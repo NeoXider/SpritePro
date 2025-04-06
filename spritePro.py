@@ -4,11 +4,19 @@ from typing import Tuple, Optional, Callable, List
 import pygame
 import math
 
+
 class GameSprite(pygame.sprite.Sprite):
-    def __init__(self, sprite: str, size: tuple = (50, 50), pos: tuple = (0, 0), speed: float = 0, health: int = 100):
+    def __init__(
+        self,
+        sprite: str,
+        size: tuple = (50, 50),
+        pos: tuple = (0, 0),
+        speed: float = 0,
+        health: int = 100,
+    ):
         """
         Инициализация спрайта.
-        
+
         Аргументы:
             sprite: Путь к изображению спрайта или имя ресурса
             size: Размер спрайта (ширина, высота) по умолчанию (50, 50)
@@ -16,53 +24,57 @@ class GameSprite(pygame.sprite.Sprite):
             speed: Скорость движения спрайта по умолчанию 0
         """
         super().__init__()
-        
+
         # Загрузка изображения спрайта
         try:
             if os.path.isfile(sprite):
                 self.original_image = pygame.image.load(sprite).convert_alpha()
             else:
                 self.original_image = pygame.Surface(size, pygame.SRCALPHA)
-                self.original_image.fill((255, 0, 255))  # Фиолетовый цвет по умолчанию если спрайт не найден
+                self.original_image.fill(
+                    (255, 0, 255)
+                )  # Фиолетовый цвет по умолчанию если спрайт не найден
         except:
             self.original_image = pygame.Surface(size, pygame.SRCALPHA)
-            self.original_image.fill((255, 0, 255))  # Фиолетовый цвет по умолчанию если спрайт не найден
-        
+            self.original_image.fill(
+                (255, 0, 255)
+            )  # Фиолетовый цвет по умолчанию если спрайт не найден
+
         # Изменение размера изображения если нужно
         if size != (self.original_image.get_width(), self.original_image.get_height()):
             self.original_image = pygame.transform.scale(self.original_image, size)
-        
+
         # Копия изображения для манипуляций
         self.image = self.original_image.copy()
-        
+
         # Создание прямоугольника из изображения и установка его центра
         self.rect = self.image.get_rect()
         self.rect.center = pos
-        
+
         # Создание маски для более точного определения столкновений
         self.mask = pygame.mask.from_surface(self.image)
-        
+
         # Физические свойства
         self.position = pygame.math.Vector2(pos)  # Позиция с плавающей точкой
         self.velocity = pygame.math.Vector2(0, 0)  # Текущая скорость (направление)
         self.speed = speed  # Максимальная скорость
-        
+
         # Состояние спрайта
         self.alive = True
         self.health = health
         self.max_health = health
-        
+
         # Визуальные эффекты
         self.flipped_h = False  # Отражение по горизонтали
         self.flipped_v = False  # Отражение по вертикали
         self.angle = 0  # Угол поворота
         self.scale = 1.0  # Масштаб
         self.alpha = 255  # Прозрачность
-        
+
         # Состояния спрайта
         self.state = "idle"  # Начальное состояние
         self.states = {"idle", "moving", "hit", "attacking", "dead"}
-        
+
         # Коллбэки для событий
         self.on_collision = None
         self.on_death = None
@@ -72,7 +84,7 @@ class GameSprite(pygame.sprite.Sprite):
         # Обновление позиции на основе скорости
         if self.velocity.length() > 0:
             self.position += self.velocity
-        
+
         self.rect.center = (int(self.position.x), int(self.position.y))
 
         # Обновляем маску коллизии если изображение изменилось
@@ -89,7 +101,10 @@ class GameSprite(pygame.sprite.Sprite):
 
         # Применяем масштаб
         if self.scale != 1.0:
-            new_size = (int(img.get_width() * self.scale), int(img.get_height() * self.scale))
+            new_size = (
+                int(img.get_width() * self.scale),
+                int(img.get_height() * self.scale),
+            )
             img = pygame.transform.scale(img, new_size)
 
         # Применяем вращение
@@ -112,11 +127,13 @@ class GameSprite(pygame.sprite.Sprite):
         """
         Перемещение спрайта на заданное расстояние.
         """
-        self.position.x += dx
-        self.position.y += dy
+        self.position.x += dx * self.speed
+        self.position.y += dy * self.speed
         self.rect.center = (int(self.position.x), int(self.position.y))
 
-    def move_towards(self, target_pos: Tuple[float, float], speed: Optional[float] = None):
+    def move_towards(
+        self, target_pos: Tuple[float, float], speed: Optional[float] = None
+    ):
         """
         Перемещение спрайта в направлении целевой позиции.
 
@@ -167,7 +184,7 @@ class GameSprite(pygame.sprite.Sprite):
 
     def move_down(self, speed: Optional[float] = None):
         """Перемещение спрайта вниз."""
-        self.velocity.y = (speed or self.speed)
+        self.velocity.y = speed or self.speed
         self.state = "moving"
 
     def move_left(self, speed: Optional[float] = None):
@@ -179,13 +196,19 @@ class GameSprite(pygame.sprite.Sprite):
 
     def move_right(self, speed: Optional[float] = None):
         """Перемещение спрайта вправо."""
-        self.velocity.x = (speed or self.speed)
+        self.velocity.x = speed or self.speed
         self.flipped_h = False
         self._update_image()
         self.state = "moving"
 
-    def handle_keyboard_input(self, keys=None, up_key=pygame.K_UP, down_key=pygame.K_DOWN,
-                             left_key=pygame.K_LEFT, right_key=pygame.K_RIGHT):
+    def handle_keyboard_input(
+        self,
+        keys=None,
+        up_key=pygame.K_UP,
+        down_key=pygame.K_DOWN,
+        left_key=pygame.K_LEFT,
+        right_key=pygame.K_RIGHT,
+    ):
         """
         Обработка ввода с клавиатуры для движения спрайта.
 
@@ -285,7 +308,7 @@ class GameSprite(pygame.sprite.Sprite):
         if pygame.sprite.collide_rect(self, other_sprite):
             offset = (
                 other_sprite.rect.x - self.rect.x,
-                other_sprite.rect.y - self.rect.y
+                other_sprite.rect.y - self.rect.y,
             )
             if other_sprite.mask is not None and self.mask is not None:
                 return self.mask.overlap(other_sprite.mask, offset) is not None
@@ -309,8 +332,8 @@ class GameSprite(pygame.sprite.Sprite):
     def distance_to(self, other_sprite) -> float:
         """Расчет расстояния до другого спрайта (от центра к центру)."""
         return math.sqrt(
-            (self.rect.centerx - other_sprite.rect.centerx) ** 2 +
-            (self.rect.centery - other_sprite.rect.centery) ** 2
+            (self.rect.centerx - other_sprite.rect.centerx) ** 2
+            + (self.rect.centery - other_sprite.rect.centery) ** 2
         )
 
     def take_damage(self, amount: int) -> bool:
@@ -377,8 +400,14 @@ class GameSprite(pygame.sprite.Sprite):
         # Проверяем пересечение прямоугольников
         return screen_rect.colliderect(sprite_rect)
 
-    def limit_movement(self, bounds: pygame.Rect, check_left: bool = True, check_right: bool = True,
-                       check_top: bool = True, check_bottom: bool = True):
+    def limit_movement(
+        self,
+        bounds: pygame.Rect,
+        check_left: bool = True,
+        check_right: bool = True,
+        check_top: bool = True,
+        check_bottom: bool = True,
+    ):
         """
         Ограничивает движение спрайта в пределах заданных границ.
 
