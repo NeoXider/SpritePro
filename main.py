@@ -59,6 +59,9 @@ pygame.font.init()
 font_label = pygame.font.Font(None, 36)
 text = font_label.render("lol", True, (255, 255, 255))
 
+ball1 = spritePro.PhysicalSprite("Sprites/ball.jpg",(50,50),(200,200), 3)
+ball1.bounce_enabled = True
+
 """ИГРОВОЙ ЦИКЛ"""
 while True:
     for event in pygame.event.get():
@@ -70,6 +73,10 @@ while True:
     player1.handle_keyboard_input(
         up_key=pygame.K_w, down_key=pygame.K_s, left_key=None, right_key=None
     )
+    ball1.handle_keyboard_input()
+
+    ball1.update(screen)
+    ball1.limit_movement(screen.get_rect())
 
     player1.update(screen)
     player1.limit_movement(bg_image.get_rect())

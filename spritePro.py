@@ -439,3 +439,145 @@ class GameSprite(pygame.sprite.Sprite):
         if check_bottom and self.rect.bottom > bounds.bottom - padding_bottom:
             self.rect.bottom = bounds.bottom - padding_bottom
             self.position.y = self.rect.centery
+
+    def collide_with_tag(self, group: pygame.sprite.Group, tag: str) -> List:
+        """Проверка столкновения с группой спрайтов по тегу."""
+        return [sprite for sprite in group if sprite.tag == tag and self.collide_with(sprite)]
+
+    def play_sound(self, sound_file: str):
+        """Воспроизведение звукового эффекта."""
+        self.sound = pygame.mixer.Sound(sound_file)
+        self.sound.play()
+
+class PhysicalSprite(GameSprite):
+    def __init__(self, sprite: str, size: tuple = (50, 50), pos: tuple = (0, 0), speed: float = 0, health: int = 100, mass: float = 1.0, gravity: float = 9.81, bounce_enabled: bool = False):
+        """Инициализация физического спрайта с поддержкой гравитации и отскока."""
+        super().__init__(sprite, size, pos, speed, health)
+        self.force = pygame.math.Vector2(0, 0)  # Сила, применяемая к спрайту
+        self.acceleration = pygame.math.Vector2(0, 0)  # Ускорение спрайта
+        self.mass = mass
+        self.gravity = gravity  # Гравитация, по умолчанию 9.81
+        self.bounce_enabled = bounce_enabled  # Включение/выключение отскока
+
+    def apply_force(self, force: pygame.math.Vector2):
+        """Применение силы к физическому спрайту."""
+        self.force += force
+
+    def bounce(self, normal: pygame.math.Vector2):
+        """Обработка отскока от поверхности с заданной нормалью."""
+        # Отражаем скорость относительно нормали
+        self.velocity = self.velocity - 2 * self.velocity.dot(normal) * normal
+
+    def update_physics(self, delta_time: float):
+        """Обновление физики спрайта с учетом гравитации."""
+        # Применение гравитации
+        self.apply_force(pygame.math.Vector2(0, self.gravity * self.mass))
+
+        # Расчет ускорения
+        if self.mass > 0:
+            self.acceleration = self.force / self.mass
+        
+        # Обновление скорости
+        self.velocity += self.acceleration * delta_time
+        
+        # Обновление позиции
+        self.position += self.velocity * delta_time
+        self.rect.center = (int(self.position.x), int(self.position.y))
+        
+        # Сброс силы после обновления
+        self.force = pygame.math.Vector2(0, 0)
+
+    def update(self, window: pygame.Surface):
+        """Обновление состояния физического спрайта."""
+        self.update_physics(1/60)  # Предполагаем, что обновление происходит 60 раз в секунду
+        super().update(window)  # Вызов метода обновления родительского класса
+
+    def limit_movement(
+        self,
+        bounds: pygame.Rect,
+        check_left: bool = True,
+        check_right: bool = True,
+        check_top: bool = True,
+        check_bottom: bool = True,
+        padding_left: int = 0,
+        padding_right: int = 0,
+        padding_top: int = 0,
+        padding_bottom: int = 0,
+    ):
+        """
+        Ограничивает движение спрайта в пределах заданных границ с учетом отступов и возможности отскока.
+
+        Аргументы:
+            bounds: Прямоугольник, определяющий границы движения спрайта.
+            check_left: Проверять границу слева (по умолчанию True).
+            check_right: Проверять границу справа (по умолчанию True).
+            check_top: Проверять верхнюю границу (по умолчанию True).
+            check_bottom: Проверять нижнюю границу (по умолчанию True).
+            padding_left: Отступ слева (по умолчанию 0).
+            padding_right: Отступ справа (по умолчанию 0).
+            padding_top: Отступ сверху (по умолчанию 0).
+            padding_bottom: Отступ снизу (по умолчанию 0).
+        """
+        if check_left and self.rect.left < bounds.left + padding_left:
+            self.rect.left = bounds.left + padding_left
+            self.position.x = self.rect.centerx
+            if self.bounce_enabled:
+                self.bounce(pygame.math.Vector2(1, 0))  # Отскок влево
+
+        if check_right and self.rect.right > bounds.right - padding_right:
+            self.rect.right = bounds.right - padding_right
+            self.position.x = self.rect.centerx
+            if self.bounce_enabled:
+                self.bounce(pygame.math.Vector2(-1, 0))  # Отскок вправо
+
+        if check_top and self.rect.top < bounds.top + padding_top:
+            self.rect.top = bounds.top + padding_top
+            self.position.y = self.rect.centery
+            if self.bounce_enabled:
+                self.bounce(pygame.math.Vector2(0, 1))  # Отскок вверх
+
+        if check_bottom and self.rect.bottom > bounds.bottom - padding_bottom:
+            self.rect.bottom = bounds.bottom - padding_bottom
+            self.position.y = self.rect.centery
+            if self.bounce_enabled:
+                self.bounce(pygame.math.Vector2(0, -1))  # Отскок вниз
+
+    def handle_keyboard_input(
+        self,
+        keys=None,
+        left_key=pygame.K_LEFT,
+        right_key=pygame.K_RIGHT,
+    ):
+        """
+        Обработка ввода с клавиатуры для движения физического спрайта.
+
+        Аргументы:
+            keys: Состояние всех клавиш. Если None, будет использован pygame.key.get_pressed()
+            up_key: Клавиша для движения вверх (по умолчанию стрелка вверх)
+            down_key: Клавиша для движения вниз (по умолчанию стрелка вниз)
+            left_key: Клавиша для движения влево (по умолчанию стрелка влево)
+            right_key: Клавиша для движения вправо (по умолчанию стрелка вправо)
+        """
+        if keys is None:
+            keys = pygame.key.get_pressed()
+
+        # Сбрасываем скорость по горизонтали
+        self.velocity.x = 0
+
+        # Проверяем нажатые клавиши и устанавливаем скорость
+        if left_key is not None and keys[left_key]:
+            self.velocity.x = -self.speed  # Движение влево
+            self.flipped_h = True
+            self._update_image()
+        if right_key is not None and keys[right_key]:
+            self.velocity.x = self.speed  # Движение вправо
+            self.flipped_h = False
+            self._update_image()
+
+    def jump(self, jump_force: float):
+        """Применение силы для прыжка."""
+        self.apply_force(pygame.math.Vector2(0, -jump_force))  # Применяем силу вверх
+
+    def move_in_direction(self, direction: pygame.math.Vector2, force: float):
+        """Применение силы в заданном направлении."""
+        self.apply_force(direction.normalize() * force)  # Применяем силу в указанном направлении
