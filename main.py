@@ -43,6 +43,12 @@ ball = spritePro.GameSprite("Sprites/ball.jpg", (50, 50), (400, 300), 3)
 speed_x = 3
 speed_y = 3
 
+lose_frames = 0
+
+pygame.font.init()
+font_label = pygame.font.Font(None, 36)
+text = font_label.render("lol", True, (255,255,255))
+
 '''ИГРОВОЙ ЦИКЛ'''
 while True:
     for event in pygame.event.get():
@@ -73,6 +79,17 @@ while True:
         
     if ball.collide_with(player1) or ball.collide_with(player2):
         speed_x *= -1
+        
+    if ball.rect.right > WIDTH:
+        lose_frames = 30
+        ball.position.x, ball.position.y = (400, 300)
+        
+    #отрисовка
+
+    if lose_frames > 0:
+        screen.blit(text, (350, 150))
+        lose_frames -= 1
+
     
     pygame.display.update()
     clock.tick(FPS)        
