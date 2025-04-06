@@ -58,18 +58,15 @@ while True:
     screen.blit(bg_image, (0, 0))
     
     player1.handle_keyboard_input(up_key=pygame.K_w, down_key=pygame.K_s, left_key=None, right_key=None)
-    if player1.rect.y > HEIGHT - player1.rect.height or player1.rect.y < 0:
-        player1.stop()
-        player1.rect.y = clamp(player1.rect.y, 0, HEIGHT - player1.rect.height)
+    
     player1.update(screen)
-
+    player1.limit_movement(bg_image.get_rect())
     
     player2.handle_keyboard_input(up_key=pygame.K_UP, down_key=pygame.K_DOWN, left_key=None, right_key=None)
-    if player2.rect.y > HEIGHT - player2.rect.height or player2.rect.y < 0:
-        player2.stop()
-        player2.rect.y = clamp(player2.rect.y, 0, HEIGHT - player2.rect.height)
     
     player2.update(screen)
+    player2.limit_movement(bg_image.get_rect())
+
 
     ball.update(screen)
     ball.move(speed_x, speed_y)

@@ -72,7 +72,8 @@ class GameSprite(pygame.sprite.Sprite):
         # Обновление позиции на основе скорости
         if self.velocity.length() > 0:
             self.position += self.velocity
-            self.rect.center = (int(self.position.x), int(self.position.y))
+        
+        self.rect.center = (int(self.position.x), int(self.position.y))
 
         # Обновляем маску коллизии если изображение изменилось
         self.mask = pygame.mask.from_surface(self.image)
@@ -375,3 +376,29 @@ class GameSprite(pygame.sprite.Sprite):
 
         # Проверяем пересечение прямоугольников
         return screen_rect.colliderect(sprite_rect)
+
+    def limit_movement(self, bounds: pygame.Rect, check_left: bool = True, check_right: bool = True,
+                       check_top: bool = True, check_bottom: bool = True):
+        """
+        Ограничивает движение спрайта в пределах заданных границ.
+
+        Аргументы:
+            bounds: Прямоугольник, определяющий границы движения спрайта.
+            check_left: Проверять границу слева (по умолчанию True).
+            check_right: Проверять границу справа (по умолчанию True).
+            check_top: Проверять верхнюю границу (по умолчанию True).
+            check_bottom: Проверять нижнюю границу (по умолчанию True).
+        """
+        if check_left and self.rect.left < bounds.left:
+            self.rect.left = bounds.left
+            self.position.x = self.rect.centerx
+        if check_right and self.rect.right > bounds.right:
+            self.rect.right = bounds.right
+            self.position.x = self.rect.centerx
+
+        if check_top and self.rect.top < bounds.top:
+            self.rect.top = bounds.top
+            self.position.y = self.rect.centery
+        if check_bottom and self.rect.bottom > bounds.bottom:
+            self.rect.bottom = bounds.bottom
+            self.position.y = self.rect.centery
