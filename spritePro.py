@@ -285,14 +285,14 @@ class GameSprite(pygame.sprite.Sprite):
         self.alpha = max(0, min(255, alpha))
         self._update_image()
 
-    def fade_in(self, speed: int = 5):
-        """Постепенное увеличение прозрачности."""
-        self.alpha = min(255, self.alpha + speed)
+    def fade_by(self, amount: int, min_alpha: int = 0, max_alpha: int = 255):
+        """Изменение прозрачности спрайта на заданное количество с ограничениями."""
+        self.alpha = max(min_alpha, min(max_alpha, self.alpha + amount))
         self._update_image()
 
-    def fade_out(self, speed: int = 5):
-        """Постепенное уменьшение прозрачности."""
-        self.alpha = max(0, self.alpha - speed)
+    def scale_by(self, amount: float, min_scale: float = 0.0, max_scale: float = 2.0):
+        """Изменение масштаба спрайта на заданное количество с ограничениями."""
+        self.scale = max(min_scale, min(max_scale, self.scale + amount))
         self._update_image()
 
     def collide_with(self, other_sprite) -> bool:
@@ -407,9 +407,13 @@ class GameSprite(pygame.sprite.Sprite):
         check_right: bool = True,
         check_top: bool = True,
         check_bottom: bool = True,
+        padding_left: int = 0,
+        padding_right: int = 0,
+        padding_top: int = 0,
+        padding_bottom: int = 0,
     ):
         """
-        Ограничивает движение спрайта в пределах заданных границ.
+        Ограничивает движение спрайта в пределах заданных границ с учетом отступов.
 
         Аргументы:
             bounds: Прямоугольник, определяющий границы движения спрайта.
@@ -417,17 +421,21 @@ class GameSprite(pygame.sprite.Sprite):
             check_right: Проверять границу справа (по умолчанию True).
             check_top: Проверять верхнюю границу (по умолчанию True).
             check_bottom: Проверять нижнюю границу (по умолчанию True).
+            padding_left: Отступ слева (по умолчанию 0).
+            padding_right: Отступ справа (по умолчанию 0).
+            padding_top: Отступ сверху (по умолчанию 0).
+            padding_bottom: Отступ снизу (по умолчанию 0).
         """
-        if check_left and self.rect.left < bounds.left:
-            self.rect.left = bounds.left
+        if check_left and self.rect.left < bounds.left + padding_left:
+            self.rect.left = bounds.left + padding_left
             self.position.x = self.rect.centerx
-        if check_right and self.rect.right > bounds.right:
-            self.rect.right = bounds.right
+        if check_right and self.rect.right > bounds.right - padding_right:
+            self.rect.right = bounds.right - padding_right
             self.position.x = self.rect.centerx
 
-        if check_top and self.rect.top < bounds.top:
-            self.rect.top = bounds.top
+        if check_top and self.rect.top < bounds.top + padding_top:
+            self.rect.top = bounds.top + padding_top
             self.position.y = self.rect.centery
-        if check_bottom and self.rect.bottom > bounds.bottom:
-            self.rect.bottom = bounds.bottom
+        if check_bottom and self.rect.bottom > bounds.bottom - padding_bottom:
+            self.rect.bottom = bounds.bottom - padding_bottom
             self.position.y = self.rect.centery
