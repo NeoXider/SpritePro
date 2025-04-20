@@ -56,10 +56,10 @@ def ball_bounch():
         ball.dir_y *= -1
 
     if ball.collide_with(player_right):
-        ball.ball_baunch_x(right=False)
+        ball.baunch_x(right=False)
 
     if ball.collide_with(player_left):
-        ball.ball_baunch_x(right=True)
+        ball.baunch_x(right=True)
 
 
 def player_input():
