@@ -203,7 +203,6 @@ class GameSprite(pygame.sprite.Sprite):
 
     def handle_keyboard_input(
         self,
-        keys=None,
         up_key=pygame.K_UP,
         down_key=pygame.K_DOWN,
         left_key=pygame.K_LEFT,
@@ -213,14 +212,12 @@ class GameSprite(pygame.sprite.Sprite):
         Обработка ввода с клавиатуры для движения спрайта.
 
         Аргументы:
-            keys: Состояние всех клавиш. Если None, будет использован pygame.key.get_pressed()
             up_key: Клавиша для движения вверх (по умолчанию стрелка вверх)
             down_key: Клавиша для движения вниз (по умолчанию стрелка вниз)
             left_key: Клавиша для движения влево (по умолчанию стрелка влево)
             right_key: Клавиша для движения вправо (по умолчанию стрелка вправо)
         """
-        if keys is None:
-            keys = pygame.key.get_pressed()
+        keys = pygame.key.get_pressed()
 
         # Сбрасываем скорость
         self.velocity.x = 0
@@ -442,15 +439,30 @@ class GameSprite(pygame.sprite.Sprite):
 
     def collide_with_tag(self, group: pygame.sprite.Group, tag: str) -> List:
         """Проверка столкновения с группой спрайтов по тегу."""
-        return [sprite for sprite in group if sprite.tag == tag and self.collide_with(sprite)]
+        return [
+            sprite
+            for sprite in group
+            if sprite.tag == tag and self.collide_with(sprite)
+        ]
 
     def play_sound(self, sound_file: str):
         """Воспроизведение звукового эффекта."""
         self.sound = pygame.mixer.Sound(sound_file)
         self.sound.play()
 
+
 class PhysicalSprite(GameSprite):
-    def __init__(self, sprite: str, size: tuple = (50, 50), pos: tuple = (0, 0), speed: float = 0, health: int = 100, mass: float = 1.0, gravity: float = 9.81, bounce_enabled: bool = False):
+    def __init__(
+        self,
+        sprite: str,
+        size: tuple = (50, 50),
+        pos: tuple = (0, 0),
+        speed: float = 0,
+        health: int = 100,
+        mass: float = 1.0,
+        gravity: float = 9.81,
+        bounce_enabled: bool = False,
+    ):
         """Инициализация физического спрайта с поддержкой гравитации и отскока."""
         super().__init__(sprite, size, pos, speed, health)
         self.force = pygame.math.Vector2(0, 0)  # Сила, применяемая к спрайту
@@ -476,20 +488,22 @@ class PhysicalSprite(GameSprite):
         # Расчет ускорения
         if self.mass > 0:
             self.acceleration = self.force / self.mass
-        
+
         # Обновление скорости
         self.velocity += self.acceleration * delta_time
-        
+
         # Обновление позиции
         self.position += self.velocity * delta_time
         self.rect.center = (int(self.position.x), int(self.position.y))
-        
+
         # Сброс силы после обновления
         self.force = pygame.math.Vector2(0, 0)
 
     def update(self, window: pygame.Surface):
         """Обновление состояния физического спрайта."""
-        self.update_physics(1/60)  # Предполагаем, что обновление происходит 60 раз в секунду
+        self.update_physics(
+            1 / 60
+        )  # Предполагаем, что обновление происходит 60 раз в секунду
         super().update(window)  # Вызов метода обновления родительского класса
 
     def limit_movement(
@@ -580,4 +594,6 @@ class PhysicalSprite(GameSprite):
 
     def move_in_direction(self, direction: pygame.math.Vector2, force: float):
         """Применение силы в заданном направлении."""
-        self.apply_force(direction.normalize() * force)  # Применяем силу в указанном направлении
+        self.apply_force(
+            direction.normalize() * force
+        )  # Применяем силу в указанном направлении
