@@ -139,6 +139,8 @@ player_left.rotate_to(-90)
 player_right = spritePro.GameSprite("Sprites/platforma.png", (120, 50), (750, 300), 6)
 player_right.rotate_to(90)
 
+physic = spritePro.PhysicalSprite("Sprites/ball.png", (50, 50), (400, 290), 2)
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -146,6 +148,11 @@ while True:
 
     render_game()
     render_text()
+
+    physic.handle_keyboard_input()
+    physic.limit_movement(SCREEN.get_rect())
+    physic.update(SCREEN)
+
 
     if current_state == STATE_GAME:
         player_input()
