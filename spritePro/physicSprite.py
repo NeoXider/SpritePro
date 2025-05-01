@@ -1,5 +1,9 @@
 import pygame
-from .gameSprite import GameSprite
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from spritePro.gameSprite import GameSprite
+
 
 class PhysicalSprite(GameSprite):
     jump_force = 5
@@ -51,7 +55,7 @@ class PhysicalSprite(GameSprite):
         self.velocity += self.acceleration * dt
 
         # Применяем трение только если не было управления по X
-        if self.is_grounded and not getattr(self, '_x_controlled_this_frame', False):
+        if self.is_grounded and not getattr(self, "_x_controlled_this_frame", False):
             self.velocity.x *= self.ground_friction
             if abs(self.velocity.x) < self.min_velocity_threshold:
                 self.velocity.x = 0
@@ -192,8 +196,9 @@ class PhysicalSprite(GameSprite):
         fps — кадров в секунду (для расчёта dt).
         """
         dt = 1.0 / fps
-        step = max(1, int(getattr(self, 'collision_step', 1)))
+        step = max(1, int(getattr(self, "collision_step", 1)))
         rects = []
+
         def collect_rects(objs):
             for obj in objs:
                 if isinstance(obj, pygame.sprite.Sprite):
@@ -202,6 +207,7 @@ class PhysicalSprite(GameSprite):
                     rects.append(obj)
                 elif isinstance(obj, (pygame.sprite.Group, list, tuple)):
                     collect_rects(obj)
+
         collect_rects(obstacles)
         # --- Сначала по Y ---
         dy = self.velocity.y * dt
@@ -215,7 +221,11 @@ class PhysicalSprite(GameSprite):
             for r in rects:
                 if self.rect.colliderect(r):
                     # Приземлились сверху (только если не прыжок вверх)
-                    if step_dy > 0 and prev_y + self.rect.height // 2 <= r.top and self.velocity.y >= 0:
+                    if (
+                        step_dy > 0
+                        and prev_y + self.rect.height // 2 <= r.top
+                        and self.velocity.y >= 0
+                    ):
                         self.is_grounded = True
                         self.velocity.y = 0
                         self.position.y = r.top - self.rect.height // 2
@@ -265,7 +275,11 @@ class PhysicalSprite(GameSprite):
         # После всех шагов по Y: если стоим на платформе и не прыгаем вверх, выставить is_grounded
         if self.velocity.y >= 0:
             for r in rects:
-                if self.rect.bottom == r.top and self.rect.right > r.left and self.rect.left < r.right:
+                if (
+                    self.rect.bottom == r.top
+                    and self.rect.right > r.left
+                    and self.rect.left < r.right
+                ):
                     self.is_grounded = True
                     break
         else:

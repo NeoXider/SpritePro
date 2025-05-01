@@ -2,8 +2,9 @@ import pygame
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
-
 from spritePro.gameSprite import GameSprite
+
+path = Path(__file__).parent
 
 pygame.init()
 pygame.font.init()
@@ -15,6 +16,8 @@ FPS = 60
 CLOCK = pygame.time.Clock()
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 
+SCORE_GAMEOVER = 3
+
 STATE_GAME = 0
 STATE_WIN_LEFT = 1
 STATE_WIN_RIGHT = 2
@@ -23,9 +26,17 @@ current_state = STATE_GAME
 
 
 class Ball(GameSprite):
+    add_speed_per_frame = 0.005
+    max_speed = 5
+    speed_rotate = 2
     x_bounch = 0
     dir_x = 1
     dir_y = 1
+
+    def __init__(self, sprite, size, pos, speed):
+        super().__init__(sprite, size, pos, speed)
+        self.start_speed = speed
+        self.start_pos = self.position.copy()
 
     def baunch_x(self, right: bool):
         global bounch_sound
@@ -35,8 +46,14 @@ class Ball(GameSprite):
             bounch_sound.play()
 
     def move(self, dx: float, dy: float):
-        ball.speed += add_speed_per_frame
+        self.speed = min(self.speed + self.add_speed_per_frame, self.max_speed)
+        self.rotate_by(self.speed_rotate * self.speed * self.dir_x * self.dir_y * -1)
         super().move(dx, dy)
+
+    def reset(self):
+        self.speed = self.start_speed
+        self.position = self.start_pos
+        self.dir_x *= -1
 
 
 def render_game():
@@ -78,17 +95,17 @@ def player_input():
 
 
 def ball_fail():
-    if ball.rect.x < 0:
+    if ball.position.x < 0:
         add_score(True)
 
-    if ball.rect.x > WIDTH:
+    if ball.position.x > WIDTH:
         add_score(False)
 
 
 def add_score(right_player: bool):
     global rightScore, leftScore
-    ball.position = pygame.math.Vector2(WIDTH // 2, HEIGHT // 2)
-    ball.dir_x *= -1
+    ball.reset()
+    print("reset")
 
     if right_player:
         rightScore += 1
@@ -99,33 +116,35 @@ def add_score(right_player: bool):
 def check_win():
     global current_state
 
-    if rightScore > 2:
+    if rightScore >= SCORE_GAMEOVER:
         current_state = STATE_WIN_RIGHT
-    elif leftScore > 2:
+    elif leftScore >= SCORE_GAMEOVER:
         current_state = STATE_WIN_LEFT
 
 
 def create_music():
-    pygame.mixer.music.load("Audio/fon_musik.mp3")
+    pygame.mixer.music.load(path / "Audio" / "fon_musik.mp3")
     pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.4)
 
 
-def create_text(FONT_LABEL):
+def create_text(FONT_LABEL: pygame.font.Font):
     global text_left_win, text_right_win
     text_right_win = FONT_LABEL.render("Победа правого", 1, (255, 255, 255))
     text_left_win = FONT_LABEL.render("Победа левого", 1, (255, 255, 255))
 
 
-def win(text, player):
+def win(text: pygame.Surface, player: GameSprite):
     SCREEN.blit(text, (320, 10))
     player.rotate_by(6)
 
 
 pygame.display.set_caption("pin pong")
-bg = pygame.transform.scale(pygame.image.load("Sprites/bg.jpg"), (WIDTH, HEIGHT))
+bg = pygame.transform.scale(
+    pygame.image.load(path / "Sprites" / "bg.jpg"), (WIDTH, HEIGHT)
+)
 
-bounch_sound = pygame.mixer.Sound("Audio/baunch.mp3")
+bounch_sound = pygame.mixer.Sound(path / "Audio" / "baunch.mp3")
 
 create_music()
 create_text(FONT_LABEL)
@@ -133,14 +152,12 @@ create_text(FONT_LABEL)
 leftScore = 0
 rightScore = 0
 
-add_speed_per_frame = 0.0005
+ball = Ball(path / "Sprites" / "ball.png", (50, 50), (400, 290), 2)
 
-ball = Ball("Sprites/ball.png", (50, 50), (400, 290), 2)
-
-player_left = GameSprite("Sprites/platforma.png", (120, 50), (50, 300), 6)
+player_left = GameSprite(path / "Sprites" / "platforma.png", (120, 50), (50, 300), 6)
 player_left.rotate_to(-90)
 
-player_right = GameSprite("Sprites/platforma.png", (120, 50), (750, 300), 6)
+player_right = GameSprite(path / "Sprites" / "platforma.png", (120, 50), (750, 300), 6)
 player_right.rotate_to(90)
 
 while True:
