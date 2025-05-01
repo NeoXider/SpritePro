@@ -72,9 +72,10 @@ class Sprite(pygame.sprite.Sprite):
         # Состояния спрайта
         self.state = "idle"  # Начальное состояние
         self.states = {"idle", "moving", "hit", "attacking", "dead"}
-        
+
     def set_color(self, color: Tuple):
-        self.original_image.fill(color)
+        self.color = color
+        self._update_image()
 
     def update(self, window: pygame.Surface):
         """Обновление состояния спрайта."""
@@ -114,6 +115,9 @@ class Sprite(pygame.sprite.Sprite):
 
         # Обновляем изображение и прямоугольник
         self.image = img
+
+        if self.color is not None:
+            self.image.fill(self.color)
 
         # Сохраняем центр
         center = self.rect.center
