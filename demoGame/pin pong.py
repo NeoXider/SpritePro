@@ -1,5 +1,9 @@
 import pygame
-import spritePro
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
+from spritePro.gameSprite import GameSprite
 
 pygame.init()
 pygame.font.init()
@@ -18,7 +22,7 @@ STATE_WIN_RIGHT = 2
 current_state = STATE_GAME
 
 
-class Ball(spritePro.GameSprite):
+class Ball(GameSprite):
     x_bounch = 0
     dir_x = 1
     dir_y = 1
@@ -133,13 +137,11 @@ add_speed_per_frame = 0.0005
 
 ball = Ball("Sprites/ball.png", (50, 50), (400, 290), 2)
 
-player_left = spritePro.GameSprite("Sprites/platforma.png", (120, 50), (50, 300), 6)
+player_left = GameSprite("Sprites/platforma.png", (120, 50), (50, 300), 6)
 player_left.rotate_to(-90)
 
-player_right = spritePro.GameSprite("Sprites/platforma.png", (120, 50), (750, 300), 6)
+player_right = GameSprite("Sprites/platforma.png", (120, 50), (750, 300), 6)
 player_right.rotate_to(90)
-
-physic = spritePro.PhysicalSprite("Sprites/ball.png", (50, 50), (400, 290), 2)
 
 while True:
     for event in pygame.event.get():
@@ -148,11 +150,6 @@ while True:
 
     render_game()
     render_text()
-
-    physic.handle_keyboard_input()
-    physic.limit_movement(SCREEN.get_rect())
-    physic.update(SCREEN)
-
 
     if current_state == STATE_GAME:
         player_input()

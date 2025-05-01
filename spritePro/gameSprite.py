@@ -6,13 +6,18 @@ import math
 
 
 class GameSprite(pygame.sprite.Sprite):
+    auto_flip: bool = True
+    _last_obstacles_hash = None
+    _last_obstacles_rects = None
+    collision_step: int = 1
+
     def __init__(
         self,
         sprite: str,
         size: tuple = (50, 50),
         pos: tuple = (0, 0),
         speed: float = 0,
-        health: int = 100,
+        health: int = 100
     ):
         """
         Инициализация спрайта.
@@ -190,15 +195,17 @@ class GameSprite(pygame.sprite.Sprite):
     def move_left(self, speed: Optional[float] = None):
         """Перемещение спрайта влево."""
         self.velocity.x = -(speed or self.speed)
-        self.flipped_h = True
-        self._update_image()
+        if self.auto_flip:
+            self.flipped_h = True
+            self._update_image()
         self.state = "moving"
 
     def move_right(self, speed: Optional[float] = None):
         """Перемещение спрайта вправо."""
         self.velocity.x = speed or self.speed
-        self.flipped_h = False
-        self._update_image()
+        if self.auto_flip:
+            self.flipped_h = False
+            self._update_image()
         self.state = "moving"
 
     def handle_keyboard_input(
@@ -236,14 +243,16 @@ class GameSprite(pygame.sprite.Sprite):
         if left_key != None:
             if keys[left_key]:
                 self.velocity.x = -self.speed
-                self.flipped_h = True
-                self._update_image()
+                if self.auto_flip:
+                    self.flipped_h = True
+                    self._update_image()
                 was_moving = True
         if right_key != None:
             if keys[right_key]:
                 self.velocity.x = self.speed
-                self.flipped_h = False
-                self._update_image()
+                if self.auto_flip:
+                    self.flipped_h = False
+                    self._update_image()
                 was_moving = True
 
         # Обновляем состояние в зависимости от движения
@@ -450,184 +459,77 @@ class GameSprite(pygame.sprite.Sprite):
         self.sound = pygame.mixer.Sound(sound_file)
         self.sound.play()
 
+    def _get_collision_side(self, prev_x, prev_y, rect):
+        # Определяет сторону столкновения: 'top', 'bottom', 'left', 'right', 'inside'
+        cx, cy = self.rect.center
+        if prev_y + self.rect.height // 2 <= rect.top:
+            return 'bottom'  # мы сверху
+        elif prev_y - self.rect.height // 2 >= rect.bottom:
+            return 'top'    # мы снизу
+        elif prev_x + self.rect.width // 2 <= rect.left:
+            return 'right'  # мы слева
+        elif prev_x - self.rect.width // 2 >= rect.right:
+            return 'left'   # мы справа
+        else:
+            return 'inside'
 
-class PhysicalSprite(GameSprite):
-    jump_force = 5
-
-    def __init__(
-        self,
-        sprite: str,
-        size: tuple = (50, 50),
-        pos: tuple = (0, 0),
-        speed: float = 0,
-        health: int = 100,
-        mass: float = 1.0,
-        gravity: float = 9.81,
-        bounce_enabled: bool = False,
-    ):
-        """Инициализация физического спрайта с поддержкой гравитации и отскока."""
-        super().__init__(sprite, size, pos, speed, health)
-        self.force = pygame.math.Vector2(0, 0)  # Сила, применяемая к спрайту
-        self.acceleration = pygame.math.Vector2(0, 0)  # Ускорение спрайта
-        self.mass = mass
-        self.gravity = gravity  # Гравитация, по умолчанию 9.81
-        self.bounce_enabled = bounce_enabled  # Включение/выключение отскока
-        self.is_grounded = False  # Флаг нахождения на земле
-        self.min_velocity_threshold = 0.1  # Минимальный порог скорости
-        self.ground_friction = 0.8  # Коэффициент трения о землю
-
-    def apply_force(self, force: pygame.math.Vector2):
-        """Применение силы к физическому спрайту."""
-        self.force += force
-
-    def bounce(self, normal: pygame.math.Vector2):
-        """Обработка отскока от поверхности с заданной нормалью."""
-        # Отражаем скорость относительно нормали
-        self.velocity = self.velocity - 2 * self.velocity.dot(normal) * normal
-
-    def update_physics(self, delta_time: float):
-        """Обновление физики спрайта с учетом гравитации и состояния на земле."""
-        # Применяем гравитацию только если не на земле
-        if not self.is_grounded:
-            self.apply_force(pygame.math.Vector2(0, self.gravity * self.mass))
-
-        # Расчет ускорения
-        if self.mass > 0:
-            self.acceleration = self.force / self.mass
-
-        # Обновление скорости
-        self.velocity += self.acceleration * delta_time
-
-        # Применяем трение если на земле
-        if self.is_grounded:
-            self.velocity.x *= self.ground_friction
-            # Останавливаем полностью при малой скорости
-            if abs(self.velocity.x) < self.min_velocity_threshold:
-                self.velocity.x = 0
-
-        # Обновление позиции
-        self.position += self.velocity * delta_time
-        self.rect.center = (int(self.position.x), int(self.position.y))
-
-        # Сброс силы после обновления
-        self.force = pygame.math.Vector2(0, 0)
-
-    def update(self, window: pygame.Surface):
-        """Обновление состояния физического спрайта."""
-        self.update_physics(
-            1 / 60
-        )  # Предполагаем, что обновление происходит 60 раз в секунду
-        super().update(window)  # Вызов метода обновления родительского класса
-
-    def limit_movement(
-        self,
-        bounds: pygame.Rect,
-        check_left: bool = True,
-        check_right: bool = True,
-        check_top: bool = True,
-        check_bottom: bool = True,
-        padding_left: int = 0,
-        padding_right: int = 0,
-        padding_top: int = 0,
-        padding_bottom: int = 0,
-    ):
+    def resolve_collisions(self, *obstacles):
         """
-        Ограничивает движение спрайта в пределах заданных границ с учетом отступов и возможности отскока.
-
-        Аргументы:
-            bounds: Прямоугольник, определяющий границы движения спрайта.
-            check_left: Проверять границу слева (по умолчанию True).
-            check_right: Проверять границу справа (по умолчанию True).
-            check_top: Проверять верхнюю границу (по умолчанию True).
-            check_bottom: Проверять нижнюю границу (по умолчанию True).
-            padding_left: Отступ слева (по умолчанию 0).
-            padding_right: Отступ справа (по умолчанию 0).
-            padding_top: Отступ сверху (по умолчанию 0).
-            padding_bottom: Отступ снизу (по умолчанию 0).
+        Останавливает движение при столкновении с любыми препятствиями.
+        obstacles — любое количество спрайтов, ректов, групп или списков.
+        Возвращает список кортежей (rect, side), где side — сторона столкновения.
         """
-        # Сохраняем предыдущее состояние is_grounded
-        was_grounded = self.is_grounded
-        self.is_grounded = False
+        def flatten_ids(objs):
+            ids = []
+            for obj in objs:
+                if isinstance(obj, (list, tuple, pygame.sprite.Group)):
+                    ids.extend(flatten_ids(obj))
+                else:
+                    ids.append(id(obj))
+            return ids
+        obstacles_hash = hash(tuple(flatten_ids(obstacles)))
+        if obstacles_hash == self._last_obstacles_hash and self._last_obstacles_rects is not None:
+            rects = self._last_obstacles_rects
+        else:
+            rects = []
+            for obj in obstacles:
+                if isinstance(obj, pygame.sprite.Sprite):
+                    rects.append(obj.rect)
+                elif isinstance(obj, pygame.Rect):
+                    rects.append(obj)
+                elif isinstance(obj, (pygame.sprite.Group, list, tuple)):
+                    for o in obj:
+                        if isinstance(o, pygame.sprite.Sprite):
+                            rects.append(o.rect)
+                        elif isinstance(o, pygame.Rect):
+                            rects.append(o)
+            self._last_obstacles_hash = obstacles_hash
+            self._last_obstacles_rects = rects
+        # --- Шаг проверки теперь задается через self.collision_step ---
+        step = max(1, int(getattr(self, 'collision_step', 1)))
+        total_steps = int(max(abs(self.velocity.x), abs(self.velocity.y)) // step)
+        if total_steps == 0:
+            return []
+        dx = self.velocity.x / (total_steps * step) if total_steps else 0
+        dy = self.velocity.y / (total_steps * step) if total_steps else 0
+        collisions = []
+        for _ in range(total_steps * step):
+            prev_x = self.position.x
+            prev_y = self.position.y
+            self.position.x += dx
+            self.position.y += dy
+            self.rect.center = (int(self.position.x), int(self.position.y))
+            for r in rects:
+                if self.rect.colliderect(r):
+                    side = self._get_collision_side(prev_x, prev_y, r)
+                    collisions.append((r, side))
+                    self.position.x -= dx
+                    self.position.y -= dy
+                    self.rect.center = (int(self.position.x), int(self.position.y))
+                    if abs(dx) > abs(dy):
+                        self.velocity.x = 0
+                    else:
+                        self.velocity.y = 0
+                    return collisions
+        return collisions
 
-        if check_left and self.rect.left < bounds.left + padding_left:
-            self.rect.left = bounds.left + padding_left
-            self.position.x = self.rect.centerx
-            if self.bounce_enabled:
-                self.bounce(pygame.math.Vector2(1, 0))
-            else:
-                self.velocity.x = 0
-
-        if check_right and self.rect.right > bounds.right - padding_right:
-            self.rect.right = bounds.right - padding_right
-            self.position.x = self.rect.centerx
-            if self.bounce_enabled:
-                self.bounce(pygame.math.Vector2(-1, 0))
-            else:
-                self.velocity.x = 0
-
-        if check_top and self.rect.top < bounds.top + padding_top:
-            self.rect.top = bounds.top + padding_top
-            self.position.y = self.rect.centery
-            if self.bounce_enabled:
-                self.bounce(pygame.math.Vector2(0, 1))
-            else:
-                self.velocity.y = 0
-
-        if check_bottom and self.rect.bottom > bounds.bottom - padding_bottom:
-            self.rect.bottom = bounds.bottom - padding_bottom
-            self.position.y = self.rect.centery
-            if self.bounce_enabled:
-                self.bounce(pygame.math.Vector2(0, -1))
-            else:
-                self.velocity.y = 0
-                self.is_grounded = True
-                # Если только что приземлились, обнуляем вертикальную скорость
-                if not was_grounded:
-                    self.velocity.y = 0
-
-    def handle_keyboard_input(
-        self,
-        keys=None,
-        left_key=pygame.K_LEFT,
-        right_key=pygame.K_RIGHT,
-        up_key=pygame.K_UP,
-    ):
-        """
-        Обработка ввода с клавиатуры для движения физического спрайта.
-
-        Аргументы:
-            keys: Состояние всех клавиш. Если None, будет использован pygame.key.get_pressed()
-            up_key: Клавиша для движения вверх (по умолчанию стрелка вверх)
-            down_key: Клавиша для движения вниз (по умолчанию стрелка вниз)
-            left_key: Клавиша для движения влево (по умолчанию стрелка влево)
-            right_key: Клавиша для движения вправо (по умолчанию стрелка вправо)
-        """
-        if keys is None:
-            keys = pygame.key.get_pressed()
-
-        # Сбрасываем скорость по горизонтали
-        self.velocity.x = 0
-
-        # Проверяем нажатые клавиши и устанавливаем скорость
-        if left_key is not None and keys[left_key]:
-            self.velocity.x = -self.speed  # Движение влево
-            self.flipped_h = True
-            self._update_image()
-        if right_key is not None and keys[right_key]:
-            self.velocity.x = self.speed  # Движение вправо
-            self.flipped_h = False
-            self._update_image()
-        if up_key is not None and keys[up_key]: #прыжок вверх
-            self.jump(self.jump_force)
-
-    def jump(self, jump_force: float):
-        """Применение силы для прыжка."""
-        if self.is_grounded:  # Прыжок только если на земле
-            self.is_grounded = False
-            self.velocity.y = -jump_force  # Мгновенная вертикальная скорость
-
-    def move_in_direction(self, direction: pygame.math.Vector2, force: float):
-        """Применение силы в заданном направлении."""
-        self.apply_force(
-            direction.normalize() * force
-        )  # Применяем силу в указанном направлении
