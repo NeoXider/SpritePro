@@ -7,6 +7,7 @@ import math
 class Sprite(pygame.sprite.Sprite):
     auto_flip: bool = True
     stop_threshold = 1.0
+    color = None
 
     def __init__(
         self,

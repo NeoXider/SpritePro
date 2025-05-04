@@ -1,8 +1,10 @@
 import pygame
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent.parent))
 from spritePro.physicSprite import PhysicalSprite
+
 path = Path(__file__).parent
 
 pygame.init()
