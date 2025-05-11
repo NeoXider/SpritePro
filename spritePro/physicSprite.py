@@ -8,6 +8,7 @@ from spritePro.gameSprite import GameSprite
 PIXELS_PER_METER = 50  # 1 метр = 50 пикселей
 SKIN = 2
 
+
 class PhysicalSprite(GameSprite):
     jump_force = 7  # м/с, как в Unity
     MAX_STEPS = 8
@@ -34,9 +35,14 @@ class PhysicalSprite(GameSprite):
         self.min_velocity_threshold = 0.01
         self.ground_friction = 0.8
         # Позиция и скорость в метрах
-        self.position = pygame.math.Vector2(pos[0] / PIXELS_PER_METER, pos[1] / PIXELS_PER_METER)
+        self.position = pygame.math.Vector2(
+            pos[0] / PIXELS_PER_METER, pos[1] / PIXELS_PER_METER
+        )
         self.velocity = pygame.math.Vector2(0, 0)  # м/с
-        self.rect.center = (int(self.position.x * PIXELS_PER_METER), int(self.position.y * PIXELS_PER_METER))
+        self.rect.center = (
+            int(self.position.x * PIXELS_PER_METER),
+            int(self.position.y * PIXELS_PER_METER),
+        )
 
     def apply_force(self, force: pygame.math.Vector2):
         """Применение силы к физическому спрайту."""
@@ -68,7 +74,10 @@ class PhysicalSprite(GameSprite):
 
         if not collisions_enabled:
             self.position += self.velocity * dt
-            self.rect.center = (int(self.position.x * PIXELS_PER_METER), int(self.position.y * PIXELS_PER_METER))
+            self.rect.center = (
+                int(self.position.x * PIXELS_PER_METER),
+                int(self.position.y * PIXELS_PER_METER),
+            )
 
         self.force = pygame.math.Vector2(0, 0)
         self._x_controlled_this_frame = False
@@ -153,7 +162,10 @@ class PhysicalSprite(GameSprite):
         else:
             self.is_grounded = False
         self.position.x, self.position.y = x, y
-        self.rect.center = (int(self.position.x * PIXELS_PER_METER), int(self.position.y * PIXELS_PER_METER))
+        self.rect.center = (
+            int(self.position.x * PIXELS_PER_METER),
+            int(self.position.y * PIXELS_PER_METER),
+        )
 
     def handle_keyboard_input(
         self,
@@ -209,7 +221,15 @@ class PhysicalSprite(GameSprite):
                 return True
         return False
 
-    def resolve_collisions(self, *obstacles, fps=60, limit_top=True, limit_bottom=True, limit_left=True, limit_right=True):
+    def resolve_collisions(
+        self,
+        *obstacles,
+        fps=60,
+        limit_top=True,
+        limit_bottom=True,
+        limit_left=True,
+        limit_right=True,
+    ):
         """
         Перемещает спрайт по velocity с учётом коллизий: сначала по Y, затем по X.
         Надёжно работает для платформеров и любых платформ.
@@ -218,6 +238,7 @@ class PhysicalSprite(GameSprite):
         """
         dt = 1.0 / fps
         rects = []
+
         def collect_rects(objs):
             for obj in objs:
                 if isinstance(obj, pygame.sprite.Sprite):
@@ -226,6 +247,7 @@ class PhysicalSprite(GameSprite):
                     rects.append(obj)
                 elif isinstance(obj, (pygame.sprite.Group, list, tuple)):
                     collect_rects(obj)
+
         collect_rects(obstacles)
         x, y = self.position.x, self.position.y
         px, py = int(x * PIXELS_PER_METER), int(y * PIXELS_PER_METER)
@@ -243,10 +265,10 @@ class PhysicalSprite(GameSprite):
                 if self.rect.colliderect(r):
                     # Приземление сверху (туннелирование)
                     if (
-                        limit_top and
-                        step_dy > 0 and
-                        prev_y * PIXELS_PER_METER + self.rect.height // 2 <= r.top and
-                        y * PIXELS_PER_METER + self.rect.height // 2 >= r.top
+                        limit_top
+                        and step_dy > 0
+                        and prev_y * PIXELS_PER_METER + self.rect.height // 2 <= r.top
+                        and y * PIXELS_PER_METER + self.rect.height // 2 >= r.top
                     ):
                         y = (r.top - self.rect.height // 2) / PIXELS_PER_METER
                         py = int(y * PIXELS_PER_METER)
@@ -258,10 +280,11 @@ class PhysicalSprite(GameSprite):
                         break
                     # Удар головой (туннелирование снизу)
                     elif (
-                        limit_bottom and
-                        step_dy < 0 and
-                        prev_y * PIXELS_PER_METER - self.rect.height // 2 >= r.bottom and
-                        y * PIXELS_PER_METER - self.rect.height // 2 <= r.bottom
+                        limit_bottom
+                        and step_dy < 0
+                        and prev_y * PIXELS_PER_METER - self.rect.height // 2
+                        >= r.bottom
+                        and y * PIXELS_PER_METER - self.rect.height // 2 <= r.bottom
                     ):
                         y = (r.bottom + self.rect.height // 2) / PIXELS_PER_METER
                         py = int(y * PIXELS_PER_METER)
@@ -290,10 +313,10 @@ class PhysicalSprite(GameSprite):
                         continue
                     # Столкновение справа
                     if (
-                        limit_right and
-                        step_dx > 0 and
-                        prev_x * PIXELS_PER_METER + self.rect.width // 2 <= r.left and
-                        x * PIXELS_PER_METER + self.rect.width // 2 >= r.left
+                        limit_right
+                        and step_dx > 0
+                        and prev_x * PIXELS_PER_METER + self.rect.width // 2 <= r.left
+                        and x * PIXELS_PER_METER + self.rect.width // 2 >= r.left
                     ):
                         x = (r.left - self.rect.width // 2) / PIXELS_PER_METER
                         px = int(x * PIXELS_PER_METER)
@@ -304,10 +327,10 @@ class PhysicalSprite(GameSprite):
                         break
                     # Столкновение слева
                     elif (
-                        limit_left and
-                        step_dx < 0 and
-                        prev_x * PIXELS_PER_METER - self.rect.width // 2 >= r.right and
-                        x * PIXELS_PER_METER - self.rect.width // 2 <= r.right
+                        limit_left
+                        and step_dx < 0
+                        and prev_x * PIXELS_PER_METER - self.rect.width // 2 >= r.right
+                        and x * PIXELS_PER_METER - self.rect.width // 2 <= r.right
                     ):
                         x = (r.right + self.rect.width // 2) / PIXELS_PER_METER
                         px = int(x * PIXELS_PER_METER)
@@ -319,5 +342,8 @@ class PhysicalSprite(GameSprite):
             if collided:
                 break
         self.position.x, self.position.y = x, y
-        self.rect.center = (int(self.position.x * PIXELS_PER_METER), int(self.position.y * PIXELS_PER_METER))
+        self.rect.center = (
+            int(self.position.x * PIXELS_PER_METER),
+            int(self.position.y * PIXELS_PER_METER),
+        )
         self.is_grounded = self._check_grounded(rects)
