@@ -1,74 +1,83 @@
 import pygame
-import sys
+import pymunk
 from pathlib import Path
+import sys
 
 sys.path.append(str(Path(__file__).parent.parent))
-from spritePro.physicSprite import PhysicalSprite
+from spritePro import PymunkGameSprite
 
 path = Path(__file__).parent
 
 pygame.init()
-pygame.font.init()
-pygame.mixer.init()
-
 WIDTH, HEIGHT = 800, 600
-FONT_LABEL = pygame.font.Font(None, 72)
 FPS = 60
 CLOCK = pygame.time.Clock()
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 
-STATE_GAME = 0
-STATE_WIN_LEFT = 1
-STATE_WIN_RIGHT = 2
+space = pymunk.Space()
+space.gravity = (0, 900)
 
-current_state = STATE_GAME
-
-
-def render_game():
-    SCREEN.blit(bg, (0, 0))
-
-
-def create_music():
-    pygame.mixer.music.load(path / "Audio" / "fon_musik.mp3")
-    pygame.mixer.music.play(-1)
-    pygame.mixer.music.set_volume(0.1)
-
-
-pygame.display.set_caption("pin pong")
+# Фон
 bg = pygame.transform.scale(
-    pygame.image.load(path / "Sprites" / "bg.jpg"), (WIDTH, HEIGHT)
+    pygame.image.load(path / "Sprites" / "bg.jpg").convert(), (WIDTH, HEIGHT)
 )
 
-create_music()
-
-planes = pygame.sprite.Group()
-
-physic = PhysicalSprite(path / "Sprites" / "ball.png", (50, 50), (400, 290), 2)
-plane = PhysicalSprite(
-    path / "Sprites" / "platforma.png", (120, 50), (400, 500), 6, gravity=0
+# Мячик (динамический)
+ball = PymunkGameSprite(
+    sprite=path / "Sprites" / "ball.png",
+    pos=(400, 290),
+    size=(50, 50),
+    mass=1.0,
+    friction=0.7,
+    elasticity=0.8,
+    space=space,
 )
-planes.add(plane)
-plane1 = PhysicalSprite(
-    path / "Sprites" / "platforma.png", (120, 50), (500, 350), 6, gravity=0
-)
-planes.add(plane1)
+ball.setup_platformer_handlers(platform_collision_type=2)
 
-physic.jump_force = 8
+# Платформы (статические)
+platforms = []
+platform1 = PymunkGameSprite(
+    sprite=path / "Sprites" / "platforma.png",
+    pos=(400, 500),
+    size=(100, 50),
+    mass=1.0,
+    body_type=pymunk.Body.STATIC,
+    space=space,
+    collision_type=2,
+)
+platforms.append(platform1)
+platform2 = PymunkGameSprite(
+    sprite=path / "Sprites" / "platforma.png",
+    pos=(500, 350),
+    size=(100, 50),
+    mass=1.0,
+    body_type=pymunk.Body.STATIC,
+    space=space,
+    collision_type=2,
+)
+platforms.append(platform2)
+
+sprites = pygame.sprite.Group([ball] + platforms)
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
 
-    render_game()
+    SCREEN.blit(bg, (0, 0))
 
-    physic.handle_keyboard_input()
-    physic.update_physics(FPS)
-    physic.resolve_collisions(planes)
-    physic.limit_movement(SCREEN.get_rect())
+    # Управление мячом с клавиатуры
+    ball.handle_keyboard_input()
+    ball.limit_movement(SCREEN.get_rect())
 
-    planes.update(SCREEN)
-    physic.update(SCREEN)
+    # Физика
+    space.step(1 / FPS)
+
+    # Обновление позиций спрайтов
+    sprites.update()
+
+    # Отрисовка
+    sprites.draw(SCREEN)
 
     pygame.display.update()
     CLOCK.tick(FPS)

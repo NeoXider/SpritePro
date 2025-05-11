@@ -1,7 +1,8 @@
 import os
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 import pygame
 import math
+from pathlib import Path
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -26,66 +27,74 @@ class Sprite(pygame.sprite.Sprite):
             speed: Скорость движения спрайта по умолчанию 0
         """
         super().__init__()
-
-        # Загрузка изображения спрайта
-        try:
-            if os.path.isfile(sprite):
-                self.original_image = pygame.image.load(sprite).convert_alpha()
-            else:
-                self.original_image = pygame.Surface(size, pygame.SRCALPHA)
-                self.original_image.fill(
-                    (255, 0, 255)
-                )  # Фиолетовый цвет по умолчанию если спрайт не найден
-        except:  # noqa: E722
-            self.original_image = pygame.Surface(size, pygame.SRCALPHA)
-            self.original_image.fill(
-                (255, 0, 255)
-            )  # Фиолетовый цвет по умолчанию если спрайт не найден
-
-        # Изменение размера изображения если нужно
-        if size != (self.original_image.get_width(), self.original_image.get_height()):
-            self.original_image = pygame.transform.scale(self.original_image, size)
-
         self.size = size
-
-        # Копия изображения для манипуляций
-        self.image = self.original_image.copy()
-
-        # Создание прямоугольника из изображения и установка его центра
-        self.rect = self.image.get_rect()
-        self.rect.center = pos
-
-        # Создание маски для более точного определения столкновений
-        self.mask = pygame.mask.from_surface(self.image)
-
-        # Физические свойства
-        self.position = pygame.math.Vector2(pos)  # Позиция с плавающей точкой
-        self.velocity = pygame.math.Vector2(0, 0)  # Текущая скорость (направление)
-        self.speed = speed  # Максимальная скорость
-
-        # Визуальные эффекты
-        self.flipped_h = False  # Отражение по горизонтали
-        self.flipped_v = False  # Отражение по вертикали
-        self.angle = 0  # Угол поворота
-        self.scale = 1.0  # Масштаб
-        self.alpha = 255  # Прозрачность
-
-        # Состояния спрайта
-        self.state = "idle"  # Начальное состояние
+        self.start_pos = pos
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.speed = speed
+        self.flipped_h = False
+        self.flipped_v = False
+        self.color = (255, 255, 255)
+        self.angle = 0
+        self.scale = 1.0
+        self.alpha = 255
+        self.state = "idle"
         self.states = {"idle", "moving", "hit", "attacking", "dead"}
 
+        self.set_image(sprite, size)
+        self.rect.center = pos
+
     def set_color(self, color: Tuple):
+        """
+        Устанавливает цветовой оттенок (tint) для спрайта.
+
+        Если у спрайта есть изображение, цвет применяется как оттенок (tint) с помощью режима BLEND_RGBA_MULT.
+        Если изображения нет, спрайт будет просто закрашен этим цветом.
+        """
         self.color = color
+        self._update_image()
+
+    def set_image(
+        self,
+        image_source="",
+        size: Optional[Tuple[int, int]] = None,
+    ):
+        """
+        Устанавливает новое изображение для спрайта.
+        image_source: путь к файлу (str/Path) или Surface
+        size: кортеж (ширина, высота) или None (оставить оригинальный размер)
+        """
+        img = None
+        if isinstance(image_source, pygame.Surface):
+            img = image_source.copy()
+        else:
+            try:
+                img = pygame.image.load(str(image_source)).convert_alpha()
+            except Exception:
+                print(
+                    f"[Sprite] Не удалось загрузить картинку для объекта {type(self).__name__} из '{image_source}'"
+                )
+                img = pygame.Surface(size or self.size, pygame.SRCALPHA)
+                img.fill(self.color)
+        if size is not None:
+            img = pygame.transform.scale(img, size)
+            self.size = size
+        else:
+            self.size = (img.get_width(), img.get_height())
+        self.original_image = img
+        self.image = img.copy()
+        center = getattr(self, "rect", None)
+        center = center.center if center is not None else None
+        self.rect = self.image.get_rect()
+        if center:
+            self.rect.center = center
+        self.mask = pygame.mask.from_surface(self.image)
         self._update_image()
 
     def update(self, window: pygame.Surface):
         """Обновление состояния спрайта."""
-        # Обновление позиции на основе скорости
         if self.velocity.length() > 0:
-            self.position += self.velocity
-
-        self.rect.center = (int(self.position.x), int(self.position.y))
-
+            cx, cy = self.rect.center
+            self.rect.center = (int(cx + self.velocity.x), int(cy + self.velocity.y))
         # Обновляем маску коллизии если изображение изменилось
         self.mask = pygame.mask.from_surface(self.image)
         window.blit(self.image, self.rect)
@@ -118,20 +127,25 @@ class Sprite(pygame.sprite.Sprite):
         self.image = img
 
         if self.color is not None:
-            self.image.fill(self.color)
+            self.image.fill(self.color, special_flags=pygame.BLEND_RGBA_MULT)
 
         # Сохраняем центр
         center = self.rect.center
         self.rect = self.image.get_rect()
         self.rect.center = center
 
+    def reset_sprite(self):
+        """Возвращает спрайт в стартовую позицию."""
+        self.rect.center = self.start_pos
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.state = "idle"
+
     def move(self, dx: float, dy: float):
         """
         Перемещение спрайта на заданное расстояние.
         """
-        self.position.x += dx * self.speed
-        self.position.y += dy * self.speed
-        self.rect.center = (int(self.position.x), int(self.position.y))
+        cx, cy = self.rect.center
+        self.rect.center = (int(cx + dx * self.speed), int(cy + dy * self.speed))
 
     def move_towards(
         self, target_pos: Tuple[float, float], speed: Optional[float] = None
@@ -145,32 +159,19 @@ class Sprite(pygame.sprite.Sprite):
         """
         if speed is None:
             speed = self.speed
-
-        # Расчет вектора направления к цели
-        current_pos = pygame.math.Vector2(self.position)
+        current_pos = pygame.math.Vector2(self.rect.center)
         target_vector = pygame.math.Vector2(target_pos)
         direction = target_vector - current_pos
-
-        # Расчет расстояния до цели
         distance = direction.length()
-
-        # Порог остановки - останавливаемся если мы достаточно близко к цели
         if distance < self.stop_threshold:
-            # Если мы достаточно близко, просто устанавливаем позицию точно в цель
-            self.position = target_vector
+            self.rect.center = (int(target_vector.x), int(target_vector.y))
             self.velocity = pygame.math.Vector2(0, 0)
             self.state = "idle"
         else:
-            # Нормализуем вектор направления и умножаем на скорость
-            if distance > 0:  # Проверка, чтобы избежать деления на ноль
+            if distance > 0:
                 direction = direction / distance * speed
-
-            # Устанавливаем скорость
             self.velocity = direction
             self.state = "moving"
-
-        # Обновляем положение спрайта
-        self.rect.center = (int(self.position.x), int(self.position.y))
 
     def set_velocity(self, vx: float, vy: float):
         """Прямая установка скорости спрайта."""
@@ -358,17 +359,12 @@ class Sprite(pygame.sprite.Sprite):
         """
         if check_left and self.rect.left < bounds.left + padding_left:
             self.rect.left = bounds.left + padding_left
-            self.position.x = self.rect.centerx
         if check_right and self.rect.right > bounds.right - padding_right:
             self.rect.right = bounds.right - padding_right
-            self.position.x = self.rect.centerx
-
         if check_top and self.rect.top < bounds.top + padding_top:
             self.rect.top = bounds.top + padding_top
-            self.position.y = self.rect.centery
         if check_bottom and self.rect.bottom > bounds.bottom - padding_bottom:
             self.rect.bottom = bounds.bottom - padding_bottom
-            self.position.y = self.rect.centery
 
     def play_sound(self, sound_file: str):
         """Воспроизведение звукового эффекта."""

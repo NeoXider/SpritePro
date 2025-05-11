@@ -1,13 +1,4 @@
-from .gameSprite import GameSprite
-from .physicSprite import PhysicalSprite
-from .sprite import Sprite
-from .button import Button
-from .pymunk_sprite import PymunkGameSprite
-from .timer import Timer
 import time
-
-
-__all__ = ["GameSprite", "PhysicalSprite", "Sprite", "Button", "PymunkGameSprite", "Timer"]
 
 class Timer:
     """Универсальный таймер для анимаций и задержек."""
@@ -25,4 +16,4 @@ class Timer:
         return (time.time() - self.start_time) >= self.duration
 
     def reset(self):
-        self.start_time = None
+        self.start_time = None 

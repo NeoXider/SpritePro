@@ -1,22 +1,26 @@
 import pygame
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent.parent))
 from spritePro.gameSprite import GameSprite
 
+PIXELS_PER_METER = 50  # 1 метр = 50 пикселей
+SKIN = 2
 
 class PhysicalSprite(GameSprite):
-    jump_force = 5
+    jump_force = 7  # м/с, как в Unity
+    MAX_STEPS = 8
 
     def __init__(
         self,
         sprite: str,
         size: tuple = (50, 50),
         pos: tuple = (0, 0),
-        speed: float = 0,
+        speed: float = 5,  # м/с
         health: int = 100,
         mass: float = 1.0,
-        gravity: float = 9.81,
+        gravity: float = 9.8,
         bounce_enabled: bool = False,
     ):
         """Инициализация физического спрайта с поддержкой гравитации и отскока."""
@@ -24,11 +28,15 @@ class PhysicalSprite(GameSprite):
         self.force = pygame.math.Vector2(0, 0)
         self.acceleration = pygame.math.Vector2(0, 0)
         self.mass = mass
-        self.gravity = gravity
+        self.gravity = gravity  # м/с^2
         self.bounce_enabled = bounce_enabled
         self.is_grounded = False
-        self.min_velocity_threshold = 0.1
+        self.min_velocity_threshold = 0.01
         self.ground_friction = 0.8
+        # Позиция и скорость в метрах
+        self.position = pygame.math.Vector2(pos[0] / PIXELS_PER_METER, pos[1] / PIXELS_PER_METER)
+        self.velocity = pygame.math.Vector2(0, 0)  # м/с
+        self.rect.center = (int(self.position.x * PIXELS_PER_METER), int(self.position.y * PIXELS_PER_METER))
 
     def apply_force(self, force: pygame.math.Vector2):
         """Применение силы к физическому спрайту."""
@@ -36,7 +44,6 @@ class PhysicalSprite(GameSprite):
 
     def bounce(self, normal: pygame.math.Vector2):
         """Обработка отскока от поверхности с заданной нормалью."""
-        # Отражаем скорость относительно нормали
         self.velocity = self.velocity - 2 * self.velocity.dot(normal) * normal
 
     def update_physics(self, fps: float, collisions_enabled: bool = True):
@@ -54,7 +61,6 @@ class PhysicalSprite(GameSprite):
 
         self.velocity += self.acceleration * dt
 
-        # Применяем трение только если не было управления по X
         if self.is_grounded and not getattr(self, "_x_controlled_this_frame", False):
             self.velocity.x *= self.ground_friction
             if abs(self.velocity.x) < self.min_velocity_threshold:
@@ -62,7 +68,7 @@ class PhysicalSprite(GameSprite):
 
         if not collisions_enabled:
             self.position += self.velocity * dt
-            self.rect.center = (int(self.position.x), int(self.position.y))
+            self.rect.center = (int(self.position.x * PIXELS_PER_METER), int(self.position.y * PIXELS_PER_METER))
 
         self.force = pygame.math.Vector2(0, 0)
         self._x_controlled_this_frame = False
@@ -105,10 +111,12 @@ class PhysicalSprite(GameSprite):
             padding_bottom: Отступ снизу (по умолчанию 0).
         """
         self.is_grounded = False
-
+        x, y = self.position.x, self.position.y
+        px, py = int(x * PIXELS_PER_METER), int(y * PIXELS_PER_METER)
         if check_left and self.rect.left < bounds.left + padding_left:
             self.rect.left = bounds.left + padding_left
-            self.position.x = self.rect.centerx
+            px = self.rect.centerx
+            x = px / PIXELS_PER_METER
             if self.bounce_enabled:
                 self.bounce(pygame.math.Vector2(1, 0))
             else:
@@ -116,7 +124,8 @@ class PhysicalSprite(GameSprite):
 
         if check_right and self.rect.right > bounds.right - padding_right:
             self.rect.right = bounds.right - padding_right
-            self.position.x = self.rect.centerx
+            px = self.rect.centerx
+            x = px / PIXELS_PER_METER
             if self.bounce_enabled:
                 self.bounce(pygame.math.Vector2(-1, 0))
             else:
@@ -124,25 +133,27 @@ class PhysicalSprite(GameSprite):
 
         if check_top and self.rect.top < bounds.top + padding_top:
             self.rect.top = bounds.top + padding_top
-            self.position.y = self.rect.centery
+            py = self.rect.centery
+            y = py / PIXELS_PER_METER
             if self.bounce_enabled:
                 self.bounce(pygame.math.Vector2(0, 1))
             else:
                 self.velocity.y = 0
 
-        # Проверяем только нижнюю границу для "на земле"
         if check_bottom and self.rect.bottom >= bounds.bottom - padding_bottom:
             self.rect.bottom = bounds.bottom - padding_bottom
-            self.position.y = self.rect.centery
+            py = self.rect.centery
+            y = py / PIXELS_PER_METER
             if self.bounce_enabled:
                 self.bounce(pygame.math.Vector2(0, -1))
             else:
-                # Только если падали вниз, сбрасываем скорость
                 if self.velocity.y > 0:
                     self.velocity.y = 0
                 self.is_grounded = True
         else:
             self.is_grounded = False
+        self.position.x, self.position.y = x, y
+        self.rect.center = (int(self.position.x * PIXELS_PER_METER), int(self.position.y * PIXELS_PER_METER))
 
     def handle_keyboard_input(
         self,
@@ -188,7 +199,17 @@ class PhysicalSprite(GameSprite):
         """Применение силы в заданном направлении."""
         self.apply_force(direction.normalize() * force)
 
-    def resolve_collisions(self, *obstacles, fps=60):
+    def _check_grounded(self, rects):
+        for r in rects:
+            if (
+                abs(self.rect.bottom - r.top) <= SKIN
+                and self.rect.right > r.left
+                and self.rect.left < r.right
+            ):
+                return True
+        return False
+
+    def resolve_collisions(self, *obstacles, fps=60, limit_top=True, limit_bottom=True, limit_left=True, limit_right=True):
         """
         Перемещает спрайт по velocity с учётом коллизий: сначала по Y, затем по X.
         Надёжно работает для платформеров и любых платформ.
@@ -196,9 +217,7 @@ class PhysicalSprite(GameSprite):
         fps — кадров в секунду (для расчёта dt).
         """
         dt = 1.0 / fps
-        step = max(1, int(getattr(self, "collision_step", 1)))
         rects = []
-
         def collect_rects(objs):
             for obj in objs:
                 if isinstance(obj, pygame.sprite.Sprite):
@@ -207,80 +226,98 @@ class PhysicalSprite(GameSprite):
                     rects.append(obj)
                 elif isinstance(obj, (pygame.sprite.Group, list, tuple)):
                     collect_rects(obj)
-
         collect_rects(obstacles)
-        # --- Сначала по Y ---
+        x, y = self.position.x, self.position.y
+        px, py = int(x * PIXELS_PER_METER), int(y * PIXELS_PER_METER)
+        # --- Y ---
         dy = self.velocity.y * dt
-        steps_y = max(1, int(abs(dy) // step))
+        steps_y = max(1, min(self.MAX_STEPS, int(abs(dy * PIXELS_PER_METER)) + 1))
         step_dy = dy / steps_y if steps_y else 0
-        self.is_grounded = False
         for _ in range(steps_y):
-            prev_y = self.position.y
-            self.position.y += step_dy
-            self.rect.center = (int(self.position.x), int(self.position.y))
+            prev_y = y
+            y += step_dy
+            py = int(y * PIXELS_PER_METER)
+            self.rect.center = (int(px), py)
+            collided = False
             for r in rects:
                 if self.rect.colliderect(r):
-                    # Приземлились сверху (только если не прыжок вверх)
+                    # Приземление сверху (туннелирование)
                     if (
-                        step_dy > 0
-                        and prev_y + self.rect.height // 2 <= r.top
-                        and self.velocity.y >= 0
+                        limit_top and
+                        step_dy > 0 and
+                        prev_y * PIXELS_PER_METER + self.rect.height // 2 <= r.top and
+                        y * PIXELS_PER_METER + self.rect.height // 2 >= r.top
                     ):
-                        self.is_grounded = True
-                        self.velocity.y = 0
-                        self.position.y = r.top - self.rect.height // 2
-                        self.rect.center = (int(self.position.x), int(self.position.y))
+                        y = (r.top - self.rect.height // 2) / PIXELS_PER_METER
+                        py = int(y * PIXELS_PER_METER)
+                        self.position.y = y
+                        self.rect.center = (int(px), py)
+                        if self.velocity.y > 0:
+                            self.velocity.y = 0
+                        collided = True
                         break
-                    # Ударились головой (только если двигаемся вверх)
-                    elif step_dy < 0 and prev_y - self.rect.height // 2 >= r.bottom:
-                        self.velocity.y = 0
-                        self.position.y = r.bottom + self.rect.height // 2
-                        self.rect.center = (int(self.position.x), int(self.position.y))
+                    # Удар головой (туннелирование снизу)
+                    elif (
+                        limit_bottom and
+                        step_dy < 0 and
+                        prev_y * PIXELS_PER_METER - self.rect.height // 2 >= r.bottom and
+                        y * PIXELS_PER_METER - self.rect.height // 2 <= r.bottom
+                    ):
+                        y = (r.bottom + self.rect.height // 2) / PIXELS_PER_METER
+                        py = int(y * PIXELS_PER_METER)
+                        self.position.y = y
+                        self.rect.center = (int(px), py)
+                        if self.velocity.y < 0:
+                            self.velocity.y = 0
+                        collided = True
                         break
-                    # Если прыгаем вверх и есть пересечение — игнорируем платформу
-                    elif step_dy < 0:
-                        continue
-                    else:
-                        self.velocity.y = 0
-                        break
-            else:
-                continue
-            break
-        # --- Затем по X ---
+            if collided:
+                break
+        # --- X ---
         dx = self.velocity.x * dt
-        steps_x = max(1, int(abs(dx) // step))
+        steps_x = max(1, min(self.MAX_STEPS, int(abs(dx * PIXELS_PER_METER)) + 1))
         step_dx = dx / steps_x if steps_x else 0
         for _ in range(steps_x):
-            prev_x = self.position.x
-            self.position.x += step_dx
-            self.rect.center = (int(self.position.x), int(self.position.y))
+            prev_x = x
+            x += step_dx
+            px = int(x * PIXELS_PER_METER)
+            self.rect.center = (px, int(py))
+            collided = False
             for r in rects:
                 if self.rect.colliderect(r):
-                    if step_dx > 0 and prev_x + self.rect.width // 2 <= r.left:
+                    # Движение по платформе
+                    if self._check_grounded([r]):
+                        continue
+                    # Столкновение справа
+                    if (
+                        limit_right and
+                        step_dx > 0 and
+                        prev_x * PIXELS_PER_METER + self.rect.width // 2 <= r.left and
+                        x * PIXELS_PER_METER + self.rect.width // 2 >= r.left
+                    ):
+                        x = (r.left - self.rect.width // 2) / PIXELS_PER_METER
+                        px = int(x * PIXELS_PER_METER)
+                        self.position.x = x
+                        self.rect.center = (px, int(py))
                         self.velocity.x = 0
-                        self.position.x = r.left - self.rect.width // 2
-                        self.rect.center = (int(self.position.x), int(self.position.y))
+                        collided = True
                         break
-                    elif step_dx < 0 and prev_x - self.rect.width // 2 >= r.right:
+                    # Столкновение слева
+                    elif (
+                        limit_left and
+                        step_dx < 0 and
+                        prev_x * PIXELS_PER_METER - self.rect.width // 2 >= r.right and
+                        x * PIXELS_PER_METER - self.rect.width // 2 <= r.right
+                    ):
+                        x = (r.right + self.rect.width // 2) / PIXELS_PER_METER
+                        px = int(x * PIXELS_PER_METER)
+                        self.position.x = x
+                        self.rect.center = (px, int(py))
                         self.velocity.x = 0
-                        self.position.x = r.right + self.rect.width // 2
-                        self.rect.center = (int(self.position.x), int(self.position.y))
+                        collided = True
                         break
-                    else:
-                        self.velocity.x = 0
-                        break
-            else:
-                continue
-            break
-        # После всех шагов по Y: если стоим на платформе и не прыгаем вверх, выставить is_grounded
-        if self.velocity.y >= 0:
-            for r in rects:
-                if (
-                    self.rect.bottom == r.top
-                    and self.rect.right > r.left
-                    and self.rect.left < r.right
-                ):
-                    self.is_grounded = True
-                    break
-        else:
-            self.is_grounded = False
+            if collided:
+                break
+        self.position.x, self.position.y = x, y
+        self.rect.center = (int(self.position.x * PIXELS_PER_METER), int(self.position.y * PIXELS_PER_METER))
+        self.is_grounded = self._check_grounded(rects)

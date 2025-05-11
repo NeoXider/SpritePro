@@ -1,8 +1,10 @@
 import pygame
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent.parent))
 from spritePro.gameSprite import GameSprite
+import spritePro
 
 path = Path(__file__).parent
 
@@ -18,11 +20,10 @@ SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 
 SCORE_GAMEOVER = 3
 
+# Состояния игры
 STATE_GAME = 0
 STATE_WIN_LEFT = 1
 STATE_WIN_RIGHT = 2
-
-current_state = STATE_GAME
 
 
 class Ball(GameSprite):
@@ -36,7 +37,6 @@ class Ball(GameSprite):
     def __init__(self, sprite, size, pos, speed):
         super().__init__(sprite, size, pos, speed)
         self.start_speed = speed
-        self.start_pos = self.position.copy()
 
     def baunch_x(self, right: bool):
         global bounch_sound
@@ -95,10 +95,10 @@ def player_input():
 
 
 def ball_fail():
-    if ball.position.x < 0:
+    if ball.rect.x < 0:
         add_score(True)
 
-    if ball.position.x > WIDTH:
+    if ball.rect.right > WIDTH:
         add_score(False)
 
 
@@ -151,16 +151,25 @@ create_text(FONT_LABEL)
 
 leftScore = 0
 rightScore = 0
-
+current_state = STATE_GAME
 ball = Ball(path / "Sprites" / "ball.png", (50, 50), (400, 290), 2)
-
+ball.set_color((255, 255, 255))
 player_left = GameSprite(path / "Sprites" / "platforma.png", (120, 50), (50, 300), 6)
 player_left.rotate_to(-90)
 
 player_right = GameSprite(path / "Sprites" / "platforma.png", (120, 50), (750, 300), 6)
 player_right.rotate_to(90)
 
+btn = spritePro.Button("", (200, 40), (0, 0), "Выход")
+btn.set_on_click(exit)
+btn.set_alpha(100)
+btn.rect.centerx = WIDTH // 2
+btn.rect.bottom = HEIGHT - 20
+
 while True:
+    pygame.display.update()
+    CLOCK.tick(FPS)
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
@@ -174,12 +183,10 @@ while True:
         ball_bounch()
         ball_fail()
         check_win()
+        btn.update(SCREEN)
 
     elif current_state == STATE_WIN_LEFT:
         win(text_left_win, player_left)
 
     elif current_state == STATE_WIN_RIGHT:
         win(text_right_win, player_right)
-
-    pygame.display.update()
-    CLOCK.tick(FPS)
