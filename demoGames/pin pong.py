@@ -21,9 +21,11 @@ SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 SCORE_GAMEOVER = 3
 
 # Состояния игры
-STATE_GAME = 0
-STATE_WIN_LEFT = 1
-STATE_WIN_RIGHT = 2
+STATE_MENU = 0
+STATE_SHOP = 1
+STATE_GAME = 2
+STATE_WIN_LEFT = 3
+STATE_WIN_RIGHT = 4
 
 
 class Ball(GameSprite):
@@ -52,12 +54,12 @@ class Ball(GameSprite):
 
     def reset(self):
         self.speed = self.start_speed
-        self.position = self.start_pos
+        self.rect.center = self.start_pos
         self.dir_x *= -1
 
 
 def render_game():
-    SCREEN.blit(bg, (0, 0))
+    SCREEN.blit(BGS[STATE_GAME], (0, 0))
     player_left.update(SCREEN)
     player_right.update(SCREEN)
     ball.update(SCREEN)
@@ -95,10 +97,10 @@ def player_input():
 
 
 def ball_fail():
-    if ball.rect.x < 0:
+    if ball.rect.right < 0:
         add_score(True)
 
-    if ball.rect.right > WIDTH:
+    if ball.rect.x > WIDTH:
         add_score(False)
 
 
@@ -128,7 +130,7 @@ def create_music():
     pygame.mixer.music.set_volume(0.4)
 
 
-def create_text(FONT_LABEL: pygame.font.Font):
+def create_text_win(FONT_LABEL: pygame.font.Font):
     global text_left_win, text_right_win
     text_right_win = FONT_LABEL.render("Победа правого", 1, (255, 255, 255))
     text_left_win = FONT_LABEL.render("Победа левого", 1, (255, 255, 255))
@@ -139,19 +141,59 @@ def win(text: pygame.Surface, player: GameSprite):
     player.rotate_by(6)
 
 
-pygame.display.set_caption("pin pong")
-bg = pygame.transform.scale(
-    pygame.image.load(path / "Sprites" / "bg.jpg"), (WIDTH, HEIGHT)
-)
+def start_game():
+    global current_state, leftScore, rightScore
+    current_state = STATE_GAME
+    leftScore = 0
+    rightScore = 0
+    player_left.rect.center = player_left.start_pos
+    player_right.rect.center = player_right.start_pos
+    ball.reset()
 
+
+def menu():
+    global current_state
+    current_state = STATE_MENU
+
+
+def shop():
+    global current_state
+    current_state = STATE_SHOP
+
+
+def logic_shop():
+    SCREEN.blit(BGS[current_state], (0, 0))
+    text = FONT_LABEL.render("Shop", 1, (255, 255, 100))
+    text_rect = text.get_rect()
+    text_rect.centerx, text_rect.y = (WIDTH // 2, 10)
+    SCREEN.blit(text, text_rect)
+    bts[STATE_MENU].update(SCREEN)
+
+
+def logic_menu():
+    SCREEN.blit(BGS[current_state], (0, 0))
+    bts[STATE_GAME].update(SCREEN)
+    bts[STATE_SHOP].update(SCREEN)
+
+
+def logic_game():
+    player_input()
+    ball.move(ball.dir_x, ball.dir_y)
+    ball_bounch()
+    ball_fail()
+    check_win()
+    bts[STATE_MENU].update(SCREEN)
+
+
+pygame.display.set_caption("pin pong")
 bounch_sound = pygame.mixer.Sound(path / "Audio" / "baunch.mp3")
 
 create_music()
-create_text(FONT_LABEL)
+create_text_win(FONT_LABEL)
 
 leftScore = 0
 rightScore = 0
-current_state = STATE_GAME
+current_state = STATE_MENU
 ball = Ball(path / "Sprites" / "ball.png", (50, 50), (400, 290), 2)
 ball.set_color((255, 255, 255))
 player_left = GameSprite(path / "Sprites" / "platforma.png", (120, 50), (50, 300), 6)
@@ -160,11 +202,40 @@ player_left.rotate_to(-90)
 player_right = GameSprite(path / "Sprites" / "platforma.png", (120, 50), (750, 300), 6)
 player_right.rotate_to(90)
 
-btn = spritePro.Button("", (200, 40), (0, 0), "Выход")
-btn.set_on_click(exit)
-btn.set_alpha(100)
-btn.rect.centerx = WIDTH // 2
-btn.rect.bottom = HEIGHT - 20
+size_text = 32
+
+btn_menu = spritePro.Button("", (200, 40), (0, 0), "Menu", size_text)
+btn_menu.set_on_click(menu)
+btn_menu.set_alpha(100)
+btn_menu.rect.centerx = WIDTH // 2
+btn_menu.rect.bottom = HEIGHT - 20
+
+bts = {
+    STATE_MENU: btn_menu,
+    STATE_SHOP: spritePro.Button(
+        "", (200, 40), (WIDTH // 2, HEIGHT // 2 + 100), "Shop", size_text, on_click=shop
+    ),
+    STATE_GAME: spritePro.Button(
+        "",
+        (200, 40),
+        (WIDTH // 2, HEIGHT // 2),
+        "Start game",
+        size_text,
+        on_click=start_game,
+    ),
+}
+
+BGS = {
+    STATE_MENU: pygame.transform.scale(
+        pygame.image.load(path / "Sprites" / "bg.jpg"), (WIDTH, HEIGHT)
+    ),
+    STATE_SHOP: pygame.transform.scale(
+        pygame.image.load(path / "Sprites" / "bg.jpg"), (WIDTH, HEIGHT)
+    ),
+    STATE_GAME: pygame.transform.scale(
+        pygame.image.load(path / "Sprites" / "bg.jpg"), (WIDTH, HEIGHT)
+    ),
+}
 
 while True:
     pygame.display.update()
@@ -177,16 +248,19 @@ while True:
     render_game()
     render_text()
 
-    if current_state == STATE_GAME:
-        player_input()
-        ball.move(ball.dir_x, ball.dir_y)
-        ball_bounch()
-        ball_fail()
-        check_win()
-        btn.update(SCREEN)
+    if current_state == STATE_MENU:
+        logic_menu()
+
+    elif current_state == STATE_SHOP:
+        logic_shop()
+
+    elif current_state == STATE_GAME:
+        logic_game()
 
     elif current_state == STATE_WIN_LEFT:
         win(text_left_win, player_left)
+        bts[STATE_MENU].update(SCREEN)
 
     elif current_state == STATE_WIN_RIGHT:
         win(text_right_win, player_right)
+        bts[STATE_MENU].update(SCREEN)
