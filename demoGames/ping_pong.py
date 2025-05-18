@@ -12,10 +12,11 @@ pygame.init()
 pygame.font.init()
 pygame.mixer.init()
 
+
 WIDTH, HEIGHT = 800, 600
 FPS = 60
 CLOCK = pygame.time.Clock()
-SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
+SCREEN = spritePro.get_screen((WIDTH, HEIGHT))
 
 SCORE_GAMEOVER = 3
 
@@ -210,6 +211,7 @@ size_text = 32
 
 btn_menu = spritePro.Button("", (200, 40), (0, 0), "Menu", size_text)
 btn_menu.set_on_click(menu)
+
 btn_menu.set_alpha(100)
 btn_menu.rect.centerx = WIDTH // 2
 btn_menu.rect.bottom = HEIGHT - 20
@@ -249,9 +251,9 @@ while True:
     pygame.display.update()
     CLOCK.tick(FPS)
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            exit()
+    spritePro.update()
+    for e in spritePro.events:
+        pass
 
     render_game()
     render_text()

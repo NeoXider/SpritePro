@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 
 sys.path.append(str(Path(__file__).parent.parent))
+import spritePro
 from spritePro import PymunkGameSprite
 
 path = Path(__file__).parent
@@ -60,9 +61,10 @@ platforms.append(platform2)
 sprites = pygame.sprite.Group([ball] + platforms)
 
 while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            exit()
+    spritePro.update()
+    for e in spritePro.events:
+        pass
+
 
     SCREEN.blit(bg, (0, 0))
 

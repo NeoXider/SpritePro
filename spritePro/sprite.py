@@ -48,6 +48,8 @@ class Sprite(pygame.sprite.Sprite):
         """
         Устанавливает цветовой оттенок (tint) для спрайта.
 
+        :param color: Цвет в формате RGB (tuple)
+
         Если у спрайта есть изображение, цвет применяется как оттенок (tint) с помощью режима BLEND_RGBA_MULT.
         Если изображения нет, спрайт будет просто закрашен этим цветом.
         """
@@ -61,9 +63,11 @@ class Sprite(pygame.sprite.Sprite):
     ):
         """
         Устанавливает новое изображение для спрайта.
-        image_source: путь к файлу (str/Path) или Surface
-        size: кортеж (ширина, высота) или None (оставить оригинальный размер)
+
+        :param image_source: путь к файлу (str/Path) или Surface
+        :param size: кортеж (ширина, высота) или None (оставить оригинальный размер)
         """
+        self._image_source = image_source
         img = None
         if isinstance(image_source, pygame.Surface):
             img = image_source.copy()
@@ -91,11 +95,20 @@ class Sprite(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self._update_image()
 
+    def set_native_size(self):
+        """
+        Устанавливает спрайт в его оригинальный (нативный) размер изображения.
+        Перезагружает картинку в её исходных
+        ширине и высоте.
+        """
+        # перезагружаем изображение без параметра size → ставит оригинальный размер
+        self.set_image(self._image_source, size=None)
+
     def update(self, window: pygame.Surface):
         """Обновление состояния спрайта.
-        
-            Аргументы:
-                window (pygame.Surface): Окно для рисования спрайта.
+
+        :param window:
+            window (pygame.Surface): Окно для рисования спрайта.
         """
         if self.velocity.length() > 0:
             cx, cy = self.rect.center
@@ -142,8 +155,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_active(self, active: bool):
         """Устанавливает активность спрайта.
-        Аргументы:
-           active: Булевый флаг активности (True - активен, False - неактивен)
+        :param active: Булевый флаг активности (True - активен, False - неактивен)
         """
         self.active = active
 
@@ -156,9 +168,9 @@ class Sprite(pygame.sprite.Sprite):
     def move(self, dx: float, dy: float):
         """
         Перемещение спрайта на заданное расстояние.
-        Аргументы:
-            dx: Скорость перемещения по оси X
-            dy: Скорость перемещения по оси Y
+
+        :param dx: Скорость перемещения по оси X
+        :param dy: Скорость перемещения по оси Y
         """
         cx, cy = self.rect.center
         self.rect.center = (int(cx + dx * self.speed), int(cy + dy * self.speed))
@@ -169,9 +181,8 @@ class Sprite(pygame.sprite.Sprite):
         """
         Перемещение спрайта в направлении целевой позиции.
 
-        Аргументы:
-            target_pos: Целевая позиция (x, y)
-            speed: Опциональная скорость движения (если None, используется self.speed)
+        :param target_pos: Целевая позиция (x, y)
+        :param speed: Опциональная скорость движения (если None, используется self.speed)
         """
         if speed is None:
             speed = self.speed
@@ -190,12 +201,20 @@ class Sprite(pygame.sprite.Sprite):
             self.state = "moving"
 
     def set_velocity(self, vx: float, vy: float):
-        """Прямая установка скорости спрайта."""
+        """Прямая установка скорости спрайта.
+        
+        :param vs: Скорость по оси x.
+        :param vy: Скорость по оси y.
+        """
         self.velocity.x = vx
         self.velocity.y = vy
 
     def move_up(self, speed: Optional[float] = None):
-        """Перемещение спрайта вверх."""
+        """Перемещение спрайта вверх.
+        
+        :param speed: Скорость перемещения.
+        """
+
         self.velocity.y = -(speed or self.speed)
         self.state = "moving"
 
@@ -230,11 +249,10 @@ class Sprite(pygame.sprite.Sprite):
         """
         Обработка ввода с клавиатуры для движения спрайта.
 
-        Аргументы:
-            up_key: Клавиша для движения вверх (по умолчанию стрелка вверх)
-            down_key: Клавиша для движения вниз (по умолчанию стрелка вниз)
-            left_key: Клавиша для движения влево (по умолчанию стрелка влево)
-            right_key: Клавиша для движения вправо (по умолчанию стрелка вправо)
+        :param up_key: Клавиша для движения вверх (по умолчанию стрелка вверх)
+        :param down_key: Клавиша для движения вниз (по умолчанию стрелка вниз)
+        :param left_key: Клавиша для движения влево (по умолчанию стрелка влево)
+        :param right_key: Клавиша для движения вправо (по умолчанию стрелка вправо)
         """
         keys = pygame.key.get_pressed()
 
@@ -332,8 +350,7 @@ class Sprite(pygame.sprite.Sprite):
     def is_visible_on_screen(self, screen: pygame.Surface) -> bool:
         """Проверка, видим ли спрайт на экране.
 
-        Args:
-            screen: Поверхность экрана Pygame
+        :param screen: Поверхность экрана Pygame
 
         Returns:
             bool: True если спрайт виден на экране, False в противном случае
@@ -362,16 +379,15 @@ class Sprite(pygame.sprite.Sprite):
         """
         Ограничивает движение спрайта в пределах заданных границ с учетом отступов.
 
-        Аргументы:
-            bounds: Прямоугольник, определяющий границы движения спрайта.
-            check_left: Проверять границу слева (по умолчанию True).
-            check_right: Проверять границу справа (по умолчанию True).
-            check_top: Проверять верхнюю границу (по умолчанию True).
-            check_bottom: Проверять нижнюю границу (по умолчанию True).
-            padding_left: Отступ слева (по умолчанию 0).
-            padding_right: Отступ справа (по умолчанию 0).
-            padding_top: Отступ сверху (по умолчанию 0).
-            padding_bottom: Отступ снизу (по умолчанию 0).
+        :param bounds: Прямоугольник, определяющий границы движения спрайта.
+        :param check_left: Проверять границу слева (по умолчанию True).
+        :param check_right: Проверять границу справа (по умолчанию True).
+        :param check_top: Проверять верхнюю границу (по умолчанию True).
+        :param check_bottom: Проверять нижнюю границу (по умолчанию True).
+        :param padding_left: Отступ слева (по умолчанию 0).
+        :param padding_right: Отступ справа (по умолчанию 0).
+        :param padding_top: Отступ сверху (по умолчанию 0).
+        :param padding_bottom: Отступ снизу (по умолчанию 0).
         """
         if check_left and self.rect.left < bounds.left + padding_left:
             self.rect.left = bounds.left + padding_left
