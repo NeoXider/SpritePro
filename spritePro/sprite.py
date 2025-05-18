@@ -9,6 +9,7 @@ class Sprite(pygame.sprite.Sprite):
     auto_flip: bool = True
     stop_threshold = 1.0
     color = None
+    active = True
 
     def __init__(
         self,
@@ -91,13 +92,18 @@ class Sprite(pygame.sprite.Sprite):
         self._update_image()
 
     def update(self, window: pygame.Surface):
-        """Обновление состояния спрайта."""
+        """Обновление состояния спрайта.
+        
+            Аргументы:
+                window (pygame.Surface): Окно для рисования спрайта.
+        """
         if self.velocity.length() > 0:
             cx, cy = self.rect.center
             self.rect.center = (int(cx + self.velocity.x), int(cy + self.velocity.y))
         # Обновляем маску коллизии если изображение изменилось
         self.mask = pygame.mask.from_surface(self.image)
-        window.blit(self.image, self.rect)
+        if self.active:
+            window.blit(self.image, self.rect)
 
     def _update_image(self):
         """Обновляет изображение с учетом всех визуальных эффектов."""
@@ -134,6 +140,13 @@ class Sprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = center
 
+    def set_active(self, active: bool):
+        """Устанавливает активность спрайта.
+        Аргументы:
+           active: Булевый флаг активности (True - активен, False - неактивен)
+        """
+        self.active = active
+
     def reset_sprite(self):
         """Возвращает спрайт в стартовую позицию."""
         self.rect.center = self.start_pos
@@ -143,6 +156,9 @@ class Sprite(pygame.sprite.Sprite):
     def move(self, dx: float, dy: float):
         """
         Перемещение спрайта на заданное расстояние.
+        Аргументы:
+            dx: Скорость перемещения по оси X
+            dy: Скорость перемещения по оси Y
         """
         cx, cy = self.rect.center
         self.rect.center = (int(cx + dx * self.speed), int(cy + dy * self.speed))

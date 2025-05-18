@@ -13,7 +13,6 @@ pygame.font.init()
 pygame.mixer.init()
 
 WIDTH, HEIGHT = 800, 600
-FONT_LABEL = pygame.font.Font(None, 72)
 FPS = 60
 CLOCK = pygame.time.Clock()
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -66,17 +65,26 @@ def render_game():
 
 
 def render_text():
-    score_text1 = FONT_LABEL.render(str(leftScore), 1, (255, 255, 255))
-    SCREEN.blit(score_text1, (10, 10))
+    score_text_l.set_text(f"{leftScore}")
+    score_text_l.rect.topleft = (10, 10)
 
-    score_text2 = FONT_LABEL.render(str(rightScore), 1, (255, 255, 255))
-    SCREEN.blit(score_text2, (750, 10))
-
+    score_text_r.set_text(f"{rightScore}")
+    score_text_r.rect.topright = (WIDTH-10, 10)
+    
+    player_left.rotate_to(-90)
+    player_right.rotate_to(90)
+    
+    score_text_l.update(SCREEN)
+    score_text_r.update(SCREEN)
 
 def ball_bounch():
-    if ball.rect.bottom >= HEIGHT or ball.rect.top <= 0:
+    if ball.rect.top <= 0:
         bounch_sound.play()
-        ball.dir_y *= -1
+        ball.dir_y= 1
+        
+    if ball.rect.bottom >= HEIGHT :
+        bounch_sound.play()
+        ball.dir_y = -1
 
     if ball.collide_with(player_right):
         ball.baunch_x(right=False)
@@ -130,14 +138,13 @@ def create_music():
     pygame.mixer.music.set_volume(0.4)
 
 
-def create_text_win(FONT_LABEL: pygame.font.Font):
-    global text_left_win, text_right_win
-    text_right_win = FONT_LABEL.render("Победа правого", 1, (255, 255, 255))
-    text_left_win = FONT_LABEL.render("Победа левого", 1, (255, 255, 255))
-
-
-def win(text: pygame.Surface, player: GameSprite):
-    SCREEN.blit(text, (320, 10))
+def win(player: GameSprite):
+    text = "Победа левого" if player == player_left else "Победа правого"
+    text += " игрока!"
+    textWin.set_text(text)
+    textWin.rect.centerx, textWin.rect.y = (WIDTH // 2, HEIGHT // 2)
+    textWin.update(SCREEN)
+    
     player.rotate_by(6)
 
 
@@ -148,6 +155,8 @@ def start_game():
     rightScore = 0
     player_left.rect.center = player_left.start_pos
     player_right.rect.center = player_right.start_pos
+    player_left.rotate_to(0)
+    player_right.rotate_to(0)
     ball.reset()
 
 
@@ -163,10 +172,8 @@ def shop():
 
 def logic_shop():
     SCREEN.blit(BGS[current_state], (0, 0))
-    text = FONT_LABEL.render("Shop", 1, (255, 255, 100))
-    text_rect = text.get_rect()
-    text_rect.centerx, text_rect.y = (WIDTH // 2, 10)
-    SCREEN.blit(text, text_rect)
+    textShop.rect.centerx, textShop.rect.y = (WIDTH // 2, 10)
+    textShop.update(SCREEN)
     bts[STATE_MENU].update(SCREEN)
 
 
@@ -189,7 +196,6 @@ pygame.display.set_caption("pin pong")
 bounch_sound = pygame.mixer.Sound(path / "Audio" / "baunch.mp3")
 
 create_music()
-create_text_win(FONT_LABEL)
 
 leftScore = 0
 rightScore = 0
@@ -197,10 +203,8 @@ current_state = STATE_MENU
 ball = Ball(path / "Sprites" / "ball.png", (50, 50), (400, 290), 2)
 ball.set_color((255, 255, 255))
 player_left = GameSprite(path / "Sprites" / "platforma.png", (120, 50), (50, 300), 6)
-player_left.rotate_to(-90)
-
 player_right = GameSprite(path / "Sprites" / "platforma.png", (120, 50), (750, 300), 6)
-player_right.rotate_to(90)
+
 
 size_text = 32
 
@@ -209,6 +213,10 @@ btn_menu.set_on_click(menu)
 btn_menu.set_alpha(100)
 btn_menu.rect.centerx = WIDTH // 2
 btn_menu.rect.bottom = HEIGHT - 20
+textWin = spritePro.TextSprite("", 72, (255, 255, 100))
+textShop = spritePro.TextSprite("Shop",72, (255, 255, 100))
+score_text_l = spritePro.TextSprite(f'{rightScore}',72, (255, 255, 255))
+score_text_r = spritePro.TextSprite(f'{rightScore}',72, (255, 255, 255))
 
 bts = {
     STATE_MENU: btn_menu,
@@ -258,9 +266,9 @@ while True:
         logic_game()
 
     elif current_state == STATE_WIN_LEFT:
-        win(text_left_win, player_left)
+        win(player_left)
         bts[STATE_MENU].update(SCREEN)
 
     elif current_state == STATE_WIN_RIGHT:
-        win(text_right_win, player_right)
+        win(player_right)
         bts[STATE_MENU].update(SCREEN)
