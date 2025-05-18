@@ -70,20 +70,21 @@ def render_text():
     score_text_l.rect.topleft = (10, 10)
 
     score_text_r.set_text(f"{rightScore}")
-    score_text_r.rect.topright = (WIDTH-10, 10)
-    
+    score_text_r.rect.topright = (WIDTH - 10, 10)
+
     player_left.rotate_to(-90)
     player_right.rotate_to(90)
-    
+
     score_text_l.update(SCREEN)
     score_text_r.update(SCREEN)
+
 
 def ball_bounch():
     if ball.rect.top <= 0:
         bounch_sound.play()
-        ball.dir_y= 1
-        
-    if ball.rect.bottom >= HEIGHT :
+        ball.dir_y = 1
+
+    if ball.rect.bottom >= HEIGHT:
         bounch_sound.play()
         ball.dir_y = -1
 
@@ -145,7 +146,7 @@ def win(player: GameSprite):
     textWin.set_text(text)
     textWin.rect.centerx, textWin.rect.y = (WIDTH // 2, HEIGHT // 2)
     textWin.update(SCREEN)
-    
+
     player.rotate_by(6)
 
 
@@ -216,9 +217,9 @@ btn_menu.set_alpha(100)
 btn_menu.rect.centerx = WIDTH // 2
 btn_menu.rect.bottom = HEIGHT - 20
 textWin = spritePro.TextSprite("", 72, (255, 255, 100))
-textShop = spritePro.TextSprite("Shop",72, (255, 255, 100))
-score_text_l = spritePro.TextSprite(f'{rightScore}',72, (255, 255, 255))
-score_text_r = spritePro.TextSprite(f'{rightScore}',72, (255, 255, 255))
+textShop = spritePro.TextSprite("Shop", 72, (255, 255, 100))
+score_text_l = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))
+score_text_r = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))
 
 bts = {
     STATE_MENU: btn_menu,

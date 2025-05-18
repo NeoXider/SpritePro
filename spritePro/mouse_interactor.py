@@ -3,8 +3,10 @@ import pygame
 from typing import Callable, Optional, List
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent.parent))
 import spritePro
+
 
 class MouseInteractor:
     """
@@ -79,18 +81,18 @@ class MouseInteractor:
                         self.on_mouse_up()
                 self._pressed = False
 
+
 if __name__ == "__main__":
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
     clock = pygame.time.Clock()
     fps = 60
-    
+
     sprite = pygame.sprite.Sprite()
     sprite.image = pygame.Surface((250, 50))
     sprite.rect = sprite.image.get_rect()
     sprite.rect.center = (400, 300)
     sprite.color = (255, 0, 0)
-
 
     inter = MouseInteractor(
         sprite=sprite,
@@ -106,7 +108,6 @@ if __name__ == "__main__":
         screen.fill((255, 255, 255))
         screen.blit(sprite.image, sprite.rect)
         inter.update()
-        
+
         pygame.display.flip()
         clock.tick(fps)
-

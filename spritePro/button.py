@@ -72,9 +72,7 @@ class Button(Sprite):
         # Логика мыши
         self.interactor = MouseInteractor(sprite=self, on_click=on_click)
 
-    def update(
-        self, screen: pygame.Surface
-    ):
+    def update(self, screen: pygame.Surface):
         """
         Вызывается из основного цикла:
           - update логики мыши
@@ -112,7 +110,7 @@ class Button(Sprite):
     def set_on_click(self, func: Callable):
         """
         Устанавливает функцию, которая будет вызываться при нажатии на кнопку.
-        
+
         :param func: Функция, которую нужно вызвать.
         """
         self.interactor.on_click = func

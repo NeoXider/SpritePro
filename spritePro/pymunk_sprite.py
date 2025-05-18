@@ -33,6 +33,7 @@ sprite = PymunkGameSprite(
 #   screen.blit(sprite.image, sprite.rect)
 """
 
+
 class PymunkGameSprite(GameSprite):
     """
     Физический спрайт для pygame с поддержкой pymunk и всех фич GameSprite.
@@ -50,6 +51,7 @@ class PymunkGameSprite(GameSprite):
     :param health: int — здоровье спрайта
     :param gravity_enabled: bool — включена ли гравитация (по умолчанию True)
     """
+
     def __init__(
         self,
         sprite,
@@ -97,7 +99,9 @@ class PymunkGameSprite(GameSprite):
         """
         if not self._space or self._collision_handlers_set:
             return
-        handler = self._space.add_collision_handler(self.shape.collision_type, platform_collision_type)
+        handler = self._space.add_collision_handler(
+            self.shape.collision_type, platform_collision_type
+        )
         handler.pre_solve = self._on_ground_contact
         self._collision_handlers_set = True
 
@@ -132,8 +136,14 @@ class PymunkGameSprite(GameSprite):
         for shape in self._space.shapes:
             if shape == self.shape:
                 continue
-            if hasattr(shape.body, 'body_type') and shape.body.body_type == pymunk.Body.STATIC:
-                if self._is_on_shape(shape, x, y, w, h) and abs(self.body.velocity.y) < 1:
+            if (
+                hasattr(shape.body, "body_type")
+                and shape.body.body_type == pymunk.Body.STATIC
+            ):
+                if (
+                    self._is_on_shape(shape, x, y, w, h)
+                    and abs(self.body.velocity.y) < 1
+                ):
                     self._can_jump = True
                     return
 
@@ -145,20 +155,22 @@ class PymunkGameSprite(GameSprite):
         if isinstance(shape, pymunk.Segment):
             a, b = shape.a, shape.b
             y_seg = a[1]
-            thickness = shape.radius * 2 if hasattr(shape, 'radius') else 10
+            thickness = shape.radius * 2 if hasattr(shape, "radius") else 10
             # Проверяем только горизонтальные сегменты (верх/низ)
             if a[1] == b[1]:
                 # Мяч должен быть ВЫШЕ сегмента (или почти на нем)
-                if (y + h/2) - y_seg < max(eps, thickness) and (y + h/2) - y_seg > -max(eps, thickness):
+                if (y + h / 2) - y_seg < max(eps, thickness) and (
+                    y + h / 2
+                ) - y_seg > -max(eps, thickness):
                     if y < y_seg:  # центр мяча выше сегмента
-                        if min(a[0], b[0]) - w/2 < x < max(a[0], b[0]) + w/2:
+                        if min(a[0], b[0]) - w / 2 < x < max(a[0], b[0]) + w / 2:
                             return True
             return False
         # Для Poly (платформы)
         points = [
-            (x - w/2 + 2, y + h/2 + 1),
-            (x + w/2 - 2, y + h/2 + 1),
-            (x, y + h/2 + 1),
+            (x - w / 2 + 2, y + h / 2 + 1),
+            (x + w / 2 - 2, y + h / 2 + 1),
+            (x, y + h / 2 + 1),
         ]
         for pt in points:
             if shape.point_query(pt).distance <= eps:
@@ -167,7 +179,9 @@ class PymunkGameSprite(GameSprite):
                     return True
         return False
 
-    def handle_keyboard_input(self, left=pygame.K_LEFT, right=pygame.K_RIGHT, up=pygame.K_UP, speed=None):
+    def handle_keyboard_input(
+        self, left=pygame.K_LEFT, right=pygame.K_RIGHT, up=pygame.K_UP, speed=None
+    ):
         keys = pygame.key.get_pressed()
         vx = 0
         move_speed = speed if speed is not None else self.speed
@@ -282,7 +296,7 @@ class PymunkGameSprite(GameSprite):
         x, y = self.body.position
         tx, ty = target
         dx, dy = tx - x, ty - y
-        dist = (dx ** 2 + dy ** 2) ** 0.5
+        dist = (dx**2 + dy**2) ** 0.5
         if dist == 0:
             self.body.velocity = 0, 0
             return
@@ -351,10 +365,18 @@ class PymunkGameSprite(GameSprite):
         """
         x0, y0, w, h = rect.left, rect.top, rect.width, rect.height
         static_lines = [
-            pymunk.Segment(space.static_body, (x0, y0), (x0 + w, y0), thickness),         # верх
-            pymunk.Segment(space.static_body, (x0, y0 + h), (x0 + w, y0 + h), thickness), # низ
-            pymunk.Segment(space.static_body, (x0, y0), (x0, y0 + h), thickness),         # лево
-            pymunk.Segment(space.static_body, (x0 + w, y0), (x0 + w, y0 + h), thickness), # право
+            pymunk.Segment(
+                space.static_body, (x0, y0), (x0 + w, y0), thickness
+            ),  # верх
+            pymunk.Segment(
+                space.static_body, (x0, y0 + h), (x0 + w, y0 + h), thickness
+            ),  # низ
+            pymunk.Segment(
+                space.static_body, (x0, y0), (x0, y0 + h), thickness
+            ),  # лево
+            pymunk.Segment(
+                space.static_body, (x0 + w, y0), (x0 + w, y0 + h), thickness
+            ),  # право
         ]
         for line in static_lines:
             line.elasticity = elasticity
@@ -370,6 +392,8 @@ class PymunkGameSprite(GameSprite):
         :param elasticity: упругость
         :param friction: трение
         """
-        if not hasattr(self._space, '_walls_created'):
-            self._space._walls = self.create_walls(self._space, rect, thickness, elasticity, friction)
-            self._space._walls_created = True 
+        if not hasattr(self._space, "_walls_created"):
+            self._space._walls = self.create_walls(
+                self._space, rect, thickness, elasticity, friction
+            )
+            self._space._walls_created = True

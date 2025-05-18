@@ -202,7 +202,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_velocity(self, vx: float, vy: float):
         """Прямая установка скорости спрайта.
-        
+
         :param vs: Скорость по оси x.
         :param vy: Скорость по оси y.
         """
@@ -211,7 +211,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def move_up(self, speed: Optional[float] = None):
         """Перемещение спрайта вверх.
-        
+
         :param speed: Скорость перемещения.
         """
 
