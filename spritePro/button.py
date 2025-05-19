@@ -1,3 +1,5 @@
+import imp
+import re
 import sys
 from pathlib import Path
 import pygame
@@ -8,6 +10,8 @@ sys.path.append(str(Path(__file__).parent.parent))
 from spritePro.sprite import Sprite
 from spritePro.text import TextSprite
 from spritePro.mouse_interactor import MouseInteractor
+import spritePro
+import random
 
 
 class Button(Sprite):
@@ -30,9 +34,9 @@ class Button(Sprite):
 
     def __init__(
         self,
-        sprite: str,
-        size: Tuple[int, int],
-        pos: Tuple[int, int],
+        sprite: str = "",
+        size: Tuple[int, int] = (250, 70),
+        pos: Tuple[int, int] = (300, 200),
         text: str = "Button",
         text_size: int = 24,
         text_color: Tuple[int, int, int] = (0, 0, 0),
@@ -50,7 +54,7 @@ class Button(Sprite):
         super().__init__(sprite, size=size, pos=pos)
 
         # Параметры анимации и цвета
-        self.base_color = base_color
+        self.set_color(base_color)
         self.hover_color = hover_color
         self.press_color = press_color
         self.current_color = base_color
@@ -89,7 +93,7 @@ class Button(Sprite):
             self.current_color = self.hover_color
             self._target_scale = self.hover_scale
         else:
-            self.current_color = self.base_color
+            self.current_color = self.color
             self._target_scale = 1.0
 
         # Плавная анимация масштаба
@@ -114,3 +118,48 @@ class Button(Sprite):
         :param func: Функция, которую нужно вызвать.
         """
         self.interactor.on_click = func
+
+
+if __name__ == "__main__":
+    from spritePro.utils.surface import round_corners
+
+    def get_rundom_color() -> List[int]:
+        return [random.randint(0, 255) for _ in range(3)]
+
+    def set_rand_color() -> None:
+        global color
+        btn.text_sprite.set_color(get_rundom_color())
+        btn.press_color = get_rundom_color()
+        btn.text_sprite.set_text(
+            f"""=== ({
+                random.choice(
+                    [
+                        "<_>",
+                        ">_<",
+                        "-_-",
+                        "^_^",
+                    ]
+                )
+            }) ==="""
+        )
+        color = get_rundom_color()
+
+    pygame.init()
+    screen = spritePro.get_screen((800, 600), "Button")
+    color = (100, 120, 255)
+
+    btn = Button(
+        sprite="",
+        pos=screen.get_rect().center,
+        text="Random color",
+        text_size=52,
+        base_color=(255, 255, 255),
+        on_click=set_rand_color,
+    )
+    btn.set_image(round_corners(btn.image, 30))
+
+    while True:
+        spritePro.update()
+
+        screen.fill(color)
+        btn.update(screen)

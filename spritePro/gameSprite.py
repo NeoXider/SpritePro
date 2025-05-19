@@ -1,10 +1,14 @@
-from typing import Callable, List
+from typing import Callable, List, Optional
 import pygame
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
+import spritePro
 from spritePro.sprite import Sprite
+
+# Импортируем наш компонент здоровья
+from spritePro.components.health import HealthComponent, DamageCallback, DeathCallback
 
 
 class GameSprite(Sprite):
@@ -18,28 +22,92 @@ class GameSprite(Sprite):
         size: tuple = (50, 50),
         pos: tuple = (0, 0),
         speed: float = 0,
-        health: int = 100,
+        max_health: int = 100,
+        # Возможность передать начальное HP, по умолчанию равно max_health
+        current_health: Optional[int] = None,
     ):
         """
-        Инициализация спрайта.
+        Инициализация игрового спрайта с компонентом здоровья.
 
         Аргументы:
             sprite: Путь к изображению спрайта или имя ресурса
             size: Размер спрайта (ширина, высота) по умолчанию (50, 50)
             pos: Начальная позиция спрайта (x, y) по умолчанию (0, 0)
             speed: Скорость движения спрайта по умолчанию 0
-            health: хп спрайта по умолчанию 100
+            max_health: Максимальное количество здоровья спрайта (по умолчанию 100).
+                        Это значение используется для инициализации HealthComponent.
+            current_health: Начальное текущее здоровье. Если None, равно max_health.
         """
         super().__init__(sprite, size, pos, speed)
 
-        # Состояние спрайта
-        self.alive = True
-        self.health = health
-        self.max_health = health
+        # >>> Создаем компонент здоровья вместо старых атрибутов <<<
+        # Начальное текущее здоровье либо переданное, либо равно max_health
+        initial_current_health = (
+            current_health if current_health is not None else max_health
+        )
+        self.health_component: HealthComponent = HealthComponent(
+            max_health=max_health,
+            current_health=initial_current_health,
+            owner_sprite=self,  # Ссылка на этот спрайт как владельца
+            # Колбэки смерти и урона будут управляться через HealthComponent
+            on_death=self._handle_death_event,  # Наш внутренний обработчик смерти
+            on_damage=self._handle_damage_state,  # Наш внутренний обработчик урона для смены состояния
+        )
 
-        # Коллбэки для событий
-        self.on_collision = None
-        self.on_death = None
+        # Коллбэки для событий, которые пользователь может установить извне
+        # Теперь они будут вызываться из наших внутренних обработчиков HealthComponent
+        self.on_collision: Optional[Callable] = None
+        # Старый on_death теперь хранится здесь и вызывается из _handle_death_event
+        self._user_on_death_callback: Optional[Callable[["GameSprite"], None]] = None
+
+    # --- Новые внутренние методы для обработки колбэков HealthComponent ---
+
+    def _handle_damage_state(self, amount: float):
+        """
+        Внутренний колбэк HealthComponent, вызывается при получении урона.
+        Устанавливает состояние спрайта в 'hit'.
+        """
+        print(
+            f"{self.name if hasattr(self, 'name') else type(self).__name__} получил урон. Устанавливаем состояние 'hit'."
+        )
+        self.state = "hit"  # Устанавливаем состояние "hit"
+
+    def _handle_death_event(self, dead_sprite: "Sprite"):
+        """
+        Внутренний колбэк HealthComponent, вызывается при смерти спрайта.
+        Устанавливает состояние спрайта в 'dead' и вызывает пользовательский колбэк.
+        """
+        print(
+            f"{self.name if hasattr(self, 'name') else type(self).__name__} умер. Устанавливаем состояние 'dead'."
+        )
+        # self.alive = False # Этот атрибут теперь управляется в HealthComponent (is_alive)
+        self.state = "dead"  # Устанавливаем состояние "dead"
+
+        # Вызываем пользовательский колбэк смерти, если он установлен
+        if self._user_on_death_callback:
+            # Передаем ссылку на GameSprite, как в старом коде
+            self._user_on_death_callback(self)
+
+    # --- Методы установки пользовательских колбэков (теперь просто сохраняют ссылку) ---
+
+    def on_collision_event(self, callback: Callable):
+        """Установка функции обратного вызова для событий столкновения."""
+        self.on_collision = callback  # TODO: Возможно, стоит интегрировать коллизии и урон через компоненты
+
+    def on_death_event(self, callback: Callable[["GameSprite"], None]):
+        """
+        Установка функции обратного вызова для событий смерти.
+        Эта функция будет вызвана после того, как HealthComponent
+        обработает смерть.
+        """
+        # Сохраняем пользовательский колбэк
+        if callable(callback):
+            self._user_on_death_callback = callback
+        else:
+            print("Предупреждение: Попытка установить некорректный колбэк смерти.")
+
+    # --- Остальные методы GameSprite (collide_with, collide_with_group, etc.) без изменений ---
+    # Они не зависят напрямую от внутренней реализации здоровья, только от наличия спрайта.
 
     def collide_with(self, other_sprite) -> bool:
         """
@@ -74,43 +142,6 @@ class GameSprite(Sprite):
         return pygame.sprite.spritecollide(
             self, group, False, pygame.sprite.collide_mask
         )
-
-    def take_damage(self, amount: int) -> bool:
-        """
-        Уменьшение здоровья на заданное количество.
-
-        Аргументы:
-            amount: Количество получаемого урона
-
-        Возвращает:
-            bool: True если все еще жив, False если умер
-        """
-        if not self.alive:
-            return False
-
-        self.health = max(0, self.health - amount)
-        self.state = "hit"
-
-        if self.health <= 0:
-            self.alive = False
-            self.state = "dead"
-            if self.on_death:
-                self.on_death(self)
-            return False
-        return True
-
-    def heal(self, amount: int):
-        """Увеличение здоровья на заданное количество, до max_health."""
-        if self.alive:
-            self.health = min(self.max_health, self.health + amount)
-
-    def on_collision_event(self, callback: Callable):
-        """Установка функции обратного вызова для событий столкновения."""
-        self.on_collision = callback
-
-    def on_death_event(self, callback: Callable):
-        """Установка функции обратного вызова для событий смерти."""
-        self.on_death = callback
 
     def collide_with_tag(self, group: pygame.sprite.Group, tag: str) -> List:
         """Проверка столкновения с группой спрайтов по тегу."""
@@ -198,3 +229,115 @@ class GameSprite(Sprite):
                         self.velocity.y = 0
                     return collisions
         return collisions
+
+
+# --- Простая демонстрация использования ---
+if __name__ == "__main__":
+    spritePro.init()
+    screen = spritePro.get_screen((800, 600), "GameSprite Demo")
+
+    def player_death_handler(player_sprite: GameSprite):
+        print(
+            f"Демо: Игрок {player_sprite.name if hasattr(player_sprite, 'name') else 'без имени'} умер!"
+        )
+        print("Демо: Останавливаем цикл игры.")
+        global running
+        running = False  # Останавливаем основной цикл
+
+    def player_change_hp(hp, amount):
+        player.set_scale(
+            player.health_component.current_health / player.health_component.max_health
+        )
+
+    # Создаем экземпляр GameSprite
+    # Пустая строка для спрайта означает, что Pygame создаст Surface
+    player = GameSprite(
+        sprite="",
+        size=(250, 250),
+        pos=(spritePro.WH[0] // 4, spritePro.WH_CENTER[1]),
+        max_health=100,
+        speed=5,
+    )
+    player.name = "Игрок"  # Даем имя для вывода в консоль
+
+    # Устанавливаем колбэк смерти GameSprite (он будет вызван из HealthComponent)
+    player.on_death_event(player_death_handler)
+
+    player.health_component.add_on_hp_change_callback(player_change_hp)
+
+    # Можно установить начальный цвет, чтобы видеть спрайт
+    player.set_color((0, 255, 0))  # Зеленый цвет
+
+    # Враг для демонстрации урона (не будет получать урон в этой демо)
+    enemy = GameSprite(
+        sprite="",
+        size=(40, 40),
+        pos=(spritePro.WH[0] * 3 // 4, spritePro.WH_CENTER[1]),
+        max_health=10,
+        speed=0,
+    )
+    enemy.name = "Враг"
+    enemy.set_color((255, 0, 0))  # Красный цвет
+
+    all_sprites = pygame.sprite.Group()
+    all_sprites.add(player, enemy)
+
+    running = True
+
+    print("Демо: Начинаем. Игрок HP:", player.health_component.current_health)
+
+    damage_taken = False  # Флаг, чтобы нанести урон один раз
+
+    while True:
+        spritePro.update()
+
+        for event in spritePro.events:
+            if event.type == pygame.QUIT:
+                running = False
+            # Простой ввод для нанесения урона, лечения и воскрешения
+            if event.type == pygame.KEYDOWN:
+                if (
+                    event.key == pygame.K_s and player.health_component.is_alive
+                ):  # Проверяем, жив ли, прежде чем нанести урон
+                    print("Демо: Наносим игроку 30 урона (пробел).")
+                    # Используем метод take_damage из HealthComponent
+                    player.health_component.take_damage(10)
+                    print(
+                        "Демо: Игрок HP после урона:",
+                        player.health_component.current_health,
+                    )
+
+                if (
+                    event.key == pygame.K_w and player.health_component.is_alive
+                ):  # Лечить только если жив (пока без логики воскрешения через лечение)
+                    print("Демо: Лечим игрока на 10 (H).")
+                    # Используем оператор += (перегружен в HealthComponent)
+                    player.health_component += 10
+                    print(
+                        "Демо: Игрок HP после лечения:",
+                        player.health_component.current_health,
+                    )
+
+                if event.key == pygame.K_r:
+                    print("Демо: Воскрешаем игрока (R)...")
+                    player.health_component.resurrect()
+                    print(
+                        "Демо: Игрок HP после воскрешения:",
+                        player.health_component.current_health,
+                    )
+
+        # Обновление спрайтов (включая родительский update в Sprite) - пока HealthComponent.update() пустой, можно его не вызывать.
+        # Если добавите DoT/HoT, нужно будет добавить вызов health_component.update(dt) сюда.
+        # for sprite in all_sprites:
+        #    sprite.update(screen) # Вызываем update для всех спрайтов в группе - не нужно, draw сделает blit
+
+        # Отрисовка
+        screen.fill((30, 30, 30))  # Темный фон
+
+        # Отрисовываем все спрайты
+        all_sprites.update(
+            screen
+        )  # Этот метод группы сам вызывает blit для каждого спрайта
+
+        if not running:
+            pass

@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 from spritePro.gameSprite import GameSprite
+from spritePro.utils.surface import round_corners
 import spritePro
 
 path = Path(__file__).parent
@@ -12,11 +13,8 @@ pygame.init()
 pygame.font.init()
 pygame.mixer.init()
 
-
-WIDTH, HEIGHT = 800, 600
-FPS = 60
-CLOCK = pygame.time.Clock()
-SCREEN = spritePro.get_screen((WIDTH, HEIGHT))
+SCREEN = spritePro.get_screen((960, 720))
+WIDTH, HEIGHT = spritePro.WH
 
 SCORE_GAMEOVER = 3
 
@@ -71,9 +69,6 @@ def render_text():
 
     score_text_r.set_text(f"{rightScore}")
     score_text_r.rect.topright = (WIDTH - 10, 10)
-
-    player_left.rotate_to(-90)
-    player_right.rotate_to(90)
 
     score_text_l.update(SCREEN)
     score_text_r.update(SCREEN)
@@ -147,7 +142,8 @@ def win(player: GameSprite):
     textWin.rect.centerx, textWin.rect.y = (WIDTH // 2, HEIGHT // 2)
     textWin.update(SCREEN)
 
-    player.rotate_by(6)
+    player.rotate_by(-8)
+    player.update(SCREEN)
 
 
 def start_game():
@@ -157,8 +153,8 @@ def start_game():
     rightScore = 0
     player_left.rect.center = player_left.start_pos
     player_right.rect.center = player_right.start_pos
-    player_left.rotate_to(0)
-    player_right.rotate_to(0)
+    player_left.rotate_to(-90)
+    player_right.rotate_to(90)
     ball.reset()
 
 
@@ -202,33 +198,47 @@ create_music()
 leftScore = 0
 rightScore = 0
 current_state = STATE_MENU
-ball = Ball(path / "Sprites" / "ball.png", (50, 50), (400, 290), 2)
-ball.set_color((255, 255, 255))
-player_left = GameSprite(path / "Sprites" / "platforma.png", (120, 50), (50, 300), 6)
-player_right = GameSprite(path / "Sprites" / "platforma.png", (120, 50), (750, 300), 6)
-
-
 size_text = 32
+pading_x_player = 50
 
-btn_menu = spritePro.Button("", (200, 40), (0, 0), "Menu", size_text)
-btn_menu.set_on_click(menu)
 
-btn_menu.set_alpha(100)
-btn_menu.rect.centerx = WIDTH // 2
-btn_menu.rect.bottom = HEIGHT - 20
-textWin = spritePro.TextSprite("", 72, (255, 255, 100))
+ball = Ball(path / "Sprites" / "ball.png", (50, 50), spritePro.WH_CENTER, 2)
+ball.set_color((255, 255, 255))
+player_left = GameSprite(
+    path / "Sprites" / "platforma.png",
+    (120, 50),
+    (pading_x_player, spritePro.WH_CENTER[1]),
+    6,
+)
+player_right = GameSprite(
+    path / "Sprites" / "platforma.png",
+    (120, 50),
+    (WIDTH - pading_x_player, spritePro.WH_CENTER[1]),
+    6,
+)
+
+textWin = spritePro.TextSprite("", 72, (255, 255, 100), spritePro.WH_CENTER)
 textShop = spritePro.TextSprite("Shop", 72, (255, 255, 100))
 score_text_l = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))
 score_text_r = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))
 
+btn_size = 210, 50
+
+btn_menu = spritePro.Button("", btn_size, (0, 0), "Menu", size_text)
+btn_menu.set_on_click(menu)
+
+btn_menu.set_alpha(150)
+btn_menu.rect.centerx = WIDTH // 2
+btn_menu.rect.bottom = HEIGHT - 20
+
 bts = {
     STATE_MENU: btn_menu,
     STATE_SHOP: spritePro.Button(
-        "", (200, 40), (WIDTH // 2, HEIGHT // 2 + 100), "Shop", size_text, on_click=shop
+        "", btn_size, (WIDTH // 2, HEIGHT // 2 + 100), "Shop", size_text, on_click=shop
     ),
     STATE_GAME: spritePro.Button(
         "",
-        (200, 40),
+        btn_size,
         (WIDTH // 2, HEIGHT // 2),
         "Start game",
         size_text,
@@ -236,22 +246,23 @@ bts = {
     ),
 }
 
+# добавляем скругления
+for bt in bts.values():
+    bt.set_image(round_corners(bt.image, 50))
+
 BGS = {
     STATE_MENU: pygame.transform.scale(
-        pygame.image.load(path / "Sprites" / "bg.jpg"), (WIDTH, HEIGHT)
+        pygame.image.load(path / "Sprites" / "bg.jpg"), (spritePro.WH)
     ),
     STATE_SHOP: pygame.transform.scale(
-        pygame.image.load(path / "Sprites" / "bg.jpg"), (WIDTH, HEIGHT)
+        pygame.image.load(path / "Sprites" / "bg.jpg"), (spritePro.WH)
     ),
     STATE_GAME: pygame.transform.scale(
-        pygame.image.load(path / "Sprites" / "bg.jpg"), (WIDTH, HEIGHT)
+        pygame.image.load(path / "Sprites" / "bg.jpg"), (spritePro.WH)
     ),
 }
 
 while True:
-    pygame.display.update()
-    CLOCK.tick(FPS)
-
     spritePro.update()
     for e in spritePro.events:
         pass

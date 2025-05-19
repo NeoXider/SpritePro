@@ -84,9 +84,9 @@ class MouseInteractor:
 
 if __name__ == "__main__":
     pygame.init()
-    screen = pygame.display.set_mode((800, 600))
-    clock = pygame.time.Clock()
-    fps = 60
+    spritePro.init()
+
+    screen = spritePro.get_screen((800, 600), "Mouse Interactor")
 
     sprite = pygame.sprite.Sprite()
     sprite.image = pygame.Surface((250, 50))
@@ -104,10 +104,8 @@ if __name__ == "__main__":
     )
 
     while True:
-        spritePro.update()
+        spritePro.update(60)
+
         screen.fill((255, 255, 255))
         screen.blit(sprite.image, sprite.rect)
         inter.update()
-
-        pygame.display.flip()
-        clock.tick(fps)
