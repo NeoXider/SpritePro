@@ -240,9 +240,9 @@ if __name__ == "__main__":
         print(
             f"Демо: Игрок {player_sprite.name if hasattr(player_sprite, 'name') else 'без имени'} умер!"
         )
-        print("Демо: Останавливаем цикл игры.")
+        print("==================================\nДля воскрешения нажмите R.\n")
         global running
-        running = False  # Останавливаем основной цикл
+        running = False
 
     def player_change_hp(hp, amount):
         player.set_scale(
@@ -286,8 +286,6 @@ if __name__ == "__main__":
 
     print("Демо: Начинаем. Игрок HP:", player.health_component.current_health)
 
-    damage_taken = False  # Флаг, чтобы нанести урон один раз
-
     while True:
         spritePro.update()
 
@@ -326,12 +324,6 @@ if __name__ == "__main__":
                         player.health_component.current_health,
                     )
 
-        # Обновление спрайтов (включая родительский update в Sprite) - пока HealthComponent.update() пустой, можно его не вызывать.
-        # Если добавите DoT/HoT, нужно будет добавить вызов health_component.update(dt) сюда.
-        # for sprite in all_sprites:
-        #    sprite.update(screen) # Вызываем update для всех спрайтов в группе - не нужно, draw сделает blit
-
-        # Отрисовка
         screen.fill((30, 30, 30))  # Темный фон
 
         # Отрисовываем все спрайты
