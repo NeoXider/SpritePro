@@ -1,8 +1,14 @@
 import os
+import random
 from typing import Tuple, Optional, Union
 import pygame
 import math
+
+import sys
 from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
+import spritePro
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -404,3 +410,50 @@ class Sprite(pygame.sprite.Sprite):
             self.sound_file = sound_file
             self.sound = pygame.mixer.Sound(sound_file)
         self.sound.play()
+
+
+if __name__ == "__main__":
+    spritePro.init()
+    # cоздание окна
+    spritePro.get_screen((800, 600), "Sprite")
+
+    # игрок
+    img = pygame.Surface((50, 50), pygame.SRCALPHA)
+    pygame.draw.rect(img, (255, 255, 255, 255), img.get_rect(), 8, 1000)
+
+    player = Sprite(img, (100, 100), (spritePro.WH_CENTER), 5)
+    player.set_color((100, 255, 100))
+
+    # враг
+    img = pygame.Surface((50, 50), pygame.SRCALPHA)
+    pygame.draw.rect(img, (255, 255, 255, 255), img.get_rect(), 13)
+
+    enemy = Sprite(img, (50, 50), (50, 50), 3)
+    enemy.set_alpha(0)
+    enemy.rotate = 17
+    enemy.set_color((255, 10, 30))
+
+    # группа спрайтов
+    game_sprites = pygame.sprite.Group()
+    game_sprites.add((player, enemy))
+
+    spritePro.screen.fill((0, 0, 100))
+
+    while True:
+        spritePro.update()
+
+        player.handle_keyboard_input()
+        enemy.move_towards(player.rect.center)
+        enemy.rotate_by(enemy.rotate)
+        game_sprites.update(spritePro.screen)
+
+        for s in game_sprites:
+            s.limit_movement(spritePro.screen.get_rect())
+
+        if enemy.rect.colliderect(player.rect):
+            player.set_color((0, random.randint(100, 255), 0))
+            enemy.fade_by(5, 10, 255)
+            player.scale_by(-0.05, 0.3, 1)
+        else:
+            enemy.fade_by(-5, 10, 255)
+            player.scale_by(0.05, 0.3, 1)
