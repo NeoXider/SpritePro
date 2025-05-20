@@ -131,8 +131,7 @@ if __name__ == "__main__":
     spritePro.init()
     screen = spritePro.get_screen(title="Text Demo")
     text_sprite = TextSprite(
-        text="Hello, World!",
-        font_name=None,
+        text="write text (escape: clear)",
         color=(0, 0, 0),
         font_size=32,
         pos=(spritePro.WH_CENTER),
