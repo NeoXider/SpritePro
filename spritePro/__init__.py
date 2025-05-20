@@ -24,8 +24,9 @@ __all__ = [
 
 events: List[pygame.event.Event] = None
 screen: pygame.Surface = None
+screen_rect: pygame.Rect = None
 clock = pygame.time.Clock()
-df: float = 0
+dt: float = 0
 FPS: int = 60
 WH: tuple[int, int] = (0, 0)
 WH_CENTER: tuple[int, int] = (0, 0)
@@ -36,7 +37,7 @@ def init():
 
 
 def get_screen(
-    size: tuple[int, int], title: str = "Игра", icon: str = None
+    size: tuple[int, int] = (800, 600), title: str = "Игра", icon: str = None
 ) -> pygame.Surface:
     """
     Инициализация экрана игры
@@ -46,8 +47,9 @@ def get_screen(
     :param icon: иконка окна
     :return: экран
     """
-    global events, screen, WH, WH_CENTER
+    global events, screen, screen_rect, WH, WH_CENTER
     screen = pygame.display.set_mode(size)
+    screen_rect = screen.get_rect()
     pygame.display.set_caption(title)
     if icon:
         pygame.display.set_icon(pygame.image.load(icon))
@@ -58,7 +60,9 @@ def get_screen(
     return screen
 
 
-def update(fps: int = -1, update_display: bool = True) -> None:
+def update(
+    fps: int = -1, update_display: bool = True, fill_color: tuple[int, int, int] = None
+) -> None:
     """
     Обновление экрана и событий
 
@@ -69,9 +73,13 @@ def update(fps: int = -1, update_display: bool = True) -> None:
     if update_display:
         pygame.display.update()
 
-    fps = fps if fps >= 0 else FPS
-    clock.tick(fps)
     dt = clock.tick(fps) / 1000.0
+
+    if fill_color is not None:
+        screen.fill(fill_color)
+
+    fps = fps if fps >= 0 else FPS
+
     events = pygame.event.get()
     for event in events:
         if event.type == pygame.QUIT:

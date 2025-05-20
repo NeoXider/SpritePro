@@ -1,11 +1,13 @@
 # text_sprite.py
 
+import imp
 import pygame
 from typing import Tuple, Optional, Union
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
+import spritePro
 from spritePro.sprite import Sprite
 
 
@@ -41,13 +43,14 @@ class TextSprite(Sprite):
     ):
         # инициализируем Pygame Font-модуль
         pygame.font.init()
+        self.auto_flip = False
 
         # сначала создаём базовый Sprite с временным изображением
         dummy = pygame.Surface((1, 1), pygame.SRCALPHA)
         super().__init__(sprite=dummy, pos=pos, speed=speed, **sprite_kwargs)
 
         # сохраняем параметры текста
-        self.text = text
+        self._text = text
         self.color = color
         self.font_path = font_name
         self.font_size = font_size
@@ -55,14 +58,36 @@ class TextSprite(Sprite):
         # создаём и рендерим шрифт через set_font
         self.set_font(font_name, font_size)
 
-    def set_text(self, new_text: str):
+    @property
+    def text(self) -> str:
+        return self._text
+
+    @text.setter
+    def text(self, new_text: str) -> None:  # noqa: F811
+        if isinstance(new_text, str):
+            self._text = new_text
+            self.set_text()
+
+    def input(self, k_delete: pygame.key = pygame.K_ESCAPE) -> str:
+        for e in spritePro.events:
+            if e.type == pygame.KEYDOWN:
+                if k_delete is not None and e.key == k_delete:
+                    text_sprite.text = ""
+                elif e.key == pygame.K_BACKSPACE:
+                    text_sprite.text = text_sprite.text[:-1]
+                else:
+                    text_sprite.text += e.unicode
+        return self.text
+
+    def set_text(self, new_text: str = None):
         """
         Заменяет текст спрайта и перерисовывает изображение.
 
         Args:
             new_text (str): Новый текст для отображения.
         """
-        self.text = new_text
+        if new_text is not None:
+            self._text = new_text
         # переложим логику рендера в set_font, сохраняя текущий шрифт
         self.set_font(self.font_path, self.font_size)
 
@@ -97,6 +122,24 @@ class TextSprite(Sprite):
             self.font = pygame.font.SysFont("arial", font_size)
 
         # рендерим текстовую поверхность
-        surf = self.font.render(self.text, True, self.color)
+        surf = self.font.render(self._text, True, self.color)
         # обновляем изображение спрайта
         self.set_image(surf)
+
+
+if __name__ == "__main__":
+    spritePro.init()
+    screen = spritePro.get_screen(title="Text Demo")
+    text_sprite = TextSprite(
+        text="Hello, World!",
+        font_name=None,
+        color=(0, 0, 0),
+        font_size=32,
+        pos=(spritePro.WH_CENTER),
+    )
+
+    while True:
+        spritePro.update(fill_color=(200, 200, 255))
+        text_sprite.update(screen)
+
+        text_sprite.input()
