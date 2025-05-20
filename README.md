@@ -59,30 +59,23 @@ PhysicalSprite(sprite: str, size: tuple = (50, 50), pos: tuple = (0, 0), speed: 
 
 ```python
 import pygame
+import spritePro
 from spritePro import PhysicalSprite
 
-# Инициализация Pygame
-pygame.init()
-window = pygame.display.set_mode((800, 600))
+spritePro.init()
+window = spritePro.get_screen((800, 600))
 
 # Создание физического спрайта
 ball = PhysicalSprite("Sprites/ball.png", size=(50, 50), pos=(100, 100), speed=5, mass=1.0)
 
-# Игровой цикл
-running = True
 while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+    spritePro.update()
 
-    keys = pygame.key.get_pressed()
     ball.handle_keyboard_input(keys)  # Обработка ввода
     ball.update(window)  # Обновление спрайта
     ball.limit_movement(window.get_rect())  # Ограничение движения
 
     pygame.display.flip()
-
-pygame.quit()
 ```
 
 ## Заключение
