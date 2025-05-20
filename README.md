@@ -89,3 +89,17 @@ pygame.quit()
 
 Модуль `spritePro.py` предоставляет мощные инструменты для работы с 2D-спрайтами в Pygame, включая поддержку физики, анимации и взаимодействия с окружением. Вы можете использовать его для создания интерактивных игр и приложений. 
 
+![image](https://github.com/user-attachments/assets/feef0139-9605-4890-a28f-9c7f7e1f4e5a)
+![image](https://github.com/user-attachments/assets/12998d5d-cf32-46c3-806b-49d9f37c1a29)
+![image](https://github.com/user-attachments/assets/e8034e50-7724-4456-aaa4-ff75fa7447e5)
+![image](https://github.com/user-attachments/assets/599fa2e8-e57a-4822-bebb-6b424d50fd86)
+![image](https://github.com/user-attachments/assets/c7a00c20-3e8a-438e-8e84-08e260217d81)
+![image](https://github.com/user-attachments/assets/43b29fbc-957a-4da0-9753-80f2a632d55e)
+
+
+
+
+
+
+
+
