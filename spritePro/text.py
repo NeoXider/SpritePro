@@ -1,6 +1,5 @@
 # text_sprite.py
 
-import imp
 import pygame
 from typing import Tuple, Optional, Union
 import sys
