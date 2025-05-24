@@ -73,12 +73,11 @@ def update(
     if update_display:
         pygame.display.update()
 
+    fps = fps if fps >= 0 else FPS
     dt = clock.tick(fps) / 1000.0
 
     if fill_color is not None:
         screen.fill(fill_color)
-
-    fps = fps if fps >= 0 else FPS
 
     events = pygame.event.get()
     for event in events:

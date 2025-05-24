@@ -1,5 +1,3 @@
-import imp
-import re
 import sys
 from pathlib import Path
 import pygame
