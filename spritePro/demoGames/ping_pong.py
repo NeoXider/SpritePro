@@ -228,7 +228,7 @@ score_text_r = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))
 btn_size = 210, 50
 
 btn_menu = spritePro.Button("", btn_size, (0, 0), "Menu", size_text)
-btn_menu.set_on_click(menu)
+btn_menu.on_click(menu)
 
 btn_menu.set_alpha(150)
 btn_menu.rect.centerx = WIDTH // 2

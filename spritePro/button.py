@@ -134,13 +134,21 @@ class Button(Sprite):
             self.start_scale = scale
         super().set_scale(scale)
 
-    def set_on_click(self, func: Callable):
+    def on_click(self, func: Callable):
         """Sets the click handler function for the button.
 
         Args:
             func (Callable): The function to call when the button is clicked.
         """
         self.interactor.on_click = func
+
+    def on_hover(self, func: Callable):
+        """Sets the hover handler function for the button.
+
+        Args:
+            func (Callable): The function to call when the button is hovered.
+        """
+        self.interactor.on_hover_enter = func
 
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 # spritePro Documentation
 
+[Русская версия](DOCUMENTATION.ru.md)
+
 ## Table of Contents
 1. [Initialization and Setup](#initialization-and-setup)
 2. [Core Classes](#core-classes)
@@ -8,6 +10,22 @@
 5. [Global Variables](#global-variables)
 
 ## Initialization and Setup
+
+### Initialization
+```python
+import spritePro
+
+# Initialize the library
+spritePro.init()
+
+# Create a window
+spritePro.get_screen((800, 600), "My Game")
+```
+
+### Main Constants
+- `spritePro.WH_CENTER`: Screen center coordinates
+- `spritePro.screen`: Main window surface
+- `spritePro.clock`: FPS control object
 
 ### Basic Setup
 ```python
@@ -30,12 +48,42 @@ while True:
 
 ### Global Variables
 - `spritePro.events`: List of current pygame events
-- `spritePro.screen`: Main game window surface
+- `spritePro.screen`: Main window surface
 - `spritePro.screen_rect`: Rectangle of the main window
+- `spritePro.clock`: FPS control object
 - `spritePro.dt`: Delta time between frames
 - `spritePro.FPS`: Default frames per second (60)
 - `spritePro.WH`: Window dimensions tuple
-- `spritePro.WH_CENTER`: Center point of the window
+- `spritePro.WH_CENTER`: Screen center coordinates tuple
+
+### Physics Constants
+- `PIXELS_PER_METER`: Conversion factor from pixels to meters (50 pixels = 1 meter)
+- `SKIN`: Collision skin width for ground detection (2 pixels)
+
+### Button Defaults
+- `hover_scale_delta`: Scale change on hover (0.05)
+- `press_scale_delta`: Scale change on press (-0.08)
+- `hover_color`: Background color on hover ((230, 230, 230))
+- `press_color`: Background color on press ((180, 180, 180))
+- `base_color`: Default background color ((255, 255, 255))
+- `anim_speed`: Animation speed multiplier (0.2)
+- `animated`: Whether animations are enabled (True)
+
+### Sprite Defaults
+- `auto_flip`: Whether to automatically flip sprite horizontally when moving left/right (True)
+- `stop_threshold`: Distance threshold for stopping movement (1.0)
+- `color`: Default color tint ((255, 255, 255))
+- `active`: Whether sprite is active and should be rendered (True)
+- `states`: Default sprite states ({"idle", "moving", "hit", "attacking", "dead"})
+
+### Physics Sprite Defaults
+- `jump_force`: Default jump force in m/s (7)
+- `MAX_STEPS`: Maximum physics steps per frame (8)
+- `mass`: Default mass in kg (1.0)
+- `gravity`: Default gravity force in m/s² (9.8)
+- `bounce_enabled`: Whether bouncing is enabled by default (False)
+- `ground_friction`: Default ground friction coefficient (0.8)
+- `min_velocity_threshold`: Minimum velocity threshold for stopping (0.01)
 
 ## Core Classes
 
@@ -43,23 +91,79 @@ while True:
 The base sprite class that provides fundamental sprite functionality.
 
 #### Properties
-- `auto_flip` (bool): Whether to automatically flip sprite horizontally when moving
+- `auto_flip` (bool): Whether to automatically flip sprite horizontally when moving left/right
 - `stop_threshold` (float): Distance threshold for stopping movement
 - `color` (Tuple[int, int, int]): Current color tint
 - `active` (bool): Whether the sprite is active and should be rendered
+- `size` (tuple): Sprite dimensions (width, height)
+- `start_pos` (tuple): Initial position (x, y)
+- `velocity` (Vector2): Current velocity vector
+- `speed` (float): Base movement speed
+- `flipped_h` (bool): Whether sprite is flipped horizontally
+- `flipped_v` (bool): Whether sprite is flipped vertically
+- `angle` (float): Current rotation angle
+- `scale` (float): Current scale factor
+- `alpha` (int): Current transparency (0-255)
+- `state` (str): Current state ("idle", "moving", "hit", "attacking", "dead")
+- `states` (set): Available states
+- `mask` (pygame.mask.Mask): Collision mask
 
 #### Methods
-- `__init__(sprite: str, size: tuple = (50, 50), pos: tuple = (0, 0), speed: float = 0)`
+- `__init__(sprite: str, size: tuple = (50, 50), pos: tuple = (0, 0), speed: float = 0)`: Initializes a new sprite
 - `set_color(color: Tuple)`: Sets the color tint
-- `set_image(image_source: str, size: Optional[Tuple[int, int]] = None)`: Sets a new image
+- `set_image(image_source: Union[str, Path, pygame.Surface], size: Optional[Tuple[int, int]] = None)`: Sets a new image
+- `set_native_size()`: Resets sprite to original image dimensions
 - `update(window: pygame.Surface)`: Updates sprite state and renders
-- `move(dx: float, dy: float)`: Moves the sprite by specified distance
+- `_update_image()`: Updates sprite image with all visual effects
+- `set_active(active: bool)`: Sets sprite's active state
+- `reset_sprite()`: Resets sprite to initial position and state
+- `move(dx: float, dy: float)`: Moves sprite by specified distance
 - `move_towards(target_pos: Tuple[float, float], speed: Optional[float] = None)`: Moves towards target
 - `set_velocity(vx: float, vy: float)`: Sets velocity directly
+- `move_up(speed: Optional[float] = None)`: Moves upward
+- `move_down(speed: Optional[float] = None)`: Moves downward
+- `move_left(speed: Optional[float] = None)`: Moves left
+- `move_right(speed: Optional[float] = None)`: Moves right
+- `handle_keyboard_input(up_key=pygame.K_UP, down_key=pygame.K_DOWN, left_key=pygame.K_LEFT, right_key=pygame.K_RIGHT)`: Handles keyboard input
+- `stop()`: Stops movement
 - `rotate_to(angle: float)`: Rotates to specific angle
+- `rotate_by(angle_change: float)`: Rotates by relative angle
 - `set_scale(scale: float)`: Sets scale factor
 - `set_alpha(alpha: int)`: Sets transparency level
-- `limit_movement(bounds: pygame.Rect, ...)`: Limits movement within bounds
+- `fade_by(amount: int, min_alpha: int = 0, max_alpha: int = 255)`: Changes transparency by amount
+- `scale_by(amount: float, min_scale: float = 0.0, max_scale: float = 2.0)`: Changes scale by amount
+- `distance_to(other_sprite) -> float`: Calculates distance to another sprite
+- `set_state(state: str)`: Sets current state
+- `is_in_state(state: str) -> bool`: Checks if sprite is in specific state
+- `is_visible_on_screen(screen: pygame.Surface) -> bool`: Checks if sprite is visible on screen
+- `limit_movement(bounds: pygame.Rect, check_left: bool = True, check_right: bool = True, check_top: bool = True, check_bottom: bool = True, padding_left: int = 0, padding_right: int = 0, padding_top: int = 0, padding_bottom: int = 0)`: Limits movement within bounds
+- `play_sound(sound_file: str)`: Plays a sound effect
+
+Example usage:
+```python
+# Create a sprite
+sprite = Sprite("sprite.png", size=(100, 100), pos=(400, 300), speed=5)
+
+# Set color tint
+sprite.set_color((255, 0, 0))  # Red tint
+
+# Movement
+sprite.move_towards((500, 400))  # Move towards point
+sprite.set_velocity(2, 0)  # Move right at speed 2
+
+# Visual effects
+sprite.set_scale(1.5)  # 50% larger
+sprite.set_alpha(128)  # 50% transparent
+sprite.rotate_by(45)  # Rotate 45 degrees
+
+# State management
+sprite.set_state("moving")
+if sprite.is_in_state("moving"):
+    print("Sprite is moving")
+
+# Movement limits
+sprite.limit_movement(screen.get_rect(), padding=10)  # Keep 10px from screen edges
+```
 
 ### GameSprite
 Extends the base Sprite class with game-specific functionality including health management and collision handling.
@@ -68,15 +172,19 @@ Extends the base Sprite class with game-specific functionality including health 
 - `collision_step` (int): Step size for collision resolution (default: 1)
 - `health_component` (HealthComponent): Manages health-related functionality
 - `on_collision` (Optional[Callable]): Callback for collision events
+- `_user_on_death_callback` (Optional[Callable]): User-defined death callback
 
 #### Methods
 - `__init__(sprite: str, size: tuple = (50, 50), pos: tuple = (0, 0), speed: float = 0, max_health: int = 100, current_health: Optional[int] = None)`: Initializes a game sprite with health management
+- `_handle_damage_state(amount: float)`: Internal callback for handling damage events
+- `_handle_death_event(dead_sprite: Sprite)`: Internal callback for handling death events
 - `on_collision_event(callback: Callable)`: Sets callback function for collision events
 - `on_death_event(callback: Callable[["GameSprite"], None])`: Sets callback function for death events
 - `collide_with(other_sprite) -> bool`: Checks collision with another sprite using pixel-perfect masks
 - `collide_with_group(group: pygame.sprite.Group) -> List`: Checks collision with a group of sprites
 - `collide_with_tag(group: pygame.sprite.Group, tag: str) -> List`: Checks collision with tagged sprites
-- `resolve_collisions(*obstacles)`: Resolves collisions with obstacles and stops movement
+- `_get_collision_side(prev_x: float, prev_y: float, rect: pygame.Rect) -> str`: Determines collision side
+- `resolve_collisions(*obstacles) -> List[Tuple[pygame.Rect, str]]`: Resolves collisions with obstacles
 
 #### Health Management
 The GameSprite class includes a health system with the following features:
@@ -87,13 +195,29 @@ The GameSprite class includes a health system with the following features:
 
 Example usage:
 ```python
+# Create a game sprite with health
 player = GameSprite("player.png", max_health=100)
 
 def on_death(sprite):
     print(f"{sprite} has died!")
 
+def on_collision():
+    print("Collision detected!")
+
+# Set up callbacks
 player.on_death_event(on_death)
+player.on_collision_event(on_collision)
+
+# Health management
 player.health_component.take_damage(50)  # Reduce health by 50
+player.health_component.heal(20)  # Heal by 20
+
+# Collision detection
+if player.collide_with(enemy):
+    print("Hit enemy!")
+
+# Resolve collisions
+player.resolve_collisions(obstacles)
 ```
 
 ### PhysicSprite
@@ -107,6 +231,7 @@ A physics-enabled sprite with gravity, bouncing, and collision handling. Extends
 - `bounce_enabled` (bool): Whether bouncing is enabled
 - `is_grounded` (bool): Whether sprite is touching ground
 - `ground_friction` (float): Friction coefficient when grounded
+- `min_velocity_threshold` (float): Minimum velocity threshold for stopping
 - `position` (Vector2): Position in meters
 - `velocity` (Vector2): Velocity in m/s
 - `force` (Vector2): Current force vector
@@ -117,8 +242,13 @@ A physics-enabled sprite with gravity, bouncing, and collision handling. Extends
 - `apply_force(force: pygame.math.Vector2)`: Applies a force vector to the sprite
 - `bounce(normal: pygame.math.Vector2)`: Handles bouncing off a surface
 - `update_physics(fps: float, collisions_enabled: bool = True)`: Updates sprite physics
-- `jump(jump_force: float)`: Applies jump force if sprite is grounded
+- `update(window: pygame.Surface)`: Renders the sprite without updating physics
+- `limit_movement(bounds: pygame.Rect, check_left: bool = True, check_right: bool = True, check_top: bool = True, check_bottom: bool = True, padding_left: int = 0, padding_right: int = 0, padding_top: int = 0, padding_bottom: int = 0)`: Limits movement within bounds with bounce support
 - `handle_keyboard_input(keys=None, left_key=pygame.K_LEFT, right_key=pygame.K_RIGHT, up_key=pygame.K_UP)`: Handles keyboard input for physics-based movement
+- `jump(jump_force: float)`: Applies jump force if sprite is grounded
+- `force_in_direction(direction: pygame.math.Vector2, force: float)`: Applies force in a specific direction
+- `_check_grounded(rects)`: Internal method to check if sprite is grounded
+- `resolve_collisions(*obstacles, fps=60, limit_top=True, limit_bottom=True, limit_left=True, limit_right=True)`: Resolves collisions with obstacles
 
 #### Physics System
 The PhysicSprite class implements a physics system with the following features:
@@ -131,13 +261,34 @@ The PhysicSprite class implements a physics system with the following features:
 
 Example usage:
 ```python
-player = PhysicSprite("player.png", mass=1.0, gravity=9.8, bounce_enabled=True)
+# Create a physics-enabled sprite
+player = PhysicSprite(
+    "player.png",
+    mass=1.0,
+    gravity=9.8,
+    bounce_enabled=True
+)
 
 # In game loop:
-player.handle_keyboard_input()  # Handle movement input
-player.update_physics(60)  # Update physics (60 FPS)
-player.limit_movement(screen.get_rect())  # Keep within screen bounds
-player.update(screen)  # Render sprite
+while True:
+    # Handle input
+    player.handle_keyboard_input()
+    
+    # Update physics
+    player.update_physics(60)  # 60 FPS
+    
+    # Keep within screen bounds
+    player.limit_movement(screen.get_rect())
+    
+    # Render
+    player.update(screen)
+    
+    # Apply forces
+    player.apply_force(pygame.math.Vector2(0, -9.8))  # Gravity
+    
+    # Jump
+    if player.is_grounded:
+        player.jump(7)  # Jump with 7 m/s force
 ```
 
 ## Components
@@ -179,50 +330,50 @@ text.input()  # Allows typing with backspace and escape to clear
 ```
 
 ### Button
-A convenient UI button that combines sprite functionality with text display and mouse interaction. Features hover and press animations.
+Interactive UI button component.
 
 #### Properties
-- `hover_color` (Tuple[int, int, int]): Background color on hover
-- `press_color` (Tuple[int, int, int]): Background color on press
-- `base_color` (Tuple[int, int, int]): Default background color
-- `hover_scale_delta` (float): Scale change on hover
-- `press_scale_delta` (float): Scale change on press
-- `anim_speed` (float): Animation speed multiplier
-- `animated` (bool): Whether animations are enabled
-- `text_sprite` (TextSprite): The text label component
-- `interactor` (MouseInteractor): Mouse interaction handler
+- `text` (str): Button text
+- `pos` (Tuple[int, int]): Position (x, y)
+- `size` (Tuple[int, int]): Size (width, height)
+- `is_hovered` (bool): Whether mouse is hovering
+- `is_pressed` (bool): Whether button is pressed
+- `color` (Tuple[int, int, int]): Button color
+- `hover_color` (Tuple[int, int, int]): Color when hovered
+- `press_color` (Tuple[int, int, int]): Color when pressed
+- `text_color` (Tuple[int, int, int]): Text color
+- `font_size` (int): Text font size
+- `border_radius` (int): Corner radius
+- `padding` (int): Inner padding
 
 #### Methods
-- `__init__(sprite: str = "", size: Tuple[int, int] = (250, 70), pos: Tuple[int, int] = (300, 200), text: str = "Button", text_size: int = 24, text_color: Tuple[int, int, int] = (0, 0, 0), font_name: Optional[Union[str, Path]] = None, on_click: Optional[Callable[[], None]] = None, hover_scale_delta: float = 0.05, press_scale_delta: float = -0.08, hover_color: Tuple[int, int, int] = (230, 230, 230), press_color: Tuple[int, int, int] = (180, 180, 180), base_color: Tuple[int, int, int] = (255, 255, 255), anim_speed: float = 0.2, animated: bool = True)`: Initializes a button with specified properties
-- `update(screen: pygame.Surface)`: Updates button state and renders it
-- `set_scale(scale: float, update: bool = True)`: Sets the button's scale
-- `set_on_click(func: Callable)`: Sets the click handler function
+- `__init__(text: str, pos: Tuple[int, int], size: Tuple[int, int], color: Tuple[int, int, int] = (100, 100, 100), hover_color: Tuple[int, int, int] = (150, 150, 150), press_color: Tuple[int, int, int] = (50, 50, 50), text_color: Tuple[int, int, int] = (255, 255, 255), font_size: int = 24, border_radius: int = 10, padding: int = 10)`: Initializes a button
+- `on_click(callback: Callable)`: Sets click handler
+- `on_hover(callback: Callable)`: Sets hover handler
+- `on_press(callback: Callable)`: Sets press handler
+- `on_release(callback: Callable)`: Sets release handler
+- `update()`: Updates button state
+- `draw(surface: pygame.Surface)`: Draws button on surface
 
-#### Features
-- Automatic hover and press animations
-- Smooth scale transitions
-- Color state changes
-- Text label support
-- Mouse interaction handling
-- Customizable appearance and behavior
-
-Example usage:
+Example:
 ```python
-def on_button_click():
-    print("Button clicked!")
-
-button = Button(
+button = spritePro.Button(
     text="Click Me",
     pos=(400, 300),
-    text_size=32,
-    base_color=(255, 255, 255),
-    hover_color=(230, 230, 230),
-    press_color=(180, 180, 180),
-    on_click=on_button_click
+    size=(200, 50),
+    color=(100, 100, 100),
+    hover_color=(150, 150, 150),
+    press_color=(50, 50, 50),
+    text_color=(255, 255, 255),
+    font_size=24,
+    border_radius=10,
+    padding=10
 )
 
-# In game loop:
-button.update(screen)
+def on_click():
+    print("Button clicked!")
+
+button.on_click(on_click)
 ```
 
 ### Timer
@@ -246,14 +397,6 @@ A universal timer based on system time polling. Provides precise timing control 
 - `time_left() -> float`: Gets remaining time until trigger
 - `elapsed() -> float`: Gets elapsed time since last (re)start
 - `progress() -> float`: Gets completion progress from 0.0 to 1.0
-
-#### Features
-- Precise timing using system monotonic time
-- Callback support with args/kwargs
-- Pause/resume functionality
-- Repeating timer option
-- Progress tracking
-- Time remaining/elapsed queries
 
 Example usage:
 ```python
@@ -306,15 +449,6 @@ A comprehensive health management system for sprites. Provides health tracking, 
 - `add_on_heal_callback(callback: HealCallback)`: Adds a callback for healing events
 - `add_on_death_callback(callback: DeathCallback)`: Adds a callback for death events
 
-#### Features
-- Health tracking with maximum and current values
-- Damage and healing mechanics
-- Death state management
-- Event callbacks for health changes, damage, healing, and death
-- Support for multiple callbacks per event
-- Comparison operators for health values
-- Resurrection functionality
-
 Example usage:
 ```python
 def on_hp_change(new_hp, diff):
@@ -346,51 +480,40 @@ if not health.is_alive:
 ```
 
 ### MouseInteractor
-Adds hover/click/press interaction logic to sprites. Handles mouse interaction events including hover detection, button press/release, and click detection.
+Component for handling mouse interactions with sprites.
 
 #### Properties
-- `is_hovered` (bool): Whether mouse is currently over the sprite
-- `is_pressed` (bool): Whether mouse button is currently pressed over the sprite
-- `sprite` (pygame.sprite.Sprite): The sprite being interacted with
-- `on_click` (Optional[Callable]): Called when mouse button is released over sprite
-- `on_mouse_down` (Optional[Callable]): Called when mouse button is pressed over sprite
-- `on_mouse_up` (Optional[Callable]): Called when mouse button is released
-- `on_hover_enter` (Optional[Callable]): Called when mouse first enters sprite area
-- `on_hover_exit` (Optional[Callable]): Called when mouse leaves sprite area
+- `is_hovered` (bool): Whether mouse is hovering over the sprite
+- `is_pressed` (bool): Whether mouse button is pressed on the sprite
+- `is_clicked` (bool): Whether sprite was clicked
+- `mouse_pos` (Tuple[int, int]): Current mouse position
+- `mouse_buttons` (Tuple[bool, bool, bool]): Current mouse button states
 
 #### Methods
-- `__init__(sprite: pygame.sprite.Sprite, on_click: Optional[Callable[[], None]] = None, on_mouse_down: Optional[Callable[[], None]] = None, on_mouse_up: Optional[Callable[[], None]] = None, on_hover_enter: Optional[Callable[[], None]] = None, on_hover_exit: Optional[Callable[[], None]] = None)`: Initializes a mouse interactor
-- `update(events: Optional[List[pygame.event.Event]] = None)`: Updates interaction state based on mouse events
+- `__init__(sprite: Sprite)`: Initializes mouse interaction for a sprite
+- `on_hover(callback: Callable)`: Sets hover handler
+- `on_press(callback: Callable)`: Sets press handler
+- `on_release(callback: Callable)`: Sets release handler
+- `on_click(callback: Callable)`: Sets click handler
+- `update()`: Updates interaction state
 
-#### Features
-- Hover detection (enter/exit)
-- Mouse button press/release tracking
-- Click detection
-- Custom callback support for all events
-- Automatic event processing
-
-Example usage:
+Example:
 ```python
+sprite = spritePro.Sprite("sprite.png")
+interactor = spritePro.MouseInteractor(sprite)
+
 def on_hover():
-    print("Mouse entered sprite")
+    print("Mouse is hovering over sprite")
 
 def on_click():
-    print("Sprite clicked!")
+    print("Sprite was clicked")
 
-interactor = MouseInteractor(
-    sprite=my_sprite,
-    on_hover_enter=on_hover,
-    on_click=on_click
-)
+interactor.on_hover(on_hover)
+interactor.on_click(on_click)
 
-# In game loop:
-interactor.update()  # Process mouse events
-
-# Check state
-if interactor.is_hovered:
-    print("Mouse is over sprite")
-if interactor.is_pressed:
-    print("Mouse button is pressed on sprite")
+# In game loop
+while True:
+    interactor.update()
 ```
 
 ## Utilities
