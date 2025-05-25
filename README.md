@@ -119,7 +119,7 @@ sprite.set_alpha(200)
 ### Physics Sprite
 ```python
 # Create a physics-enabled sprite
-physics_sprite = spritePro.PhysicSprite(
+physics_sprite = spritePro.PhysicalSprite(
     "ball.png",
     mass=1.0,
     gravity=9.8,

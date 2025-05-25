@@ -31,7 +31,9 @@ WH_CENTER: tuple[int, int] = (0, 0)
 
 
 def init():
-    pass
+    pygame.init()
+    pygame.font.init()
+    pygame.mixer.init()
 
 
 def get_screen(
