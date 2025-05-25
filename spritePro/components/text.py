@@ -140,7 +140,7 @@ if __name__ == "__main__":
         text="write text (escape: clear)",
         color=(0, 0, 0),
         font_size=32,
-        pos=(spritePro.WH_CENTER),
+        pos=(spritePro.WH_C),
     )
 
     while True:

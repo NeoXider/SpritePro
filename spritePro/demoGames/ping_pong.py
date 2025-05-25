@@ -205,22 +205,22 @@ size_text = 32
 pading_x_player = 50
 
 
-ball = Ball(path / "Sprites" / "ball.png", (50, 50), spritePro.WH_CENTER, 2)
+ball = Ball(path / "Sprites" / "ball.png", (50, 50), spritePro.WH_C, 2)
 ball.set_color((255, 255, 255))
 player_left = GameSprite(
     path / "Sprites" / "platforma.png",
     (120, 50),
-    (pading_x_player, spritePro.WH_CENTER[1]),
+    (pading_x_player, spritePro.WH_C[1]),
     6,
 )
 player_right = GameSprite(
     path / "Sprites" / "platforma.png",
     (120, 50),
-    (WIDTH - pading_x_player, spritePro.WH_CENTER[1]),
+    (WIDTH - pading_x_player, spritePro.WH_C[1]),
     6,
 )
 
-textWin = spritePro.TextSprite("", 72, (255, 255, 100), spritePro.WH_CENTER)
+textWin = spritePro.TextSprite("", 72, (255, 255, 100), spritePro.WH_C)
 textShop = spritePro.TextSprite("Shop", 72, (255, 255, 100))
 score_text_l = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))
 score_text_r = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))

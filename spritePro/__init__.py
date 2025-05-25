@@ -2,9 +2,12 @@ from .gameSprite import GameSprite
 from .physicSprite import PhysicalSprite
 from .sprite import Sprite
 from .button import Button
+
 from .components.timer import Timer
 from .components.text import TextSprite
 from .components.mouse_interactor import MouseInteractor
+from .components.animation import Animation
+from .components.tween import Tween, TweenManager, EasingType
 
 from typing import List
 import pygame
@@ -18,16 +21,19 @@ __all__ = [
     "Timer",
     "TextSprite",
     "MouseInteractor",
+    "Animation",
+    "Tween",
+    "TweenManager",
+    "EasingType",
+    # methods
+    "init",
+    "get_screen",
+    "update",
 ]
 
-events: List[pygame.event.Event] = None
-screen: pygame.Surface = None
-screen_rect: pygame.Rect = None
-clock = pygame.time.Clock()
-dt: float = 0
 FPS: int = 60
 WH: tuple[int, int] = (0, 0)
-WH_CENTER: tuple[int, int] = (0, 0)
+WH_C: tuple[int, int] = (0, 0)
 
 
 def init():
@@ -47,7 +53,7 @@ def get_screen(
     :param icon: иконка окна
     :return: экран
     """
-    global events, screen, screen_rect, WH, WH_CENTER
+    global events, screen, screen_rect, WH, WH_C
     screen = pygame.display.set_mode(size)
     screen_rect = screen.get_rect()
     pygame.display.set_caption(title)
@@ -56,7 +62,7 @@ def get_screen(
 
     events = pygame.event.get()
     WH = size
-    WH_CENTER = (size[0] // 2, size[1] // 2)
+    WH_C = (size[0] // 2, size[1] // 2)
     return screen
 
 
@@ -83,3 +89,12 @@ def update(
     for event in events:
         if event.type == pygame.QUIT:
             sys.exit()
+
+
+events: List[pygame.event.Event] = None
+screen: pygame.Surface = None
+screen_rect: pygame.Rect = None
+clock = pygame.time.Clock()
+dt: float = 0
+
+init()

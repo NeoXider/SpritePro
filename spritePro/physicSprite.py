@@ -6,6 +6,7 @@ current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
 sys.path.append(str(parent_dir))
 
+import spritePro
 from spritePro.gameSprite import GameSprite
 
 PIXELS_PER_METER = 50  # 1 meter = 50 pixels
@@ -120,7 +121,7 @@ class PhysicalSprite(GameSprite):
         self.force = pygame.math.Vector2(0, 0)
         self._x_controlled_this_frame = False
 
-    def update(self, window: pygame.Surface):
+    def update(self, screen: pygame.Surface = None):
         """Renders the sprite without updating physics.
 
         Note: In main loop, use in this order:
@@ -132,7 +133,8 @@ class PhysicalSprite(GameSprite):
         Args:
             window (pygame.Surface): Surface to render on.
         """
-        super().update(window)
+        screen = screen or spritePro.screen
+        super().update(screen)
 
     def limit_movement(
         self,

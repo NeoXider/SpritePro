@@ -127,11 +127,11 @@ class Sprite(pygame.sprite.Sprite):
         # перезагружаем изображение без параметра size → ставит оригинальный размер
         self.set_image(self._image_source, size=None)
 
-    def update(self, window: pygame.Surface):
+    def update(self, screen: pygame.Surface = None):
         """Updates sprite state and renders it to the window.
 
         Args:
-            window (pygame.Surface): Surface to render the sprite on.
+            screen (pygame.Surface): Surface to render the sprite on.
         """
         if self.velocity.length() > 0:
             cx, cy = self.rect.center
@@ -139,7 +139,9 @@ class Sprite(pygame.sprite.Sprite):
         # Обновляем маску коллизии если изображение изменилось
         self.mask = pygame.mask.from_surface(self.image)
         if self.active:
-            window.blit(self.image, self.rect)
+            screen = screen or spritePro.screen
+            if screen is not None:
+                screen.blit(self.image, self.rect)
 
     def _update_image(self):
         """Updates the sprite image with all visual effects applied.
@@ -508,7 +510,7 @@ if __name__ == "__main__":
     img = pygame.Surface((50, 50), pygame.SRCALPHA)
     pygame.draw.rect(img, (255, 255, 255, 255), img.get_rect(), 8, 1000)
 
-    player = Sprite(img, (100, 100), (spritePro.WH_CENTER), 5)
+    player = Sprite(img, (100, 100), (spritePro.WH_C), 5)
     player.set_color((100, 255, 100))
 
     # враг
@@ -532,7 +534,7 @@ if __name__ == "__main__":
         player.handle_keyboard_input()
         enemy.move_towards(player.rect.center)
         enemy.rotate_by(enemy.rotate)
-        game_sprites.update(spritePro.screen)
+        game_sprites.update()
 
         for s in game_sprites:
             s.limit_movement(spritePro.screen.get_rect())

@@ -81,21 +81,29 @@ Note: In the future, spritePro will be available through pip installation.
 ## Quick Start
 
 ```python
-import spritePro
+import spritePro as s
+import pygame
 
 # Initialize the library
-spritePro.init()
+s.init()
 
 # Create a window
-spritePro.get_screen((800, 600), "My Game")
+s.get_screen((800, 600), "My Game")
 
 # Create a basic sprite
-player = spritePro.Sprite("player.png", size=(50, 50), pos=(400, 300))
+player = s.Sprite(
+    "",
+    size=(100, 100),
+    pos=s.WH_C,
+    speed=3,
+)
 
 # Main game loop
 while True:
-    spritePro.update()
-    player.update(spritePro.screen)
+    s.update(fill_color=(0, 0, 100))
+
+    player.update()
+
 ```
 
 ## Examples

@@ -10,8 +10,10 @@ parent_dir = current_dir.parent.parent
 sys.path.append(str(parent_dir))
 import spritePro
 
+
 class EasingType(IntFlag):
     """Типы функций плавности."""
+
     LINEAR = auto()
     EASE_IN = auto()
     EASE_OUT = auto()
@@ -26,6 +28,7 @@ class EasingType(IntFlag):
     QUINT = auto()
     SINE = auto()
     EXPO = auto()
+
 
 class Tween:
     """Base tween class for smooth transitions between values.
@@ -49,15 +52,20 @@ class Tween:
         on_complete (Callable): Callback function when tween completes.
         delay (float): Delay before tween starts in seconds.
     """
-    
+
     # Словарь доступных функций плавности
     EASING_FUNCTIONS = {
         EasingType.LINEAR: lambda x: x,
         EasingType.EASE_IN: lambda x: x * x,
         EasingType.EASE_OUT: lambda x: 1 - (1 - x) * (1 - x),
         EasingType.EASE_IN_OUT: lambda x: 3 * x * x - 2 * x * x * x,
-        EasingType.BOUNCE: lambda x: 1 - (math.cos(x * 4.5 * math.pi) * math.exp(-x * 3)) if x < 1 else 1,
-        EasingType.ELASTIC: lambda x: math.sin(x * 13 * math.pi) * math.exp(-x * 3) if x < 1 else 0,
+        EasingType.BOUNCE: lambda x: 1
+        - (math.cos(x * 4.5 * math.pi) * math.exp(-x * 3))
+        if x < 1
+        else 1,
+        EasingType.ELASTIC: lambda x: math.sin(x * 13 * math.pi) * math.exp(-x * 3)
+        if x < 1
+        else 0,
         EasingType.BACK: lambda x: x * x * (2.70158 * x - 1.70158),
         EasingType.CIRC: lambda x: 1 - math.sqrt(1 - x * x),
         EasingType.QUAD: lambda x: x * x,
@@ -67,7 +75,7 @@ class Tween:
         EasingType.SINE: lambda x: 1 - math.cos(x * math.pi / 2),
         EasingType.EXPO: lambda x: 0 if x == 0 else math.pow(2, 10 * (x - 1)),
     }
-    
+
     def __init__(
         self,
         start_value: float,
@@ -78,10 +86,10 @@ class Tween:
         loop: bool = False,
         yoyo: bool = False,
         delay: float = 0,
-        on_update: Optional[Callable[[float], None]] = None
+        on_update: Optional[Callable[[float], None]] = None,
     ):
         """Инициализация перехода.
-        
+
         Args:
             start_value: Начальное значение
             end_value: Конечное значение
@@ -96,38 +104,40 @@ class Tween:
         self.start_value = start_value
         self.end_value = end_value
         self.duration = duration
-        self.easing = self.EASING_FUNCTIONS.get(easing, self.EASING_FUNCTIONS[EasingType.LINEAR])
+        self.easing = self.EASING_FUNCTIONS.get(
+            easing, self.EASING_FUNCTIONS[EasingType.LINEAR]
+        )
         self.on_complete = on_complete
         self.loop = loop
         self.yoyo = yoyo
         self.delay = delay
         self.on_update = on_update
-        
+
         self.start_time = time.time()
         self.current_value = start_value
         self.is_playing = True
         self.is_paused = False
         self.pause_time = 0
         self.direction = 1  # 1 для движения вперед, -1 для движения назад
-        
+
     def update(self, dt: Optional[float] = None) -> Optional[float]:
         """Обновление перехода.
-        
+
         Args:
             dt: Время с последнего обновления
-            
+
         Returns:
             Текущее значение или None если завершен
         """
         if not self.is_playing or self.is_paused:
             return self.current_value
-            
+
         now = time.time()
         elapsed = now - self.start_time - self.delay
-        
+
         if elapsed < 0:  # Ожидаем задержку
             return self.start_value
-            
+
         if elapsed >= self.duration:
             if self.loop:
                 if self.yoyo:
@@ -143,33 +153,35 @@ class Tween:
                 if self.on_complete:
                     self.on_complete()
                 return None
-                
+
         progress = elapsed / self.duration
         eased = self.easing(progress)
-        
-        self.current_value = self.start_value + (self.end_value - self.start_value) * eased
-        
+
+        self.current_value = (
+            self.start_value + (self.end_value - self.start_value) * eased
+        )
+
         if self.on_update:
             self.on_update(self.current_value)
-            
+
         return self.current_value
-        
+
     def pause(self) -> None:
         """Пауза перехода."""
         if not self.is_paused:
             self.is_paused = True
             self.pause_time = time.time()
-            
+
     def resume(self) -> None:
         """Возобновление перехода."""
         if self.is_paused:
             self.is_paused = False
             self.start_time += time.time() - self.pause_time
-            
+
     def stop(self) -> None:
         """Остановка перехода."""
         self.is_playing = False
-        
+
     def reset(self) -> None:
         """Сброс перехода в начальное состояние."""
         self.start_time = time.time()
@@ -177,22 +189,22 @@ class Tween:
         self.is_playing = True
         self.is_paused = False
         self.direction = 1
-        
+
     def get_progress(self) -> float:
         """Получение прогресса перехода (0-1).
-        
+
         Returns:
             Прогресс перехода от 0 до 1
         """
         if not self.is_playing:
             return 1.0 if self.current_value == self.end_value else 0.0
-            
+
         now = time.time()
         elapsed = now - self.start_time - self.delay
-        
+
         if elapsed < 0:
             return 0.0
-            
+
         return min(1.0, elapsed / self.duration)
 
 
@@ -210,11 +222,11 @@ class TweenManager:
         tweens (Dict[str, Tween]): Dictionary of active tweens.
         paused (bool): Whether all tweens are paused.
     """
-    
+
     def __init__(self):
         """Инициализация менеджера переходов."""
         self.tweens: Dict[str, Tween] = {}
-        
+
     def add_tween(
         self,
         name: str,
@@ -226,10 +238,10 @@ class TweenManager:
         loop: bool = False,
         yoyo: bool = False,
         delay: float = 0,
-        on_update: Optional[Callable[[float], None]] = None
+        on_update: Optional[Callable[[float], None]] = None,
     ) -> None:
         """Добавление нового перехода.
-        
+
         Args:
             name: Имя перехода
             start_value: Начальное значение
@@ -251,12 +263,12 @@ class TweenManager:
             loop,
             yoyo,
             delay,
-            on_update
+            on_update,
         )
-        
+
     def update(self, dt: Optional[float] = None) -> None:
         """Обновление всех переходов.
-        
+
         Args:
             dt: Время с последнего обновления
         """
@@ -264,37 +276,37 @@ class TweenManager:
             value = self.tweens[name].update(dt)
             if value is None:
                 del self.tweens[name]
-                
+
     def get_tween(self, name: str) -> Optional[Tween]:
         """Получение перехода по имени.
-        
+
         Args:
             name: Имя перехода
-            
+
         Returns:
             Переход или None если не найден
         """
         return self.tweens.get(name)
-        
+
     def remove_tween(self, name: str) -> None:
         """Удаление перехода.
-        
+
         Args:
             name: Имя перехода
         """
         if name in self.tweens:
             del self.tweens[name]
-            
+
     def pause_all(self) -> None:
         """Пауза всех переходов."""
         for tween in self.tweens.values():
             tween.pause()
-            
+
     def resume_all(self) -> None:
         """Возобновление всех переходов."""
         for tween in self.tweens.values():
             tween.resume()
-            
+
     def stop_all(self) -> None:
         """Остановка всех переходов."""
         for tween in self.tweens.values():
@@ -306,21 +318,21 @@ if __name__ == "__main__":
     import pygame
     import sys
     from pathlib import Path
-    
+
     current_dir = Path(__file__).parent
     parent_dir = current_dir.parent.parent
     sys.path.append(str(parent_dir))
     import spritePro
-    
+
     # Инициализация
     spritePro.init()
 
     screen = spritePro.get_screen((800, 800), "Tween Demo")
-    
+
     # Создание спрайтов для демонстрации разных типов плавности
     sprites = []
     tween_manager = TweenManager()
-    
+
     # Создаем спрайты для каждого типа плавности
     y_pos = 50
     for easing_type in EasingType:
@@ -331,7 +343,7 @@ if __name__ == "__main__":
         pygame.draw.circle(surface, (255, 255, 255), (25, 25), 20)
         sprite.set_image(surface)
         sprites.append(sprite)
-        
+
         # Добавляем твин для движения спрайта
         tween_manager.add_tween(
             f"move_{easing_type.name}",
@@ -341,9 +353,9 @@ if __name__ == "__main__":
             easing=easing_type,
             loop=True,
             yoyo=True,
-            on_update=lambda x, s=sprite: setattr(s.rect, 'x', int(x))
+            on_update=lambda x, s=sprite: setattr(s.rect, "x", int(x)),
         )
-        
+
         # Добавляем твин для изменения цвета
         tween_manager.add_tween(
             f"color_{easing_type.name}",
@@ -353,15 +365,13 @@ if __name__ == "__main__":
             easing=easing_type,
             loop=True,
             yoyo=True,
-            on_update=lambda x, s=sprite: s.set_color((
-                max(0, min(255, int(x))),
-                max(0, min(255, int(255 - x))),
-                0
-            ))
+            on_update=lambda x, s=sprite: s.set_color(
+                (max(0, min(255, int(x))), max(0, min(255, int(255 - x))), 0)
+            ),
         )
-        
+
         y_pos += 60
-    
+
     # Создаем текст для отображения названий типов плавности
     font = pygame.font.Font(None, 24)
     texts = []
@@ -370,21 +380,23 @@ if __name__ == "__main__":
         text = font.render(easing_type.name, True, (255, 255, 255))
         texts.append((text, (20, y_pos + 15)))
         y_pos += 60
-    
+
     # Добавляем инструкции
-    instructions = font.render("Press SPACE to pause/resume, ESC to exit", True, (255, 255, 255))
+    instructions = font.render(
+        "Press SPACE to pause/resume, ESC to exit", True, (255, 255, 255)
+    )
     instructions_pos = (screen.get_width() // 2 - instructions.get_width() // 2, 10)
-    
+
     paused = False
-    
+
     # Главный цикл
     while True:
         spritePro.update(fill_color=(0, 0, 0))
-        
+
         # Обновляем все твины
         if not paused:
             tween_manager.update(spritePro.dt)
-        
+
         # Рисуем линии траектории
         y_pos = 50
         for _ in EasingType:
@@ -394,21 +406,21 @@ if __name__ == "__main__":
                 (50, 50, 50),  # Темно-серый цвет для линий
                 (100, y_pos + 25),  # Начало линии (центр начальной позиции спрайта)
                 (700, y_pos + 25),  # Конец линии (центр конечной позиции спрайта)
-                2  # Толщина линии
+                2,  # Толщина линии
             )
             y_pos += 60
-        
+
         # Обновляем спрайты
         for sprite in sprites:
             sprite.update(screen)
-            
+
         # Отображаем названия типов плавности
         for text, pos in texts:
             screen.blit(text, pos)
-            
+
         # Отображаем инструкции
         screen.blit(instructions, instructions_pos)
-        
+
         # Обработка событий
         for event in spritePro.events:
             if event.type == pygame.KEYDOWN:
@@ -420,4 +432,4 @@ if __name__ == "__main__":
                         tween_manager.resume_all()
                 elif event.key == pygame.K_ESCAPE:
                     pygame.quit()
-                    sys.exit() 
+                    sys.exit()

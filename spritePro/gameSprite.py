@@ -300,7 +300,7 @@ if __name__ == "__main__":
     player = GameSprite(
         sprite="",
         size=(250, 250),
-        pos=(spritePro.WH[0] // 4, spritePro.WH_CENTER[1]),
+        pos=(spritePro.WH[0] // 4, spritePro.WH_C[1]),
         max_health=100,
         speed=5,
     )
@@ -318,7 +318,7 @@ if __name__ == "__main__":
     enemy = GameSprite(
         sprite="",
         size=(40, 40),
-        pos=(spritePro.WH[0] * 3 // 4, spritePro.WH_CENTER[1]),
+        pos=(spritePro.WH[0] * 3 // 4, spritePro.WH_C[1]),
         max_health=10,
         speed=0,
     )

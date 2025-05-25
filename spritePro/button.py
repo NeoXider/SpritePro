@@ -84,7 +84,7 @@ class Button(Sprite):
         # Логика мыши
         self.interactor = MouseInteractor(sprite=self, on_click=on_click)
 
-    def update(self, screen: pygame.Surface):
+    def update(self, screen: pygame.Surface = None):
         """Updates button state and renders it to the screen.
 
         This method handles:
@@ -95,6 +95,8 @@ class Button(Sprite):
         Args:
             screen (pygame.Surface): The surface to render the button on.
         """
+        screen = screen or spritePro.screen
+
         self.interactor.update()
 
         # Определяем цвет и цель масштаба
