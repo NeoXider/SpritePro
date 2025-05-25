@@ -67,9 +67,16 @@ spritePro is a comprehensive game development framework that provides a rich set
 
 ## Installation
 
-```bash
-pip install spritePro
+Currently, spritePro is not available through pip. To use it in your project:
+
+1. Clone the repository or download the `spritePro` folder
+2. Place the `spritePro` folder in your project directory
+3. Import it in your code:
+```python
+import spritePro
 ```
+
+Note: In the future, spritePro will be available through pip installation.
 
 ## Quick Start
 
