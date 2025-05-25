@@ -24,8 +24,8 @@ class Button(Sprite):
         text_color (Tuple[int,int,int]): Цвет текста.
         font_name (Optional[Union[str, Path]]): Путь к TTF-шрифту или None.
         on_click (Callable): Обработчик клика по кнопке.
-        hover_scale (float): Масштаб при наведении.
-        press_scale (float): Масштаб при нажатии.
+        hover_scale_delta (float): Изменение масштаба при наведении.
+        press_scale_delta (float): Изменение масштаба при нажатии.
         hover_color / press_color / base_color: Цвета фона.
         animated (bool): Включить/выключить анимацию.
     """
@@ -40,8 +40,8 @@ class Button(Sprite):
         text_color: Tuple[int, int, int] = (0, 0, 0),
         font_name: Optional[Union[str, Path]] = None,
         on_click: Optional[Callable[[], None]] = None,
-        hover_scale: float = 1.05,
-        press_scale: float = 0.92,
+        hover_scale_delta: float = 0.05,
+        press_scale_delta: float = -0.08,
         hover_color: Tuple[int, int, int] = (230, 230, 230),
         press_color: Tuple[int, int, int] = (180, 180, 180),
         base_color: Tuple[int, int, int] = (255, 255, 255),
@@ -56,9 +56,10 @@ class Button(Sprite):
         self.hover_color = hover_color
         self.press_color = press_color
         self.current_color = base_color
-        self.hover_scale = hover_scale
-        self.press_scale = press_scale
-        self._target_scale = 1.0
+        self.hover_scale_delta = hover_scale_delta
+        self.press_scale_delta = press_scale_delta
+        self.start_scale = self.scale
+        self._target_scale = self.scale
         self.anim_speed = anim_speed
         self.animated = animated
 
@@ -86,20 +87,20 @@ class Button(Sprite):
         # Определяем цвет и цель масштаба
         if self.interactor.is_pressed and self.animated:
             self.current_color = self.press_color
-            self._target_scale = self.press_scale
+            self._target_scale = self.start_scale + self.press_scale_delta
         elif self.interactor.is_hovered and self.animated:
             self.current_color = self.hover_color
-            self._target_scale = self.hover_scale
+            self._target_scale = self.start_scale + self.hover_scale_delta
         else:
             self.current_color = self.color
-            self._target_scale = 1.0
+            self._target_scale = self.start_scale
 
         # Плавная анимация масштаба
         if self.animated:
             delta = (self._target_scale - self.scale) * self.anim_speed
-            self.set_scale(self.scale + delta)
+            self.set_scale(self.scale + delta, False)
         else:
-            self.set_scale(1.0)
+            self.set_scale(self._target_scale, False)
 
         # Рисуем фон (прямоугольник) и спрайт от родителя
         self.set_color(self.current_color)
@@ -108,6 +109,17 @@ class Button(Sprite):
         # Обновляем и рисуем текст
         self.text_sprite.rect.center = self.rect.center
         self.text_sprite.update(screen)
+
+    def set_scale(self, scale: float, update: bool = True):
+        """
+        Устанавливает масштаб кнопки.
+
+        :param scale: Масштаб.
+        :param update: Обновлять ли масштаб.
+        """
+        if update:
+            self.start_scale = scale
+        super().set_scale(scale)
 
     def set_on_click(self, func: Callable):
         """
