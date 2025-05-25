@@ -4,30 +4,39 @@ import pygame
 from typing import Tuple, Optional, Callable, Union, List
 
 
-sys.path.append(str(Path(__file__).parent.parent))
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent
+sys.path.append(str(parent_dir))
+
 from spritePro.sprite import Sprite
-from spritePro.text import TextSprite
-from spritePro.mouse_interactor import MouseInteractor
+from spritePro.components.text import TextSprite
+from spritePro.components.mouse_interactor import MouseInteractor
 import spritePro
 import random
 
 
 class Button(Sprite):
-    """
-    Удобная UI-кнопка на базе Sprite + TextSprite + MouseInteractor.
+    """A convenient UI button based on Sprite + TextSprite + MouseInteractor.
+
+    This class combines sprite functionality with text display and mouse interaction
+    to create an interactive button with hover and press animations.
 
     Args:
-        size (Tuple[int, int]): Размер кнопки (ширина, высота).
-        pos (Tuple[int, int]): Центр кнопки в координатах экрана.
-        text (str): Надпись на кнопке.
-        text_size (int): Базовый размер шрифта.
-        text_color (Tuple[int,int,int]): Цвет текста.
-        font_name (Optional[Union[str, Path]]): Путь к TTF-шрифту или None.
-        on_click (Callable): Обработчик клика по кнопке.
-        hover_scale_delta (float): Изменение масштаба при наведении.
-        press_scale_delta (float): Изменение масштаба при нажатии.
-        hover_color / press_color / base_color: Цвета фона.
-        animated (bool): Включить/выключить анимацию.
+        sprite (str): Path to the sprite image. Defaults to empty string.
+        size (Tuple[int, int]): Button dimensions (width, height). Defaults to (250, 70).
+        pos (Tuple[int, int]): Button center position on screen. Defaults to (300, 200).
+        text (str): Button label text. Defaults to "Button".
+        text_size (int): Base font size. Defaults to 24.
+        text_color (Tuple[int,int,int]): Text color in RGB. Defaults to (0, 0, 0).
+        font_name (Optional[Union[str, Path]]): Path to TTF font or None. Defaults to None.
+        on_click (Optional[Callable]): Click handler function. Defaults to None.
+        hover_scale_delta (float): Scale change on hover. Defaults to 0.05.
+        press_scale_delta (float): Scale change on press. Defaults to -0.08.
+        hover_color (Tuple[int,int,int]): Background color on hover. Defaults to (230, 230, 230).
+        press_color (Tuple[int,int,int]): Background color on press. Defaults to (180, 180, 180).
+        base_color (Tuple[int,int,int]): Default background color. Defaults to (255, 255, 255).
+        anim_speed (float): Animation speed multiplier. Defaults to 0.2.
+        animated (bool): Whether to enable animations. Defaults to True.
     """
 
     def __init__(
@@ -76,11 +85,15 @@ class Button(Sprite):
         self.interactor = MouseInteractor(sprite=self, on_click=on_click)
 
     def update(self, screen: pygame.Surface):
-        """
-        Вызывается из основного цикла:
-          - update логики мыши
-          - установка цвета и масштаба
-          - отрисовка фона, основного спрайта и текста
+        """Updates button state and renders it to the screen.
+
+        This method handles:
+        - Mouse interaction updates
+        - Color and scale state changes
+        - Background, sprite and text rendering
+
+        Args:
+            screen (pygame.Surface): The surface to render the button on.
         """
         self.interactor.update()
 
@@ -111,21 +124,21 @@ class Button(Sprite):
         self.text_sprite.update(screen)
 
     def set_scale(self, scale: float, update: bool = True):
-        """
-        Устанавливает масштаб кнопки.
+        """Sets the button's scale.
 
-        :param scale: Масштаб.
-        :param update: Обновлять ли масштаб.
+        Args:
+            scale (float): The new scale value.
+            update (bool, optional): Whether to update the base scale. Defaults to True.
         """
         if update:
             self.start_scale = scale
         super().set_scale(scale)
 
     def set_on_click(self, func: Callable):
-        """
-        Устанавливает функцию, которая будет вызываться при нажатии на кнопку.
+        """Sets the click handler function for the button.
 
-        :param func: Функция, которую нужно вызвать.
+        Args:
+            func (Callable): The function to call when the button is clicked.
         """
         self.interactor.on_click = func
 

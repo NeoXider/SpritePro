@@ -2,10 +2,9 @@ from .gameSprite import GameSprite
 from .physicSprite import PhysicalSprite
 from .sprite import Sprite
 from .button import Button
-from .pymunk_sprite import PymunkGameSprite
-from .timer import Timer
-from .text import TextSprite
-from .mouse_interactor import MouseInteractor
+from .components.timer import Timer
+from .components.text import TextSprite
+from .components.mouse_interactor import MouseInteractor
 
 from typing import List
 import pygame
@@ -16,7 +15,6 @@ __all__ = [
     "PhysicalSprite",
     "Sprite",
     "Button",
-    "PymunkGameSprite",
     "Timer",
     "TextSprite",
     "MouseInteractor",

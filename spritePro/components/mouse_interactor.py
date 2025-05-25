@@ -4,21 +4,32 @@ from typing import Callable, Optional, List
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent.parent
+sys.path.append(str(parent_dir))
 import spritePro
 
 
 class MouseInteractor:
-    """
-    Добавляет спрайту hover/click/press-логику.
+    """Adds hover/click/press interaction logic to sprites.
+
+    This class handles mouse interaction events for a sprite, including:
+    - Hover detection (enter/exit)
+    - Mouse button press/release
+    - Click detection
+    - Custom callback support for all events
 
     Args:
-        sprite: любой pygame.sprite.Sprite с атрибутом .rect
-        on_click: вызывается при отпускании кнопки над спрайтом
-        on_mouse_down: при нажатии над спрайтом
-        on_mouse_up: при отпускании (вне зависимости от позиции)
-        on_hover_enter: при первом наведении мыши
-        on_hover_exit: при уходе мыши
+        sprite (pygame.sprite.Sprite): Any sprite with a .rect attribute.
+        on_click (Optional[Callable[[], None]]): Called when mouse button is released over sprite.
+        on_mouse_down (Optional[Callable[[], None]]): Called when mouse button is pressed over sprite.
+        on_mouse_up (Optional[Callable[[], None]]): Called when mouse button is released (regardless of position).
+        on_hover_enter (Optional[Callable[[], None]]): Called when mouse first enters sprite area.
+        on_hover_exit (Optional[Callable[[], None]]): Called when mouse leaves sprite area.
+
+    Attributes:
+        is_hovered (bool): Whether mouse is currently over the sprite.
+        is_pressed (bool): Whether mouse button is currently pressed over the sprite.
     """
 
     def __init__(
@@ -49,9 +60,14 @@ class MouseInteractor:
         return self._pressed
 
     def update(self, events: Optional[List[pygame.event.Event]] = None):
-        """
-        Надо вызывать каждый кадр (до отрисовки):
+        """Updates interaction state based on mouse events.
+
+        Should be called every frame before rendering:
             inter.update(pygame.event.get())
+
+        Args:
+            events (Optional[List[pygame.event.Event]]): List of pygame events to process.
+                If None, uses spritePro.events.
         """
         events = events or spritePro.events
         pos = pygame.mouse.get_pos()

@@ -3,7 +3,10 @@ import pygame
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent
+sys.path.append(str(parent_dir))
+
 import spritePro
 from spritePro.sprite import Sprite
 
@@ -12,6 +15,20 @@ from spritePro.components.health import HealthComponent, DamageCallback, DeathCa
 
 
 class GameSprite(Sprite):
+    """A game sprite with health management and collision handling.
+
+    This class extends the base Sprite with:
+    - Health system with damage and death handling
+    - Collision detection and resolution
+    - Event callbacks for collisions and death
+    - State management for hit/death conditions
+
+    Attributes:
+        collision_step (int): Step size for collision resolution. Defaults to 1.
+        health_component (HealthComponent): Manages health-related functionality.
+        on_collision (Optional[Callable]): Callback for collision events.
+    """
+
     _last_obstacles_hash = None
     _last_obstacles_rects = None
     collision_step: int = 1
@@ -26,17 +43,15 @@ class GameSprite(Sprite):
         # Возможность передать начальное HP, по умолчанию равно max_health
         current_health: Optional[int] = None,
     ):
-        """
-        Инициализация игрового спрайта с компонентом здоровья.
+        """Initializes a game sprite with health management.
 
-        Аргументы:
-            sprite: Путь к изображению спрайта или имя ресурса
-            size: Размер спрайта (ширина, высота) по умолчанию (50, 50)
-            pos: Начальная позиция спрайта (x, y) по умолчанию (0, 0)
-            speed: Скорость движения спрайта по умолчанию 0
-            max_health: Максимальное количество здоровья спрайта (по умолчанию 100).
-                        Это значение используется для инициализации HealthComponent.
-            current_health: Начальное текущее здоровье. Если None, равно max_health.
+        Args:
+            sprite (str): Path to sprite image or resource name.
+            size (tuple, optional): Sprite dimensions (width, height). Defaults to (50, 50).
+            pos (tuple, optional): Initial position (x, y). Defaults to (0, 0).
+            speed (float, optional): Movement speed. Defaults to 0.
+            max_health (int, optional): Maximum health value. Defaults to 100.
+            current_health (Optional[int], optional): Initial health value. If None, equals max_health.
         """
         super().__init__(sprite, size, pos, speed)
 
@@ -63,9 +78,12 @@ class GameSprite(Sprite):
     # --- Новые внутренние методы для обработки колбэков HealthComponent ---
 
     def _handle_damage_state(self, amount: float):
-        """
-        Внутренний колбэк HealthComponent, вызывается при получении урона.
-        Устанавливает состояние спрайта в 'hit'.
+        """Internal callback for handling damage events.
+
+        Sets sprite state to 'hit' when damage is taken.
+
+        Args:
+            amount (float): Amount of damage taken.
         """
         print(
             f"{self.name if hasattr(self, 'name') else type(self).__name__} получил урон. Устанавливаем состояние 'hit'."
@@ -73,9 +91,12 @@ class GameSprite(Sprite):
         self.state = "hit"  # Устанавливаем состояние "hit"
 
     def _handle_death_event(self, dead_sprite: "Sprite"):
-        """
-        Внутренний колбэк HealthComponent, вызывается при смерти спрайта.
-        Устанавливает состояние спрайта в 'dead' и вызывает пользовательский колбэк.
+        """Internal callback for handling death events.
+
+        Sets sprite state to 'dead' and calls user death callback if set.
+
+        Args:
+            dead_sprite (Sprite): The sprite that died.
         """
         print(
             f"{self.name if hasattr(self, 'name') else type(self).__name__} умер. Устанавливаем состояние 'dead'."
@@ -91,14 +112,20 @@ class GameSprite(Sprite):
     # --- Методы установки пользовательских колбэков (теперь просто сохраняют ссылку) ---
 
     def on_collision_event(self, callback: Callable):
-        """Установка функции обратного вызова для событий столкновения."""
+        """Sets callback function for collision events.
+
+        Args:
+            callback (Callable): Function to call on collision.
+        """
         self.on_collision = callback  # TODO: Возможно, стоит интегрировать коллизии и урон через компоненты
 
     def on_death_event(self, callback: Callable[["GameSprite"], None]):
-        """
-        Установка функции обратного вызова для событий смерти.
-        Эта функция будет вызвана после того, как HealthComponent
-        обработает смерть.
+        """Sets callback function for death events.
+
+        This callback is called after HealthComponent processes the death event.
+
+        Args:
+            callback (Callable[[GameSprite], None]): Function to call on death.
         """
         # Сохраняем пользовательский колбэк
         if callable(callback):
@@ -110,14 +137,13 @@ class GameSprite(Sprite):
     # Они не зависят напрямую от внутренней реализации здоровья, только от наличия спрайта.
 
     def collide_with(self, other_sprite) -> bool:
-        """
-        Проверка столкновения с другим спрайтом, используя маски для точности.
+        """Checks collision with another sprite using pixel-perfect masks.
 
-        Аргументы:
-            other_sprite: Другой экземпляр GameSprite для проверки столкновения
+        Args:
+            other_sprite (GameSprite): Other sprite to check collision with.
 
-        Возвращает:
-            bool: True если есть столкновение, False иначе
+        Returns:
+            bool: True if collision detected, False otherwise.
         """
         if pygame.sprite.collide_rect(self, other_sprite):
             offset = (
@@ -130,21 +156,28 @@ class GameSprite(Sprite):
         return False
 
     def collide_with_group(self, group: pygame.sprite.Group) -> List:
-        """
-        Проверка столкновения с группой спрайтов, используя маски для точности.
+        """Checks collision with a group of sprites using pixel-perfect masks.
 
-        Аргументы:
-            group: Группа спрайтов для проверки столкновения
+        Args:
+            group (pygame.sprite.Group): Group of sprites to check collision with.
 
-        Возвращает:
-            list: Список спрайтов, с которыми сталкивается данный спрайт
+        Returns:
+            List: List of sprites that collide with this sprite.
         """
         return pygame.sprite.spritecollide(
             self, group, False, pygame.sprite.collide_mask
         )
 
     def collide_with_tag(self, group: pygame.sprite.Group, tag: str) -> List:
-        """Проверка столкновения с группой спрайтов по тегу."""
+        """Checks collision with sprites in a group that have a specific tag.
+
+        Args:
+            group (pygame.sprite.Group): Group of sprites to check.
+            tag (str): Tag to filter sprites by.
+
+        Returns:
+            List: List of tagged sprites that collide with this sprite.
+        """
         return [
             sprite
             for sprite in group
@@ -152,6 +185,16 @@ class GameSprite(Sprite):
         ]
 
     def _get_collision_side(self, prev_x, prev_y, rect):
+        """Determines which side of a rectangle the collision occurred on.
+
+        Args:
+            prev_x (float): Previous X position.
+            prev_y (float): Previous Y position.
+            rect (pygame.Rect): Rectangle to check collision side against.
+
+        Returns:
+            str: Collision side ('top', 'bottom', 'left', 'right', or 'inside').
+        """
         # Определяет сторону столкновения: 'top', 'bottom', 'left', 'right', 'inside'
         cx, cy = self.rect.center
         if prev_y + self.rect.height // 2 <= rect.top:
@@ -166,10 +209,13 @@ class GameSprite(Sprite):
             return "inside"
 
     def resolve_collisions(self, *obstacles):
-        """
-        Останавливает движение при столкновении с любыми препятствиями.
-        obstacles — любое количество спрайтов, ректов, групп или списков.
-        Возвращает список кортежей (rect, side), где side — сторона столкновения.
+        """Resolves collisions with obstacles and stops movement.
+
+        Args:
+            *obstacles: Variable number of sprites, rects, groups, or lists to check against.
+
+        Returns:
+            List[Tuple[pygame.Rect, str]]: List of (rect, side) tuples for collisions.
         """
 
         def flatten_ids(objs):

@@ -1,88 +1,190 @@
-# SpritePro
+# spritePro
 
-`SpritePro` — это модуль для работы с 2D-спрайтами в Pygame, который предоставляет классы для создания и управления спрайтами с поддержкой физики, анимации и взаимодействия с окружением.
+[Русская версия](README.ru.md)
 
-## Классы
+A powerful and flexible Python game development library built on top of Pygame, created by neoxider.
 
-### GameSprite
+## Overview
 
-Класс `GameSprite` является базовым классом для создания спрайтов. Он предоставляет основные функции для загрузки изображений, управления состоянием спрайта и обработки столкновений.
+spritePro is a comprehensive game development framework that provides a rich set of tools and components for creating 2D games in Python. It extends Pygame's functionality with advanced sprite management, physics, UI components, and utility functions.
 
-#### Конструктор
+## Features
 
-```python
-GameSprite(sprite: str, size: tuple = (50, 50), pos: tuple = (0, 0), speed: float = 0, health: int = 100)
+### Core Features
+- **Advanced Sprite System**: Base sprite class with built-in support for:
+  - Movement and velocity control
+  - Rotation and scaling
+  - Transparency and color tinting
+  - State management
+  - Collision detection
+  - Movement boundaries
+
+### Physics System
+- **Physics Integration**: Physics-based sprites with:
+  - Real-world units (meters, m/s, m/s²)
+  - Gravity and ground detection
+  - Force application and acceleration
+  - Bouncing mechanics
+  - Ground friction
+  - Collision resolution
+
+### Game Components
+- **Text System**: Advanced text rendering with:
+  - Custom fonts support
+  - Color and size control
+  - Text input handling
+  - Dynamic updates
+
+- **Button System**: Interactive UI buttons featuring:
+  - Hover and press animations
+  - Customizable appearance
+  - Event callbacks
+  - Text label support
+
+- **Timer System**: Precise timing control with:
+  - Callback support
+  - Pause/resume functionality
+  - Repeating timers
+  - Progress tracking
+
+- **Health System**: Comprehensive health management:
+  - Health tracking
+  - Damage/healing mechanics
+  - Death state management
+  - Event callbacks
+
+- **Mouse Interaction**: Advanced mouse handling:
+  - Hover detection
+  - Click/press tracking
+  - Custom event callbacks
+  - Automatic state updates
+
+### Utility Functions
+- Surface manipulation
+- Collision detection helpers
+- Resource management
+- Game state utilities
+
+## Installation
+
+```bash
+pip install spritePro
 ```
 
-- `sprite`: Путь к изображению спрайта или имя ресурса.
-- `size`: Размер спрайта (ширина, высота) по умолчанию (50, 50).
-- `pos`: Начальная позиция спрайта (x, y) по умолчанию (0, 0).
-- `speed`: Скорость движения спрайта по умолчанию 0.
-- `health`: Здоровье спрайта по умолчанию 100.
-
-#### Методы
-
-- `update(window: pygame.Surface)`: Обновляет состояние спрайта и отрисовывает его на переданной поверхности.
-- `move(dx: float, dy: float)`: Перемещает спрайт на заданное расстояние.
-- `handle_keyboard_input(keys=None, ...)`: Обрабатывает ввод с клавиатуры для движения спрайта.
-- `collide_with(other_sprite)`: Проверяет столкновение с другим спрайтом.
-- `set_velocity(vx: float, vy: float)`: Устанавливает скорость спрайта.
-- `set_state(state: str)`: Устанавливает состояние спрайта, если оно допустимо.
-- `is_in_state(state: str)`: Проверяет, находится ли спрайт в заданном состоянии.
-- `fade_by(amount: int, min_alpha: int = 0, max_alpha: int = 255)`: Изменяет прозрачность спрайта на заданное количество с ограничениями.
-- `scale_by(amount: float, min_scale: float = 0.0, max_scale: float = 2.0)`: Изменяет масштаб спрайта на заданное количество с ограничениями.
-- `on_collision_event(callback: Callable)`: Устанавливает функцию обратного вызова для событий столкновения.
-- `on_death_event(callback: Callable)`: Устанавливает функцию обратного вызова для событий смерти.
-
-### PhysicalSprite
-
-Класс `PhysicalSprite` наследует от `GameSprite` и добавляет поддержку физики, включая гравитацию и возможность отскока.
-
-#### Конструктор
+## Quick Start
 
 ```python
-PhysicalSprite(sprite: str, size: tuple = (50, 50), pos: tuple = (0, 0), speed: float = 0, health: int = 100, mass: float = 1.0, gravity: float = 9.81, bounce_enabled: bool = False)
-```
-
-- `mass`: Масса спрайта, используемая для расчета физики.
-- `gravity`: Ускорение свободного падения, по умолчанию 9.81.
-- `bounce_enabled`: Включает или отключает возможность отскока.
-
-#### Методы
-
-- `apply_force(force: pygame.math.Vector2)`: Применяет силу к спрайту.
-- `bounce(normal: pygame.math.Vector2)`: Обрабатывает отскок от поверхности с заданной нормалью.
-- `update_physics(delta_time: float)`: Обновляет физическое состояние спрайта.
-- `limit_movement(bounds: pygame.Rect, ...)`: Ограничивает движение спрайта в пределах заданных границ с учетом отскока.
-
-### Пример использования
-
-```python
-import pygame
 import spritePro
-from spritePro import PhysicalSprite
 
+# Initialize the library
 spritePro.init()
-window = spritePro.get_screen((800, 600))
 
-# Создание физического спрайта
-ball = PhysicalSprite("Sprites/ball.png", size=(50, 50), pos=(100, 100), speed=5, mass=1.0)
+# Create a window
+spritePro.get_screen((800, 600), "My Game")
 
-while running:
+# Create a basic sprite
+player = spritePro.Sprite("player.png", size=(50, 50), pos=(400, 300))
+
+# Main game loop
+while True:
     spritePro.update()
-
-    ball.handle_keyboard_input(keys)  # Обработка ввода
-    ball.update(window)  # Обновление спрайта
-    ball.limit_movement(window.get_rect())  # Ограничение движения
-
-    pygame.display.flip()
+    player.update(spritePro.screen)
 ```
 
-## Заключение
+## Examples
 
-Модуль `spritePro.py` предоставляет мощные инструменты для работы с 2D-спрайтами в Pygame, включая поддержку физики, анимации и взаимодействия с окружением. Вы можете использовать его для создания интерактивных игр и приложений. 
+### Basic Sprite
+```python
+# Create a sprite with custom properties
+sprite = spritePro.Sprite(
+    "sprite.png",
+    size=(100, 100),
+    pos=(400, 300),
+    speed=5
+)
 
-так же есть demo games
+# Add movement and effects
+sprite.move_towards((500, 400))
+sprite.set_scale(1.5)
+sprite.set_alpha(200)
+```
+
+### Physics Sprite
+```python
+# Create a physics-enabled sprite
+physics_sprite = spritePro.PhysicSprite(
+    "ball.png",
+    mass=1.0,
+    gravity=9.8,
+    bounce_enabled=True
+)
+
+# Apply forces and handle physics
+physics_sprite.apply_force(pygame.math.Vector2(10, 0))
+physics_sprite.update_physics(60)
+```
+
+### UI Components
+```python
+# Create a button
+button = spritePro.Button(
+    text="Click Me",
+    pos=(400, 300),
+    on_click=lambda: print("Clicked!")
+)
+
+# Create text
+text = spritePro.TextSprite(
+    text="Hello World",
+    font_size=32,
+    color=(255, 255, 255)
+)
+```
+
+## Documentation
+
+For detailed documentation on how to use spritePro, please refer to the [Documentation](DOCUMENTATION.md) file.
+
+## Demo Games
+
+spritePro comes with a demo game showcasing its capabilities:
+
+**Ping Pong**: Classic ping pong game with physics
+
+![Demo Game](https://github.com/user-attachments/assets/153ddc64-18d7-4d8a-b0c2-baa12b4e77bc)
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Author
+
+Created by neoxider
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+### Contributing Guidelines
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## Support
+
+If you encounter any issues or have questions, please:
+1. Check the [Documentation](DOCUMENTATION.md)
+2. Search for existing issues
+3. Create a new issue if needed
+
+## Acknowledgments
+
+- Thanks to the Pygame community for their excellent work
+- Special thanks to all contributors who have helped improve spritePro
+
+
 ![image](https://github.com/user-attachments/assets/153ddc64-18d7-4d8a-b0c2-baa12b4e77bc)
 ![image](https://github.com/user-attachments/assets/ca405e6c-06b7-4494-8c8c-8a04fb173e8d)
 

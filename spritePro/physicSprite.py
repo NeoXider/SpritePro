@@ -2,15 +2,31 @@ import pygame
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent
+sys.path.append(str(parent_dir))
+
 from spritePro.gameSprite import GameSprite
 
-PIXELS_PER_METER = 50  # 1 метр = 50 пикселей
+PIXELS_PER_METER = 50  # 1 meter = 50 pixels
 SKIN = 2
 
 
 class PhysicalSprite(GameSprite):
-    jump_force = 7  # м/с, как в Unity
+    """A physics-enabled sprite with gravity, bouncing, and collision handling.
+
+    This class extends GameSprite with:
+    - Physics simulation (gravity, forces, acceleration)
+    - Ground detection and friction
+    - Bouncing mechanics
+    - Pixel-to-meter conversion for physics calculations
+
+    Attributes:
+        jump_force (float): Jump force in m/s. Defaults to 7.
+        MAX_STEPS (int): Maximum physics steps per frame. Defaults to 8.
+    """
+
+    jump_force = 7  # m/s, like in Unity
     MAX_STEPS = 8
 
     def __init__(
@@ -18,18 +34,29 @@ class PhysicalSprite(GameSprite):
         sprite: str,
         size: tuple = (50, 50),
         pos: tuple = (0, 0),
-        speed: float = 5,  # м/с
+        speed: float = 5,  # m/s
         health: int = 100,
         mass: float = 1.0,
         gravity: float = 9.8,
         bounce_enabled: bool = False,
     ):
-        """Инициализация физического спрайта с поддержкой гравитации и отскока."""
+        """Initializes a physics-enabled sprite.
+
+        Args:
+            sprite (str): Path to sprite image or resource name.
+            size (tuple, optional): Sprite dimensions (width, height). Defaults to (50, 50).
+            pos (tuple, optional): Initial position (x, y). Defaults to (0, 0).
+            speed (float, optional): Movement speed in m/s. Defaults to 5.
+            health (int, optional): Maximum health value. Defaults to 100.
+            mass (float, optional): Mass in kg. Defaults to 1.0.
+            gravity (float, optional): Gravity force in m/s². Defaults to 9.8.
+            bounce_enabled (bool, optional): Whether to enable bouncing. Defaults to False.
+        """
         super().__init__(sprite, size, pos, speed, health)
         self.force = pygame.math.Vector2(0, 0)
         self.acceleration = pygame.math.Vector2(0, 0)
         self.mass = mass
-        self.gravity = gravity  # м/с^2
+        self.gravity = gravity  # m/s^2
         self.bounce_enabled = bounce_enabled
         self.is_grounded = False
         self.min_velocity_threshold = 0.01
@@ -38,23 +65,34 @@ class PhysicalSprite(GameSprite):
         self.position = pygame.math.Vector2(
             pos[0] / PIXELS_PER_METER, pos[1] / PIXELS_PER_METER
         )
-        self.velocity = pygame.math.Vector2(0, 0)  # м/с
+        self.velocity = pygame.math.Vector2(0, 0)  # m/s
         self.rect.center = (
             int(self.position.x * PIXELS_PER_METER),
             int(self.position.y * PIXELS_PER_METER),
         )
 
     def apply_force(self, force: pygame.math.Vector2):
-        """Применение силы к физическому спрайту."""
+        """Applies a force vector to the sprite.
+
+        Args:
+            force (pygame.math.Vector2): Force vector to apply.
+        """
         self.force += force
 
     def bounce(self, normal: pygame.math.Vector2):
-        """Обработка отскока от поверхности с заданной нормалью."""
+        """Handles bouncing off a surface with given normal.
+
+        Args:
+            normal (pygame.math.Vector2): Surface normal vector.
+        """
         self.velocity = self.velocity - 2 * self.velocity.dot(normal) * normal
 
     def update_physics(self, fps: float, collisions_enabled: bool = True):
-        """Обновление физики спрайта с учетом гравитации и состояния на земле. fps - кадров в секунду.
-        Если collisions_enabled=False, позиция обновляется по velocity (без коллизий).
+        """Updates sprite physics including gravity and ground state.
+
+        Args:
+            fps (float): Frames per second for delta time calculation.
+            collisions_enabled (bool, optional): Whether to handle collisions. Defaults to True.
         """
         dt = 1.0 / fps
         if not self.is_grounded:
@@ -83,13 +121,16 @@ class PhysicalSprite(GameSprite):
         self._x_controlled_this_frame = False
 
     def update(self, window: pygame.Surface):
-        """
-        Только отрисовка! Не обновляет физику.
-        В основном цикле используйте:
-            handle_keyboard_input()
-            update_physics(dt)
-            limit_movement(...)
-            update(SCREEN)
+        """Renders the sprite without updating physics.
+
+        Note: In main loop, use in this order:
+            1. handle_keyboard_input()
+            2. update_physics(dt)
+            3. limit_movement(...)
+            4. update(SCREEN)
+
+        Args:
+            window (pygame.Surface): Surface to render on.
         """
         super().update(window)
 
@@ -105,19 +146,18 @@ class PhysicalSprite(GameSprite):
         padding_top: int = 0,
         padding_bottom: int = 0,
     ):
-        """
-        Ограничивает движение спрайта в пределах заданных границ с учетом отступов и возможности отскока.
+        """Limits sprite movement within bounds with padding and bounce support.
 
-        Аргументы:
-            bounds: Прямоугольник, определяющий границы движения спрайта.
-            check_left: Проверять границу слева (по умолчанию True).
-            check_right: Проверять границу справа (по умолчанию True).
-            check_top: Проверять верхнюю границу (по умолчанию True).
-            check_bottom: Проверять нижнюю границу (по умолчанию True).
-            padding_left: Отступ слева (по умолчанию 0).
-            padding_right: Отступ справа (по умолчанию 0).
-            padding_top: Отступ сверху (по умолчанию 0).
-            padding_bottom: Отступ снизу (по умолчанию 0).
+        Args:
+            bounds (pygame.Rect): Boundary rectangle.
+            check_left (bool, optional): Whether to check left boundary. Defaults to True.
+            check_right (bool, optional): Whether to check right boundary. Defaults to True.
+            check_top (bool, optional): Whether to check top boundary. Defaults to True.
+            check_bottom (bool, optional): Whether to check bottom boundary. Defaults to True.
+            padding_left (int, optional): Left padding. Defaults to 0.
+            padding_right (int, optional): Right padding. Defaults to 0.
+            padding_top (int, optional): Top padding. Defaults to 0.
+            padding_bottom (int, optional): Bottom padding. Defaults to 0.
         """
         self.is_grounded = False
         x, y = self.position.x, self.position.y
@@ -174,15 +214,13 @@ class PhysicalSprite(GameSprite):
         right_key=pygame.K_RIGHT,
         up_key=pygame.K_UP,
     ):
-        """
-        Обработка ввода с клавиатуры для движения физического спрайта.
+        """Handles keyboard input for physics-based movement.
 
-        Аргументы:
-            keys: Состояние всех клавиш. Если None, будет использован pygame.key.get_pressed()
-            up_key: Клавиша для движения вверх (по умолчанию стрелка вверх)
-            down_key: Клавиша для движения вниз (по умолчанию стрелка вниз)
-            left_key: Клавиша для движения влево (по умолчанию стрелка влево)
-            right_key: Клавиша для движения вправо (по умолчанию стрелка вправо)
+        Args:
+            keys (Optional[pygame.key.ScancodeWrapper]): Keyboard state. If None, uses pygame.key.get_pressed().
+            left_key (int, optional): Key for left movement. Defaults to pygame.K_LEFT.
+            right_key (int, optional): Key for right movement. Defaults to pygame.K_RIGHT.
+            up_key (int, optional): Key for jumping. Defaults to pygame.K_UP.
         """
         if keys is None:
             keys = pygame.key.get_pressed()
@@ -202,16 +240,33 @@ class PhysicalSprite(GameSprite):
             self.jump(self.jump_force)
 
     def jump(self, jump_force: float):
-        """Применение силы для прыжка."""
+        """Applies jump force if sprite is grounded.
+
+        Args:
+            jump_force (float): Jump force to apply in m/s.
+        """
         if self.is_grounded:
             self.is_grounded = False
             self.velocity.y = -jump_force
 
     def force_in_direction(self, direction: pygame.math.Vector2, force: float):
-        """Применение силы в заданном направлении."""
+        """Applies force in a specific direction.
+
+        Args:
+            direction (pygame.math.Vector2): Direction vector.
+            force (float): Force magnitude.
+        """
         self.apply_force(direction.normalize() * force)
 
     def _check_grounded(self, rects):
+        """Checks if sprite is grounded on any of the given rectangles.
+
+        Args:
+            rects (List[pygame.Rect]): List of rectangles to check against.
+
+        Returns:
+            bool: True if sprite is grounded, False otherwise.
+        """
         for r in rects:
             if (
                 abs(self.rect.bottom - r.top) <= SKIN
@@ -230,12 +285,20 @@ class PhysicalSprite(GameSprite):
         limit_left=True,
         limit_right=True,
     ):
+        """Resolves collisions while moving sprite by velocity.
+
+        Handles collisions in order: Y-axis first, then X-axis.
+        Works reliably for platformers and any platforms.
+
+        Args:
+            *obstacles: Variable number of sprites, rects, groups, or lists to check against.
+            fps (int, optional): Frames per second for delta time. Defaults to 60.
+            limit_top (bool, optional): Whether to limit top movement. Defaults to True.
+            limit_bottom (bool, optional): Whether to limit bottom movement. Defaults to True.
+            limit_left (bool, optional): Whether to limit left movement. Defaults to True.
+            limit_right (bool, optional): Whether to limit right movement. Defaults to True.
         """
-        Перемещает спрайт по velocity с учётом коллизий: сначала по Y, затем по X.
-        Надёжно работает для платформеров и любых платформ.
-        obstacles — любое количество спрайтов, ректов, групп или списков.
-        fps — кадров в секунду (для расчёта dt).
-        """
+        # Move sprite by velocity with collision handling: Y-axis first, then X-axis
         dt = 1.0 / fps
         rects = []
 

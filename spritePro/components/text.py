@@ -5,29 +5,29 @@ from typing import Tuple, Optional, Union
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent.parent
+sys.path.append(str(parent_dir))
+
 import spritePro
 from spritePro.sprite import Sprite
 
 
 class TextSprite(Sprite):
-    """
-    Sprite, отображающий текст и наследующий все механики базового Sprite:
-      – перемещение и скорость
-      – вращение и масштабирование
-      – прозрачность и отражение
-      – ограничение движения и коллизии
+    """A sprite that displays text with all base Sprite mechanics.
 
-    При обновлении текста, цвета или шрифта автоматически перерисовывает изображение спрайта.
+    This class extends the base Sprite functionality to handle text rendering while maintaining
+    all core sprite features like movement, rotation, scaling, transparency, and collision detection.
+    Automatically redraws the sprite image when text, color, or font is updated.
 
     Args:
-        text (str): Текст для отображения.
-        font_size (int): Размер шрифта в пунктах.
-        color (Tuple[int, int, int]): Цвет текста в формате RGB.
-        pos (Tuple[int, int]): Начальная позиция центра спрайта (x, y).
-        font_name (Optional[Union[str, Path]]): Путь к .ttf-файлу шрифта или None для системного.
-        speed (float): Базовая скорость движения спрайта.
-        **sprite_kwargs: Дополнительные аргументы, передаваемые в Sprite (например, auto_flip, stop_threshold и т.д.).
+        text (str): Text to display.
+        font_size (int): Font size in points. Defaults to 24.
+        color (Tuple[int, int, int]): Text color in RGB format. Defaults to (255, 255, 255).
+        pos (Tuple[int, int]): Initial center position of the sprite (x, y). Defaults to (0, 0).
+        font_name (Optional[Union[str, Path]]): Path to .ttf font file or None for system font. Defaults to None.
+        speed (float): Base movement speed of the sprite. Defaults to 0.
+        **sprite_kwargs: Additional arguments passed to Sprite (e.g., auto_flip, stop_threshold).
     """
 
     def __init__(
@@ -68,6 +68,16 @@ class TextSprite(Sprite):
             self.set_text()
 
     def input(self, k_delete: pygame.key = pygame.K_ESCAPE) -> str:
+        """Handles text input from keyboard events.
+
+        Processes keyboard input to modify the text content, supporting backspace and custom delete key.
+
+        Args:
+            k_delete (pygame.key, optional): Key to clear text. Defaults to pygame.K_ESCAPE.
+
+        Returns:
+            str: The current text content after processing input.
+        """
         for e in spritePro.events:
             if e.type == pygame.KEYDOWN:
                 if k_delete is not None and e.key == k_delete:
@@ -79,11 +89,10 @@ class TextSprite(Sprite):
         return self.text
 
     def set_text(self, new_text: str = None):
-        """
-        Заменяет текст спрайта и перерисовывает изображение.
+        """Updates the sprite's text and redraws the image.
 
         Args:
-            new_text (str): Новый текст для отображения.
+            new_text (str, optional): New text to display. If None, uses existing text. Defaults to None.
         """
         if new_text is not None:
             self._text = new_text
@@ -91,23 +100,21 @@ class TextSprite(Sprite):
         self.set_font(self.font_path, self.font_size)
 
     def set_color(self, new_color: Tuple[int, int, int]):
-        """
-        Устанавливает новый цвет текста и перерисовывает изображение.
+        """Updates the text color and redraws the image.
 
         Args:
-            new_color (Tuple[int, int, int]): Новый RGB-цвет текста.
+            new_color (Tuple[int, int, int]): New RGB color for the text.
         """
         self.color = new_color
         # перерисовываем с текущим шрифтом и текстом
         self.set_font(self.font_path, self.font_size)
 
     def set_font(self, font_name: Optional[Union[str, Path]], font_size: int):
-        """
-        Устанавливает шрифт и его размер, затем рендерит текст на новую поверхность.
+        """Sets the font and size, then renders the text to a new surface.
 
         Args:
-            font_name (Optional[Union[str, Path]]): Путь к файлу .ttf или None для системного шрифта.
-            font_size (int): Размер шрифта в пунктах.
+            font_name (Optional[Union[str, Path]]): Path to .ttf file or None for system font.
+            font_size (int): Font size in points.
         """
         self.font_size = font_size
         # загружаем шрифт

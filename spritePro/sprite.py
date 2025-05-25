@@ -6,11 +6,31 @@ import math
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent
+sys.path.append(str(parent_dir))
+
 import spritePro
 
 
 class Sprite(pygame.sprite.Sprite):
+    """Base sprite class with movement, animation, and visual effects support.
+
+    This class extends pygame.sprite.Sprite with additional functionality for:
+    - Movement and velocity control
+    - Rotation and scaling
+    - Transparency and color tinting
+    - State management
+    - Collision detection
+    - Movement boundaries
+
+    Attributes:
+        auto_flip (bool): Whether to automatically flip sprite horizontally when moving left/right.
+        stop_threshold (float): Distance threshold for stopping movement.
+        color (Tuple[int, int, int]): Current color tint of the sprite.
+        active (bool): Whether the sprite is active and should be rendered.
+    """
+
     auto_flip: bool = True
     stop_threshold = 1.0
     color = None
@@ -23,14 +43,13 @@ class Sprite(pygame.sprite.Sprite):
         pos: tuple = (0, 0),
         speed: float = 0,
     ):
-        """
-        Инициализация спрайта.
+        """Initializes a new sprite instance.
 
-        Аргументы:
-            sprite: Путь к изображению спрайта или имя ресурса
-            size: Размер спрайта (ширина, высота) по умолчанию (50, 50)
-            pos: Начальная позиция спрайта (x, y) по умолчанию (0, 0)
-            speed: Скорость движения спрайта по умолчанию 0
+        Args:
+            sprite (str): Path to sprite image or resource name.
+            size (tuple, optional): Sprite dimensions (width, height). Defaults to (50, 50).
+            pos (tuple, optional): Initial position (x, y). Defaults to (0, 0).
+            speed (float, optional): Movement speed. Defaults to 0.
         """
         super().__init__()
         self.size = size
@@ -50,13 +69,13 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.center = pos
 
     def set_color(self, color: Tuple):
-        """
-        Устанавливает цветовой оттенок (tint) для спрайта.
+        """Sets the color tint for the sprite.
 
-        :param color: Цвет в формате RGB (tuple)
+        If the sprite has an image, the color is applied as a tint using BLEND_RGBA_MULT.
+        If no image is present, the sprite will be filled with this color.
 
-        Если у спрайта есть изображение, цвет применяется как оттенок (tint) с помощью режима BLEND_RGBA_MULT.
-        Если изображения нет, спрайт будет просто закрашен этим цветом.
+        Args:
+            color (Tuple): RGB color tuple.
         """
         self.color = color
         self._update_image()
@@ -66,11 +85,11 @@ class Sprite(pygame.sprite.Sprite):
         image_source="",
         size: Optional[Tuple[int, int]] = None,
     ):
-        """
-        Устанавливает новое изображение для спрайта.
+        """Sets a new image for the sprite.
 
-        :param image_source: путь к файлу (str/Path) или Surface
-        :param size: кортеж (ширина, высота) или None (оставить оригинальный размер)
+        Args:
+            image_source (Union[str, Path, pygame.Surface]): Path to image file or Surface object.
+            size (Optional[Tuple[int, int]]): New dimensions (width, height) or None to keep original size.
         """
         self._image_source = image_source
         img = None
@@ -101,19 +120,18 @@ class Sprite(pygame.sprite.Sprite):
         self._update_image()
 
     def set_native_size(self):
-        """
-        Устанавливает спрайт в его оригинальный (нативный) размер изображения.
-        Перезагружает картинку в её исходных
-        ширине и высоте.
+        """Resets the sprite to its original image dimensions.
+
+        Reloads the image at its native width and height.
         """
         # перезагружаем изображение без параметра size → ставит оригинальный размер
         self.set_image(self._image_source, size=None)
 
     def update(self, window: pygame.Surface):
-        """Обновление состояния спрайта.
+        """Updates sprite state and renders it to the window.
 
-        :param window:
-            window (pygame.Surface): Окно для рисования спрайта.
+        Args:
+            window (pygame.Surface): Surface to render the sprite on.
         """
         if self.velocity.length() > 0:
             cx, cy = self.rect.center
@@ -124,7 +142,10 @@ class Sprite(pygame.sprite.Sprite):
             window.blit(self.image, self.rect)
 
     def _update_image(self):
-        """Обновляет изображение с учетом всех визуальных эффектов."""
+        """Updates the sprite image with all visual effects applied.
+
+        Applies transformations in order: flip → scale → rotate → alpha → color tint.
+        """
         img = self.original_image.copy()
 
         # Применяем отражение
@@ -159,23 +180,25 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.center = center
 
     def set_active(self, active: bool):
-        """Устанавливает активность спрайта.
-        :param active: Булевый флаг активности (True - активен, False - неактивен)
+        """Sets the sprite's active state.
+
+        Args:
+            active (bool): True to enable rendering, False to disable.
         """
         self.active = active
 
     def reset_sprite(self):
-        """Возвращает спрайт в стартовую позицию."""
+        """Resets the sprite to its initial position and state."""
         self.rect.center = self.start_pos
         self.velocity = pygame.math.Vector2(0, 0)
         self.state = "idle"
 
     def move(self, dx: float, dy: float):
-        """
-        Перемещение спрайта на заданное расстояние.
+        """Moves the sprite by the specified distance.
 
-        :param dx: Скорость перемещения по оси X
-        :param dy: Скорость перемещения по оси Y
+        Args:
+            dx (float): Distance to move on X axis.
+            dy (float): Distance to move on Y axis.
         """
         cx, cy = self.rect.center
         self.rect.center = (int(cx + dx * self.speed), int(cy + dy * self.speed))
@@ -183,11 +206,11 @@ class Sprite(pygame.sprite.Sprite):
     def move_towards(
         self, target_pos: Tuple[float, float], speed: Optional[float] = None
     ):
-        """
-        Перемещение спрайта в направлении целевой позиции.
+        """Moves the sprite towards a target position.
 
-        :param target_pos: Целевая позиция (x, y)
-        :param speed: Опциональная скорость движения (если None, используется self.speed)
+        Args:
+            target_pos (Tuple[float, float]): Target position (x, y).
+            speed (Optional[float]): Movement speed. If None, uses self.speed.
         """
         if speed is None:
             speed = self.speed
@@ -206,30 +229,40 @@ class Sprite(pygame.sprite.Sprite):
             self.state = "moving"
 
     def set_velocity(self, vx: float, vy: float):
-        """Прямая установка скорости спрайта.
+        """Sets the sprite's velocity directly.
 
-        :param vs: Скорость по оси x.
-        :param vy: Скорость по оси y.
+        Args:
+            vx (float): Velocity on X axis.
+            vy (float): Velocity on Y axis.
         """
         self.velocity.x = vx
         self.velocity.y = vy
 
     def move_up(self, speed: Optional[float] = None):
-        """Перемещение спрайта вверх.
+        """Moves the sprite upward.
 
-        :param speed: Скорость перемещения.
+        Args:
+            speed (Optional[float]): Movement speed. If None, uses self.speed.
         """
 
         self.velocity.y = -(speed or self.speed)
         self.state = "moving"
 
     def move_down(self, speed: Optional[float] = None):
-        """Перемещение спрайта вниз."""
+        """Moves the sprite downward.
+
+        Args:
+            speed (Optional[float]): Movement speed. If None, uses self.speed.
+        """
         self.velocity.y = speed or self.speed
         self.state = "moving"
 
     def move_left(self, speed: Optional[float] = None):
-        """Перемещение спрайта влево."""
+        """Moves the sprite leftward.
+
+        Args:
+            speed (Optional[float]): Movement speed. If None, uses self.speed.
+        """
         self.velocity.x = -(speed or self.speed)
         if self.auto_flip:
             self.flipped_h = True
@@ -237,7 +270,11 @@ class Sprite(pygame.sprite.Sprite):
         self.state = "moving"
 
     def move_right(self, speed: Optional[float] = None):
-        """Перемещение спрайта вправо."""
+        """Moves the sprite rightward.
+
+        Args:
+            speed (Optional[float]): Movement speed. If None, uses self.speed.
+        """
         self.velocity.x = speed or self.speed
         if self.auto_flip:
             self.flipped_h = False
@@ -251,13 +288,13 @@ class Sprite(pygame.sprite.Sprite):
         left_key=pygame.K_LEFT,
         right_key=pygame.K_RIGHT,
     ):
-        """
-        Обработка ввода с клавиатуры для движения спрайта.
+        """Handles keyboard input for sprite movement.
 
-        :param up_key: Клавиша для движения вверх (по умолчанию стрелка вверх)
-        :param down_key: Клавиша для движения вниз (по умолчанию стрелка вниз)
-        :param left_key: Клавиша для движения влево (по умолчанию стрелка влево)
-        :param right_key: Клавиша для движения вправо (по умолчанию стрелка вправо)
+        Args:
+            up_key (int, optional): Key code for upward movement. Defaults to pygame.K_UP.
+            down_key (int, optional): Key code for downward movement. Defaults to pygame.K_DOWN.
+            left_key (int, optional): Key code for leftward movement. Defaults to pygame.K_LEFT.
+            right_key (int, optional): Key code for rightward movement. Defaults to pygame.K_RIGHT.
         """
         keys = pygame.key.get_pressed()
 
@@ -302,63 +339,110 @@ class Sprite(pygame.sprite.Sprite):
             self.velocity = self.velocity.normalize() * self.speed
 
     def stop(self):
-        """Остановка всякого движения."""
+        """Stops the sprite's movement and resets velocity."""
         self.velocity.x = 0
         self.velocity.y = 0
 
     def rotate_to(self, angle: float):
-        """Установка вращения спрайта на заданный угол в градусах."""
+        """Rotates the sprite to a specific angle.
+
+        Args:
+            angle (float): Target angle in degrees.
+        """
         self.angle = angle
         self._update_image()
 
     def rotate_by(self, angle_change: float):
-        """Вращение спрайта на заданное количество градусов."""
+        """Rotates the sprite by a relative angle.
+
+        Args:
+            angle_change (float): Angle change in degrees.
+        """
         self.angle += angle_change
         self._update_image()
 
     def set_scale(self, scale: float):
-        """Установка масштаба спрайта."""
+        """Sets the sprite's scale factor.
+
+        Args:
+            scale (float): New scale factor.
+        """
         self.scale = scale
         self._update_image()
 
     def set_alpha(self, alpha: int):
-        """Установка прозрачности спрайта (0-255)."""
+        """Sets the sprite's transparency level.
+
+        Args:
+            alpha (int): Alpha value (0-255, where 0 is fully transparent).
+        """
         self.alpha = max(0, min(255, alpha))
         self._update_image()
 
     def fade_by(self, amount: int, min_alpha: int = 0, max_alpha: int = 255):
-        """Изменение прозрачности спрайта на заданное количество с ограничениями."""
+        """Changes the sprite's transparency by a relative amount.
+
+        Args:
+            amount (int): Amount to change alpha by.
+            min_alpha (int, optional): Minimum alpha value. Defaults to 0.
+            max_alpha (int, optional): Maximum alpha value. Defaults to 255.
+        """
         self.alpha = max(min_alpha, min(max_alpha, self.alpha + amount))
         self._update_image()
 
     def scale_by(self, amount: float, min_scale: float = 0.0, max_scale: float = 2.0):
-        """Изменение масштаба спрайта на заданное количество с ограничениями."""
+        """Changes the sprite's scale by a relative amount.
+
+        Args:
+            amount (float): Amount to change scale by.
+            min_scale (float, optional): Minimum scale value. Defaults to 0.0.
+            max_scale (float, optional): Maximum scale value. Defaults to 2.0.
+        """
         self.scale = max(min_scale, min(max_scale, self.scale + amount))
         self._update_image()
 
     def distance_to(self, other_sprite) -> float:
-        """Расчет расстояния до другого спрайта (от центра к центру)."""
+        """Calculates distance to another sprite.
+
+        Args:
+            other_sprite (Sprite): Target sprite to measure distance to.
+
+        Returns:
+            float: Distance between sprite centers.
+        """
         return math.sqrt(
             (self.rect.centerx - other_sprite.rect.centerx) ** 2
             + (self.rect.centery - other_sprite.rect.centery) ** 2
         )
 
     def set_state(self, state: str):
-        """Установка состояния спрайта, если оно допустимо."""
+        """Sets the sprite's current state.
+
+        Args:
+            state (str): New state name.
+        """
         if state in self.states:
             self.state = state
 
     def is_in_state(self, state: str) -> bool:
-        """Проверка, находится ли спрайт в заданном состоянии."""
+        """Checks if sprite is in a specific state.
+
+        Args:
+            state (str): State name to check.
+
+        Returns:
+            bool: True if sprite is in the specified state.
+        """
         return self.state == state
 
     def is_visible_on_screen(self, screen: pygame.Surface) -> bool:
-        """Проверка, видим ли спрайт на экране.
+        """Checks if sprite is visible within screen bounds.
 
-        :param screen: Поверхность экрана Pygame
+        Args:
+            screen (pygame.Surface): Screen surface to check against.
 
         Returns:
-            bool: True если спрайт виден на экране, False в противном случае
+            bool: True if sprite is visible on screen.
         """
         # Получаем прямоугольник экрана
         screen_rect = screen.get_rect()
@@ -381,18 +465,18 @@ class Sprite(pygame.sprite.Sprite):
         padding_top: int = 0,
         padding_bottom: int = 0,
     ):
-        """
-        Ограничивает движение спрайта в пределах заданных границ с учетом отступов.
+        """Limits sprite movement within specified bounds.
 
-        :param bounds: Прямоугольник, определяющий границы движения спрайта.
-        :param check_left: Проверять границу слева (по умолчанию True).
-        :param check_right: Проверять границу справа (по умолчанию True).
-        :param check_top: Проверять верхнюю границу (по умолчанию True).
-        :param check_bottom: Проверять нижнюю границу (по умолчанию True).
-        :param padding_left: Отступ слева (по умолчанию 0).
-        :param padding_right: Отступ справа (по умолчанию 0).
-        :param padding_top: Отступ сверху (по умолчанию 0).
-        :param padding_bottom: Отступ снизу (по умолчанию 0).
+        Args:
+            bounds (pygame.Rect): Boundary rectangle.
+            check_left (bool, optional): Whether to check left boundary. Defaults to True.
+            check_right (bool, optional): Whether to check right boundary. Defaults to True.
+            check_top (bool, optional): Whether to check top boundary. Defaults to True.
+            check_bottom (bool, optional): Whether to check bottom boundary. Defaults to True.
+            padding_left (int, optional): Left padding. Defaults to 0.
+            padding_right (int, optional): Right padding. Defaults to 0.
+            padding_top (int, optional): Top padding. Defaults to 0.
+            padding_bottom (int, optional): Bottom padding. Defaults to 0.
         """
         if check_left and self.rect.left < bounds.left + padding_left:
             self.rect.left = bounds.left + padding_left
@@ -404,7 +488,11 @@ class Sprite(pygame.sprite.Sprite):
             self.rect.bottom = bounds.bottom - padding_bottom
 
     def play_sound(self, sound_file: str):
-        """Воспроизведение звукового эффекта."""
+        """Plays a sound effect.
+
+        Args:
+            sound_file (str): Path to sound file.
+        """
         if self.sound_file != sound_file:
             self.sound_file = sound_file
             self.sound = pygame.mixer.Sound(sound_file)

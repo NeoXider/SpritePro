@@ -2,7 +2,10 @@ import pygame
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent.parent
+sys.path.append(str(parent_dir))
+
 from spritePro.gameSprite import GameSprite
 from spritePro.utils.surface import round_corners
 import spritePro
