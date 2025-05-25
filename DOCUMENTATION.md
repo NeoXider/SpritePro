@@ -398,7 +398,7 @@ animation.add_tween(
 )
 ```
 
-For more detailed documentation, see [Animation Module Documentation](spritePro/docs/animation.md)
+For more detailed documentation, see [Animation Module Documentation](spritePro/docs/animation.md) and [Tween Module Documentation](spritePro/docs/tween.md)
 
 ### TextSprite
 Sprite for text display with support for all basic Sprite mechanics. Extends the base Sprite class for text rendering while maintaining core sprite features like movement, rotation, scaling, transparency, and collision detection. Automatically redraws the sprite image when text, color, or font is updated.
@@ -680,25 +680,4 @@ rounded = round_corners(surface, radius=20)  # Round corners with 20px radius
 mask = pygame.Surface((100, 100), pygame.SRCALPHA)
 pygame.draw.circle(mask, (255, 255, 255, 255), (50, 50), 50)  # Circular mask
 masked = set_mask(surface, mask)  # Apply mask to surface
-```
-
-## Best Practices
-
-1. **Initialization**
-   - Always call `spritePro.init()` before using any other functions
-   - Set up your window with appropriate size and title
-
-2. **Sprite Management**
-   - Use sprite groups for better organization
-   - Implement proper collision detection
-   - Clean up resources when sprites are no longer needed
-
-3. **Performance**
-   - Use sprite groups for efficient rendering
-   - Implement proper game loop timing
-   - Optimize collision detection for large numbers of sprites
-
-4. **Memory Management**
-   - Properly dispose of unused sprites
-   - Cache frequently used resources
-   - Monitor memory usage in long-running games 
+``` 

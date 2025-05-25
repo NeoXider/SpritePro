@@ -7,7 +7,6 @@
 2. [Основные классы](#основные-классы)
 3. [Компоненты](#компоненты)
 4. [Утилиты](#утилиты)
-5. [Лучшие практики](#лучшие-практики)
 
 ## Инициализация и настройка
 
@@ -278,6 +277,69 @@ while True:
 ```
 
 ## Компоненты
+
+### Animation
+Расширенный компонент анимации для спрайтов с поддержкой покадровой анимации, управления состоянием и плавных переходов.
+
+#### Свойства
+- `owner`: Спрайт-владелец анимации
+- `frames`: Список кадров анимации
+- `frame_duration`: Длительность каждого кадра в миллисекундах
+- `loop`: Зациклена ли анимация
+- `current_frame`: Индекс текущего кадра
+- `is_playing`: Воспроизводится ли анимация
+- `is_paused`: На паузе ли анимация
+
+#### Методы
+- `add_state(name: str, frames: List[pygame.Surface])`: Добавить новое состояние анимации
+- `set_state(name: str)`: Переключиться на другое состояние анимации
+- `play()`: Начать воспроизведение анимации
+- `pause()`: Поставить анимацию на паузу
+- `resume()`: Возобновить анимацию
+- `stop()`: Остановить анимацию
+- `reset()`: Сбросить анимацию в начальное состояние
+- `add_tween(name: str, start_value: float, end_value: float, duration: float, ...)`: Добавить плавный переход
+- `update_tween(name: str, dt: Optional[float] = None)`: Обновить конкретный переход
+- `add_parallel_animation(animation: Animation)`: Добавить анимацию для параллельного выполнения
+- `update(dt: Optional[float] = None)`: Обновить состояние анимации
+- `get_current_frame() -> Optional[pygame.Surface]`: Получить текущий кадр анимации
+- `set_frame_duration(duration: int)`: Установить длительность кадра
+- `set_loop(loop: bool)`: Установить зацикливание анимации
+
+Пример использования:
+```python
+# Создание спрайта
+sprite = Sprite("", (100, 100), (400, 300))
+
+# Создание кадров анимации
+frames = []
+for i in range(8):
+    frame = pygame.Surface((100, 100), pygame.SRCALPHA)
+    # Нарисовать что-то на кадре
+    frames.append(frame)
+
+# Создание и запуск анимации
+animation = Animation(sprite, frames=frames, frame_duration=100)
+animation.play()
+
+# Добавление анимации с состояниями
+animation.add_state("idle", idle_frames)
+animation.add_state("walk", walk_frames)
+animation.set_state("walk")
+
+# Добавление твина
+animation.add_tween(
+    "scale",
+    start_value=1.0,
+    end_value=1.5,
+    duration=1.0,
+    easing=EasingType.EASE_IN_OUT,
+    loop=True,
+    yoyo=True
+)
+```
+
+Для более подробной документации см. [Документация модуля Animation](spritePro/docs/animation_ru.md) и [Документация модуля Tween](spritePro/docs/tween_ru.md)
 
 ### TextSprite
 Спрайт для отображения текста с поддержкой всех базовых механик Sprite. Расширяет базовый класс Sprite для обработки отображения текста, сохраняя все основные функции спрайта, такие как движение, вращение, масштабирование, прозрачность и определение столкновений. Автоматически перерисовывает изображение спрайта при обновлении текста, цвета или шрифта.
@@ -560,8 +622,3 @@ mask = pygame.Surface((100, 100), pygame.SRCALPHA)
 pygame.draw.circle(mask, (255, 255, 255, 255), (50, 50), 50)  # Круглая маска
 masked = set_mask(surface, mask)  # Применяем маску к поверхности
 ```
-
-## Лучшие практики
-
-### Управление ресурсами
-- Используйте `
