@@ -50,6 +50,17 @@ Health management system: damage, healing, regeneration, maximum health, and dea
 #### [Surface](surface.md)
 Set of utilities for working with Pygame surfaces: rounded corners, masking, and other effects.
 
+#### [Color Effects](color_effects.md)
+Dynamic color effects and animations: pulse, rainbow, breathing, wave, and other visual effects.
+
+### Ready Sprites
+
+#### [Ready Sprites Overview](readySprites.md)
+Complete guide to pre-built game components with immediate usability and full customization.
+
+#### [Text_fps](text_fps.md)
+Ready-to-use FPS counter sprite that automatically displays and updates frame rate with customizable appearance.
+
 ## Quick Navigation
 
 ### By Functionality Type
@@ -76,6 +87,10 @@ Set of utilities for working with Pygame surfaces: rounded corners, masking, and
 **Helper Tools:**
 - [Surface](surface.md) - Surface operations
 - [Color Effects](color_effects.md) - Dynamic color effects and utilities
+
+**Ready Sprites:**
+- [Ready Sprites Overview](readySprites.md) - Pre-built game components guide
+- [Text_fps](text_fps.md) - Automatic FPS counter display
 
 ## Usage Examples
 
