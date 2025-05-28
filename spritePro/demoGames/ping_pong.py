@@ -27,6 +27,8 @@ STATE_SHOP = 1
 STATE_GAME = 2
 STATE_WIN_LEFT = 3
 STATE_WIN_RIGHT = 4
+MUSIC_VOLUME = 0.4
+SFX_VOLUME = 1
 
 
 class Ball(GameSprite):
@@ -135,7 +137,7 @@ def check_win():
 def create_music():
     pygame.mixer.music.load(path / "Audio" / "fon_musik.mp3")
     pygame.mixer.music.play(-1)
-    pygame.mixer.music.set_volume(0.4)
+    pygame.mixer.music.set_volume(MUSIC_VOLUME)
 
 
 def win(player: GameSprite):
@@ -159,29 +161,39 @@ def start_game():
     player_left.rotate_to(-90)
     player_right.rotate_to(90)
     ball.reset()
+    bounch_sound.play()
 
 
 def menu():
     global current_state
     current_state = STATE_MENU
+    bounch_sound.play()
 
 
 def shop():
     global current_state
     current_state = STATE_SHOP
+    bounch_sound.play()
 
 
 def logic_shop():
     SCREEN.blit(BGS[current_state], (0, 0))
     textShop.rect.centerx, textShop.rect.y = (WIDTH // 2, 10)
     textShop.update(SCREEN)
+    bts[STATE_MENU].set_color(COLOR_EFX[STATE_MENU]())
     bts[STATE_MENU].update(SCREEN)
 
 
 def logic_menu():
     SCREEN.blit(BGS[current_state], (0, 0))
+    bts[STATE_GAME].set_color(COLOR_EFX[STATE_GAME]())
     bts[STATE_GAME].update(SCREEN)
+
+    bts[STATE_SHOP].set_color(COLOR_EFX[STATE_SHOP]())
     bts[STATE_SHOP].update(SCREEN)
+
+    for toggle in TOGGLES.values():
+        toggle.update(SCREEN)
 
 
 def logic_game():
@@ -190,11 +202,27 @@ def logic_game():
     ball_bounch()
     ball_fail()
     check_win()
+    bts[STATE_MENU].set_color(COLOR_EFX[STATE_MENU]())
     bts[STATE_MENU].update(SCREEN)
 
 
+def music_toggle(is_on: bool) -> None:
+    pygame.mixer.music.unpause() if is_on else pygame.mixer.music.pause()
+    bounch_sound.play()
+
+
+def audio_toggle(is_on: bool) -> None:
+    for sound in efxs:
+        sound.set_volume(SFX_VOLUME if is_on else 0)
+    bounch_sound.play()
+
+
+efxs = []
+
 pygame.display.set_caption("pin pong")
 bounch_sound = pygame.mixer.Sound(path / "Audio" / "baunch.mp3")
+bounch_sound.set_volume(SFX_VOLUME)
+efxs.append(bounch_sound)
 
 create_music()
 
@@ -263,6 +291,34 @@ BGS = {
     STATE_GAME: pygame.transform.scale(
         pygame.image.load(path / "Sprites" / "bg.jpg"), (spritePro.WH)
     ),
+}
+
+
+TOGGLES = {
+    "music": spritePro.ToggleButton(
+        "",
+        size=(150, 40),
+        pos=(150, 50),
+        text_on="music: ON",
+        text_off="music: OFF",
+        on_toggle=music_toggle,
+        color_off=(255, 100, 0),
+    ),
+    "audio": spritePro.ToggleButton(
+        "",
+        size=(150, 40),
+        pos=(150, 120),
+        text_on="audio: ON",
+        text_off="audio: OFF",
+        on_toggle=audio_toggle,
+        color_off=(255, 100, 0),
+    ),
+}
+
+COLOR_EFX = {
+    STATE_MENU: spritePro.utils.pulse,
+    STATE_GAME: spritePro.utils.wave,
+    STATE_SHOP: lambda: spritePro.utils.flicker(flicker_color=(50, 50, 255)),
 }
 
 while True:

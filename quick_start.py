@@ -18,7 +18,5 @@ player = s.Sprite(
 # Main game loop
 while True:
     s.update(fill_color=(0, 0, 100))
-
-    player.update()
-
     player.handle_keyboard_input()
+    player.update()
