@@ -65,6 +65,7 @@ pygame.quit()
 
 ### UI Components
 - [Button](docs/button.md) - Interactive button component
+- [ToggleButton](docs/toggle_button.md) - Toggle switch component
 - [Text](docs/text.md) - Text rendering and management
 - [Mouse Interaction](docs/mouse_interactor.md) - Mouse interaction handling
 
@@ -86,6 +87,7 @@ Explore our demo games to see SpritePro in action:
 - [Pymunk Demo](spritePro/demoGames/demo_pymunk.py) - Advanced physics with Pymunk
 - [Ping Pong](spritePro/demoGames/ping_pong.py) - Classic Pong game
 - [Tweening Demo](spritePro/demoGames/tweenDemo.py) - Animation tweening examples
+- [Toggle Demo](spritePro/demoGames/toggle_demo.py) - Interactive toggle buttons showcase
 
 ## 🛠️ Requirements
 

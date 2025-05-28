@@ -132,15 +132,32 @@ button = s.Button(
 # Update button based on game state
 def update_button():
     if player.health > 50:
-        button.set_text("Healthy")
-        button.set_colors(base=(100, 255, 100))
+        button.text_sprite.set_text("Healthy")
+        button.set_color((100, 255, 100))
     else:
-        button.set_text("Injured")
-        button.set_colors(base=(255, 100, 100))
+        button.text_sprite.set_text("Injured")
+        button.set_color((255, 100, 100))
 
 # Call in game loop
 update_button()
 ```
+
+### Toggle Buttons
+For buttons that need to switch between states, use ToggleButton:
+```python
+# Create a toggle button
+toggle = s.ToggleButton(
+    pos=(400, 300),
+    text_on="Sound ON",
+    text_off="Sound OFF",
+    color_on=(50, 200, 50),
+    color_off=(200, 50, 50),
+    is_on=True,
+    on_toggle=lambda state: print(f"Sound {'enabled' if state else 'disabled'}")
+)
+```
+
+See [ToggleButton documentation](toggle_button.md) for detailed information.
 
 ### Button Groups
 ```python

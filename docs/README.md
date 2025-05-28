@@ -22,6 +22,9 @@ Sprite with physics support: gravity, velocity, acceleration, friction, and coll
 #### [Button](button.md)
 Interactive button with support for different states (normal, hover, pressed) and event handling.
 
+#### [ToggleButton](toggle_button.md)
+Toggle button that switches between ON/OFF states with different colors and text labels.
+
 #### [Text](text.md)
 Component for text rendering and management with support for different fonts, sizes, and colors.
 
@@ -58,6 +61,7 @@ Set of utilities for working with Pygame surfaces: rounded corners, masking, and
 
 **User Interface:**
 - [Button](button.md) - Interactive buttons
+- [ToggleButton](toggle_button.md) - Toggle switches
 - [Text](text.md) - Text elements
 - [Mouse Interactor](mouse_interactor.md) - Mouse handling
 

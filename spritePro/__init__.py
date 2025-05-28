@@ -2,6 +2,7 @@ from .gameSprite import GameSprite
 from .physicSprite import PhysicalSprite
 from .sprite import Sprite
 from .button import Button
+from .toggle_button import ToggleButton
 
 from .components.timer import Timer
 from .components.text import TextSprite
@@ -18,6 +19,7 @@ __all__ = [
     "PhysicalSprite",
     "Sprite",
     "Button",
+    "ToggleButton",
     "Timer",
     "TextSprite",
     "MouseInteractor",
