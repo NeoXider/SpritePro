@@ -64,10 +64,11 @@ while True:
 
 ## Demo Games
 
-🎮 **Ping Pong** - Classic game with physics simulation  
-🎬 **Animation Demo** - Sprite animation showcase  
-⚡ **Physics Demo** - Gravity and collision examples  
-✨ **Tween Demo** - Smooth animation transitions  
+🎮 **[Ping Pong](spritePro/demoGames/ping_pong.py)** - Classic game with physics simulation  
+🎬 **[Animation Demo](spritePro/demoGames/animationDemo.py)** - Sprite animation showcase  
+⚡ **[Physics Demo](spritePro/demoGames/demo_physics.py)** - Gravity and collision examples  
+✨ **[Tween Demo](spritePro/demoGames/tweenDemo.py)** - Smooth animation transitions  
+🔧 **[Pymunk Demo](spritePro/demoGames/demo_pymunk.py)** - Advanced physics with Pymunk  
 
 ![Demo Games](https://github.com/user-attachments/assets/153ddc64-18d7-4d8a-b0c2-baa12b4e77bc)
 
