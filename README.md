@@ -27,34 +27,28 @@ cd SpritePro
 ### Basic Usage
 
 ```python
-import pygame
 import spritePro as s
+import pygame
 
-# Initialize Pygame
-pygame.init()
-screen = pygame.display.set_mode((800, 600))
-clock = pygame.time.Clock()
+# Initialize the library
+s.init()
 
-# Create sprite
-sprite = s.Sprite("assets/player.png", (64, 64), (400, 300))
+# Create a window
+s.get_screen((800, 600), "My Game")
 
-# Game loop
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    
-    # Update
-    sprite.update()
-    
-    # Render
-    screen.fill((0, 0, 0))
-    sprite.draw(screen)
-    pygame.display.flip()
-    clock.tick(60)
+# Create a basic sprite
+player = s.Sprite(
+    "",
+    size=(100, 100),
+    pos=s.WH_C,
+    speed=3,
+)
 
-pygame.quit()
+# Main game loop
+while True:
+    s.update(fill_color=(0, 0, 100))
+    player.handle_keyboard_input()
+    player.update()
 ```
 
 ## 📚 Documentation
