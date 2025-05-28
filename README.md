@@ -78,6 +78,7 @@ pygame.quit()
 
 ### Utilities
 - [Surface Utilities](docs/surface.md) - Tools for working with surfaces
+- [Color Effects](docs/color_effects.md) - Dynamic color effects and animations
 
 ## 🎯 Demo Games
 
@@ -89,6 +90,8 @@ Explore our demo games to see SpritePro in action:
 - [Ping Pong](spritePro/demoGames/ping_pong.py) - Classic Pong game
 - [Tweening Demo](spritePro/demoGames/tweenDemo.py) - Animation tweening examples
 - [Toggle Demo](spritePro/demoGames/toggle_demo.py) - Interactive toggle buttons showcase
+- [Color Effects Demo](spritePro/demoGames/color_effects_demo.py) - Dynamic color effects showcase
+- [Color Text Demo](spritePro/demoGames/color_text_demo.py) - Text with color effects
 
 ## 🛠️ Requirements
 
