@@ -423,4 +423,10 @@ toggle.set_colors(
 text_sprite.set_color(s.utils.wave(speed=1.5, colors=[(255, 0, 0), (0, 255, 0), (0, 0, 255)]))
 ```
 
+## Demo
+
+See the interactive demonstrations:
+- `spritePro/demoGames/color_effects_demo.py` - Interactive color picker with all effects
+- `spritePro/demoGames/color_text_demo.py` - Text effects showcase with dynamic colors applied to TextSprite objects
+
 The color effects module provides a powerful toolkit for creating dynamic, engaging visual effects that enhance the player experience and provide important visual feedback in your games.
