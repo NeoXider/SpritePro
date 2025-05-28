@@ -11,6 +11,7 @@ from .components.animation import Animation
 from .components.tween import Tween, TweenManager, EasingType
 
 from . import utils
+from . import readySprites
 
 from typing import List
 import pygame
@@ -30,6 +31,7 @@ __all__ = [
     "TweenManager",
     "EasingType",
     "utils",
+    "readySprites",
     # methods
     "init",
     "get_screen",

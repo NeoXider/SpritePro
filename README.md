@@ -80,6 +80,9 @@ pygame.quit()
 - [Surface Utilities](docs/surface.md) - Tools for working with surfaces
 - [Color Effects](docs/color_effects.md) - Dynamic color effects and animations
 
+### Ready Sprites
+- [Text_fps](docs/text_fps.md) - Ready-to-use FPS counter with automatic updates
+
 ## 🎯 Demo Games
 
 Explore our demo games to see SpritePro in action:
@@ -93,6 +96,7 @@ Explore our demo games to see SpritePro in action:
 - [Color Effects Demo](spritePro/demoGames/color_effects_demo.py) - Dynamic color effects showcase
 - [Color Text Demo](spritePro/demoGames/color_text_demo.py) - Text with color effects
 - [FPS Camera Demo](spritePro/demoGames/fps_camera_demo/fps_camera_demo.py) - FPS counter and camera system
+- [Text FPS Demo](spritePro/demoGames/text_fps_demo.py) - Ready-to-use FPS counter showcase
 
 ## 🛠️ Requirements
 
