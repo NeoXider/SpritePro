@@ -12,6 +12,7 @@ SpritePro - a powerful and flexible game development library built on top of Pyg
 - **Health System**: Complete health management with damage, healing, and callbacks
 - **Mouse Interaction**: Simple mouse handling with hover and click detection
 - **Surface Utilities**: Advanced tools for working with surfaces
+- **Color Effects**: Dynamic color effects and animations for visual appeal
 
 ## 🚀 Quick Start
 

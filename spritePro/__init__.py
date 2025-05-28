@@ -10,6 +10,8 @@ from .components.mouse_interactor import MouseInteractor
 from .components.animation import Animation
 from .components.tween import Tween, TweenManager, EasingType
 
+from . import utils
+
 from typing import List
 import pygame
 import sys
@@ -27,6 +29,7 @@ __all__ = [
     "Tween",
     "TweenManager",
     "EasingType",
+    "utils",
     # methods
     "init",
     "get_screen",

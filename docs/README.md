@@ -75,6 +75,7 @@ Set of utilities for working with Pygame surfaces: rounded corners, masking, and
 
 **Helper Tools:**
 - [Surface](surface.md) - Surface operations
+- [Color Effects](color_effects.md) - Dynamic color effects and utilities
 
 ## Usage Examples
 
