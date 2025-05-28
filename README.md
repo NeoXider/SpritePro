@@ -1,21 +1,21 @@
 # SpritePro
 
-SpritePro - мощная и гибкая библиотека для разработки игр, построенная на основе Pygame. Предоставляет комплексный набор инструментов для создания 2D игр с продвинутыми возможностями.
+SpritePro - a powerful and flexible game development library built on top of Pygame. Provides a comprehensive set of tools for creating 2D games with advanced capabilities.
 
-## 🎮 Основные возможности
+## 🎮 Key Features
 
-- **Система спрайтов**: Гибкое управление спрайтами с встроенной физикой и игровой логикой
-- **Физический движок**: Реалистичная физическая симуляция с обнаружением и обработкой коллизий
-- **Система анимации**: Плавные анимации с твинингом и управлением состояниями
-- **UI компоненты**: Готовые к использованию кнопки, текстовые элементы и интерактивные компоненты
-- **Система таймеров**: Точное управление временем для игровых событий и анимаций
-- **Система здоровья**: Полное управление здоровьем с уроном, лечением и коллбэками
-- **Взаимодействие с мышью**: Простая обработка мыши с определением наведения и кликов
-- **Утилиты поверхностей**: Продвинутые инструменты для работы с поверхностями
+- **Sprite System**: Flexible sprite management with built-in physics and game logic
+- **Physics Engine**: Realistic physics simulation with collision detection and handling
+- **Animation System**: Smooth animations with tweening and state management
+- **UI Components**: Ready-to-use buttons, text elements, and interactive components
+- **Timer System**: Precise time management for game events and animations
+- **Health System**: Complete health management with damage, healing, and callbacks
+- **Mouse Interaction**: Simple mouse handling with hover and click detection
+- **Surface Utilities**: Advanced tools for working with surfaces
 
-## 🚀 Быстрый старт
+## 🚀 Quick Start
 
-### Установка
+### Installation
 
 ```bash
 pip install pygame
@@ -23,31 +23,31 @@ git clone https://github.com/NeoXider/SpritePro.git
 cd SpritePro
 ```
 
-### Базовое использование
+### Basic Usage
 
 ```python
 import pygame
 import spritePro as s
 
-# Инициализация Pygame
+# Initialize Pygame
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
 clock = pygame.time.Clock()
 
-# Создание спрайта
+# Create sprite
 sprite = s.Sprite("assets/player.png", (64, 64), (400, 300))
 
-# Игровой цикл
+# Game loop
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
     
-    # Обновление
+    # Update
     sprite.update()
     
-    # Отрисовка
+    # Render
     screen.fill((0, 0, 0))
     sprite.draw(screen)
     pygame.display.flip()
@@ -56,53 +56,53 @@ while running:
 pygame.quit()
 ```
 
-## 📚 Документация
+## 📚 Documentation
 
-### Основные компоненты
-- [Система спрайтов](docs/sprite.md) - Базовая функциональность спрайтов
-- [Игровой спрайт](docs/gameSprite.md) - Расширенные спрайты с игровой логикой
-- [Физический спрайт](docs/physicSprite.md) - Спрайты с поддержкой физики
+### Core Components
+- [Sprite System](docs/sprite.md) - Basic sprite functionality
+- [Game Sprite](docs/gameSprite.md) - Extended sprites with game logic
+- [Physics Sprite](docs/physicSprite.md) - Sprites with physics support
 
-### UI компоненты
-- [Кнопка](docs/button.md) - Интерактивный компонент кнопки
-- [Текст](docs/text.md) - Отрисовка и управление текстом
-- [Взаимодействие с мышью](docs/mouse_interactor.md) - Обработка взаимодействия с мышью
+### UI Components
+- [Button](docs/button.md) - Interactive button component
+- [Text](docs/text.md) - Text rendering and management
+- [Mouse Interaction](docs/mouse_interactor.md) - Mouse interaction handling
 
-### Игровые системы
-- [Анимация](docs/animation.md) - Анимация и управление состояниями
-- [Твининг](docs/tween.md) - Плавные переходы и сглаживание
-- [Таймер](docs/timer.md) - Система времени и планирования
-- [Здоровье](docs/health.md) - Управление здоровьем и уроном
+### Game Systems
+- [Animation](docs/animation.md) - Animation and state management
+- [Tweening](docs/tween.md) - Smooth transitions and easing
+- [Timer](docs/timer.md) - Time system and scheduling
+- [Health](docs/health.md) - Health and damage management
 
-### Утилиты
-- [Утилиты поверхностей](docs/surface.md) - Инструменты для работы с поверхностями
+### Utilities
+- [Surface Utilities](docs/surface.md) - Tools for working with surfaces
 
-## 🎯 Демо игры
+## 🎯 Demo Games
 
-Изучите наши демо игры, чтобы увидеть SpritePro в действии:
+Explore our demo games to see SpritePro in action:
 
-- [Демо анимации](spritePro/demoGames/animationDemo.py) - Демонстрация анимации спрайтов
-- [Демо физики](spritePro/demoGames/demo_physics.py) - Пример физической симуляции
-- [Демо Pymunk](spritePro/demoGames/demo_pymunk.py) - Продвинутая физика с Pymunk
-- [Пинг-понг](spritePro/demoGames/ping_pong.py) - Классическая игра Pong
-- [Демо твининга](spritePro/demoGames/tweenDemo.py) - Примеры анимационного твининга
+- [Animation Demo](spritePro/demoGames/animationDemo.py) - Sprite animation demonstration
+- [Physics Demo](spritePro/demoGames/demo_physics.py) - Physics simulation example
+- [Pymunk Demo](spritePro/demoGames/demo_pymunk.py) - Advanced physics with Pymunk
+- [Ping Pong](spritePro/demoGames/ping_pong.py) - Classic Pong game
+- [Tweening Demo](spritePro/demoGames/tweenDemo.py) - Animation tweening examples
 
-## 🛠️ Требования
+## 🛠️ Requirements
 
 - Python 3.7+
 - Pygame 2.0+
-- Опционально: Pymunk (для продвинутой физики)
+- Optional: Pymunk (for advanced physics)
 
-## 📖 Справочник API
+## 📖 API Reference
 
-Для подробной документации API посетите нашу [папку документации](docs/).
+For detailed API documentation, visit our [documentation folder](docs/).
 
-## 🤝 Участие в разработке
+## 🤝 Contributing
 
-Мы приветствуем вклад в развитие! Пожалуйста, не стесняйтесь отправлять issues, запросы функций или pull requests.
+We welcome contributions! Please feel free to submit issues, feature requests, or pull requests.
 
-## 📄 Лицензия
+## 📄 License
 
-Этот проект имеет открытый исходный код. Пожалуйста, ознакомьтесь с файлом лицензии для получения дополнительной информации.
+This project is open source. Please check the license file for more information.
 
-Начните работу с SpritePro сегодня и воплотите свои игровые идеи в жизнь! 🚀
+Start working with SpritePro today and bring your game ideas to life! 🚀

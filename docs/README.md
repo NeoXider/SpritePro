@@ -1,86 +1,86 @@
-# Документация SpritePro
+# SpritePro Documentation
 
-Добро пожаловать в документацию SpritePro! Здесь вы найдете подробную информацию о всех модулях и компонентах библиотеки.
+Welcome to SpritePro documentation! Here you will find detailed information about all modules and components of the library.
 
-## Обзор модулей
+## Module Overview
 
-SpritePro состоит из нескольких основных модулей, каждый из которых предоставляет специфическую функциональность для разработки игр.
+SpritePro consists of several core modules, each providing specific functionality for game development.
 
-### Основные компоненты
+### Core Components
 
 #### [Sprite](sprite.md)
-Базовый класс спрайта с основной функциональностью: позиционирование, отрисовка, обновление и управление компонентами.
+Base sprite class with core functionality: positioning, rendering, updating, and component management.
 
 #### [GameSprite](gameSprite.md) 
-Расширенный спрайт с игровой логикой, включающий систему здоровья, взаимодействие с мышью и дополнительные игровые возможности.
+Extended sprite with game logic, including health system, mouse interaction, and additional game capabilities.
 
 #### [PhysicSprite](physicSprite.md)
-Спрайт с поддержкой физики: гравитация, скорость, ускорение, трение и обнаружение коллизий.
+Sprite with physics support: gravity, velocity, acceleration, friction, and collision detection.
 
-### UI компоненты
+### UI Components
 
 #### [Button](button.md)
-Интерактивная кнопка с поддержкой различных состояний (обычное, наведение, нажатие) и обработкой событий.
+Interactive button with support for different states (normal, hover, pressed) and event handling.
 
 #### [Text](text.md)
-Компонент для отрисовки и управления текстом с поддержкой различных шрифтов, размеров и цветов.
+Component for text rendering and management with support for different fonts, sizes, and colors.
 
 #### [Mouse Interactor](mouse_interactor.md)
-Компонент для обработки взаимодействия с мышью: определение наведения, кликов и других событий мыши.
+Component for handling mouse interaction: hover detection, clicks, and other mouse events.
 
-### Игровые системы
+### Game Systems
 
 #### [Animation](animation.md)
-Система анимации с поддержкой состояний, кадров, параллельных анимаций и интеграцией с твинингом.
+Animation system with support for states, frames, parallel animations, and tweening integration.
 
 #### [Tween](tween.md)
-Система плавных переходов и анимаций с различными типами сглаживания (easing) и управлением временем.
+System for smooth transitions and animations with various easing types and time management.
 
 #### [Timer](timer.md)
-Система таймеров для точного управления временем в играх: отсчеты, задержки, повторяющиеся события.
+Timer system for precise time management in games: countdowns, delays, repeating events.
 
 #### [Health](health.md)
-Система управления здоровьем: урон, лечение, регенерация, максимальное здоровье и обработка смерти.
+Health management system: damage, healing, regeneration, maximum health, and death handling.
 
-### Утилиты
+### Utilities
 
 #### [Surface](surface.md)
-Набор утилит для работы с поверхностями Pygame: скругление углов, маскирование и другие эффекты.
+Set of utilities for working with Pygame surfaces: rounded corners, masking, and other effects.
 
-## Быстрая навигация
+## Quick Navigation
 
-### По типу функциональности
+### By Functionality Type
 
-**Базовые компоненты:**
-- [Sprite](sprite.md) - Основа всех игровых объектов
-- [GameSprite](gameSprite.md) - Игровые объекты с логикой
-- [PhysicSprite](physicSprite.md) - Объекты с физикой
+**Base Components:**
+- [Sprite](sprite.md) - Foundation of all game objects
+- [GameSprite](gameSprite.md) - Game objects with logic
+- [PhysicSprite](physicSprite.md) - Objects with physics
 
-**Пользовательский интерфейс:**
-- [Button](button.md) - Интерактивные кнопки
-- [Text](text.md) - Текстовые элементы
-- [Mouse Interactor](mouse_interactor.md) - Обработка мыши
+**User Interface:**
+- [Button](button.md) - Interactive buttons
+- [Text](text.md) - Text elements
+- [Mouse Interactor](mouse_interactor.md) - Mouse handling
 
-**Анимация и эффекты:**
-- [Animation](animation.md) - Покадровая анимация
-- [Tween](tween.md) - Плавные переходы
+**Animation and Effects:**
+- [Animation](animation.md) - Frame-based animation
+- [Tween](tween.md) - Smooth transitions
 
-**Игровая логика:**
-- [Timer](timer.md) - Управление временем
-- [Health](health.md) - Система здоровья
+**Game Logic:**
+- [Timer](timer.md) - Time management
+- [Health](health.md) - Health system
 
-**Вспомогательные инструменты:**
-- [Surface](surface.md) - Работа с поверхностями
+**Helper Tools:**
+- [Surface](surface.md) - Surface operations
 
-## Примеры использования
+## Usage Examples
 
-Каждый модуль содержит подробные примеры использования и объяснения API. Рекомендуется начать с [Sprite](sprite.md) как основы, а затем изучить специализированные компоненты в зависимости от ваших потребностей.
+Each module contains detailed usage examples and API explanations. It's recommended to start with [Sprite](sprite.md) as the foundation, then study specialized components based on your needs.
 
-## Интеграция модулей
+## Module Integration
 
-Модули SpritePro разработаны для совместной работы. Например:
-- `GameSprite` может использовать компоненты `Health`, `MouseInteractor` и `Timer`
-- `Animation` может интегрироваться с `Tween` для создания сложных эффектов
-- `PhysicSprite` может использовать `Timer` для временных эффектов
+SpritePro modules are designed to work together. For example:
+- `GameSprite` can use `Health`, `MouseInteractor`, and `Timer` components
+- `Animation` can integrate with `Tween` to create complex effects
+- `PhysicSprite` can use `Timer` for temporary effects
 
-Изучите документацию каждого модуля для понимания возможностей интеграции.
+Study the documentation of each module to understand integration possibilities.
