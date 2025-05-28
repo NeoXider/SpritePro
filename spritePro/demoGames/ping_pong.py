@@ -321,8 +321,15 @@ COLOR_EFX = {
     STATE_SHOP: lambda: spritePro.utils.flicker(flicker_color=(50, 50, 255)),
 }
 
+fps_text = spritePro.readySprites.create_fps_counter((spritePro.WH_C[0], 15))
+
+
 while True:
+    fps_text.update()
+    fps_text.update_fps()
+
     spritePro.update()
+
     for e in spritePro.events:
         pass
 
