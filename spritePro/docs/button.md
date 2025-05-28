@@ -90,57 +90,30 @@ button = s.Button(
 
 ### Advanced Event Handling
 ```python
-class GameButton(s.Button):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-    def on_hover_enter(self):
-        # Called when mouse enters button
-        print("Mouse entered button")
-        
-    def on_hover_exit(self):
-        # Called when mouse leaves button
-        print("Mouse left button")
-        
-    def on_press(self):
-        # Called when button is pressed
-        print("Button pressed")
-        
-    def on_release(self):
-        # Called when button is released
-        print("Button released")
+def hover_handler():
+    print("Mouse is hovering over button")
+
+button = s.Button(text="Hover Button")
+button.on_hover(hover_handler)
+
+# Or set click handler after creation
+def click_handler():
+    print("Button clicked!")
+    
+button.on_click(click_handler)
 ```
 
 ## Button States
 
-### State Properties
-```python
-# Check button state
-if button.is_hovered():
-    print("Mouse is over button")
-    
-if button.is_pressed():
-    print("Button is being pressed")
-    
-if button.is_enabled():
-    print("Button is enabled")
-```
-
 ### State Management
 ```python
-# Enable/disable button
-button.set_enabled(False)  # Disable button
-button.set_enabled(True)   # Enable button
+# Scale button
+button.set_scale(1.2)  # Make button 20% larger
 
-# Change button text
-button.set_text("New Text")
-
-# Update button appearance
-button.set_colors(
-    base=(200, 200, 200),
-    hover=(220, 220, 220),
-    press=(180, 180, 180)
-)
+# Access button properties
+current_scale = button.scale
+button_rect = button.rect
+button_text = button.text
 ```
 
 ## Advanced Features

@@ -28,14 +28,14 @@ enemy = s.GameSprite(
 )
 
 # Damage the sprite
-enemy.take_damage(25)
+enemy.health_component.take_damage(25)
 
 # Heal the sprite
-enemy.heal(10)
+enemy.health_component += 10
 
 # Check health status
-if enemy.is_alive():
-    print(f"Health: {enemy.get_health()}/{enemy.get_max_health()}")
+if enemy.health_component.is_alive:
+    print(f"Health: {enemy.health_component.current_health}/{enemy.health_component.max_health}")
 ```
 
 ## Constructor Parameters
@@ -49,100 +49,83 @@ Inherits all Sprite parameters plus:
 ### Basic Health Operations
 ```python
 # Take damage
-sprite.take_damage(50)
+sprite.health_component.take_damage(50)
 
 # Heal damage
-sprite.heal(25)
+sprite.health_component += 25
 
 # Set health directly
-sprite.set_health(75)
+sprite.health_component.current_health = 75
 
 # Check health status
-health = sprite.get_health()
-max_health = sprite.get_max_health()
-is_alive = sprite.is_alive()
+health = sprite.health_component.current_health
+max_health = sprite.health_component.max_health
+is_alive = sprite.health_component.is_alive
 ```
 
 ### Health Callbacks
 ```python
-def on_damage(sprite, damage_amount, new_health):
-    print(f"Sprite took {damage_amount} damage! Health: {new_health}")
+def on_damage(damage_amount):
+    print(f"Sprite took {damage_amount} damage!")
 
-def on_death(sprite):
+def on_death(dead_sprite):
     print("Sprite died!")
-    sprite.set_active(False)
+    dead_sprite.set_active(False)
 
 # Set callbacks
-sprite.set_damage_callback(on_damage)
-sprite.set_death_callback(on_death)
+sprite.health_component.on_damage = on_damage
+sprite.on_death_event(on_death)
 ```
 
 ## Collision System
 
 ### Collision Detection
 ```python
-# Check collision with obstacles
-obstacles = [wall1, wall2, wall3]
-if sprite.check_collision(obstacles):
+# Check collision with another sprite
+if sprite.collide_with(other_sprite):
     print("Collision detected!")
 
-# Get collision information
-collision_info = sprite.get_collision_info(obstacles)
+# Check collision with group
+collided_sprites = sprite.collide_with_group(enemy_group)
+
+# Check collision with tagged sprites
+tagged_collisions = sprite.collide_with_tag(group, "enemy")
 ```
 
 ### Collision Resolution
 ```python
 # Automatic collision resolution
-sprite.resolve_collision(obstacles)
+obstacles = [wall1, wall2, wall3]
+collisions = sprite.resolve_collisions(*obstacles)
 
 # Custom collision handling
-def handle_collision(sprite, obstacle):
-    sprite.take_damage(10)
+def handle_collision():
+    sprite.health_component.take_damage(10)
     print("Hit obstacle!")
 
-sprite.on_collision = handle_collision
+sprite.on_collision_event(handle_collision)
 ```
 
 ## Advanced Features
 
-### Health Regeneration
-```python
-# Enable health regeneration
-sprite.enable_regeneration(
-    regen_rate=1,      # HP per second
-    regen_delay=3.0    # Delay after taking damage
-)
-
-# Disable regeneration
-sprite.disable_regeneration()
-```
-
-### Invincibility Frames
-```python
-# Make sprite temporarily invincible
-sprite.set_invincible(duration=2.0)  # 2 seconds
-
-# Check invincibility status
-if sprite.is_invincible():
-    print("Sprite is invincible!")
-```
-
 ### Death Handling
 ```python
 # Custom death behavior
-def custom_death(sprite):
-    # Play death animation
-    sprite.play_animation("death")
-    
-    # Remove from game after delay
-    def remove_sprite():
-        sprite.kill()
-    
-    # Schedule removal
-    timer = s.Timer(2.0, remove_sprite)
-    timer.start()
+def custom_death(dead_sprite):
+    print(f"Sprite {dead_sprite} died!")
+    dead_sprite.set_active(False)
 
-sprite.set_death_callback(custom_death)
+# Set death callback
+sprite.on_death_event(custom_death)
+
+# Resurrect sprite
+sprite.health_component.resurrect()
+```
+
+### Collision Step Control
+```python
+# Set collision resolution precision
+sprite.collision_step = 2  # Higher values = less precise but faster
 ```
 
 ## Integration Examples
@@ -150,33 +133,26 @@ sprite.set_death_callback(custom_death)
 ### With Animation System
 ```python
 # Damage animation
-def damage_callback(sprite, damage, health):
-    sprite.play_animation("hit")
+def damage_callback(damage_amount):
     sprite.set_color((255, 100, 100))  # Red flash
+    sprite.set_state("hit")
 
-sprite.set_damage_callback(damage_callback)
-```
-
-### With Physics
-```python
-# Physics-enabled game sprite
-class PhysicsGameSprite(s.PhysicalSprite, s.GameSprite):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-    def take_damage(self, amount):
-        super().take_damage(amount)
-        # Add knockback effect
-        self.apply_force(pygame.math.Vector2(100, -50))
+sprite.health_component.on_damage = damage_callback
 ```
 
 ## Properties and Methods
 
 ### Health Properties
 - `health_component`: Access to the underlying HealthComponent
-- `get_health()`: Current health points
-- `get_max_health()`: Maximum health points
-- `is_alive()`: Whether sprite is alive
+- `health_component.current_health`: Current health points
+- `health_component.max_health`: Maximum health points
+- `health_component.is_alive`: Whether sprite is alive
+
+### Collision Methods
+- `collide_with(other_sprite)`: Check collision with another sprite
+- `collide_with_group(group)`: Check collision with sprite group
+- `collide_with_tag(group, tag)`: Check collision with tagged sprites
+- `resolve_collisions(*obstacles)`: Resolve collisions with obstacles
 
 ### Collision Properties
 - `collision_step`: Step size for collision resolution

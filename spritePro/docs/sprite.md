@@ -33,7 +33,7 @@ player.move_towards((500, 400))
 # Apply visual effects
 player.set_scale(1.5)
 player.set_alpha(200)
-player.set_rotation(45)
+player.rotate_to(45)
 ```
 
 ## Constructor Parameters
@@ -46,22 +46,30 @@ player.set_rotation(45)
 ## Key Methods
 
 ### Movement
-- `move_towards(target_pos)`: Move sprite towards target position
-- `move_by(dx, dy)`: Move sprite by relative offset
+- `move_towards(target_pos, speed=None)`: Move sprite towards target position
+- `move(dx, dy)`: Move sprite by relative offset
+- `move_up(speed=None)`: Move sprite upward
+- `move_down(speed=None)`: Move sprite downward
+- `move_left(speed=None)`: Move sprite leftward
+- `move_right(speed=None)`: Move sprite rightward
 - `stop()`: Stop all movement
 - `set_velocity(vx, vy)`: Set velocity directly
+- `handle_keyboard_input()`: Handle keyboard input for movement
 
 ### Visual Effects
 - `set_scale(scale)`: Scale sprite uniformly
 - `set_alpha(alpha)`: Set transparency (0-255)
-- `set_rotation(angle)`: Rotate sprite in degrees
+- `rotate_to(angle)`: Rotate sprite to specific angle in degrees
+- `rotate_by(angle_change)`: Rotate sprite by relative angle
 - `set_color(color)`: Apply color tint
+- `fade_by(amount)`: Change transparency by relative amount
+- `scale_by(amount)`: Change scale by relative amount
 
 ### State Management
 - `set_active(active)`: Enable/disable sprite
-- `is_active()`: Check if sprite is active
-- `get_center()`: Get sprite center position
-- `get_rect()`: Get sprite rectangle
+- `set_state(state)`: Set sprite's current state
+- `is_in_state(state)`: Check if sprite is in specific state
+- `reset_sprite()`: Reset sprite to initial position and state
 
 ## Properties
 
@@ -79,8 +87,9 @@ sprite.auto_flip = True  # Sprite flips when moving left/right
 
 ### Movement Boundaries
 ```python
-# Set movement boundaries
-sprite.set_boundaries(0, 0, 800, 600)
+# Limit movement within bounds
+bounds = pygame.Rect(0, 0, 800, 600)
+sprite.limit_movement(bounds)
 ```
 
 ### Color Effects

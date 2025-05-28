@@ -72,19 +72,21 @@ timer.restart()
 ### Timer State Checking
 ```python
 # Check timer state
-if timer.is_running():
+if timer.active:
     print("Timer is active")
 
-if timer.is_paused():
-    print("Timer is paused")
+if timer.done:
+    print("Timer is completed")
 
-if timer.is_finished():
-    print("Timer has completed")
+# Get timer information
+time_left = timer.time_left()
+elapsed_time = timer.elapsed()
+progress = timer.progress()
 
-# Get timer progress
-progress = timer.get_progress()  # 0.0 to 1.0
-remaining = timer.get_remaining_time()
-elapsed = timer.get_elapsed_time()
+print(f"Progress: {progress:.2f}")  # 0.0 to 1.0
+print(f"Time left: {time_left:.2f} seconds")
+print(f"Elapsed: {elapsed_time:.2f} seconds")
+
 ```
 
 ## Callback System

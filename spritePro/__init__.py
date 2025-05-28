@@ -37,9 +37,12 @@ WH_C: tuple[int, int] = (0, 0)
 
 
 def init():
-    pygame.init()
-    pygame.font.init()
-    pygame.mixer.init()
+    try:
+        pygame.init()
+        pygame.font.init()
+        pygame.mixer.init()
+    except:
+        print("Error init")
 
 
 def get_screen(

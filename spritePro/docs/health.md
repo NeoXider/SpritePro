@@ -4,16 +4,15 @@ The `HealthComponent` provides comprehensive health management for game sprites,
 
 ## Overview
 
-The HealthComponent is a modular system that can be attached to any sprite to add health functionality. It supports damage callbacks, death events, regeneration, and invincibility frames.
+The HealthComponent is a modular system that can be attached to any sprite to add health functionality. It supports damage callbacks, death events, and healing.
 
 ## Key Features
 
 - **Health Management**: Track current and maximum health
 - **Damage System**: Take damage with customizable callbacks
 - **Healing System**: Restore health with limits and callbacks
-- **Regeneration**: Automatic health recovery over time
-- **Invincibility**: Temporary damage immunity
 - **Death Handling**: Automatic death detection and callbacks
+- **Operator Overloading**: Use +, -, ==, <, > operators for health operations
 
 ## Basic Usage
 
@@ -44,18 +43,17 @@ if health.is_alive():
 ### Basic Health Management
 ```python
 # Set health values
-health.set_health(75)
-health.set_max_health(150)
+health.current_health = 75
+health.max_health = 150
 
 # Get health information
-current = health.get_health()
-maximum = health.get_max_health()
-percentage = health.get_health_percentage()
+current = health.current_health
+maximum = health.max_health
+is_alive = health.is_alive
 
 # Check status
-is_alive = health.is_alive()
-is_dead = health.is_dead()
-is_full_health = health.is_full_health()
+is_alive = health.is_alive
+is_full_health = (health.current_health == health.max_health)
 ```
 
 ### Damage System

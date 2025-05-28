@@ -51,7 +51,7 @@ text.update()
 text.set_text("New message")
 
 # Get current text
-current_text = text.get_text()
+current_text = text.text
 
 # Update text with formatting
 text.set_text(f"Score: {player.score}")

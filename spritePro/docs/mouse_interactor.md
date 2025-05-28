@@ -43,89 +43,17 @@ mouse_handler.update()
 
 ## Event Handling
 
-### Click Events
+### State Checking
 ```python
-# Basic click callback
-def handle_click():
-    print("Sprite was clicked!")
-
-mouse_handler.set_click_callback(handle_click)
-
-# Click with button information
-def handle_click_with_button(button):
-    if button == 1:  # Left click
-        print("Left clicked!")
-    elif button == 2:  # Middle click
-        print("Middle clicked!")
-    elif button == 3:  # Right click
-        print("Right clicked!")
-
-mouse_handler.set_click_callback(handle_click_with_button)
-```
-
-### Hover Events
-```python
-# Hover enter callback
-def on_hover_enter():
-    print("Mouse entered sprite")
-    sprite.set_scale(1.1)  # Grow slightly
-
-# Hover exit callback
-def on_hover_exit():
-    print("Mouse left sprite")
-    sprite.set_scale(1.0)  # Return to normal size
-
-mouse_handler.set_hover_enter_callback(on_hover_enter)
-mouse_handler.set_hover_exit_callback(on_hover_exit)
-```
-
-### Press and Release Events
-```python
-# Mouse press callback
-def on_press(button):
-    print(f"Mouse button {button} pressed")
-    sprite.set_color((200, 200, 200))  # Darken sprite
-
-# Mouse release callback
-def on_release(button):
-    print(f"Mouse button {button} released")
-    sprite.set_color(None)  # Return to normal color
-
-mouse_handler.set_press_callback(on_press)
-mouse_handler.set_release_callback(on_release)
-```
-
-## State Checking
-
-### Mouse State Properties
-```python
-# Check current mouse state
+# Check mouse interaction state
 if mouse_handler.is_hovered():
     print("Mouse is over sprite")
 
 if mouse_handler.is_pressed():
-    print("Mouse button is pressed on sprite")
+    print("Mouse is pressed on sprite")
 
-if mouse_handler.is_clicked():
-    print("Sprite was just clicked")
-
-# Check specific button states
-if mouse_handler.is_button_pressed(1):  # Left button
-    print("Left mouse button is pressed")
-
-if mouse_handler.is_button_pressed(3):  # Right button
-    print("Right mouse button is pressed")
-```
-
-### Mouse Position
-```python
-# Get mouse position relative to sprite
-relative_pos = mouse_handler.get_relative_mouse_pos()
-print(f"Mouse at {relative_pos} relative to sprite")
-
-# Get absolute mouse position
-absolute_pos = mouse_handler.get_mouse_pos()
-print(f"Mouse at {absolute_pos} on screen")
+# Update mouse handler (call in game loop)
+mouse_handler.update(events)  # Pass pygame events
 ```
 
 ## Advanced Features

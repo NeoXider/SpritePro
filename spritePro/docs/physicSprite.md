@@ -58,28 +58,28 @@ PhysicalSprite uses real-world units:
 # Apply force (in Newtons)
 sprite.apply_force(pygame.math.Vector2(10, -20))
 
-# Apply impulse (instant velocity change)
-sprite.apply_impulse(pygame.math.Vector2(5, 0))
-
 # Set velocity directly
-sprite.set_velocity(pygame.math.Vector2(3, 0))  # 3 m/s right
+sprite.velocity = pygame.math.Vector2(3, 0)  # 3 m/s right
 
 # Jump (applies upward force)
-sprite.jump()  # Uses default jump_force
-sprite.jump(custom_force=10)  # Custom jump force
+sprite.jump(7.0)  # Jump with force of 7 m/s
+
+# Apply force in direction
+direction = pygame.math.Vector2(1, 0)  # Right
+sprite.force_in_direction(direction, 10)  # 10 N force
 ```
 
 ### Physics Properties
 ```python
 # Get physics state
-velocity = sprite.get_velocity()  # Vector2 in m/s
-acceleration = sprite.get_acceleration()  # Vector2 in m/s²
-is_grounded = sprite.is_on_ground()
+velocity = sprite.velocity  # Vector2 in m/s
+acceleration = sprite.acceleration  # Vector2 in m/s²
+is_grounded = sprite.is_grounded
 
 # Modify physics properties
-sprite.set_mass(2.0)  # Change mass
-sprite.set_gravity(15.0)  # Stronger gravity
-sprite.set_friction(0.8)  # Ground friction
+sprite.mass = 2.0  # Change mass
+sprite.gravity = 15.0  # Stronger gravity
+sprite.ground_friction = 0.8  # Ground friction
 ```
 
 ## Ground System
@@ -87,27 +87,11 @@ sprite.set_friction(0.8)  # Ground friction
 ### Ground Detection
 ```python
 # Check if sprite is on ground
-if sprite.is_on_ground():
+if sprite.is_grounded:
     print("Sprite is grounded")
 
-# Set ground level
-sprite.set_ground_level(500)  # Y coordinate of ground
-
 # Ground friction
-sprite.set_friction(0.7)  # 0.0 = no friction, 1.0 = full stop
-```
-
-### Ground Callbacks
-```python
-def on_land(sprite):
-    print("Sprite landed!")
-    # Play landing sound or animation
-
-def on_leave_ground(sprite):
-    print("Sprite left ground!")
-
-sprite.set_ground_callback(on_land)
-sprite.set_leave_ground_callback(on_leave_ground)
+sprite.ground_friction = 0.7  # 0.0 = no friction, 1.0 = full stop
 ```
 
 ## Bouncing System
@@ -116,20 +100,13 @@ sprite.set_leave_ground_callback(on_leave_ground)
 ```python
 # Enable bouncing
 sprite.bounce_enabled = True
-sprite.set_bounce_factor(0.8)  # 80% energy retained
 
 # Disable bouncing
 sprite.bounce_enabled = False
-```
 
-### Advanced Bounce Control
-```python
-# Different bounce factors for X and Y
-sprite.set_bounce_factor_x(0.9)  # Horizontal bouncing
-sprite.set_bounce_factor_y(0.7)  # Vertical bouncing
-
-# Minimum bounce velocity
-sprite.set_min_bounce_velocity(0.5)  # Stop bouncing below 0.5 m/s
+# Manual bounce off surface
+normal = pygame.math.Vector2(0, -1)  # Upward normal
+sprite.bounce(normal)
 ```
 
 ## Collision Physics
@@ -138,19 +115,22 @@ sprite.set_min_bounce_velocity(0.5)  # Stop bouncing below 0.5 m/s
 ```python
 # Collision with physics response
 obstacles = [wall1, wall2, floor]
-sprite.resolve_physics_collision(obstacles)
+collisions = sprite.resolve_collisions(*obstacles)
 
-# Custom collision response
-def physics_collision(sprite, obstacle, collision_normal):
-    # Apply bounce based on collision normal
-    sprite.bounce_off(collision_normal)
-    
-    # Apply damage based on impact force
-    impact_force = sprite.get_impact_force()
-    if impact_force > 50:
-        sprite.take_damage(int(impact_force / 10))
-
-sprite.set_physics_collision_callback(physics_collision)
+# Handle collision results
+for rect, side in collisions:
+    print(f"Collided with {side} side")
+    if sprite.bounce_enabled:
+        # Determine normal based on collision side
+        if side == "top":
+            normal = pygame.math.Vector2(0, -1)
+        elif side == "bottom":
+            normal = pygame.math.Vector2(0, 1)
+        elif side == "left":
+            normal = pygame.math.Vector2(-1, 0)
+        elif side == "right":
+            normal = pygame.math.Vector2(1, 0)
+        sprite.bounce(normal)
 ```
 
 ## Advanced Features
@@ -160,11 +140,11 @@ sprite.set_physics_collision_callback(physics_collision)
 # Change gravity over time
 def update_gravity():
     if in_water:
-        sprite.set_gravity(2.0)  # Reduced gravity in water
+        sprite.gravity = 2.0  # Reduced gravity in water
     elif in_space:
-        sprite.set_gravity(0.0)  # No gravity in space
+        sprite.gravity = 0.0  # No gravity in space
     else:
-        sprite.set_gravity(9.8)  # Normal gravity
+        sprite.gravity = 9.8  # Normal gravity
 ```
 
 ### Force Fields
@@ -176,22 +156,12 @@ def apply_wind():
 
 # Magnetic attraction
 def magnetic_pull(target_pos):
-    direction = target_pos - sprite.get_position()
+    direction = target_pos - sprite.position
     distance = direction.length()
     if distance > 0:
         force_magnitude = 100 / (distance ** 2)  # Inverse square law
         force = direction.normalize() * force_magnitude
         sprite.apply_force(force)
-```
-
-### Terminal Velocity
-```python
-# Set maximum falling speed
-sprite.set_terminal_velocity(20)  # Max 20 m/s downward
-
-# Check if at terminal velocity
-if sprite.at_terminal_velocity():
-    print("Falling at maximum speed")
 ```
 
 ## Integration Examples
@@ -218,8 +188,8 @@ class Player(s.PhysicalSprite):
             self.apply_force(pygame.math.Vector2(200, 0))
             
         # Jumping
-        if keys[pygame.K_SPACE] and self.is_on_ground():
-            self.jump()
+        if keys[pygame.K_SPACE] and self.is_grounded:
+            self.jump(self.jump_force)
 ```
 
 ### Projectile Physics
@@ -232,9 +202,8 @@ class Projectile(s.PhysicalSprite):
             mass=0.1,  # Light projectile
             gravity=9.8
         )
-        self.set_velocity(velocity)
+        self.velocity = velocity
         self.bounce_enabled = True
-        self.set_bounce_factor(0.6)
         
     def update(self):
         super().update()
