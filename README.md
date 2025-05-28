@@ -81,6 +81,7 @@ pygame.quit()
 - [Color Effects](docs/color_effects.md) - Dynamic color effects and animations
 
 ### Ready Sprites
+- [Ready Sprites Overview](docs/readySprites.md) - Pre-built game components guide
 - [Text_fps](docs/text_fps.md) - Ready-to-use FPS counter with automatic updates
 
 ## 🎯 Demo Games
