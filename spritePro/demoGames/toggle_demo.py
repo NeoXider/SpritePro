@@ -22,7 +22,7 @@ import spritePro as s
 
 class ToggleDemo:
     def __init__(self):
-        pygame.init()
+        s.init()
         self.screen = s.get_screen((900, 700), "ToggleButton Demo - SpritePro")
         
         # Game state
@@ -245,7 +245,7 @@ class ToggleDemo:
         
         while running:
             # Handle events
-            for event in pygame.event.get():
+            for event in s.events:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
@@ -267,9 +267,8 @@ class ToggleDemo:
             # Update reset button
             self.reset_button.update(self.screen)
             
-            # Update display
-            pygame.display.flip()
-            pygame.time.Clock().tick(60)
+            # Update using SpritePro
+            s.update(fps=60)
         
         pygame.quit()
 

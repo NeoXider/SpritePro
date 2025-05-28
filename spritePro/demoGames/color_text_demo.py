@@ -20,7 +20,7 @@ from spritePro.utils.color_effects import ColorEffects
 
 class ColorTextDemo:
     def __init__(self):
-        pygame.init()
+        s.init()
         self.screen = s.get_screen((1400, 900), "Color Text Effects Demo - SpritePro")
         
         # Demo state for dynamic effects
@@ -306,7 +306,7 @@ class ColorTextDemo:
         
         while running:
             # Handle events
-            for event in pygame.event.get():
+            for event in s.events:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
@@ -347,9 +347,8 @@ class ColorTextDemo:
                 pause_text = s.TextSprite("PAUSED - Press SPACE to resume", 32, pause_color, (700, 450))
                 pause_text.update(self.screen)
             
-            # Update display
-            pygame.display.flip()
-            s.update(fps=60, update_display=False)
+            # Update using SpritePro
+            s.update(fps=60)
         
         pygame.quit()
 

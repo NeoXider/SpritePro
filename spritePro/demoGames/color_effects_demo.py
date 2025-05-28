@@ -28,7 +28,7 @@ from spritePro.utils.color_effects import ColorEffects, pulse, rainbow, breathin
 
 class ColorEffectsDemo:
     def __init__(self):
-        pygame.init()
+        s.init()
         self.screen = s.get_screen((1200, 800), "Color Effects Demo - SpritePro")
         self.font = pygame.font.Font(None, 24)
         self.title_font = pygame.font.Font(None, 48)
@@ -260,7 +260,7 @@ class ColorEffectsDemo:
         
         while running:
             # Handle events
-            for event in pygame.event.get():
+            for event in s.events:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
@@ -292,9 +292,8 @@ class ColorEffectsDemo:
                 pause_rect = pause_text.get_rect(center=(600, 400))
                 self.screen.blit(pause_text, pause_rect)
             
-            # Update display
-            pygame.display.flip()
-            s.update(fps=60, update_display=False)
+            # Update using SpritePro
+            s.update(fps=60)
         
         pygame.quit()
 
