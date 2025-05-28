@@ -21,7 +21,7 @@ from spritePro.utils.color_effects import ColorEffects
 class ColorTextDemo:
     def __init__(self):
         pygame.init()
-        self.screen = s.get_screen((1200, 800), "Color Text Effects Demo - SpritePro")
+        self.screen = s.get_screen((1400, 900), "Color Text Effects Demo - SpritePro")
         
         # Demo state for dynamic effects
         self.health = 100.0
@@ -37,10 +37,10 @@ class ColorTextDemo:
         """Setup text sprites for each color effect."""
         # Grid layout parameters
         cols = 3
-        start_x = 200
-        start_y = 100
-        spacing_x = 350
-        spacing_y = 80
+        start_x = 230
+        start_y = 120
+        spacing_x = 380
+        spacing_y = 100
         
         # Effect definitions
         effects = [
@@ -176,15 +176,15 @@ class ColorTextDemo:
             
             # Create main text sprite
             text_sprite = s.TextSprite(effect['text'], 24, (255, 255, 255), (x, y))
-            text_sprite.set_anchor("center")
+
             
             # Create description text
             desc_sprite = s.TextSprite(effect['description'], 14, (150, 150, 150), (x, y + 30))
-            desc_sprite.set_anchor("center")
+
             
             # Create RGB info text
             rgb_sprite = s.TextSprite("RGB: (255, 255, 255)", 12, (100, 100, 100), (x, y + 50))
-            rgb_sprite.set_anchor("center")
+
             
             self.text_effects.append({
                 'text_sprite': text_sprite,
@@ -245,14 +245,12 @@ class ColorTextDemo:
         """Draw title and instructions."""
         # Main title with rainbow effect
         title_color = ColorEffects.rainbow(speed=0.5, saturation=0.8)
-        title = s.TextSprite("Color Text Effects Demo", 48, title_color, (600, 30))
-        title.set_anchor("center")
-        title.draw(self.screen)
+        title = s.TextSprite("Color Text Effects Demo", 48, title_color, (700, 30))
+        title.update(self.screen)
         
         # Subtitle
-        subtitle = s.TextSprite("Dynamic Color Effects Applied to Text", 20, (200, 200, 200), (600, 70))
-        subtitle.set_anchor("center")
-        subtitle.draw(self.screen)
+        subtitle = s.TextSprite("Dynamic Color Effects Applied to Text", 20, (200, 200, 200), (700, 70))
+        subtitle.update(self.screen)
     
     def draw_instructions(self):
         """Draw instructions at the bottom."""
@@ -265,32 +263,29 @@ class ColorTextDemo:
         
         for i, instruction in enumerate(instructions):
             color = ColorEffects.pulse(speed=0.5, base_color=(100, 100, 100), target_color=(200, 200, 200), offset=i * 0.5)
-            text = s.TextSprite(instruction, 16, color, (600, 720 + i * 20))
-            text.set_anchor("center")
-            text.draw(self.screen)
+            text = s.TextSprite(instruction, 16, color, (700, 820 + i * 20))
+            text.update(self.screen)
     
     def draw_performance_info(self):
         """Draw performance information."""
         # FPS counter with breathing effect
         fps_color = ColorEffects.breathing(speed=1.0, base_color=(0, 255, 0))
-        fps_text = s.TextSprite(f"FPS: {s.clock.get_fps():.1f}", 18, fps_color, (1150, 20))
-        fps_text.set_anchor("topright")
-        fps_text.draw(self.screen)
+        fps_text = s.TextSprite(f"FPS: {s.clock.get_fps():.1f}", 18, fps_color, (1300, 20))
+        fps_text.update(self.screen)
         
         # Effect count with pulse
         count_color = ColorEffects.pulse(speed=1.5, base_color=(0, 100, 255), target_color=(100, 200, 255))
-        count_text = s.TextSprite(f"Active Text Effects: {len(self.text_effects)}", 16, count_color, (1150, 45))
-        count_text.set_anchor("topright")
-        count_text.draw(self.screen)
+        count_text = s.TextSprite(f"Active Text Effects: {len(self.text_effects)}", 16, count_color, (1300, 45))
+        count_text.update(self.screen)
         
         # Dynamic values display
         temp_color = ColorEffects.temperature(self.temperature, 0, 100)
         temp_display = s.TextSprite(f"Current Temp: {self.temperature:.1f}°C", 16, temp_color, (50, 20))
-        temp_display.draw(self.screen)
+        temp_display.update(self.screen)
         
         health_color = ColorEffects.health_bar(self.health, 100)
         health_display = s.TextSprite(f"Current Health: {self.health:.1f}%", 16, health_color, (50, 45))
-        health_display.draw(self.screen)
+        health_display.update(self.screen)
     
     def draw_color_categories(self):
         """Draw category labels."""
@@ -302,8 +297,7 @@ class ColorTextDemo:
         
         for category, pos, color in categories:
             text = s.TextSprite(category, 20, color, pos)
-            text.set_anchor("center")
-            text.draw(self.screen)
+            text.update(self.screen)
     
     def run(self):
         """Main demo loop."""
@@ -339,9 +333,9 @@ class ColorTextDemo:
             
             # Draw all text effects
             for effect in self.text_effects:
-                effect['text_sprite'].draw(self.screen)
-                effect['desc_sprite'].draw(self.screen)
-                effect['rgb_sprite'].draw(self.screen)
+                effect['text_sprite'].update(self.screen)
+                effect['desc_sprite'].update(self.screen)
+                effect['rgb_sprite'].update(self.screen)
             
             # Draw instructions and info
             self.draw_instructions()
@@ -350,9 +344,8 @@ class ColorTextDemo:
             # Show pause state
             if paused:
                 pause_color = ColorEffects.strobe(speed=3.0, on_color=(255, 255, 0), off_color=(200, 200, 0))
-                pause_text = s.TextSprite("PAUSED - Press SPACE to resume", 32, pause_color, (600, 400))
-                pause_text.set_anchor("center")
-                pause_text.draw(self.screen)
+                pause_text = s.TextSprite("PAUSED - Press SPACE to resume", 32, pause_color, (700, 450))
+                pause_text.update(self.screen)
             
             # Update display
             pygame.display.flip()
