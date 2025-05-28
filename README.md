@@ -92,6 +92,7 @@ Explore our demo games to see SpritePro in action:
 - [Toggle Demo](spritePro/demoGames/toggle_demo.py) - Interactive toggle buttons showcase
 - [Color Effects Demo](spritePro/demoGames/color_effects_demo.py) - Dynamic color effects showcase
 - [Color Text Demo](spritePro/demoGames/color_text_demo.py) - Text with color effects
+- [FPS Camera Demo](spritePro/demoGames/fps_camera_demo/fps_camera_demo.py) - FPS counter and camera system
 
 ## 🛠️ Requirements
 
