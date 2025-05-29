@@ -1,6 +1,7 @@
 # SpritePro
 
 SpritePro - a powerful and flexible game development library built on top of Pygame. Provides a comprehensive set of tools for creating 2D games with advanced capabilities.
+![gg0c31829550](https://github.com/user-attachments/assets/db56e1fd-0db5-4353-945d-c4a31c6b9d7f)
 
 ## 🎮 Key Features
 
