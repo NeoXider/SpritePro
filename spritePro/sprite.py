@@ -359,19 +359,27 @@ class Sprite(pygame.sprite.Sprite):
         """
         if speed is None:
             speed = self.speed
+        if speed <= 0:
+            return
         current_pos = pygame.math.Vector2(self.rect.center)
         target_vector = pygame.math.Vector2(target_pos)
         direction = target_vector - current_pos
         distance = direction.length()
-        if distance < self.stop_threshold:
+
+        dt = getattr(spritePro, "dt", 0.0) or 0.0
+        if dt <= 0:
+            dt = 1.0 / 60.0
+        step_distance = speed * dt
+
+        if distance <= self.stop_threshold or distance <= step_distance:
             self.rect.center = (int(target_vector.x), int(target_vector.y))
             self.velocity = pygame.math.Vector2(0, 0)
             self.state = "idle"
-        else:
-            if distance > 0:
-                direction = direction / distance * speed
-            self.velocity = direction
-            self.state = "moving"
+            return
+
+        direction.normalize_ip()
+        self.velocity = direction * step_distance
+        self.state = "moving"
 
     def set_velocity(self, vx: float, vy: float):
         """Sets the sprite's velocity directly.
