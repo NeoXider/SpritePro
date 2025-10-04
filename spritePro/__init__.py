@@ -9,6 +9,7 @@ from .components.text import TextSprite
 from .components.mouse_interactor import MouseInteractor
 from .components.animation import Animation
 from .components.tween import Tween, TweenManager, EasingType
+from .utils.save_load import PlayerPrefs
 
 from . import utils
 from . import readySprites
@@ -30,6 +31,7 @@ __all__ = [
     "Tween",
     "TweenManager",
     "EasingType",
+    "PlayerPrefs",
     "utils",
     "readySprites",
     # methods
