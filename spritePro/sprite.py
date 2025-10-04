@@ -1,5 +1,5 @@
 import random
-from typing import Tuple, Optional, Union, Sequence
+from typing import Tuple, Optional, Union, Sequence, List
 import pygame
 from pygame.math import Vector2
 import math
@@ -12,6 +12,7 @@ parent_dir = current_dir.parent
 sys.path.append(str(parent_dir))
 
 import spritePro
+from .constants import Anchor
 
 
 VectorInput = Union[Vector2, Sequence[Union[int, float]]]
@@ -80,6 +81,11 @@ class Sprite(pygame.sprite.Sprite):
         self.start_pos = _vector2_to_int_tuple(self.start_pos_vector)
         self.velocity = pygame.math.Vector2(0, 0)
         self.speed = speed
+        self._game_registered = False
+        self.screen_space = False
+        self.parent: Optional["Sprite"] = None
+        self.children: List["Sprite"] = []
+        self.local_offset = Vector2()
         self.flipped_h = False
         self.flipped_v = False
         self.color = (255, 255, 255)
@@ -91,6 +97,78 @@ class Sprite(pygame.sprite.Sprite):
 
         self.set_image(sprite, self.size_vector)
         self.rect.center = self.start_pos
+        spritePro.register_sprite(self)
+        self._game_registered = True
+
+    def set_screen_space(self, locked: bool = True) -> None:
+        """Фиксирует спрайт к экрану (без смещения камерой)."""
+        self.screen_space = locked
+
+    def set_parent(self, parent: Optional["Sprite"], keep_world_position: bool = True) -> None:
+        if parent is self:
+            raise ValueError("Sprite cannot be its own parent")
+        if parent is self.parent:
+            return
+        world_pos = self.get_world_position()
+        if self.parent:
+            try:
+                self.parent.children.remove(self)
+            except ValueError:
+                pass
+        self.parent = parent
+        if parent:
+            if self not in parent.children:
+                parent.children.append(self)
+            if parent.screen_space:
+                self.set_screen_space(True)
+            if keep_world_position:
+                self.local_offset = world_pos - parent.get_world_position()
+            else:
+                self.local_offset = Vector2()
+            self._apply_parent_transform()
+        else:
+            if keep_world_position:
+                self._set_world_center(world_pos)
+            else:
+                self._set_world_center(self.get_world_position())
+            self.local_offset = Vector2()
+
+    def set_position(self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER) -> None:
+        """Устанавливает позицию и обновляет стартовые координаты."""
+        anchor_key = anchor.lower() if isinstance(anchor, str) else anchor
+        anchors = Anchor.MAP
+        if anchor_key not in anchors:
+            raise ValueError(f"Unsupported anchor {anchor!r}")
+        vec = _coerce_vector2(position, (0, 0))
+        rect = self.rect.copy()
+        setattr(rect, anchors[anchor_key], (int(vec.x), int(vec.y)))
+        self.rect = rect
+        self._set_world_center(Vector2(self.rect.center))
+        if self.parent:
+            self.local_offset = self.get_world_position() - self.parent.get_world_position()
+
+    def get_world_position(self) -> Vector2:
+        return Vector2(self.rect.center)
+
+    def _set_world_center(self, position: Vector2) -> None:
+        self.rect.center = (int(position.x), int(position.y))
+        self.start_pos_vector = Vector2(self.rect.center)
+        self.start_pos = (self.rect.centerx, self.rect.centery)
+
+    def _apply_parent_transform(self) -> None:
+        if not self.parent:
+            return
+        desired = self.parent.get_world_position() + self.local_offset
+        self._set_world_center(desired)
+
+    def _sync_local_offset(self) -> None:
+        if self.parent:
+            self.local_offset = self.get_world_position() - self.parent.get_world_position()
+
+    def _update_children_world_positions(self) -> None:
+        for child in self.children:
+            child._apply_parent_transform()
+            child._update_children_world_positions()
 
     def set_color(self, color: Tuple):
         """Sets the color tint for the sprite.
@@ -114,6 +192,10 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             image_source (Union[str, Path, pygame.Surface]): Path to image file or Surface object.
             size (Optional[VectorInput]): New dimensions (width, height) or None to keep original size.
+        
+        Notes:
+            Falls back to a transparent surface if the file is missing.
+            The placeholder is tinted only when a sprite color is already set.
         """
         self._image_source = image_source
 
@@ -123,12 +205,14 @@ class Sprite(pygame.sprite.Sprite):
             try:
                 img = pygame.image.load(str(image_source)).convert_alpha()
             except Exception:
-                print(
-                    f"[Sprite] not found patch {type(self).__name__} / '{image_source}'"
-                )
+                if image_source:
+                    print(
+                        f"[Sprite] не удалось загрузить изображение для объекта {type(self).__name__} из '{image_source}'"
+                    )
                 fallback_size = _vector2_to_int_tuple(_coerce_vector2(size, tuple(self.size)))
                 img = pygame.Surface(fallback_size, pygame.SRCALPHA)
-                img.fill(self.color)
+                if self.color is not None:
+                    img.fill(self.color)
 
         if size is not None:
             requested_size = _coerce_vector2(size, tuple(self.size))
@@ -141,13 +225,25 @@ class Sprite(pygame.sprite.Sprite):
 
         self.original_image = img
         self.image = img.copy()
-        center = getattr(self, "rect", None)
-        center = center.center if center is not None else None
+        existing_rect = getattr(self, "rect", None)
+        if existing_rect is not None:
+            target_center = existing_rect.center
+        else:
+            target_center = getattr(self, "start_pos", None)
         self.rect = self.image.get_rect()
-        if center:
-            self.rect.center = center
+        if target_center is not None:
+            self.rect.center = (int(target_center[0]), int(target_center[1]))
+        self._set_world_center(Vector2(self.rect.center))
         self.mask = pygame.mask.from_surface(self.image)
         self._update_image()
+
+    def kill(self) -> None:
+        if self._game_registered:
+            spritePro.unregister_sprite(self)
+            self._game_registered = False
+        for child in self.children[:]:
+            child.set_parent(None, keep_world_position=True)
+        super().kill()
 
     def set_native_size(self):
         """Resets the sprite to its original image dimensions.
@@ -171,7 +267,16 @@ class Sprite(pygame.sprite.Sprite):
         if self.active:
             screen = screen or spritePro.screen
             if screen is not None:
-                screen.blit(self.image, self.rect)
+                if getattr(self, "screen_space", False):
+                    screen.blit(self.image, self.rect)
+                else:
+                    camera = getattr(spritePro.get_game(), "camera", Vector2())
+                    draw_rect = self.rect.copy()
+                    draw_rect.x -= int(camera.x)
+                    draw_rect.y -= int(camera.y)
+                    screen.blit(self.image, draw_rect)
+        self._sync_local_offset()
+        self._update_children_world_positions()
 
     def _update_image(self):
         """Updates the sprite image with all visual effects applied.
@@ -212,12 +317,16 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.center = center
 
     def set_active(self, active: bool):
-        """Sets the sprite's active state.
-
-        Args:
-            active (bool): True to enable rendering, False to disable.
-        """
+        """Включает или выключает спрайт и синхронизирует его с глобальной группой."""
+        if self.active == active:
+            return
         self.active = active
+        if active:
+            spritePro.enable_sprite(self)
+            self._game_registered = True
+        else:
+            spritePro.disable_sprite(self)
+            self._game_registered = False
 
     def reset_sprite(self):
         """Resets the sprite to its initial position and state."""

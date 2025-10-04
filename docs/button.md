@@ -116,6 +116,10 @@ button_rect = button.rect
 button_text = button.text
 ```
 
+## Sprite Hierarchy
+
+Buttons automatically parent their internal `TextSprite` label to the button sprite. This keeps the label aligned with transforms and ensures that calling `button.kill()` also removes the label from the scene. If you need to reuse the label elsewhere, detach it first with `button.text_sprite.set_parent(None)` before killing the button.
+
 ## Advanced Features
 
 ### Multi-line Text

@@ -7,6 +7,7 @@ parent_dir = current_dir.parent.parent
 sys.path.append(str(parent_dir))
 
 from spritePro.gameSprite import GameSprite
+from spritePro import Anchor
 from spritePro.utils.surface import round_corners
 import spritePro
 
@@ -17,7 +18,7 @@ pygame.font.init()
 pygame.mixer.init()
 
 SCREEN = spritePro.get_screen((960, 720))
-WIDTH, HEIGHT = spritePro.WH
+WIDTH, HEIGHT = int(spritePro.WH.x), int(spritePro.WH.y)
 
 SCORE_GAMEOVER = 3
 
@@ -144,7 +145,7 @@ def win(player: GameSprite):
     text = "Победа левого" if player == player_left else "Победа правого"
     text += " игрока!"
     textWin.set_text(text)
-    textWin.rect.centerx, textWin.rect.y = (WIDTH // 2, HEIGHT // 2)
+    textWin.set_position((WIDTH // 2, HEIGHT // 2), spritePro.Anchor.CENTER)
     textWin.update(SCREEN)
 
     player.rotate_by(-8)
@@ -156,6 +157,8 @@ def start_game():
     current_state = STATE_GAME
     leftScore = 0
     rightScore = 0
+    # Сбрасываем камеру в начало координат
+    spritePro.set_camera_position(0, 0)
     player_left.rect.center = player_left.start_pos
     player_right.rect.center = player_right.start_pos
     player_left.rotate_to(-90)
@@ -167,18 +170,22 @@ def start_game():
 def menu():
     global current_state
     current_state = STATE_MENU
+    # Сбрасываем камеру в начало координат
+    spritePro.set_camera_position(0, 0)
     bounch_sound.play()
 
 
 def shop():
     global current_state
     current_state = STATE_SHOP
+    # Сбрасываем камеру в начало координат
+    spritePro.set_camera_position(0, 0)
     bounch_sound.play()
 
 
 def logic_shop():
     SCREEN.blit(BGS[current_state], (0, 0))
-    textShop.rect.centerx, textShop.rect.y = (WIDTH // 2, 10)
+    textShop.set_position((WIDTH // 2, 10), spritePro.Anchor.MID_TOP)
     textShop.update(SCREEN)
     bts[STATE_MENU].set_color(COLOR_EFX[STATE_MENU]())
     bts[STATE_MENU].update(SCREEN)
@@ -230,37 +237,40 @@ leftScore = 0
 rightScore = 0
 current_state = STATE_MENU
 size_text = 32
-pading_x_player = 50
+pading_x_player = 100
 
 
-ball = Ball(path / "Sprites" / "ball.png", (50, 50), spritePro.WH_C, 2)
+print(f"Создаем мяч с позицией: ({WIDTH // 2}, {HEIGHT // 2})")
+ball = Ball(path / "Sprites" / "ball.png", (50, 50), (WIDTH // 2, HEIGHT // 2), 2)
 ball.set_color((255, 255, 255))
+
+print(f"Создаем левую платформу с позицией: ({pading_x_player}, {HEIGHT // 2})")
 player_left = GameSprite(
     path / "Sprites" / "platforma.png",
     (120, 50),
-    (pading_x_player, spritePro.WH_C[1]),
-    6,
-)
-player_right = GameSprite(
-    path / "Sprites" / "platforma.png",
-    (120, 50),
-    (WIDTH - pading_x_player, spritePro.WH_C[1]),
+    (pading_x_player, HEIGHT // 2),
     6,
 )
 
-textWin = spritePro.TextSprite("", 72, (255, 255, 100), spritePro.WH_C)
+print(f"Создаем правую платформу с позицией: ({WIDTH - pading_x_player}, {HEIGHT // 2})")
+player_right = GameSprite(
+    path / "Sprites" / "platforma.png",
+    (120, 50),
+    (WIDTH - pading_x_player, HEIGHT // 2),
+    6,
+)
+
+textWin = spritePro.TextSprite("", 72, (255, 255, 100), (WIDTH // 2, HEIGHT // 2))
 textShop = spritePro.TextSprite("Shop", 72, (255, 255, 100))
 score_text_l = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))
 score_text_r = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))
 
 btn_size = 210, 50
 
-btn_menu = spritePro.Button("", btn_size, (0, 0), "Menu", size_text)
+btn_menu = spritePro.Button("", btn_size, (WIDTH // 2, HEIGHT - 20), "Menu", size_text)
 btn_menu.on_click(menu)
-
 btn_menu.set_alpha(150)
-btn_menu.rect.centerx = WIDTH // 2
-btn_menu.rect.bottom = HEIGHT - 20
+btn_menu.set_position((WIDTH // 2, HEIGHT - 20), spritePro.Anchor.MID_BOTTOM)
 
 bts = {
     STATE_MENU: btn_menu,
@@ -276,6 +286,10 @@ bts = {
         on_click=start_game,
     ),
 }
+
+# Устанавливаем правильные якоря для кнопок
+bts[STATE_SHOP].set_position((WIDTH // 2, HEIGHT // 2 + 100), spritePro.Anchor.CENTER)
+bts[STATE_GAME].set_position((WIDTH // 2, HEIGHT // 2), spritePro.Anchor.CENTER)
 
 # добавляем скругления
 for bt in bts.values():
@@ -315,6 +329,10 @@ TOGGLES = {
     ),
 }
 
+# Устанавливаем правильные якоря для переключателей
+TOGGLES["music"].set_position((150, 50), spritePro.Anchor.CENTER)
+TOGGLES["audio"].set_position((150, 120), spritePro.Anchor.CENTER)
+
 COLOR_EFX = {
     STATE_MENU: spritePro.utils.pulse,
     STATE_GAME: spritePro.utils.wave,
@@ -323,6 +341,14 @@ COLOR_EFX = {
 
 fps_text = spritePro.readySprites.create_fps_counter((spritePro.WH_C[0], 15))
 
+# Фиксируем камеру на (0, 0) для пинг-понга
+spritePro.set_camera_position(0, 0)
+print(f"Размер экрана: {WIDTH}x{HEIGHT}")
+print(f"Центр экрана: {spritePro.WH_C}")
+print(f"Позиция мяча: {ball.rect.center}")
+print(f"Позиция левой платформы: {player_left.rect.center}")
+print(f"Позиция правой платформы: {player_right.rect.center}")
+print(f"Камера: {spritePro.get_camera_position()}")
 
 while True:
     fps_text.update()

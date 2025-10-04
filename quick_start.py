@@ -1,33 +1,27 @@
 import spritePro as s
 
+def on_click():
+    text.set_text("Welcome! :)")
+    button.kill()
+
 # Initialize the library
 s.init()
 
 # Create a window
 s.get_screen((800, 600), "My Game")
-
-prefs = s.PlayerPrefs()
-
-# Create a basic sprite
-player = s.Sprite(
+# text
+text = s.TextSprite("Hello World", 74, (255, 50, 255), s.WH_C)
+button = s.Button(
     "",
-    size=(100, 100),
-    # load vector2 pos or default center position
-    pos=prefs.get_vector2("player_pos", s.WH_C),
-    speed=3,
+    (300, 100),
+    s.WH_C,
+    "Click Me",
+    36,
+    on_click=on_click,
 )
 
-last_pos = tuple(player.rect.center)
+button.rect.y+=200
 
 # Main game loop
 while True:
     s.update(fill_color=(0, 0, 100))
-    player.handle_keyboard_input()
-    player.update()
-    player.handle_keyboard_input()
-
-    # save if current_pos not last_pos
-    current_pos = tuple(player.rect.center)
-    if current_pos != last_pos:
-        prefs.set_vector2("player_pos", current_pos)
-        last_pos = current_pos

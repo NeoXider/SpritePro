@@ -80,6 +80,7 @@ class Button(Sprite):
             pos=self.rect.center,
             font_name=font_name,
         )
+        self.text_sprite.set_parent(self, keep_world_position=True)
 
         # Логика мыши
         self.interactor = MouseInteractor(sprite=self, on_click=on_click)
@@ -97,13 +98,20 @@ class Button(Sprite):
         """
         screen = screen or spritePro.screen
 
-        self.interactor.update()
+        interactor = self.interactor
+        if interactor is not None:
+            interactor.update()
+            is_pressed = interactor.is_pressed
+            is_hovered = interactor.is_hovered
+        else:
+            is_pressed = False
+            is_hovered = False
 
         # Определяем цвет и цель масштаба
-        if self.interactor.is_pressed and self.animated:
+        if is_pressed and self.animated:
             self.current_color = self.press_color
             self._target_scale = self.start_scale + self.press_scale_delta
-        elif self.interactor.is_hovered and self.animated:
+        elif is_hovered and self.animated:
             self.current_color = self.hover_color
             self._target_scale = self.start_scale + self.hover_scale_delta
         else:
@@ -122,8 +130,10 @@ class Button(Sprite):
         super().update(screen)
 
         # Обновляем и рисуем текст
-        self.text_sprite.rect.center = self.rect.center
-        self.text_sprite.update(screen)
+        label = self.text_sprite
+        if label is not None and getattr(label, 'alive', lambda: True)():
+            label.rect.center = self.rect.center
+            label.update(screen)
 
     def set_scale(self, scale: float, update: bool = True):
         """Sets the button's scale.
@@ -151,6 +161,17 @@ class Button(Sprite):
             func (Callable): The function to call when the button is hovered.
         """
         self.interactor.on_hover_enter = func
+
+    def kill(self) -> None:
+        text_sprite = getattr(self, "text_sprite", None)
+        if text_sprite is not None:
+            text_sprite.set_parent(None, keep_world_position=True)
+            if hasattr(text_sprite, "kill"):
+                text_sprite.kill()
+            self.text_sprite = None
+        self.interactor = None
+        super().kill()
+
 
 
 if __name__ == "__main__":
@@ -196,3 +217,5 @@ if __name__ == "__main__":
 
         screen.fill(color)
         btn.update(screen)
+        btn.rect.x +=random.randint(-1,1)
+        btn.rect.y += random.randint(-1,1)

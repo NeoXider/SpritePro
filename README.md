@@ -54,6 +54,14 @@ while True:
 ```
 
 ### PlayerPrefs Quick Save
+### Camera Helpers
+
+SpriteProGame управляет глобальной камерой. Для перемещения достаточно вызвать `s.process_camera_input()` и передать скорость или свои клавиши. Для слежения за объектом используйте `s.set_camera_follow(sprite, offset=(0, 0))`; `s.clear_camera_follow()` возвращает ручной режим. Внутри `s.update(...)` камера обновляется автоматически, поэтому дополнительный код не требуется.
+
+### Particle Emitter
+
+Модуль `spritePro.particles` предоставляет `ParticleEmitter`. Создайте конфигурацию `ParticleConfig`, затем вызовите `emit(position)` для быстрого запуска эффекта. Частицы — полноценные `Sprite`, поддерживающие камеру и `set_screen_space`.
+
 
 SpritePro �������� ����� ���� ������ ������� ���������� � `PlayerPrefs`. �� ��������� ������ � ���������� ������� �������� (�����, ������ � ����������) ����� ������� � ���������� ��� �� ������ JSON, ��� � ��������� �������.
 
@@ -112,6 +120,7 @@ prefs.set_string("profile/name", "Hero")
 - [Surface Utilities](docs/surface.md) - Tools for working with surfaces
 - [Color Effects](docs/color_effects.md) - Dynamic color effects and animations
 - [Save/Load System](docs/save_load.md) - Professional save and load system for game data
+- [Camera & Particles](docs/camera_and_particles.md) - Camera helpers and configurable particle emitter
 
 ### Ready Sprites
 - [Ready Sprites Overview](docs/readySprites.md) - Pre-built game components guide
@@ -129,6 +138,8 @@ Explore our demo games to see SpritePro in action:
 - [Toggle Demo](spritePro/demoGames/toggle_demo.py) - Interactive toggle buttons showcase
 - [Color Effects Demo](spritePro/demoGames/color_effects_demo.py) - Dynamic color effects showcase
 - [Color Text Demo](spritePro/demoGames/color_text_demo.py) - Text with color effects
+- [Fireworks Demo](spritePro/demoGames/fireworks_demo.py) - Camera controls and particle emitter in action
+- [Particle Demo](spritePro/demoGames/particle_demo.py) - Minimal example of ParticleEmitter usage
 - [FPS Camera Demo](spritePro/demoGames/fps_camera_demo/fps_camera_demo.py) - FPS counter and camera system
 - [Text FPS Demo](spritePro/demoGames/text_fps_demo.py) - Ready-to-use FPS counter showcase
 - [Save/Load Demo](spritePro/demoGames/save_load_demo.py) - Comprehensive save and load system demonstration
