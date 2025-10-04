@@ -94,6 +94,7 @@ class Sprite(pygame.sprite.Sprite):
         self.alpha = 255
         self.state = "idle"
         self.states = {"idle", "moving", "hit", "attacking", "dead"}
+        self.anchor_key = Anchor.CENTER
 
         self.set_image(sprite, self.size_vector)
         self.rect.center = self.start_pos
@@ -135,7 +136,8 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_position(self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER) -> None:
         """Устанавливает позицию и обновляет стартовые координаты."""
-        anchor_key = anchor.lower() if isinstance(anchor, str) else anchor
+        self.anchor_key = anchor.lower() if isinstance(anchor, str) else anchor
+        anchor_key = self.anchor_key
         anchors = Anchor.MAP
         if anchor_key not in anchors:
             raise ValueError(f"Unsupported anchor {anchor!r}")
@@ -225,14 +227,22 @@ class Sprite(pygame.sprite.Sprite):
 
         self.original_image = img
         self.image = img.copy()
+        
         existing_rect = getattr(self, "rect", None)
         if existing_rect is not None:
-            target_center = existing_rect.center
+            # Получаем имя атрибута для текущего якоря (например, 'topleft')
+            anchor_attr = Anchor.MAP.get(self.anchor_key, 'center')
+            # Сохраняем текущую позицию якоря
+            anchor_pos = getattr(existing_rect, anchor_attr)
         else:
-            target_center = getattr(self, "start_pos", None)
+            anchor_attr = 'center'
+            anchor_pos = getattr(self, "start_pos", (0, 0))
+
         self.rect = self.image.get_rect()
-        if target_center is not None:
-            self.rect.center = (int(target_center[0]), int(target_center[1]))
+        
+        # Устанавливаем позицию нового rect по сохраненному якорю
+        setattr(self.rect, anchor_attr, anchor_pos)
+
         self._set_world_center(Vector2(self.rect.center))
         self.mask = pygame.mask.from_surface(self.image)
         self._update_image()
