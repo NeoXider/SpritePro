@@ -1,6 +1,7 @@
 import random
-from typing import Tuple, Optional, Union
+from typing import Tuple, Optional, Union, Sequence
 import pygame
+from pygame.math import Vector2
 import math
 
 import sys
@@ -11,6 +12,27 @@ parent_dir = current_dir.parent
 sys.path.append(str(parent_dir))
 
 import spritePro
+
+
+VectorInput = Union[Vector2, Sequence[Union[int, float]]]
+
+
+def _coerce_vector2(value: Optional[VectorInput], default: Tuple[float, float]) -> Vector2:
+    if value is None:
+        value = default
+    if isinstance(value, Vector2):
+        return value.copy()
+    if isinstance(value, (str, bytes)):
+        raise TypeError(f"Expected 2D coordinate, got {type(value)!r}")
+    try:
+        x, y = value[:2]  # type: ignore[index]
+    except (TypeError, ValueError, IndexError):
+        raise TypeError(f"Expected 2D coordinate, got {type(value)!r}") from None
+    return Vector2(float(x), float(y))
+
+
+def _vector2_to_int_tuple(vec: Vector2) -> Tuple[int, int]:
+    return int(vec.x), int(vec.y)
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -39,8 +61,8 @@ class Sprite(pygame.sprite.Sprite):
     def __init__(
         self,
         sprite: str,
-        size: tuple = (50, 50),
-        pos: tuple = (0, 0),
+        size: VectorInput = (50, 50),
+        pos: VectorInput = (0, 0),
         speed: float = 0,
     ):
         """Initializes a new sprite instance.
@@ -52,8 +74,10 @@ class Sprite(pygame.sprite.Sprite):
             speed (float, optional): Movement speed. Defaults to 0.
         """
         super().__init__()
-        self.size = size
-        self.start_pos = pos
+        self.size_vector = _coerce_vector2(size, (50, 50))
+        self.size = _vector2_to_int_tuple(self.size_vector)
+        self.start_pos_vector = _coerce_vector2(pos, (0, 0))
+        self.start_pos = _vector2_to_int_tuple(self.start_pos_vector)
         self.velocity = pygame.math.Vector2(0, 0)
         self.speed = speed
         self.flipped_h = False
@@ -65,8 +89,8 @@ class Sprite(pygame.sprite.Sprite):
         self.state = "idle"
         self.states = {"idle", "moving", "hit", "attacking", "dead"}
 
-        self.set_image(sprite, size)
-        self.rect.center = pos
+        self.set_image(sprite, self.size_vector)
+        self.rect.center = self.start_pos
 
     def set_color(self, color: Tuple):
         """Sets the color tint for the sprite.
@@ -83,16 +107,16 @@ class Sprite(pygame.sprite.Sprite):
     def set_image(
         self,
         image_source="",
-        size: Optional[Tuple[int, int]] = None,
+        size: Optional[VectorInput] = None,
     ):
         """Sets a new image for the sprite.
 
         Args:
             image_source (Union[str, Path, pygame.Surface]): Path to image file or Surface object.
-            size (Optional[Tuple[int, int]]): New dimensions (width, height) or None to keep original size.
+            size (Optional[VectorInput]): New dimensions (width, height) or None to keep original size.
         """
         self._image_source = image_source
-        img = None
+
         if isinstance(image_source, pygame.Surface):
             img = image_source.copy()
         else:
@@ -100,15 +124,21 @@ class Sprite(pygame.sprite.Sprite):
                 img = pygame.image.load(str(image_source)).convert_alpha()
             except Exception:
                 print(
-                    f"[Sprite] Не удалось загрузить картинку для объекта {type(self).__name__} из '{image_source}'"
+                    f"[Sprite] not found patch {type(self).__name__} / '{image_source}'"
                 )
-                img = pygame.Surface(size or self.size, pygame.SRCALPHA)
+                fallback_size = _vector2_to_int_tuple(_coerce_vector2(size, tuple(self.size)))
+                img = pygame.Surface(fallback_size, pygame.SRCALPHA)
                 img.fill(self.color)
+
         if size is not None:
-            img = pygame.transform.scale(img, size)
-            self.size = size
+            requested_size = _coerce_vector2(size, tuple(self.size))
+            img = pygame.transform.scale(img, _vector2_to_int_tuple(requested_size))
+            self.size_vector = requested_size
+            self.size = _vector2_to_int_tuple(requested_size)
         else:
-            self.size = (img.get_width(), img.get_height())
+            self.size_vector = Vector2(img.get_width(), img.get_height())
+            self.size = _vector2_to_int_tuple(self.size_vector)
+
         self.original_image = img
         self.image = img.copy()
         center = getattr(self, "rect", None)

@@ -52,13 +52,13 @@ class MovingSprite(Sprite):
         self.rect.y += self.velocity_y * s.dt
 
         # Bounce off screen edges
-        if self.rect.left <= 0 or self.rect.right >= s.WH[0]:
+        if self.rect.left <= 0 or self.rect.right >= int(s.WH.x):
             self.velocity_x *= -1
-        if self.rect.top <= 0 or self.rect.bottom >= s.WH[1]:
+        if self.rect.top <= 0 or self.rect.bottom >= int(s.WH.y):
             self.velocity_y *= -1
 
         # Keep sprite on screen
-        self.rect.clamp_ip(pygame.Rect(0, 0, s.WH[0], s.WH[1]))
+        self.rect.clamp_ip(pygame.Rect(0, 0, int(s.WH.x), int(s.WH.y)))
 
         # Draw sprite
         pygame.draw.rect(screen, self.color, self.rect)
@@ -155,8 +155,8 @@ def main():
                         # Create moving sprites for performance testing
                         moving_sprites.clear()
                         for _ in range(50):
-                            x = random.randint(50, s.WH[0] - 50)
-                            y = random.randint(250, s.WH[1] - 100)
+                            x = random.randint(50, int(s.WH.x) - 50)
+                            y = random.randint(250, int(s.WH.y) - 100)
                             color = (
                                 random.randint(100, 255),
                                 random.randint(100, 255),

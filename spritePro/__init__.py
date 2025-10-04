@@ -16,6 +16,7 @@ from . import readySprites
 
 from typing import List
 import pygame
+from pygame.math import Vector2
 import sys
 
 __all__ = [
@@ -41,8 +42,8 @@ __all__ = [
 ]
 
 FPS: int = 60
-WH: tuple[int, int] = (0, 0)
-WH_C: tuple[int, int] = (0, 0)
+WH: Vector2 = Vector2()
+WH_C: Vector2 = Vector2()
 
 
 def init():
@@ -73,8 +74,8 @@ def get_screen(
         pygame.display.set_icon(pygame.image.load(icon))
 
     events = pygame.event.get()
-    WH = size
-    WH_C = (size[0] // 2, size[1] // 2)
+    WH = Vector2(size)
+    WH_C = Vector2(screen_rect.center)
     return screen
 
 
