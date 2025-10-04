@@ -9,6 +9,14 @@ from typing import Callable, Optional, Sequence, Tuple
 import pygame
 from pygame.math import Vector2
 
+from pathlib import Path
+import sys
+
+_CURRENT_DIR = Path(__file__).resolve().parent
+_PARENT_DIR = _CURRENT_DIR.parent
+if str(_PARENT_DIR) not in sys.path:
+    sys.path.insert(0, str(_PARENT_DIR))
+
 import spritePro
 
 VectorRange = Tuple[float, float]

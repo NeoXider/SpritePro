@@ -2,7 +2,7 @@ import spritePro as s
 
 def on_click():
     text.set_text("Welcome! :)")
-    button.kill()
+    button.set_active(False)
 
 # Initialize the library
 s.init()

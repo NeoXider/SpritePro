@@ -2,6 +2,7 @@ from pathlib import Path
 """Quick example of ParticleEmitter usage."""
 
 from pygame.math import Vector2
+import sys
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
@@ -27,9 +28,8 @@ def main():
     )
 
     running = True
-    clock = pygame.time.Clock()
+    text = s.TextSprite("Click on screen", 56, pos = s.WH_C)
     while running:
-        dt = clock.tick(60)
         s.update(fill_color=(20, 20, 40), update_display=False)
 
         for event in s.events:
@@ -37,6 +37,7 @@ def main():
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 emitter.emit(event.pos)
+                text.set_active(False)
 
         pygame.display.flip()
 

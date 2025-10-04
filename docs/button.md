@@ -105,6 +105,11 @@ button.on_click(click_handler)
 
 ## Button States
 
+## Activation
+
+Calling `button.set_active(False)` now also forwards the inactive state to the embedded text label and any other children attached to the button. Re-enable with `button.set_active(True)` to bring both the button body and its label back into the sprite system.
+
+
 ### State Management
 ```python
 # Scale button

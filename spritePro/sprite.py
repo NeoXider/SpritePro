@@ -328,6 +328,10 @@ class Sprite(pygame.sprite.Sprite):
             spritePro.disable_sprite(self)
             self._game_registered = False
 
+        for child in list(self.children):
+            if hasattr(child, "set_active"):
+                child.set_active(active)
+
     def reset_sprite(self):
         """Resets the sprite to its initial position and state."""
         self.rect.center = self.start_pos
