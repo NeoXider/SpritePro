@@ -495,10 +495,11 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             sound_file (str): Path to sound file.
         """
-        if self.sound_file != sound_file:
-            self.sound_file = sound_file
+        try:
             self.sound = pygame.mixer.Sound(sound_file)
-        self.sound.play()
+            self.sound.play()
+        except:
+            print("Ошибка загрузки звука: " + sound_file)
 
 
 if __name__ == "__main__":

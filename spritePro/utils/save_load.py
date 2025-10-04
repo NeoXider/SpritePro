@@ -28,7 +28,7 @@ import os
 import shutil
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Union, Optional, Type, Callable
+from typing import Any, Dict, List, Union, Optional, Type, Callable, Tuple
 from datetime import datetime
 import logging
 
@@ -572,6 +572,100 @@ class SaveLoadManager:
         filepath = Path(filename) if filename else self.default_file
         backup_pattern = f"{filepath.stem}.backup_*{filepath.suffix}"
         return sorted(filepath.parent.glob(backup_pattern))
+
+
+class PlayerPrefs:
+    """Lightweight helper inspired by Unity PlayerPrefs for common value types."""
+
+    def __init__(self, filename: str = "player_prefs.json", auto_backup: bool = False, compression: bool = False):
+        self._manager = SaveLoadManager(filename, auto_backup=auto_backup, compression=compression)
+
+    def _load_data(self) -> Dict[str, Any]:
+        data = self._manager.load(default_value={})
+        if isinstance(data, dict):
+            return dict(data)
+        return {}
+
+    def _save_data(self, data: Dict[str, Any]) -> None:
+        self._manager.save(data)
+
+    def _get_value(self, key: str, default: Any) -> Any:
+        data = self._load_data()
+        return data.get(key, default)
+
+    def _set_value(self, key: str, value: Any) -> None:
+        data = self._load_data()
+        data[key] = value
+        self._save_data(data)
+
+    def get_float(self, key: str, default: float = 0.0) -> float:
+        value = self._get_value(key, default)
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return float(default)
+
+    def set_float(self, key: str, value: float) -> None:
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            raise SaveLoadError(f"Value for {key} must be a number")
+        self._set_value(key, numeric)
+
+    def get_int(self, key: str, default: int = 0) -> int:
+        value = self._get_value(key, default)
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return int(default)
+
+    def set_int(self, key: str, value: int) -> None:
+        try:
+            integer = int(value)
+        except (TypeError, ValueError):
+            raise SaveLoadError(f"Value for {key} must be an integer")
+        self._set_value(key, integer)
+
+    def get_string(self, key: str, default: str = "") -> str:
+        value = self._get_value(key, default)
+        if value is None:
+            return default
+        return str(value)
+
+    def set_string(self, key: str, value: str) -> None:
+        if value is None:
+            raise SaveLoadError(f"Value for {key} cannot be None")
+        self._set_value(key, str(value))
+
+    def get_vector2(self, key: str, default: Tuple[int, int] = (0, 0)) -> Tuple[int, int]:
+        value = self._get_value(key, default)
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            try:
+                x = int(value[0])
+                y = int(value[1])
+                return x, y
+            except (TypeError, ValueError):
+                pass
+        return int(default[0]), int(default[1])
+
+    def set_vector2(self, key: str, value: Tuple[int, int]) -> None:
+        if not isinstance(value, (list, tuple)) or len(value) != 2:
+            raise SaveLoadError(f"Value for {key} must be a 2D coordinate")
+        try:
+            x = int(value[0])
+            y = int(value[1])
+        except (TypeError, ValueError):
+            raise SaveLoadError(f"Value for {key} must contain numeric coordinates")
+        self._set_value(key, [x, y])
+
+    def delete_key(self, key: str) -> None:
+        data = self._load_data()
+        if key in data:
+            del data[key]
+            self._save_data(data)
+
+    def clear(self) -> None:
+        self._save_data({})
 
 
 # Global instance for easy access
