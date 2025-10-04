@@ -58,7 +58,6 @@ player = s.Sprite(
 while True:
     s.update(fill_color=(0, 0, 100))
     player.handle_keyboard_input()
-    player.update()
 ```
 
 ### PlayerPrefs Quick Save
