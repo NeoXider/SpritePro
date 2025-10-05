@@ -359,13 +359,14 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.center = (int(cx + dx * self.speed), int(cy + dy * self.speed))
 
     def move_towards(
-        self, target_pos: Tuple[float, float], speed: Optional[float] = None
+        self, target_pos: Tuple[float, float], speed: Optional[float] = None, use_dt: bool = False
     ):
         """Moves the sprite towards a target position.
 
         Args:
             target_pos (Tuple[float, float]): Target position (x, y).
             speed (Optional[float]): Movement speed. If None, uses self.speed.
+            use_dt (bool): Whether to use delta time for frame-rate independent movement. Defaults to False.
         """
         if speed is None:
             speed = self.speed
@@ -376,10 +377,13 @@ class Sprite(pygame.sprite.Sprite):
         direction = target_vector - current_pos
         distance = direction.length()
 
-        dt = getattr(spritePro, "dt", 0.0) or 0.0
-        if dt <= 0:
-            dt = 1.0 / 60.0
-        step_distance = speed * dt
+        if use_dt:
+            dt = getattr(spritePro, "dt", 0.0) or 0.0
+            if dt <= 0:
+                dt = 1.0 / 60.0
+            step_distance = speed * dt
+        else:
+            step_distance = speed
 
         if distance <= self.stop_threshold or distance <= step_distance:
             self.rect.center = (int(target_vector.x), int(target_vector.y))

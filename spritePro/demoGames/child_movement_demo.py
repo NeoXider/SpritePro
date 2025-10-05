@@ -46,7 +46,7 @@ class SmileyFace(s.Sprite):
         self.right_eye._apply_parent_transform()
 
         self.target: pygame.Vector2 = pygame.Vector2(self.rect.center)
-        self.speed = 180.0
+        self.speed = 180.0 # deltaTime (180px in seconds)
 
     def set_random_target(self) -> None:
         width, height = s.WH
@@ -62,7 +62,7 @@ class SmileyFace(s.Sprite):
             child.set_alpha(clamped)
 
     def update(self, screen: pygame.Surface | None = None) -> None:
-        self.move_towards(self.target)
+        self.move_towards(self.target, use_dt=True)
         super().update(screen)
 
 
