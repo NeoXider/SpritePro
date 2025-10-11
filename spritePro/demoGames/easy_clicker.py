@@ -25,7 +25,7 @@ s.init()
 # Create a window
 s.get_screen((1280, 960), "My Game")
 
-bg = s.Sprite("D:\\GIT\\_fork\\SpritePro\\spritePro\\demoGames\\Sprites\\bg1.jpg", s.WH,s.WH_C)
+bg = s.Sprite("spritePro\\demoGames\\Sprites\\bg1.jpg", s.WH,s.WH_C)
 # Create a basic sprite
 emitter = s.ParticleEmitter(
     s.ParticleConfig(
@@ -37,7 +37,7 @@ emitter = s.ParticleEmitter(
     )
 )
 player = s.Button(
-    "D:\GIT\_fork\SpritePro\spritePro\demoGames\Sprites\c.png",
+    "spritePro\demoGames\Sprites\c.png",
     (500, 500),
     s.WH_C,'',on_click=onclick
 )
