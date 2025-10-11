@@ -575,70 +575,101 @@ class SaveLoadManager:
 
 
 class PlayerPrefs:
-    """Lightweight helper inspired by Unity PlayerPrefs for common value types."""
+    """
+    A singleton class for managing player preferences, such as game settings and save data.
+    It allows you to store and retrieve various data types, including integers, floats, strings, and booleans.
+    
+    You can get the instance by calling PlayerPrefs() or use the class methods directly, 
+    e.g. PlayerPrefs.get_int("score").
+    """
+    _instance = None
+    _initialized = False
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(PlayerPrefs, cls).__new__(cls)
+        return cls._instance
 
     def __init__(self, filename: str = "player_prefs.json", auto_backup: bool = False, compression: bool = False):
+        if self._initialized:
+            return
         self._manager = SaveLoadManager(filename, auto_backup=auto_backup, compression=compression)
+        self._initialized = True
 
-    def _load_data(self) -> Dict[str, Any]:
-        data = self._manager.load(default_value={})
+    @classmethod
+    def _get_instance(cls):
+        return cls()
+
+    @classmethod
+    def _load_data(cls) -> Dict[str, Any]:
+        data = cls._get_instance()._manager.load(default_value={})
         if isinstance(data, dict):
             return dict(data)
         return {}
 
-    def _save_data(self, data: Dict[str, Any]) -> None:
-        self._manager.save(data)
+    @classmethod
+    def _save_data(cls, data: Dict[str, Any]) -> None:
+        cls._get_instance()._manager.save(data)
 
-    def _get_value(self, key: str, default: Any) -> Any:
-        data = self._load_data()
+    @classmethod
+    def _get_value(cls, key: str, default: Any) -> Any:
+        data = cls._load_data()
         return data.get(key, default)
 
-    def _set_value(self, key: str, value: Any) -> None:
-        data = self._load_data()
+    @classmethod
+    def _set_value(cls, key: str, value: Any) -> None:
+        data = cls._load_data()
         data[key] = value
-        self._save_data(data)
+        cls._save_data(data)
 
-    def get_float(self, key: str, default: float = 0.0) -> float:
-        value = self._get_value(key, default)
+    @classmethod
+    def get_float(cls, key: str, default: float = 0.0) -> float:
+        value = cls._get_value(key, default)
         try:
             return float(value)
         except (TypeError, ValueError):
             return float(default)
 
-    def set_float(self, key: str, value: float) -> None:
+    @classmethod
+    def set_float(cls, key: str, value: float) -> None:
         try:
             numeric = float(value)
         except (TypeError, ValueError):
             raise SaveLoadError(f"Value for {key} must be a number")
-        self._set_value(key, numeric)
+        cls._set_value(key, numeric)
 
-    def get_int(self, key: str, default: int = 0) -> int:
-        value = self._get_value(key, default)
+    @classmethod
+    def get_int(cls, key: str, default: int = 0) -> int:
+        value = cls._get_value(key, default)
         try:
             return int(value)
         except (TypeError, ValueError):
             return int(default)
 
-    def set_int(self, key: str, value: int) -> None:
+    @classmethod
+    def set_int(cls, key: str, value: int) -> None:
         try:
             integer = int(value)
         except (TypeError, ValueError):
             raise SaveLoadError(f"Value for {key} must be an integer")
-        self._set_value(key, integer)
+        cls._set_value(key, integer)
 
-    def get_string(self, key: str, default: str = "") -> str:
-        value = self._get_value(key, default)
+    @classmethod
+    def get_string(cls, key: str, default: str = "") -> str:
+        value = cls._get_value(key, default)
         if value is None:
             return default
         return str(value)
 
-    def set_string(self, key: str, value: str) -> None:
+    @classmethod
+    def set_string(cls, key: str, value: str) -> None:
         if value is None:
             raise SaveLoadError(f"Value for {key} cannot be None")
-        self._set_value(key, str(value))
+        cls._set_value(key, str(value))
 
-    def get_vector2(self, key: str, default: Tuple[int, int] = (0, 0)) -> Tuple[int, int]:
-        value = self._get_value(key, default)
+    @classmethod
+    def get_vector2(cls, key: str, default: Tuple[int, int] = (0, 0)) -> Tuple[int, int]:
+        value = cls._get_value(key, default)
         if isinstance(value, (list, tuple)) and len(value) == 2:
             try:
                 x = int(value[0])
@@ -648,7 +679,8 @@ class PlayerPrefs:
                 pass
         return int(default[0]), int(default[1])
 
-    def set_vector2(self, key: str, value: Tuple[int, int]) -> None:
+    @classmethod
+    def set_vector2(cls, key: str, value: Tuple[int, int]) -> None:
         if not isinstance(value, (list, tuple)) or len(value) != 2:
             raise SaveLoadError(f"Value for {key} must be a 2D coordinate")
         try:
@@ -656,16 +688,18 @@ class PlayerPrefs:
             y = int(value[1])
         except (TypeError, ValueError):
             raise SaveLoadError(f"Value for {key} must contain numeric coordinates")
-        self._set_value(key, [x, y])
+        cls._set_value(key, [x, y])
 
-    def delete_key(self, key: str) -> None:
-        data = self._load_data()
+    @classmethod
+    def delete_key(cls, key: str) -> None:
+        data = cls._load_data()
         if key in data:
             del data[key]
-            self._save_data(data)
+            cls._save_data(data)
 
-    def clear(self) -> None:
-        self._save_data({})
+    @classmethod
+    def clear(cls) -> None:
+        cls._save_data({})
 
 
 # Global instance for easy access

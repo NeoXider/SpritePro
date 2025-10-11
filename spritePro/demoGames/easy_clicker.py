@@ -15,10 +15,12 @@ path = Path(__file__).parent
 def onclick(): 
     global score
     score +=1
+    s.PlayerPrefs.set_int("score", score)
     text.text = str(score)
     emitter.emit(s.WH_C)
 
-score = 0
+score = s.PlayerPrefs.get_int("score", 0)
+
 # Initialize the library
 s.init()
 
@@ -41,7 +43,7 @@ player = s.Button(
     (500, 500),
     s.WH_C,'',on_click=onclick
 )
-text = s.TextSprite('0',96,(255,0,0))
+text = s.TextSprite(f'{score}',96,(255,0,0))
 text.set_position((s.WH_C.x,10),s.Anchor.MID_TOP)
 
 # Main game loop
