@@ -56,9 +56,10 @@ class Button(Sprite):
         base_color: Tuple[int, int, int] = (255, 255, 255),
         anim_speed: float = 0.2,
         animated: bool = True,
+        sorting_order: int = 1000,
     ):
         # Инициализируем Sprite с пустым фоном
-        super().__init__(sprite, size=size, pos=pos)
+        super().__init__(sprite, size=size, pos=pos, sorting_order=sorting_order)
 
         # Параметры анимации и цвета
         self.set_color(base_color)
@@ -79,6 +80,8 @@ class Button(Sprite):
             color=text_color,
             pos=self.rect.center,
             font_name=font_name,
+            # TextSprite по умолчанию уже 1000, но позволим синхронно с кнопкой
+            sorting_order=sorting_order,
         )
         self.text_sprite.set_parent(self, keep_world_position=True)
 
@@ -145,6 +148,12 @@ class Button(Sprite):
         if update:
             self.start_scale = scale
         super().set_scale(scale)
+        # Keep label visually in sync with button scale
+        if getattr(self, "text_sprite", None) is not None:
+            try:
+                self.text_sprite.set_scale(scale)
+            except Exception:
+                pass
 
     def on_click(self, func: Callable):
         """Sets the click handler function for the button.

@@ -42,6 +42,9 @@ System for smooth transitions and animations with various easing types and time 
 #### [Timer](timer.md)
 Timer system for precise time management in games: countdowns, delays, repeating events.
 
+#### [Particles](particles.md)
+Configurable particle bursts with lifetimes (seconds or ms), gravity, sorting order, image-based particles, rotation and scaling.
+
 #### [Health](health.md)
 Health management system: damage, healing, regeneration, maximum health, and death handling.
 

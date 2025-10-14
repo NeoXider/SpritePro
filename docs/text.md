@@ -42,6 +42,7 @@ text.update()
 - `color` (tuple): Text color RGB. Default: (255, 255, 255)
 - `font_name` (str/Path): Path to TTF font file. Default: None (system font)
 - `pos` (tuple): Text position (x, y). Default: (0, 0)
+- `sorting_order` (int): Render layer order. Default: 1000 (drawn above typical sprites)
 
 ## Text Management
 

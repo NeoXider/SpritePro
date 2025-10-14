@@ -65,6 +65,7 @@ class Sprite(pygame.sprite.Sprite):
         size: VectorInput = (50, 50),
         pos: VectorInput = (0, 0),
         speed: float = 0,
+        sorting_order: int | None = None,
     ):
         """Initializes a new sprite instance.
 
@@ -95,11 +96,27 @@ class Sprite(pygame.sprite.Sprite):
         self.state = "idle"
         self.states = {"idle", "moving", "hit", "attacking", "dead"}
         self.anchor_key = Anchor.CENTER
+        # Drawing order (layer) similar to Unity's sortingOrder
+        self.sorting_order: Optional[int] = int(sorting_order) if sorting_order is not None else None
 
         self.set_image(sprite, self.size_vector)
         self.rect.center = self.start_pos
         spritePro.register_sprite(self)
+        # Apply initial sorting order if provided
+        if self.sorting_order is not None:
+            try:
+                spritePro.get_game().set_sprite_layer(self, int(self.sorting_order))
+            except Exception:
+                pass
         self._game_registered = True
+
+    def set_sorting_order(self, order: int) -> None:
+        """Sets drawing order (layer) similar to Unity's `sortingOrder`. Lower is back, higher is front."""
+        self.sorting_order = int(order)
+        try:
+            spritePro.get_game().set_sprite_layer(self, self.sorting_order)
+        except Exception:
+            pass
 
     def set_screen_space(self, locked: bool = True) -> None:
         """Фиксирует спрайт к экрану (без смещения камерой)."""
@@ -149,6 +166,14 @@ class Sprite(pygame.sprite.Sprite):
         if self.parent:
             self.local_offset = self.get_world_position() - self.parent.get_world_position()
 
+    def get_position(self) -> Tuple[int, int]:
+        """Gets the current position of the sprite (center coordinates)."""
+        return self.rect.center
+
+    def get_size(self) -> Tuple[int, int]:
+        """Gets the current size of the sprite (width, height)."""
+        return self.size
+
     def get_world_position(self) -> Vector2:
         return Vector2(self.rect.center)
 
@@ -183,6 +208,10 @@ class Sprite(pygame.sprite.Sprite):
         """
         self.color = color
         self._update_image()
+
+    def get_color(self) -> Tuple:
+        """Gets the current color tint of the sprite."""
+        return self.color
 
     def set_image(
         self,
@@ -405,6 +434,10 @@ class Sprite(pygame.sprite.Sprite):
         self.velocity.x = vx
         self.velocity.y = vy
 
+    def get_velocity(self) -> Tuple[float, float]:
+        """Gets the current velocity of the sprite."""
+        return (self.velocity.x, self.velocity.y)
+
     def move_up(self, speed: Optional[float] = None):
         """Moves the sprite upward.
 
@@ -519,6 +552,10 @@ class Sprite(pygame.sprite.Sprite):
         self.angle = angle
         self._update_image()
 
+    def get_angle(self) -> float:
+        """Gets the current rotation angle of the sprite in degrees."""
+        return self.angle
+
     def rotate_by(self, angle_change: float):
         """Rotates the sprite by a relative angle.
 
@@ -537,6 +574,10 @@ class Sprite(pygame.sprite.Sprite):
         self.scale = scale
         self._update_image()
 
+    def get_scale(self) -> float:
+        """Gets the current scale factor of the sprite."""
+        return self.scale
+
     def set_alpha(self, alpha: int):
         """Sets the sprite's transparency level.
 
@@ -545,6 +586,10 @@ class Sprite(pygame.sprite.Sprite):
         """
         self.alpha = max(0, min(255, alpha))
         self._update_image()
+
+    def get_alpha(self) -> int:
+        """Gets the current alpha value of the sprite."""
+        return self.alpha
 
     def fade_by(self, amount: int, min_alpha: int = 0, max_alpha: int = 255):
         """Changes the sprite's transparency by a relative amount.

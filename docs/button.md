@@ -40,6 +40,7 @@ button.update()
 - `text_color` (tuple): Text color RGB. Default: (0, 0, 0)
 - `font_name` (str/Path): Font file path. Default: None (system font)
 - `on_click` (callable): Click event handler. Default: None
+- `sorting_order` (int): Render layer order for button and its label. Default: 1000
 
 ## Visual Customization
 

@@ -102,7 +102,16 @@ class SpriteProGame:
 
     def register_sprite(self, sprite: pygame.sprite.Sprite) -> None:
         if sprite not in self.all_sprites:
-            self.all_sprites.add(sprite)
+            # If sprite has a declared sorting order, add it at that layer
+            layer = getattr(sprite, "sorting_order", None)
+            if layer is not None:
+                try:
+                    self.all_sprites.add(sprite, layer=int(layer))
+                except Exception:
+                    # Fallback to default add if layer add fails
+                    self.all_sprites.add(sprite)
+            else:
+                self.all_sprites.add(sprite)
         if hasattr(sprite, "_game_registered"):
             sprite._game_registered = True
 
@@ -116,6 +125,18 @@ class SpriteProGame:
 
     def disable_sprite(self, sprite: pygame.sprite.Sprite) -> None:
         self.unregister_sprite(sprite)
+
+    def set_sprite_layer(self, sprite: pygame.sprite.Sprite, layer: int) -> None:
+        """Sets the drawing layer for a sprite in the global layered group."""
+        try:
+            # If sprite is not in the group yet, add with layer
+            if sprite not in self.all_sprites:
+                self.all_sprites.add(sprite, layer=int(layer))
+            else:
+                self.all_sprites.change_layer(sprite, int(layer))
+        except Exception:
+            # Silently ignore if the underlying group does not support layers
+            pass
 
     def set_camera(self, position: Vector2 | tuple[float, float]) -> None:
         if isinstance(position, Vector2):

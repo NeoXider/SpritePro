@@ -39,8 +39,8 @@ emitter = s.ParticleEmitter(
     s.ParticleConfig(
         amount=100,
         size_range=(5, 15),
-        speed_range=(50, 300),
-        lifetime_range=(500, 2000),
+        speed_range=(50, 700),
+        lifetime_range=(2000, 10000),
         colors=[(255, 200, 40), (255, 120, 200)],
         gravity=pygame.math.Vector2(0, 0),
     )

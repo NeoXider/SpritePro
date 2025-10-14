@@ -42,6 +42,7 @@ player.rotate_to(45)
 - `size` (tuple): Sprite dimensions (width, height). Default: (50, 50)
 - `pos` (tuple): Initial position (x, y). Default: (0, 0)
 - `speed` (float): Movement speed in pixels per frame. Default: 0
+- `sorting_order` (int | None): Render layer order. Lower draws behind, higher in front. Default: None (natural add order)
 
 ## Key Methods
 
@@ -54,22 +55,33 @@ player.rotate_to(45)
 - `move_right(speed=None)`: Move sprite rightward
 - `stop()`: Stop all movement
 - `set_velocity(vx, vy)`: Set velocity directly
+- `get_velocity()`: Get current velocity
 - `handle_keyboard_input()`: Handle keyboard input for movement
 
 ### Visual Effects
 - `set_scale(scale)`: Scale sprite uniformly
+- `get_scale()`: Get current scale factor
 - `set_alpha(alpha)`: Set transparency (0-255)
+- `get_alpha()`: Get current alpha value
 - `rotate_to(angle)`: Rotate sprite to specific angle in degrees
+- `get_angle()`: Get current rotation angle
 - `rotate_by(angle_change)`: Rotate sprite by relative angle
 - `set_color(color)`: Apply color tint
+- `get_color()`: Get current color tint
 - `fade_by(amount)`: Change transparency by relative amount
 - `scale_by(amount)`: Change scale by relative amount
 
 ### State Management
+- `set_sorting_order(order: int)`: Change render order (lower = back, higher = front)
 - `set_active(active)`: Enable/disable sprite
 - `set_state(state)`: Set sprite's current state
 - `is_in_state(state)`: Check if sprite is in specific state
 - `reset_sprite()`: Reset sprite to initial position and state
+
+### Position and Size
+- `set_position(position, anchor=Anchor.CENTER)`: Set sprite position with anchor
+- `get_position()`: Get current center position
+- `get_size()`: Get current size (width, height)
 
 ## Properties
 
@@ -77,6 +89,42 @@ player.rotate_to(45)
 - `stop_threshold` (float): Distance threshold for stopping movement
 - `color` (tuple): Current color tint
 - `active` (bool): Whether sprite is active and rendered
+- `sorting_order` (int | None): Current layer used for drawing order
+
+## Getter Methods
+
+All visual and movement properties now have corresponding getter methods:
+
+- `get_color()`: Returns current color tint
+- `get_scale()`: Returns current scale factor
+- `get_alpha()`: Returns current alpha value (0-255)
+- `get_angle()`: Returns current rotation angle in degrees
+- `get_position()`: Returns current center position (x, y)
+- `get_size()`: Returns current size (width, height)
+- `get_velocity()`: Returns current velocity (vx, vy)
+
+## Rendering Order (sorting_order)
+
+Sprites are rendered using a layer-based order similar to Unity's sortingOrder:
+
+- Lower `sorting_order` values are drawn first (appear behind)
+- Higher values are drawn later (appear in front)
+- If `sorting_order` is not set, the sprite uses its natural insertion order
+
+Basic usage:
+
+```python
+import spritePro as s
+
+bg = s.Sprite("bg.png", pos=(400, 300), sorting_order=-100)   # far back
+player = s.Sprite("player.png", pos=(420, 320), sorting_order=0)
+ui_text = s.TextSprite("Score", pos=(780, 30), sorting_order=1000)  # UI on top
+
+# Change at runtime
+player.set_sorting_order(10)
+```
+
+See the demo `spritePro/demoGames/sorting_order_demo.py` for an interactive example (Up/Down arrows adjust order).
 
 ## Advanced Features
 

@@ -119,6 +119,13 @@
 - Планирование событий
 - Игровое время
 
+#### [docs/particles.md](docs/particles.md)
+**Частицы**
+- Время жизни (секунды или миллисекунды)
+- Гравитация, скорость и углы
+- Слои отрисовки (sorting_order)
+- Частицы на основе изображений, поворот и масштаб
+
 #### [docs/health.md](docs/health.md)
 **Система здоровья**
 - Управление HP
@@ -176,6 +183,9 @@
 - [Color Effects Demo](spritePro/demoGames/color_effects_demo.py) - Цветовые эффекты
 - [FPS Camera Demo](spritePro/demoGames/fps_camera_demo/fps_camera_demo.py) - Камера и FPS
 - [Save/Load Demo](spritePro/demoGames/save_load_demo.py) - Система сохранений
+- [Sorting Order Demo](spritePro/demoGames/sorting_order_demo.py) - Порядок отрисовки (слои)
+- [Particles Images Demo](spritePro/demoGames/particles_images_demo.py) - Частицы из изображений (c.png, platforma.png)
+- [Particles Templates Demo](spritePro/demoGames/particles_templates_demo.py) - Готовые шаблоны (Sparks, Smoke, Fire)
 
 ## 🔍 Навигация по типам документации
 

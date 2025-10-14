@@ -38,6 +38,7 @@ class TextSprite(Sprite):
         pos: Tuple[int, int] = (0, 0),
         font_name: Optional[Union[str, Path]] = None,
         speed: float = 0,
+        sorting_order: int = 1000,
         **sprite_kwargs,
     ):
         # инициализируем Pygame Font-модуль
@@ -46,7 +47,7 @@ class TextSprite(Sprite):
 
         # сначала создаём базовый Sprite с временным изображением
         dummy = pygame.Surface((1, 1), pygame.SRCALPHA)
-        super().__init__(sprite=dummy, pos=pos, speed=speed, **sprite_kwargs)
+        super().__init__(sprite=dummy, pos=pos, speed=speed, sorting_order=sorting_order, **sprite_kwargs)
 
         # сохраняем параметры текста
         self._text = text
