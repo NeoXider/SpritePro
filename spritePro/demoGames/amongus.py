@@ -20,7 +20,7 @@ def on_canistra():
     global cacanistra_count
     cacanistra_count+=1
     print(cacanistra_count)
-    canistra_bar.set_image("", (400, cacanistra_count/canistra_max*400))
+    canistra_bar.set_image("", (200, cacanistra_count/canistra_max*250))
     if cacanistra_count >= canistra_max+1:
         canistra_bg.set_active(False)
         canistra_bar.set_active(False)
@@ -61,15 +61,20 @@ btn_interactive.set_screen_space(True)
 
 interacts = [t1,t2,canistra]
 
-canistra_bg = s.Button("", (400, 400), s.WH_C, "", on_click=on_canistra, base_color=(0,0,0))
-canistra_bar = s.Sprite("", (400, 0), s.WH_C)
+img_canister = "spritePro\demoGames\Sprites\\canister.png"
+canistra_bg = s.Button(img_canister, (400, 400), s.WH_C, "", on_click=on_canistra)
+canistra_bar = s.Sprite("", (200, 0), s.WH_C)
 cacanistra_count = 0
 canistra_max = 5
 canistra_bg.set_screen_space(True)
 canistra_bar.set_screen_space(True)
 canistra_bar.set_sorting_order(1010)
-canistra_bar.set_color((255,255,0))
+canistra_bar.set_color((255,255,100))
+canistra_bar.set_alpha(100)
 canistra_bar.set_position(canistra_bg.rect.bottomleft, s.Anchor.BOTTOM_LEFT)
+canistra_bar.rect.x += 100
+canistra_bar.rect.y += -50
+
 canistra_bg.set_active(False)
 canistra_bar.set_active(False)
 
@@ -99,6 +104,8 @@ while True:
         elif t2.rect.colliderect(player.rect):
             player.set_position(t1.rect.center)
         elif canistra.rect.colliderect(player.rect):
+            cacanistra_count = 0
+            canistra_bar.set_image("", (200, cacanistra_count/canistra_max*250))
             canistra_bg.set_active(True)
             canistra_bar.set_active(True)
         k_space = False
