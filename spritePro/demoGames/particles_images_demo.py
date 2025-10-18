@@ -41,15 +41,15 @@ def main():
         amount=20,
         lifetime_range_s=(1, 5),
         speed_range=(50.0, 150.0),
-        fade_speed=50.0,
+        fade_speed=500.0,
         gravity=Vector2(0, 0.0),
         image=img_c,
-        image_scale_range=(0.05, 0.1),
+        image_scale_range=(0.05, 0.2),
         image_rotation_range=(0.0, 360.0),
         angular_velocity_range=(-180.0, 180.0),
         screen_space=False,
         angle_range=(0.0, 360.0),
-        spawn_circle_radius=1000
+        spawn_circle_radius=1
     )
 
     # Platforma chunks: make smaller random subsurfaces

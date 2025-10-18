@@ -72,7 +72,7 @@ class ParticleConfig:
     # Optional hook to mutate particle after creation
     custom_factory: Optional[Callable[["Particle", int], None]] = None
     # Provide a ready image for all particles (copied internally)
-    image: Optional[pygame.Surface] = None
+    image: Union[Optional[pygame.Surface], Path] = None
     # Or provide a factory to build images per index
     image_factory: Optional[Callable[[int], pygame.Surface]] = None
     # Provide a custom Particle subclass to instantiate
@@ -157,6 +157,12 @@ class ParticleEmitter:
 
     def __init__(self, config: Optional[ParticleConfig] = None) -> None:
         self.config = config or ParticleConfig()
+        if isinstance(self.config.image, str):
+            try:
+                self.config.image = pygame.image.load(self.config.image).convert_alpha()
+            except pygame.error as e:
+                print(f"Error loading particle image at path: {self.config.image}\n{e}")
+                self.config.image = None
         self._position: Optional[Tuple[float, float] | Vector2] = None
         self._anchor: str = "center"
 

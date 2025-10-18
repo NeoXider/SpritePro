@@ -37,6 +37,8 @@ class Button(Sprite):
         base_color (Tuple[int,int,int]): Default background color. Defaults to (255, 255, 255).
         anim_speed (float): Animation speed multiplier. Defaults to 0.2.
         animated (bool): Whether to enable animations. Defaults to True.
+        use_scale_fx (bool): Enables or disables the scaling effect on hover and press. Defaults to True.
+        use_color_fx (bool): Enables or disables the color change effect on hover and press. Defaults to True.
     """
 
     def __init__(
@@ -57,6 +59,8 @@ class Button(Sprite):
         anim_speed: float = 0.2,
         animated: bool = True,
         sorting_order: int = 1000,
+        use_scale_fx: bool = True,
+        use_color_fx: bool = True,
     ):
         # Инициализируем Sprite с пустым фоном
         super().__init__(sprite, size=size, pos=pos, sorting_order=sorting_order)
@@ -65,6 +69,7 @@ class Button(Sprite):
         self.set_color(base_color)
         self.hover_color = hover_color
         self.press_color = press_color
+        self.base_color = base_color
         self.current_color = base_color
         self.hover_scale_delta = hover_scale_delta
         self.press_scale_delta = press_scale_delta
@@ -72,6 +77,8 @@ class Button(Sprite):
         self._target_scale = self.scale
         self.anim_speed = anim_speed
         self.animated = animated
+        self.use_scale_fx = use_scale_fx
+        self.use_color_fx = use_color_fx
 
         # Текст как отдельный спрайт
         self.text_sprite = TextSprite(
@@ -87,6 +94,36 @@ class Button(Sprite):
 
         # Логика мыши
         self.interactor = MouseInteractor(sprite=self, on_click=on_click)
+
+    def set_base_color(self, base_color: tuple = (255,255,255)):
+        """
+        Set base color
+        """
+        self.base_color = base_color
+
+    def set_all_colors(self, base_color: tuple, press_color: tuple, hover_color: tuple):
+        """Устанавливает все три состояния цвета для кнопки.
+
+        Args:
+            base_color (tuple): a tuple of three integers representing the base color of the button.
+            press_color (tuple): a tuple of three integers representing the color of the button when pressed.
+            hover_color (tuple): a tuple of three integers representing the color of the button when hovered over.
+        """
+        self.base_color = base_color
+        self.press_color = press_color
+        self.hover_color = hover_color
+
+    def set_all_scales(self, base_scale: float, hover_scale: float, press_scale: float):
+        """Устанавливает базовый, ховер и пресс масштабы для кнопки.
+
+        Args:
+            base_scale (float): The base scale of the button.
+            hover_scale (float): The scale of the button when hovered over.
+            press_scale (float): The scale of the button when pressed.
+        """
+        self.set_scale(base_scale, update=True)
+        self.hover_scale_delta = hover_scale - base_scale
+        self.press_scale_delta = press_scale - base_scale
 
     def update(self, screen: pygame.Surface = None):
         """Updates button state and renders it to the screen.
@@ -110,15 +147,26 @@ class Button(Sprite):
             is_pressed = False
             is_hovered = False
 
-        # Определяем цвет и цель масштаба
-        if is_pressed and self.animated:
-            self.current_color = self.press_color
-            self._target_scale = self.start_scale + self.press_scale_delta
-        elif is_hovered and self.animated:
-            self.current_color = self.hover_color
-            self._target_scale = self.start_scale + self.hover_scale_delta
+        # Определяем цвет
+        if self.use_color_fx:
+            if is_pressed:
+                self.current_color = self.press_color
+            elif is_hovered:
+                self.current_color = self.hover_color
+            else:
+                self.current_color = self.base_color
         else:
-            self.current_color = self.color
+            self.current_color = self.base_color
+
+        # Определяем цель масштаба
+        if self.use_scale_fx:
+            if is_pressed:
+                self._target_scale = self.start_scale + self.press_scale_delta
+            elif is_hovered:
+                self._target_scale = self.start_scale + self.hover_scale_delta
+            else:
+                self._target_scale = self.start_scale
+        else:
             self._target_scale = self.start_scale
 
         # Плавная анимация масштаба
@@ -192,6 +240,7 @@ if __name__ == "__main__":
     def set_rand_color() -> None:
         global color
         btn.text_sprite.set_color(get_rundom_color())
+        btn.set_base_color(get_rundom_color())
         btn.press_color = get_rundom_color()
         btn.text_sprite.set_text(
             f"""=== ({
