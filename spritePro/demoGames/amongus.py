@@ -103,6 +103,11 @@ for w in walls:
     w.set_alpha(100)
     w.set_color((255,0,255))
 
+# =================================================================
+# Активация новой системы столкновений (делается один раз)
+player.set_collision_targets(walls)
+# =================================================================
+
 text_debug = s.TextSprite("debug", 24)
 text_debug.set_position((s.WH_C.x, s.WH.y - 50), s.Anchor.MID_BOTTOM)
 text_debug.set_screen_space(True)
@@ -116,11 +121,16 @@ while True:
     #         if e.key == pygame.K_SPACE:
     #             k_space = True
     #             print("Пробел нажат")
-    #         else:
-    #             k_space = False
 
-    s.update(fill_color=(0, 0, 0))
+    # --- 1. Обработка ввода ---
     player.handle_keyboard_input()
+
+    # --- 2. Обновление состояния и отрисовка ---
+    # s.update() теперь сам обрабатывает движение И столкновения для player,
+    # так как мы настроили для него collision_targets.
+    s.update(fill_color=(0, 0, 0))
+
+    # --- 3. Остальная логика кадра ---
     s.set_camera_follow(player)
     text_cord.text = f"player cord: x:{player.rect.centerx}, y:{player.rect.centery}"
 
@@ -136,28 +146,10 @@ while True:
             canistra_bar.set_active(True)
         k_space = False
 
-    colide = False
-    for i in interacts:
-        if i.rect.colliderect(player.collide.rect):
-            colide = True
-            break
-
-    btn_interactive.set_active(colide)
-    collide = False
-    for w in walls:
-        if player.collide.rect.colliderect(w.rect):
-            collide = True
-            if player.rect.y > w.rect.y:
-                if player.velocity.y < 0:
-                    player.velocity.y = 0
-            if player.rect.y < w.rect.y:
-                if player.velocity.y > 0:
-                    player.velocity.y = 0
-            if player.rect.x > w.rect.x:
-                if player.velocity.x < 0:
-                    player.velocity.x = 0
-            if player.rect.x < w.rect.x:
-                if player.velocity.x > 0:
-                    player.velocity.x = 0
-
-    text_debug.text = f"collide: {collide}, velosity: {player.velocity}"
+    # Проверка для кнопки "Взаимодействовать"
+    can_interact = any(i.rect.colliderect(player.collide.rect) for i in interacts)
+    btn_interactive.set_active(can_interact)
+    
+    # Обновляем текст отладки
+    is_colliding_with_wall = any(player.collide.rect.colliderect(w.rect) for w in walls)
+    text_debug.text = f"collide: {is_colliding_with_wall}, velocity: {player.velocity}"

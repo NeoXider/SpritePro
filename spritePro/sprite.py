@@ -98,6 +98,7 @@ class Sprite(pygame.sprite.Sprite):
         self.anchor_key = Anchor.CENTER
         # Drawing order (layer) similar to Unity's sortingOrder
         self.sorting_order: Optional[int] = int(sorting_order) if sorting_order is not None else None
+        self.collision_targets = None
 
         self.set_image(sprite, self.size_vector)
         self.rect.center = self.start_pos
@@ -298,10 +299,16 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             screen (pygame.Surface): Surface to render the sprite on.
         """
+        # Apply velocity
         if self.velocity.length() > 0:
             cx, cy = self.rect.center
             self.rect.center = (int(cx + self.velocity.x), int(cy + self.velocity.y))
-        # Обновляем маску коллизии если изображение изменилось
+
+        # Resolve collisions automatically if targets are set
+        if self.collision_targets is not None:
+            self._resolve_collisions()
+
+        # Update collision mask and draw
         self.mask = pygame.mask.from_surface(self.image)
         if self.active:
             screen = screen or spritePro.screen
@@ -698,6 +705,87 @@ class Sprite(pygame.sprite.Sprite):
             self.rect.top = bounds.top + padding_top
         if check_bottom and self.rect.bottom > bounds.bottom - padding_bottom:
             self.rect.bottom = bounds.bottom - padding_bottom
+
+    def _resolve_collisions(self):
+        """Internal method to resolve penetrations with `self.collision_targets`."""
+        if not self.collision_targets:
+            return
+
+        # Filter out killed sprites to prevent errors
+        self.collision_targets = [s for s in self.collision_targets if s.alive()]
+
+        collider_rect = getattr(self, 'collide', self).rect
+
+        for obstacle in self.collision_targets:
+            if not hasattr(obstacle, 'rect'):
+                continue
+
+            if collider_rect.colliderect(obstacle.rect):
+                # Calculate overlap vector
+                overlap_x = min(collider_rect.right, obstacle.rect.right) - max(collider_rect.left, obstacle.rect.left)
+                overlap_y = min(collider_rect.bottom, obstacle.rect.bottom) - max(collider_rect.top, obstacle.rect.top)
+
+                # Resolve collision by pushing out on the axis of smaller overlap
+                if overlap_x < overlap_y:
+                    # Push horizontally
+                    if collider_rect.centerx < obstacle.rect.centerx:
+                        self.rect.x -= overlap_x
+                    else:
+                        self.rect.x += overlap_x
+                else:
+                    # Push vertically
+                    if collider_rect.centery < obstacle.rect.centery:
+                        self.rect.y -= overlap_y
+                    else:
+                        self.rect.y += overlap_y
+                
+                # Sync collider after resolution
+                if hasattr(self, 'collide'):
+                    collider_rect.center = self.rect.center
+
+    def set_collision_targets(self, obstacles: list):
+        """Sets or overwrites the list of sprites to collide with.
+
+        Args:
+            obstacles (list): A list or pygame.sprite.Group of sprites.
+        """
+        self.collision_targets = list(obstacles)
+
+    def add_collision_target(self, obstacle):
+        """Adds a single sprite to the collision list."""
+        if self.collision_targets is None:
+            self.collision_targets = []
+        if obstacle not in self.collision_targets:
+            self.collision_targets.append(obstacle)
+
+    def add_collision_targets(self, obstacles: list):
+        """Adds a list or group of sprites to the collision list."""
+        if self.collision_targets is None:
+            self.collision_targets = []
+        for obstacle in obstacles:
+            if obstacle not in self.collision_targets:
+                self.collision_targets.append(obstacle)
+
+    def remove_collision_target(self, obstacle):
+        """Removes a single sprite from the collision list."""
+        if self.collision_targets:
+            try:
+                self.collision_targets.remove(obstacle)
+            except ValueError:
+                pass  # Ignore if obstacle is not in the list
+
+    def remove_collision_targets(self, obstacles: list):
+        """Removes a list or group of sprites from the collision list."""
+        if self.collision_targets:
+            for obstacle in obstacles:
+                try:
+                    self.collision_targets.remove(obstacle)
+                except ValueError:
+                    pass
+
+    def clear_collision_targets(self):
+        """Disables all collisions for this sprite."""
+        self.collision_targets = None
 
     def play_sound(self, sound_file: str):
         """Plays a sound effect.
