@@ -39,7 +39,7 @@ player.set_native_size()
 player.set_position((400, 300))
 player.set_scale(0.07)
 player.speed = 5
-player.collide = s.Sprite("", (30,50), player.rect.center)
+player.collide = s.Sprite("", (30, 50), player.rect.center)
 player.collide.set_parent(player)
 player.collide.set_alpha(50)
 
@@ -94,14 +94,17 @@ canistra_bar.set_active(False)
 k_space = False
 
 
+walls = [
+    s.Sprite("", (400, 70), (430, 370)),
+    s.Sprite("", (230, 70), (330, 550)),
+    s.Sprite("", (80, 70), (600, 550)),
+    s.Sprite("", (80, 70), (700, 350)),
+    s.Sprite("", (70, 200), (260, 260)),
+]
 
-walls = [s.Sprite("", (400, 50), (430, 370)),
-         s.Sprite("", (230, 70), (330, 550)),
-         s.Sprite("", (80, 70), (600, 550)),
-         s.Sprite("", (80, 70), (700, 350))]
 for w in walls:
     w.set_alpha(100)
-    w.set_color((255,0,255))
+    w.set_color((255, 0, 255))
 
 # =================================================================
 # Активация новой системы столкновений (делается один раз)
@@ -149,7 +152,7 @@ while True:
     # Проверка для кнопки "Взаимодействовать"
     can_interact = any(i.rect.colliderect(player.collide.rect) for i in interacts)
     btn_interactive.set_active(can_interact)
-    
+
     # Обновляем текст отладки
     is_colliding_with_wall = any(player.collide.rect.colliderect(w.rect) for w in walls)
     text_debug.text = f"collide: {is_colliding_with_wall}, velocity: {player.velocity}"
