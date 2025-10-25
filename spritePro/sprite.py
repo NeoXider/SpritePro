@@ -430,6 +430,15 @@ class Sprite(pygame.sprite.Sprite):
         direction.normalize_ip()
         self.velocity = direction * step_distance
         self.state = "moving"
+        
+        # Auto-flip based on movement direction
+        if self.auto_flip and abs(direction.x) > 0.1:  # Only flip if significant horizontal movement
+            if direction.x < 0:
+                self.flipped_h = True
+                self._update_image()
+            else:
+                self.flipped_h = False
+                self._update_image()
 
     def set_velocity(self, vx: float, vy: float):
         """Sets the sprite's velocity directly.
