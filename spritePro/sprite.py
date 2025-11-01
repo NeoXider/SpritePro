@@ -55,9 +55,8 @@ class Sprite(pygame.sprite.Sprite):
     """
 
     auto_flip: bool = True
-    stop_threshold = 1.0
-    color = None
-    active = True
+    stop_threshold: float = 1.0
+    color: Optional[Tuple[int, int, int]] = None
 
     def __init__(
         self,
@@ -82,6 +81,7 @@ class Sprite(pygame.sprite.Sprite):
         self.start_pos = _vector2_to_int_tuple(self.start_pos_vector)
         self.velocity = pygame.math.Vector2(0, 0)
         self.speed = speed
+        self._active = True
         self._game_registered = False
         self.screen_space = False
         self.parent: Optional["Sprite"] = None
@@ -93,10 +93,10 @@ class Sprite(pygame.sprite.Sprite):
         self._mask_dirty = True
         self._transform_dirty = True
         self._color_dirty = True
-        self.color = (255, 255, 255)
-        self.angle = 0
-        self.scale = 1.0
-        self.alpha = 255
+        self._color = (255, 255, 255)
+        self._angle = 0
+        self._scale = 1.0
+        self._alpha = 255
         self.state = "idle"
         self.states = {"idle", "moving", "hit", "attacking", "dead"}
         self.anchor_key = Anchor.CENTER
@@ -116,6 +116,79 @@ class Sprite(pygame.sprite.Sprite):
             except Exception:
                 pass
         self._game_registered = True
+
+    @property
+    def scale(self) -> float:
+        return self._scale
+
+    @scale.setter
+    def scale(self, value: float):
+        if self._scale != value:
+            self._scale = value
+            self._transform_dirty = True
+
+    def get_scale(self) -> float:
+        """Gets the current scale of the sprite."""
+        return self.scale
+
+    def set_scale(self, value: float):
+        """Sets the scale of the sprite."""
+        self.scale = value
+
+    @property
+    def angle(self) -> float:
+        return self._angle
+
+    @angle.setter
+    def angle(self, value: float):
+        if self._angle != value:
+            self._angle = value
+            self._transform_dirty = True
+
+    def get_angle(self) -> float:
+        """Gets the current angle of the sprite."""
+        return self.angle
+
+    def set_angle(self, value: float):
+        """Sets the angle of the sprite."""
+        self.angle = value
+
+    def rotate_to(self, value: float):
+        """Alias for set_angle."""
+        self.set_angle(value)
+
+    @property
+    def alpha(self) -> int:
+        return self._alpha
+
+    @alpha.setter
+    def alpha(self, value: int):
+        value = max(0, min(255, value))
+        if self._alpha != value:
+            self._alpha = value
+            self._color_dirty = True
+
+    def get_alpha(self) -> int:
+        """Gets the current alpha transparency of the sprite."""
+        return self.alpha
+
+    def set_alpha(self, value: int):
+        """Sets the alpha transparency of the sprite."""
+        self.alpha = value
+
+    @property
+    def color(self) -> Optional[Tuple[int, int, int]]:
+        return self._color
+
+    @color.setter
+    def color(self, value: Optional[Tuple[int, int, int]]):
+        if self._color != value:
+            self._color = value
+            self._color_dirty = True
+
+    def set_color(self, value: Tuple[int, int, int]):
+        """Sets the color of the sprite. For backward compatibility."""
+        self.color = value
 
     def set_sorting_order(self, order: int) -> None:
         """Sets drawing order (layer) similar to Unity's `sortingOrder`. Lower is back, higher is front."""
@@ -204,22 +277,7 @@ class Sprite(pygame.sprite.Sprite):
             child._apply_parent_transform()
             child._update_children_world_positions()
 
-    def set_color(self, color: Tuple):
-        """Sets the color tint for the sprite.
 
-        If the sprite has an image, the color is applied as a tint using BLEND_RGBA_MULT.
-        If no image is present, the sprite will be filled with this color.
-
-        Args:
-            color (Tuple): RGB color tuple.
-        """
-        if self.color != color:
-            self.color = color
-            self._color_dirty = True
-
-    def get_color(self) -> Tuple:
-        """Gets the current color tint of the sprite."""
-        return self.color
 
     def set_image(
         self,
@@ -346,14 +404,14 @@ class Sprite(pygame.sprite.Sprite):
             img = self.original_image.copy()
             if self.flipped_h or self.flipped_v:
                 img = pygame.transform.flip(img, self.flipped_h, self.flipped_v)
-            if self.scale != 1.0:
+            if self._scale != 1.0:
                 new_size = (
-                    int(self.original_image.get_width() * self.scale),
-                    int(self.original_image.get_height() * self.scale),
+                    int(self.original_image.get_width() * self._scale),
+                    int(self.original_image.get_height() * self._scale),
                 )
                 img = pygame.transform.scale(img, new_size)
-            if self.angle != 0:
-                img = pygame.transform.rotate(img, self.angle)
+            if self._angle != 0:
+                img = pygame.transform.rotate(img, self._angle)
             
             self._transformed_image = img # cache the transformed image
             
@@ -368,10 +426,10 @@ class Sprite(pygame.sprite.Sprite):
         if self._color_dirty:
             # Start with the transformed image and apply color/alpha
             self.image = self._transformed_image.copy()
-            if self.alpha != 255:
-                self.image.set_alpha(self.alpha)
-            if self.color != (255, 255, 255):
-                self.image.fill(self.color, special_flags=pygame.BLEND_RGBA_MULT)
+            if self._alpha != 255:
+                self.image.set_alpha(self._alpha)
+            if self._color != (255, 255, 255):
+                self.image.fill(self._color, special_flags=pygame.BLEND_RGBA_MULT)
             
             self._color_dirty = False
 
@@ -382,12 +440,17 @@ class Sprite(pygame.sprite.Sprite):
             self.flipped_v = flip_v
             self._transform_dirty = True
 
-    def set_active(self, active: bool):
+    @property
+    def active(self) -> bool:
+        return self._active
+
+    @active.setter
+    def active(self, value: bool):
         """Включает или выключает спрайт и синхронизирует его с глобальной группой."""
-        if self.active == active:
+        if self._active == value:
             return
-        self.active = active
-        if active:
+        self._active = value
+        if self._active:
             spritePro.enable_sprite(self)
             self._game_registered = True
         else:
@@ -396,7 +459,15 @@ class Sprite(pygame.sprite.Sprite):
 
         for child in list(self.children):
             if hasattr(child, "set_active"):
-                child.set_active(active)
+                child.set_active(value)
+
+    def get_active(self) -> bool:
+        """Gets the current active state of the sprite."""
+        return self.active
+
+    def set_active(self, value: bool):
+        """Sets the active state of the sprite."""
+        self.active = value
 
     def reset_sprite(self):
         """Resets the sprite to its initial position and state."""
@@ -573,19 +644,7 @@ class Sprite(pygame.sprite.Sprite):
         self.velocity.x = 0
         self.velocity.y = 0
 
-    def rotate_to(self, angle: float):
-        """Rotates the sprite to a specific angle.
 
-        Args:
-            angle (float): Target angle in degrees.
-        """
-        if self.angle != angle:
-            self.angle = angle
-            self._transform_dirty = True
-
-    def get_angle(self) -> float:
-        """Gets the current rotation angle of the sprite in degrees."""
-        return self.angle
 
     def rotate_by(self, angle_change: float):
         """Rotates the sprite by a relative angle.
@@ -597,34 +656,9 @@ class Sprite(pygame.sprite.Sprite):
             self.angle += angle_change
             self._transform_dirty = True
 
-    def set_scale(self, scale: float):
-        """Sets the sprite's scale factor.
 
-        Args:
-            scale (float): New scale factor.
-        """
-        if self.scale != scale:
-            self.scale = scale
-            self._transform_dirty = True
 
-    def get_scale(self) -> float:
-        """Gets the current scale factor of the sprite."""
-        return self.scale
 
-    def set_alpha(self, alpha: int):
-        """Sets the sprite's transparency level.
-
-        Args:
-            alpha (int): Alpha value (0-255, where 0 is fully transparent).
-        """
-        alpha = max(0, min(255, alpha))
-        if self.alpha != alpha:
-            self.alpha = alpha
-            self._color_dirty = True
-
-    def get_alpha(self) -> int:
-        """Gets the current alpha value of the sprite."""
-        return self.alpha
 
     def fade_by(self, amount: int, min_alpha: int = 0, max_alpha: int = 255):
         """Changes the sprite's transparency by a relative amount.
