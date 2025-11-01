@@ -159,7 +159,7 @@ visual_test.start_game()
 emitter = s.ParticleEmitter(
     s.ParticleConfig(
         amount=20,
-        lifetime_range_s=(1, 5),
+        lifetime_range=(1, 5),
         speed_range=(50.0, 150.0),
         fade_speed=300.0,
         gravity=pygame.Vector2(0, 0.0),

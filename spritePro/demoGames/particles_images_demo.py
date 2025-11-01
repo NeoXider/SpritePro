@@ -38,18 +38,19 @@ def main():
 
     # Prepare configs
     star_cfg = ParticleConfig(
-        amount=20,
-        lifetime_range_s=(1, 5),
+        amount=5,
+        lifetime_range=(1, 5),
         speed_range=(50.0, 150.0),
         fade_speed=500.0,
         gravity=Vector2(0, 0.0),
         image=img_c,
-        image_scale_range=(0.05, 0.2),
+        image_scale_range=(0.1, 0.3),
         image_rotation_range=(0.0, 360.0),
         angular_velocity_range=(-180.0, 180.0),
         screen_space=False,
         angle_range=(0.0, 360.0),
-        spawn_circle_radius=1
+        spawn_circle_radius=50,
+        scale_velocity_range=(-0.2, -1)
     )
 
     # Platforma chunks: make smaller random subsurfaces
@@ -67,7 +68,7 @@ def main():
 
     platforma_cfg = ParticleConfig(
         amount=10,
-        lifetime_range_s=(10.0, 10.0),
+        lifetime_range=(10.0, 10.0),
         speed_range=(100.0, 220.0),
         fade_speed=100.0,
         gravity=Vector2(0, 420.0),

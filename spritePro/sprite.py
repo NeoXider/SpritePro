@@ -89,6 +89,10 @@ class Sprite(pygame.sprite.Sprite):
         self.local_offset = Vector2()
         self.flipped_h = False
         self.flipped_v = False
+        self.update_mask = False
+        self._mask_dirty = True
+        self._transform_dirty = True
+        self._color_dirty = True
         self.color = (255, 255, 255)
         self.angle = 0
         self.scale = 1.0
@@ -99,6 +103,8 @@ class Sprite(pygame.sprite.Sprite):
         # Drawing order (layer) similar to Unity's sortingOrder
         self.sorting_order: Optional[int] = int(sorting_order) if sorting_order is not None else None
         self.collision_targets = None
+        self._transformed_image = None
+        self.mask = None
 
         self.set_image(sprite, self.size_vector)
         self.rect.center = self.start_pos
@@ -207,8 +213,9 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             color (Tuple): RGB color tuple.
         """
-        self.color = color
-        self._update_image()
+        if self.color != color:
+            self.color = color
+            self._color_dirty = True
 
     def get_color(self) -> Tuple:
         """Gets the current color tint of the sprite."""
@@ -256,7 +263,8 @@ class Sprite(pygame.sprite.Sprite):
             self.size = _vector2_to_int_tuple(self.size_vector)
 
         self.original_image = img
-        self.image = img.copy()
+        self._transformed_image = self.original_image.copy()
+        self.image = self.original_image.copy()
         
         existing_rect = getattr(self, "rect", None)
         if existing_rect is not None:
@@ -274,8 +282,9 @@ class Sprite(pygame.sprite.Sprite):
         setattr(self.rect, anchor_attr, anchor_pos)
 
         self._set_world_center(Vector2(self.rect.center))
-        self.mask = pygame.mask.from_surface(self.image)
-        self._update_image()
+        self._transform_dirty = True
+        self._color_dirty = True
+        self._mask_dirty = True
 
     def kill(self) -> None:
         if self._game_registered:
@@ -308,8 +317,14 @@ class Sprite(pygame.sprite.Sprite):
         if self.collision_targets is not None:
             self._resolve_collisions()
 
-        # Update collision mask and draw
-        self.mask = pygame.mask.from_surface(self.image)
+        self._update_image()
+
+        # Update collision mask if necessary
+        if self._mask_dirty:
+            # Only update the mask if it's enabled or if it has never been created.
+            if self.update_mask or self.mask is None:
+                self.mask = pygame.mask.from_surface(self.image)
+            self._mask_dirty = False
         if self.active:
             screen = screen or spritePro.screen
             if screen is not None:
@@ -325,42 +340,47 @@ class Sprite(pygame.sprite.Sprite):
         self._update_children_world_positions()
 
     def _update_image(self):
-        """Updates the sprite image with all visual effects applied.
+        """Updates the sprite image with all visual effects applied."""
+        if self._transform_dirty:
+            # Create a transformed surface and cache it
+            img = self.original_image.copy()
+            if self.flipped_h or self.flipped_v:
+                img = pygame.transform.flip(img, self.flipped_h, self.flipped_v)
+            if self.scale != 1.0:
+                new_size = (
+                    int(self.original_image.get_width() * self.scale),
+                    int(self.original_image.get_height() * self.scale),
+                )
+                img = pygame.transform.scale(img, new_size)
+            if self.angle != 0:
+                img = pygame.transform.rotate(img, self.angle)
+            
+            self._transformed_image = img # cache the transformed image
+            
+            center = self.rect.center
+            self.rect = self._transformed_image.get_rect()
+            self.rect.center = center
 
-        Applies transformations in order: flip → scale → rotate → alpha → color tint.
-        """
-        img = self.original_image.copy()
+            self._transform_dirty = False
+            self._color_dirty = True  # Force color update after transform
+            self._mask_dirty = True
 
-        # Применяем отражение
-        if self.flipped_h or self.flipped_v:
-            img = pygame.transform.flip(img, self.flipped_h, self.flipped_v)
+        if self._color_dirty:
+            # Start with the transformed image and apply color/alpha
+            self.image = self._transformed_image.copy()
+            if self.alpha != 255:
+                self.image.set_alpha(self.alpha)
+            if self.color != (255, 255, 255):
+                self.image.fill(self.color, special_flags=pygame.BLEND_RGBA_MULT)
+            
+            self._color_dirty = False
 
-        # Применяем масштаб
-        if self.scale != 1.0:
-            new_size = (
-                int(img.get_width() * self.scale),
-                int(img.get_height() * self.scale),
-            )
-            img = pygame.transform.scale(img, new_size)
-
-        # Применяем вращение
-        if self.angle != 0:
-            img = pygame.transform.rotate(img, self.angle)
-
-        # Применяем прозрачность
-        if self.alpha != 255:
-            img.set_alpha(self.alpha)
-
-        # Обновляем изображение и прямоугольник
-        self.image = img
-
-        if self.color is not None:
-            self.image.fill(self.color, special_flags=pygame.BLEND_RGBA_MULT)
-
-        # Сохраняем центр
-        center = self.rect.center
-        self.rect = self.image.get_rect()
-        self.rect.center = center
+    def set_flip(self, flip_h: bool, flip_v: bool):
+        """Sets the horizontal and vertical flip states of the sprite."""
+        if self.flipped_h != flip_h or self.flipped_v != flip_v:
+            self.flipped_h = flip_h
+            self.flipped_v = flip_v
+            self._transform_dirty = True
 
     def set_active(self, active: bool):
         """Включает или выключает спрайт и синхронизирует его с глобальной группой."""
@@ -434,11 +454,9 @@ class Sprite(pygame.sprite.Sprite):
         # Auto-flip based on movement direction
         if self.auto_flip and abs(direction.x) > 0.1:  # Only flip if significant horizontal movement
             if direction.x < 0:
-                self.flipped_h = True
-                self._update_image()
+                self.set_flip(True, self.flipped_v)
             else:
-                self.flipped_h = False
-                self._update_image()
+                self.set_flip(False, self.flipped_v)
 
     def set_velocity(self, vx: float, vy: float):
         """Sets the sprite's velocity directly.
@@ -481,8 +499,7 @@ class Sprite(pygame.sprite.Sprite):
         """
         self.velocity.x = -(speed or self.speed)
         if self.auto_flip:
-            self.flipped_h = True
-            self._update_image()
+            self.set_flip(True, self.flipped_v)
         self.state = "moving"
 
     def move_right(self, speed: Optional[float] = None):
@@ -493,8 +510,7 @@ class Sprite(pygame.sprite.Sprite):
         """
         self.velocity.x = speed or self.speed
         if self.auto_flip:
-            self.flipped_h = False
-            self._update_image()
+            self.set_flip(False, self.flipped_v)
         self.state = "moving"
 
     def handle_keyboard_input(
@@ -532,15 +548,13 @@ class Sprite(pygame.sprite.Sprite):
             if keys[left_key]:
                 self.velocity.x = -self.speed
                 if self.auto_flip:
-                    self.flipped_h = True
-                    self._update_image()
+                    self.set_flip(True, self.flipped_v)
                 was_moving = True
         if right_key is not None:
             if keys[right_key]:
                 self.velocity.x = self.speed
                 if self.auto_flip:
-                    self.flipped_h = False
-                    self._update_image()
+                    self.set_flip(False, self.flipped_v)
                 was_moving = True
 
         # Обновляем состояние в зависимости от движения
@@ -565,8 +579,9 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             angle (float): Target angle in degrees.
         """
-        self.angle = angle
-        self._update_image()
+        if self.angle != angle:
+            self.angle = angle
+            self._transform_dirty = True
 
     def get_angle(self) -> float:
         """Gets the current rotation angle of the sprite in degrees."""
@@ -578,8 +593,9 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             angle_change (float): Angle change in degrees.
         """
-        self.angle += angle_change
-        self._update_image()
+        if angle_change != 0:
+            self.angle += angle_change
+            self._transform_dirty = True
 
     def set_scale(self, scale: float):
         """Sets the sprite's scale factor.
@@ -587,8 +603,9 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             scale (float): New scale factor.
         """
-        self.scale = scale
-        self._update_image()
+        if self.scale != scale:
+            self.scale = scale
+            self._transform_dirty = True
 
     def get_scale(self) -> float:
         """Gets the current scale factor of the sprite."""
@@ -600,8 +617,10 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             alpha (int): Alpha value (0-255, where 0 is fully transparent).
         """
-        self.alpha = max(0, min(255, alpha))
-        self._update_image()
+        alpha = max(0, min(255, alpha))
+        if self.alpha != alpha:
+            self.alpha = alpha
+            self._color_dirty = True
 
     def get_alpha(self) -> int:
         """Gets the current alpha value of the sprite."""
@@ -615,8 +634,10 @@ class Sprite(pygame.sprite.Sprite):
             min_alpha (int, optional): Minimum alpha value. Defaults to 0.
             max_alpha (int, optional): Maximum alpha value. Defaults to 255.
         """
-        self.alpha = max(min_alpha, min(max_alpha, self.alpha + amount))
-        self._update_image()
+        new_alpha = max(min_alpha, min(max_alpha, self.alpha + amount))
+        if self.alpha != new_alpha:
+            self.alpha = new_alpha
+            self._color_dirty = True
 
     def scale_by(self, amount: float, min_scale: float = 0.0, max_scale: float = 2.0):
         """Changes the sprite's scale by a relative amount.
@@ -626,22 +647,36 @@ class Sprite(pygame.sprite.Sprite):
             min_scale (float, optional): Minimum scale value. Defaults to 0.0.
             max_scale (float, optional): Maximum scale value. Defaults to 2.0.
         """
-        self.scale = max(min_scale, min(max_scale, self.scale + amount))
-        self._update_image()
+        new_scale = max(min_scale, min(max_scale, self.scale + amount))
+        if self.scale != new_scale:
+            self.scale = new_scale
+            self._transform_dirty = True
 
-    def distance_to(self, other_sprite) -> float:
-        """Calculates distance to another sprite.
+    def distance_to(self, target: Union["Sprite", VectorInput]) -> float:
+        """Calculates the distance to a target.
+
+        The target can be another Sprite, a Vector2, or a tuple of coordinates.
 
         Args:
-            other_sprite (Sprite): Target sprite to measure distance to.
+            target (Union[Sprite, VectorInput]): The target to measure the distance to.
 
         Returns:
-            float: Distance between sprite centers.
+            float: The distance between the sprite's center and the target.
+            
+        Raises:
+            TypeError: If the target is not a valid type.
         """
-        return math.sqrt(
-            (self.rect.centerx - other_sprite.rect.centerx) ** 2
-            + (self.rect.centery - other_sprite.rect.centery) ** 2
-        )
+        target_pos: Vector2
+        if isinstance(target, Sprite):
+            target_pos = target.get_world_position()
+        elif isinstance(target, Vector2):
+            target_pos = target
+        elif isinstance(target, (list, tuple)):
+            target_pos = Vector2(target)
+        else:
+            raise TypeError(f"Unsupported target type for distance calculation: {type(target)}")
+
+        return self.get_world_position().distance_to(target_pos)
 
     def set_state(self, state: str):
         """Sets the sprite's current state.

@@ -58,12 +58,8 @@ class ParticleConfig:
     amount: int = 30
     size_range: Tuple[int, int] = (4, 6)
     speed_range: VectorRange = (120.0, 260.0)
-    # Milliseconds lifetime controls (used if seconds not provided)
-    lifetime_range: Tuple[int, int] = (600, 1200)
-    lifetime_ms: Optional[int] = None
-    # Seconds lifetime controls (take priority over ms)
-    lifetime_s: Optional[float] = None
-    lifetime_range_s: Optional[Tuple[float, float]] = None
+    lifetime: Optional[float] = None  # lifetime in seconds
+    lifetime_range: Optional[Tuple[float, float]] = (0.6, 1.2)  # lifetime in seconds
     angle_range: VectorRange = (0.0, 360.0)
     colors: Sequence[Color] = field(default_factory=lambda: [(255, 255, 255)])
     fade_speed: float = 220.0
@@ -89,7 +85,8 @@ class ParticleConfig:
     # Image rotation options (degrees)
     align_rotation_to_velocity: bool = False
     image_rotation_range: Optional[Tuple[float, float]] = None
-    angular_velocity_range: Optional[Tuple[float, float]] = None  # deg/sec
+    angular_velocity_range: Optional[Tuple[float, float]] = None,  # deg/sec
+    scale_velocity_range: Optional[Tuple[float, float]] = None,  # scale factor per second
 
 
 class Particle(spritePro.Sprite):
@@ -124,6 +121,7 @@ class Particle(spritePro.Sprite):
         self.gravity = gravity
         self.set_screen_space(screen_space)
         self.angular_velocity: float = 0.0  # degrees per second
+        self.scale_velocity: float = 0.0  # scale factor per second
 
     def update(self, screen: Optional[pygame.Surface] = None) -> None:
         dt = spritePro.dt
@@ -133,7 +131,11 @@ class Particle(spritePro.Sprite):
         # Apply continuous rotation if set
         if self.angular_velocity != 0.0:
             self.rotate_by(self.angular_velocity * dt)
+        if self.scale_velocity != 0.0:
+            self.scale_by(self.scale_velocity * dt)
         self.fade_by(-self.fade_speed * dt)
+
+        self._update_image()
 
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime or self.alpha <= 0:
             self.kill()
@@ -189,6 +191,10 @@ class ParticleEmitter:
     def get_position(self) -> Optional[Tuple[float, float] | Vector2]:
         """Gets the current emitter position."""
         return self._position
+
+    def update_config(self, **kwargs):
+        """Updates the emitter's configuration with the given values."""
+        self.config = replace(self.config, **kwargs)
 
     def emit(
         self,
@@ -255,28 +261,18 @@ class ParticleEmitter:
                 image = pygame.Surface((size, size), pygame.SRCALPHA)
                 pygame.draw.circle(image, color, (size // 2, size // 2), size // 2)
 
-            # Optionally scale provided/generated image by a uniform factor range
-            if cfg.image_scale_range is not None:
-                try:
-                    scale_factor = random.uniform(*cfg.image_scale_range)
-                    if scale_factor != 1.0 and scale_factor > 0:
-                        w, h = image.get_size()
-                        new_size = (max(1, int(w * scale_factor)), max(1, int(h * scale_factor)))
-                        image = pygame.transform.scale(image, new_size)
-                except Exception:
-                    pass
 
-            # Resolve lifetime (seconds first, then ms)
-            if cfg.lifetime_s is not None:
-                lifetime = max(0, int(cfg.lifetime_s * 1000.0))
-            elif cfg.lifetime_range_s is not None:
-                lo, hi = cfg.lifetime_range_s
+
+            # Resolve lifetime
+            if cfg.lifetime is not None:
+                lifetime = max(0, int(cfg.lifetime * 1000.0))
+            elif cfg.lifetime_range is not None:
+                lo, hi = cfg.lifetime_range
                 secs = random.uniform(float(lo), float(hi))
                 lifetime = max(0, int(secs * 1000.0))
-            elif cfg.lifetime_ms is not None:
-                lifetime = max(0, int(cfg.lifetime_ms))
             else:
-                lifetime = random.randint(*cfg.lifetime_range)
+                # Default lifetime if not specified
+                lifetime = random.randint(600, 1200)
 
             # Create particle
             if cfg.factory is not None:
@@ -307,6 +303,19 @@ class ParticleEmitter:
                     particle.angular_velocity = random.uniform(*cfg.angular_velocity_range)
                 except Exception:
                     particle.angular_velocity = 0.0
+            if cfg.scale_velocity_range is not None:
+                try:
+                    particle.scale_velocity = random.uniform(*cfg.scale_velocity_range)
+                except Exception:
+                    particle.scale_velocity = 0.0
+            # Set initial scale if requested
+            if cfg.image_scale_range is not None:
+                try:
+                    scale_factor = random.uniform(*cfg.image_scale_range)
+                    particle.set_scale(scale_factor)
+                except Exception:
+                    pass
+
             if cfg.custom_factory:
                 cfg.custom_factory(particle, index)
             particles.append(particle)
@@ -331,7 +340,7 @@ def template_sparks() -> ParticleConfig:
     """Small bright sparks burst in all directions, short lifetime."""
     return ParticleConfig(
         amount=30,
-        lifetime_range_s=(0.25, 0.6),
+        lifetime_range=(0.25, 0.6),
         speed_range=(220.0, 420.0),
         angle_range=(0.0, 360.0),
         fade_speed=400.0,
@@ -349,7 +358,7 @@ def template_smoke() -> ParticleConfig:
     """Soft gray smoke puffs drifting upward, long lifetime."""
     return ParticleConfig(
         amount=20,
-        lifetime_range_s=(1.8, 3.0),
+        lifetime_range=(1.8, 3.0),
         speed_range=(20.0, 60.0),
         angle_range=(-100.0, -80.0),  # mostly upwards
         fade_speed=80.0,
@@ -367,7 +376,7 @@ def template_fire() -> ParticleConfig:
     """Upward fiery burst with orange/red tones and medium lifetime."""
     return ParticleConfig(
         amount=40,
-        lifetime_range_s=(0.5, 1.2),
+        lifetime_range=(0.5, 1.2),
         speed_range=(160.0, 320.0),
         angle_range=(-120.0, -60.0),  # upward cone
         fade_speed=300.0,
@@ -386,7 +395,7 @@ def template_snowfall() -> ParticleConfig:
     """Gentle snowfall: particles spawn in a wide rect above the view and fall down."""
     return ParticleConfig(
         amount=20,
-        lifetime_range_s=(10, 10),
+        lifetime_range=(10, 10),
         speed_range=(40.0, 80.0),
         angle_range=(80.0, 100.0),  # mostly downward
         fade_speed=30.0,
@@ -406,7 +415,7 @@ def template_circular_burst() -> ParticleConfig:
     """Circular burst: particles spawn in a 100px radius circle and explode outward."""
     return ParticleConfig(
         amount=50,
-        lifetime_range_s=(0.8, 1.5),
+        lifetime_range=(0.8, 1.5),
         speed_range=(200.0, 400.0),
         angle_range=(0.0, 360.0),  # all directions
         fade_speed=300.0,
