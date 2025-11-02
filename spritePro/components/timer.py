@@ -111,9 +111,13 @@ class Timer:
 
         now = time.monotonic()
         if now >= (self._next_fire or 0):
+            old_next_fire = self._next_fire
             # срабатывание
             if self.callback:
                 self.callback(*self.args, **self.kwargs)
+
+            if old_next_fire != self._next_fire:
+                return
 
             if self.repeat:
                 # запланировать следующее срабатывание, учитывая «проскоченные» интервалы
