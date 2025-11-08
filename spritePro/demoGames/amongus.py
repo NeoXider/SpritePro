@@ -41,19 +41,19 @@ player.set_scale(0.07)
 player.speed = 5
 player.collide = s.Sprite("", (30, 50), player.rect.center)
 player.collide.set_parent(player)
-player.collide.set_alpha(50)
+player.collide.alpha = 50
 
 text_cord = s.TextSprite("", 46)
 text_cord.set_position((s.WH_C.x, 10), s.Anchor.MID_TOP)
 text_cord.set_screen_space(True)
 
 t1 = s.Sprite("", (50, 50), (810, 610))
-t1.set_alpha(50)
-t1.set_color((0, 0, 255))
+t1.alpha = 50
+t1.color = (0, 0, 255)
 
 t2 = s.Sprite("", (50, 50), (332, 295))
-t2.set_alpha(50)
-t2.set_color((255, 0, 0))
+t2.alpha = 50
+t2.color=(255, 0, 0)
 
 canistra = s.Sprite("", (50, 50), (-35, 580))
 canistra.set_alpha(50)
@@ -151,7 +151,7 @@ while True:
 
     # Проверка для кнопки "Взаимодействовать"
     can_interact = any(i.rect.colliderect(player.collide.rect) for i in interacts)
-    btn_interactive.set_active(can_interact)
+    btn_interactive.active = can_interact
 
     # Обновляем текст отладки
     is_colliding_with_wall = any(player.collide.rect.colliderect(w.rect) for w in walls)

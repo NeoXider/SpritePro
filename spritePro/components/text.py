@@ -82,11 +82,11 @@ class TextSprite(Sprite):
         for e in spritePro.events:
             if e.type == pygame.KEYDOWN:
                 if k_delete is not None and e.key == k_delete:
-                    text_sprite.text = ""
+                    self.text = ""
                 elif e.key == pygame.K_BACKSPACE:
-                    text_sprite.text = text_sprite.text[:-1]
+                    self.text = self.text[:-1]
                 else:
-                    text_sprite.text += e.unicode
+                    self.text += e.unicode
         return self.text
 
     def set_text(self, new_text: str = None):
@@ -146,6 +146,5 @@ if __name__ == "__main__":
 
     while True:
         spritePro.update(fill_color=(200, 200, 255))
-        text_sprite.update(screen)
 
         text_sprite.input()

@@ -56,7 +56,6 @@ class Sprite(pygame.sprite.Sprite):
 
     auto_flip: bool = True
     stop_threshold: float = 1.0
-    color: Optional[Tuple[int, int, int]] = None
 
     def __init__(
         self,
