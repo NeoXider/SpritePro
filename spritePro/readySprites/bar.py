@@ -1,9 +1,8 @@
-"""
-Bar - Ready-to-use progress bar sprite
+"""Готовые к использованию спрайты полос прогресса.
 
-This module provides a Bar class that displays a fillable progress bar
-with customizable fill direction and smooth animation, similar to Unity's
-Image.fillAmount functionality.
+Этот модуль предоставляет класс Bar, который отображает заполняемую полосу прогресса
+с настраиваемым направлением заполнения и плавной анимацией, аналогично функциональности
+Unity's Image.fillAmount.
 """
 
 import sys
@@ -22,43 +21,25 @@ from ..constants import FillDirection, Anchor
 
 
 class Bar(Sprite):
-    """A ready-to-use progress bar that inherits from Sprite.
+    """Готовая к использованию полоса прогресса, наследуемая от Sprite.
 
-    This class provides a fillable progress bar with customizable fill direction
-    and smooth animation. The bar uses pygame's set_clip() for optimal performance
-    and correct anchor positioning.
+    Предоставляет заполняемую полосу прогресса с настраиваемым направлением заполнения
+    и плавной анимацией. Использует pygame's set_clip() для оптимальной производительности
+    и правильного позиционирования якоря.
 
-    Features:
-    - 4 fill directions (horizontal and vertical, each with 2 orientations)
-    - Smooth animation between fill values
-    - Correct anchor positioning when clipped
-    - Unity-style fillAmount behavior
-    - Optional animation duration control
+    Возможности:
+    - 4 направления заполнения (горизонтальные и вертикальные, каждое с 2 ориентациями)
+    - Плавная анимация между значениями заполнения
+    - Правильное позиционирование якоря при обрезке
+    - Поведение в стиле Unity fillAmount
+    - Опциональный контроль длительности анимации
 
-    Args:
-        image (str | Path | pygame.Surface): Path to bar image or pygame Surface.
-        pos (Tuple[int, int], optional): Position on screen. Defaults to (0, 0).
-        size (Tuple[int, int], optional): Bar dimensions. If None, uses image size.
-        fill_direction (str | FillDirection, optional): Fill direction. Defaults to HORIZONTAL_LEFT_TO_RIGHT.
-        fill_amount (float, optional): Initial fill amount (0.0-1.0). Defaults to 1.0.
-        animate_duration (float, optional): Animation duration in seconds. Defaults to 0.3.
-        sorting_order (int, optional): Rendering layer order.
-
-    Example:
-        # Basic horizontal progress bar
-        bar = Bar("health_bar.png", pos=(100, 100), fill_amount=0.7)
-
-        # Vertical health bar with animation
-        bar = Bar(
-            image="mana_bar.png",
-            pos=(50, 50),
-            fill_direction=FillDirection.VERTICAL_BOTTOM_TO_TOP,
-            animate_duration=0.5
-        )
-
-        # In game loop
-        bar.set_fill_amount(0.5)  # Animate to 50%
-        bar.update(screen)
+    Attributes:
+        _current_fill (float): Текущее значение заполнения (0.0-1.0).
+        _target_fill (float): Целевое значение заполнения (0.0-1.0).
+        _fill_direction (Union[str, FillDirection]): Направление заполнения.
+        _animate_duration (float): Длительность анимации в секундах.
+        _is_animating (bool): Выполняется ли анимация.
     """
 
     def __init__(
@@ -71,6 +52,17 @@ class Bar(Sprite):
         animate_duration: float = 0.3,
         sorting_order: Optional[int] = None,
     ):
+        """Инициализирует полосу прогресса.
+
+        Args:
+            image (Union[str, Path, pygame.Surface]): Путь к изображению полосы или pygame Surface.
+            pos (Tuple[int, int], optional): Позиция на экране. По умолчанию (0, 0).
+            size (Optional[Tuple[int, int]], optional): Размеры полосы. Если None, используется размер изображения.
+            fill_direction (Union[str, FillDirection], optional): Направление заполнения. По умолчанию HORIZONTAL_LEFT_TO_RIGHT.
+            fill_amount (float, optional): Начальное значение заполнения (0.0-1.0). По умолчанию 1.0.
+            animate_duration (float, optional): Длительность анимации в секундах. По умолчанию 0.3.
+            sorting_order (Optional[int], optional): Порядок отрисовки (слой).
+        """
         # Load image if path provided
         if isinstance(image, (str, Path)):
             try:
@@ -106,11 +98,11 @@ class Bar(Sprite):
         self._update_clipped_image()
 
     def set_fill_amount(self, value: float, animate: bool = True) -> None:
-        """Set the fill amount of the bar.
+        """Устанавливает значение заполнения полосы.
 
         Args:
-            value (float): Fill amount from 0.0 to 1.0.
-            animate (bool, optional): Whether to animate the change. Defaults to True.
+            value (float): Значение заполнения от 0.0 до 1.0.
+            animate (bool, optional): Анимировать ли изменение. По умолчанию True.
         """
         self._target_fill = max(0.0, min(1.0, value))  # Clamp to 0-1
         
@@ -123,36 +115,36 @@ class Bar(Sprite):
             self._animation_timer = 0.0
 
     def get_fill_amount(self) -> float:
-        """Get the current fill amount.
+        """Получает текущее значение заполнения.
 
         Returns:
-            float: Current fill amount (0.0-1.0).
+            float: Текущее значение заполнения (0.0-1.0).
         """
         return self._current_fill
 
     def set_fill_direction(self, direction: Union[str, FillDirection]) -> None:
-        """Set the fill direction of the bar.
+        """Устанавливает направление заполнения полосы.
 
         Args:
-            direction (str | FillDirection): New fill direction.
+            direction (Union[str, FillDirection]): Новое направление заполнения.
         """
         self._fill_direction = direction
         self._update_clipped_image()
 
     def set_animate_duration(self, duration: float) -> None:
-        """Set the animation duration for fill changes.
+        """Устанавливает длительность анимации для изменений заполнения.
 
         Args:
-            duration (float): Animation duration in seconds. 0 = no animation.
+            duration (float): Длительность анимации в секундах. 0 = без анимации.
         """
         self._animate_duration = duration
 
     def set_fill_type(self, fill_direction: Union[str, FillDirection], anchor: Union[str, Anchor] = Anchor.CENTER) -> None:
-        """Set the fill direction and anchor for the bar.
+        """Устанавливает направление заполнения и якорь для полосы.
 
         Args:
-            fill_direction (str | FillDirection): Fill direction (e.g., "left_to_right", "bottom_to_top").
-            anchor (str | Anchor, optional): Anchor point for positioning. Defaults to CENTER.
+            fill_direction (Union[str, FillDirection]): Направление заполнения (например, "left_to_right", "bottom_to_top").
+            anchor (Union[str, Anchor], optional): Точка якоря для позиционирования. По умолчанию CENTER.
         """
         # Set fill direction
         self.set_fill_direction(fill_direction)
@@ -163,11 +155,11 @@ class Bar(Sprite):
             self.set_position(current_pos, anchor)
 
     def set_image(self, image_source: Union[str, Path, pygame.Surface], size: Optional[Tuple[int, int]] = None) -> None:
-        """Set a new image for the bar and update clipping.
+        """Устанавливает новое изображение для полосы и обновляет обрезку.
 
         Args:
-            image_source: Path to image file or pygame Surface.
-            size: New dimensions (width, height) or None to keep original size.
+            image_source (Union[str, Path, pygame.Surface]): Путь к файлу изображения или pygame Surface.
+            size (Optional[Tuple[int, int]], optional): Новые размеры (ширина, высота) или None для сохранения оригинального размера.
         """
         # Use parent's set_image method (handles scaling properly)
         super().set_image(image_source, size)
@@ -180,7 +172,7 @@ class Bar(Sprite):
             self._update_clipped_image()
 
     def _update_clipped_image(self) -> None:
-        """Update the bar image based on current fill amount and direction."""
+        """Обновляет изображение полосы на основе текущего значения заполнения и направления."""
         if self._current_fill <= 0:
             # Empty bar - create transparent surface
             self.image = pygame.Surface(self._original_image.get_size(), pygame.SRCALPHA)
@@ -230,10 +222,10 @@ class Bar(Sprite):
         setattr(self.rect, self.anchor_key, old_anchor_pos)
 
     def _update_animation(self, dt: float) -> None:
-        """Update fill animation.
+        """Обновляет анимацию заполнения.
 
         Args:
-            dt (float): Delta time in seconds.
+            dt (float): Дельта времени в секундах.
         """
         if not self._is_animating:
             return
@@ -257,10 +249,10 @@ class Bar(Sprite):
         self._update_clipped_image()
 
     def update(self, screen: pygame.Surface) -> None:
-        """Update the bar (handles animation and drawing).
+        """Обновляет полосу (обрабатывает анимацию и отрисовку).
 
         Args:
-            screen (pygame.Surface): Screen surface to draw on.
+            screen (pygame.Surface): Поверхность экрана для отрисовки.
         """
         # Update animation if active
         if hasattr(s, "dt") and s.dt > 0:
@@ -277,25 +269,25 @@ def create_bar(
     fill_amount: float = 1.0,
     **kwargs,
 ) -> Bar:
-    """Create a ready-to-use progress bar with common settings.
+    """Создает готовую к использованию полосу прогресса с общими настройками.
 
     Args:
-        image: Bar image path or surface.
-        pos: Position on screen.
-        fill_amount: Initial fill amount (0.0-1.0).
-        **kwargs: Additional arguments passed to Bar constructor.
+        image (Union[str, Path, pygame.Surface]): Путь к изображению полосы или поверхность.
+        pos (Tuple[int, int], optional): Позиция на экране. По умолчанию (0, 0).
+        fill_amount (float, optional): Начальное значение заполнения (0.0-1.0). По умолчанию 1.0.
+        **kwargs: Дополнительные аргументы, передаваемые в конструктор Bar.
 
     Returns:
-        Bar: Configured bar instance.
+        Bar: Настроенный экземпляр полосы.
     """
     return Bar(image=image, pos=pos, fill_amount=fill_amount, **kwargs)
 
 
 class BarWithBackground(Bar):
-    """A progress bar with a background image and fill overlay.
+    """Полоса прогресса с фоновым изображением и наложением заполнения.
     
-    This class extends Bar to include a background image that remains visible
-    while the fill area is clipped on top of it.
+    Расширяет Bar для включения фонового изображения, которое остается видимым,
+    в то время как область заполнения обрезается поверх него.
     """
     
     def __init__(self, 
@@ -309,19 +301,19 @@ class BarWithBackground(Bar):
                  sorting_order: int = 0,
                  background_size: Optional[Tuple[int, int]] = None,
                  fill_size: Optional[Tuple[int, int]] = None):
-        """Initialize a bar with background and fill images.
+        """Инициализирует полосу с фоновым изображением и изображением заполнения.
         
         Args:
-            background_image: Image for the background (always visible).
-            fill_image: Image for the fill area (clipped based on fill_amount).
-            size: Default size of the bar (width, height).
-            pos: Position on screen.
-            fill_amount: Initial fill amount (0.0-1.0).
-            fill_direction: Direction of fill (left_to_right, right_to_left, etc.).
-            animate_duration: Duration for fill animations in seconds.
-            sorting_order: Rendering order (higher = on top).
-            background_size: Optional separate size for background image.
-            fill_size: Optional separate size for fill image.
+            background_image (Union[str, Path, pygame.Surface]): Изображение для фона (всегда видимо).
+            fill_image (Union[str, Path, pygame.Surface]): Изображение для области заполнения (обрезается на основе fill_amount).
+            size (Tuple[int, int]): Размер полосы по умолчанию (ширина, высота).
+            pos (Tuple[float, float], optional): Позиция на экране. По умолчанию (0, 0).
+            fill_amount (float, optional): Начальное значение заполнения (0.0-1.0). По умолчанию 1.0.
+            fill_direction (Union[str, FillDirection], optional): Направление заполнения (left_to_right, right_to_left и т.д.). По умолчанию LEFT_TO_RIGHT.
+            animate_duration (float, optional): Длительность анимации заполнения в секундах. По умолчанию 0.3.
+            sorting_order (int, optional): Порядок отрисовки (больше = сверху). По умолчанию 0.
+            background_size (Optional[Tuple[int, int]], optional): Опциональный отдельный размер для фонового изображения.
+            fill_size (Optional[Tuple[int, int]], optional): Опциональный отдельный размер для изображения заполнения.
         """
         # Initialize background sprite (always visible)
         super().__init__(
@@ -353,7 +345,14 @@ class BarWithBackground(Bar):
         self._update_clipped_image()
     
     def _parse_fill_direction(self, direction):
-        """Parse fill direction string to FillDirection constant."""
+        """Преобразует строку направления заполнения в константу FillDirection.
+        
+        Args:
+            direction (Union[str, FillDirection]): Направление заполнения.
+        
+        Returns:
+            FillDirection: Константа направления заполнения.
+        """
         if isinstance(direction, str):
             direction_lower = direction.lower()
             if direction_lower in ["left_to_right", "horizontal_left_to_right"]:
@@ -370,7 +369,7 @@ class BarWithBackground(Bar):
             return direction  # Already a FillDirection constant
     
     def _create_fill_sprite(self):
-        """Create the fill sprite from the fill image."""
+        """Создает спрайт заполнения из изображения заполнения."""
         try:
             if isinstance(self._fill_image_source, str) or isinstance(self._fill_image_source, Path):
                 # Load image from file
@@ -388,7 +387,7 @@ class BarWithBackground(Bar):
             self._fill_surface.fill((100, 150, 255))  # Blue fill color
     
     def _update_clipped_image(self):
-        """Update the fill sprite with proper clipping."""
+        """Обновляет спрайт заполнения с правильной обрезкой."""
         if not hasattr(self, '_fill_surface'):
             return
             
@@ -410,7 +409,11 @@ class BarWithBackground(Bar):
         self._clipped_fill_surface = clipped_surface
     
     def _calculate_clip_rect(self):
-        """Calculate the clipping rectangle for the fill area."""
+        """Вычисляет прямоугольник обрезки для области заполнения.
+        
+        Returns:
+            pygame.Rect: Прямоугольник обрезки.
+        """
         width, height = self._fill_size
         fill_width = int(width * self._current_fill)
         fill_height = int(height * self._current_fill)
@@ -427,48 +430,48 @@ class BarWithBackground(Bar):
             return pygame.Rect(0, 0, fill_width, height)
     
     def set_fill_image(self, fill_image: Union[str, Path, pygame.Surface]):
-        """Set a new fill image.
+        """Устанавливает новое изображение заполнения.
         
         Args:
-            fill_image: New fill image path or surface.
+            fill_image (Union[str, Path, pygame.Surface]): Новый путь к изображению заполнения или поверхность.
         """
         self._fill_image_source = fill_image
         self._create_fill_sprite()
         self._update_clipped_image()
     
     def set_background_image(self, background_image: Union[str, Path, pygame.Surface]):
-        """Set a new background image.
+        """Устанавливает новое фоновое изображение.
         
         Args:
-            background_image: New background image path or surface.
+            background_image (Union[str, Path, pygame.Surface]): Новый путь к фоновому изображению или поверхность.
         """
         self.set_image(background_image)
     
     def set_background_size(self, size: Tuple[int, int]):
-        """Set a new background size.
+        """Устанавливает новый размер фона.
         
         Args:
-            size: New background size (width, height).
+            size (Tuple[int, int]): Новый размер фона (ширина, высота).
         """
         self._background_size = size
         self.set_size(size)
     
     def set_fill_size(self, size: Tuple[int, int]):
-        """Set a new fill size.
+        """Устанавливает новый размер заполнения.
         
         Args:
-            size: New fill size (width, height).
+            size (Tuple[int, int]): Новый размер заполнения (ширина, высота).
         """
         self._fill_size = size
         self._create_fill_sprite()
         self._update_clipped_image()
     
     def set_both_sizes(self, background_size: Tuple[int, int], fill_size: Tuple[int, int]):
-        """Set both background and fill sizes.
+        """Устанавливает размеры фона и заполнения.
         
         Args:
-            background_size: New background size (width, height).
-            fill_size: New fill size (width, height).
+            background_size (Tuple[int, int]): Новый размер фона (ширина, высота).
+            fill_size (Tuple[int, int]): Новый размер заполнения (ширина, высота).
         """
         self._background_size = background_size
         self._fill_size = fill_size
@@ -477,11 +480,11 @@ class BarWithBackground(Bar):
         self._update_clipped_image()
     
     def set_fill_amount(self, value: float, animate: bool = True) -> None:
-        """Set the fill amount of the bar.
+        """Устанавливает значение заполнения полосы.
 
         Args:
-            value (float): Fill amount from 0.0 to 1.0.
-            animate (bool, optional): Whether to animate the change. Defaults to True.
+            value (float): Значение заполнения от 0.0 до 1.0.
+            animate (bool, optional): Анимировать ли изменение. По умолчанию True.
         """
         self._target_fill = max(0.0, min(1.0, value))  # Clamp to 0-1
         
@@ -494,15 +497,19 @@ class BarWithBackground(Bar):
             self._animation_timer = 0.0
     
     def get_fill_amount(self) -> float:
-        """Get the current fill amount.
+        """Получает текущее значение заполнения.
 
         Returns:
-            float: Current fill amount (0.0-1.0).
+            float: Текущее значение заполнения (0.0-1.0).
         """
         return self._current_fill
     
     def update(self, screen: pygame.Surface = None):
-        """Update the bar with animation logic."""
+        """Обновляет полосу с логикой анимации.
+        
+        Args:
+            screen (pygame.Surface, optional): Поверхность экрана для отрисовки. По умолчанию None.
+        """
         # Update fill animation
         if self._is_animating and self._animate_duration > 0:
             self._animation_timer += 1.0 / 60.0  # Assuming 60 FPS
@@ -544,7 +551,11 @@ class BarWithBackground(Bar):
             screen.blit(self._clipped_fill_surface, fill_rect)
     
     def draw(self, screen: pygame.Surface):
-        """Draw the bar with background and fill overlay."""
+        """Отрисовывает полосу с фоном и наложением заполнения.
+        
+        Args:
+            screen (pygame.Surface): Поверхность экрана для отрисовки.
+        """
         # Draw background (parent's image)
         super().draw(screen)
         
@@ -565,17 +576,17 @@ def create_bar_with_background(background_image: Union[str, Path, pygame.Surface
                               pos: Tuple[float, float] = (0, 0),
                               fill_amount: float = 1.0,
                               **kwargs) -> BarWithBackground:
-    """Create a ready-to-use bar with background and fill images.
+    """Создает готовую к использованию полосу с фоновым изображением и изображением заполнения.
 
     Args:
-        background_image: Background image path or surface.
-        fill_image: Fill image path or surface.
-        pos: Position on screen.
-        fill_amount: Initial fill amount (0.0-1.0).
-        **kwargs: Additional arguments passed to BarWithBackground constructor.
+        background_image (Union[str, Path, pygame.Surface]): Путь к фоновому изображению или поверхность.
+        fill_image (Union[str, Path, pygame.Surface]): Путь к изображению заполнения или поверхность.
+        pos (Tuple[float, float], optional): Позиция на экране. По умолчанию (0, 0).
+        fill_amount (float, optional): Начальное значение заполнения (0.0-1.0). По умолчанию 1.0.
+        **kwargs: Дополнительные аргументы, передаваемые в конструктор BarWithBackground.
 
     Returns:
-        BarWithBackground: Configured bar with background instance.
+        BarWithBackground: Настроенный экземпляр полосы с фоном.
     """
     return BarWithBackground(
         background_image=background_image,

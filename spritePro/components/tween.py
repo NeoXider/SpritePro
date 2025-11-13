@@ -12,7 +12,24 @@ import spritePro
 
 
 class EasingType(IntFlag):
-    """Типы функций плавности."""
+    """Типы функций плавности для анимаций.
+
+    Attributes:
+        LINEAR: Линейная функция плавности (без ускорения).
+        EASE_IN: Плавность с ускорением в начале.
+        EASE_OUT: Плавность с замедлением в конце.
+        EASE_IN_OUT: Плавность с ускорением в начале и замедлением в конце.
+        BOUNCE: Отскок (bounce эффект).
+        ELASTIC: Упругая (elastic эффект).
+        BACK: Откат назад (back эффект).
+        CIRC: Круговая функция плавности.
+        QUAD: Квадратичная функция плавности.
+        CUBIC: Кубическая функция плавности.
+        QUART: Функция плавности четвертой степени.
+        QUINT: Функция плавности пятой степени.
+        SINE: Синусоидальная функция плавности.
+        EXPO: Экспоненциальная функция плавности.
+    """
 
     LINEAR = auto()
     EASE_IN = auto()
@@ -31,26 +48,29 @@ class EasingType(IntFlag):
 
 
 class Tween:
-    """Base tween class for smooth transitions between values.
+    """Базовый класс для плавных переходов между значениями.
 
-    This class provides functionality for:
-    - Smooth transitions between start and end values
-    - Various easing functions for different animation styles
-    - Looping and yoyo effects
-    - Callbacks for updates and completion
-    - Pause and resume functionality
-    - Progress tracking
+    Предоставляет функциональность для:
+    - Плавных переходов между начальным и конечным значениями
+    - Различных функций плавности для разных стилей анимации
+    - Эффектов зацикливания и yoyo
+    - Обратных вызовов для обновлений и завершения
+    - Функциональности паузы и возобновления
+    - Отслеживания прогресса
 
     Attributes:
-        start_value (float): Initial value of the transition.
-        end_value (float): Target value of the transition.
-        duration (float): Total duration of the transition in seconds.
-        easing (EasingType): Type of easing function to use.
-        loop (bool): Whether the tween should loop.
-        yoyo (bool): Whether the tween should reverse direction when looping.
-        on_update (Callable): Callback function for value updates.
-        on_complete (Callable): Callback function when tween completes.
-        delay (float): Delay before tween starts in seconds.
+        start_value (float): Начальное значение перехода.
+        end_value (float): Конечное значение перехода.
+        duration (float): Общая длительность перехода в секундах.
+        easing (Callable): Функция плавности для использования.
+        loop (bool): Должен ли переход зацикливаться.
+        yoyo (bool): Должен ли переход обращаться при зацикливании.
+        on_update (Optional[Callable[[float], None]]): Функция обратного вызова для обновлений значения.
+        on_complete (Optional[Callable]): Функция обратного вызова при завершении перехода.
+        delay (float): Задержка перед началом перехода в секундах.
+        current_value (float): Текущее значение перехода.
+        is_playing (bool): Воспроизводится ли переход.
+        is_paused (bool): Находится ли переход на паузе.
     """
 
     # Словарь доступных функций плавности
@@ -88,18 +108,18 @@ class Tween:
         delay: float = 0,
         on_update: Optional[Callable[[float], None]] = None,
     ):
-        """Инициализация перехода.
+        """Инициализирует переход.
 
         Args:
-            start_value: Начальное значение
-            end_value: Конечное значение
-            duration: Длительность в секундах
-            easing: Тип плавности (из EasingType)
-            on_complete: Функция вызываемая при завершении
-            loop: Зациклить переход
-            yoyo: Двигаться туда-обратно
-            delay: Задержка перед началом в секундах
-            on_update: Функция вызываемая при обновлении значения
+            start_value (float): Начальное значение.
+            end_value (float): Конечное значение.
+            duration (float): Длительность в секундах.
+            easing (EasingType, optional): Тип плавности (из EasingType). По умолчанию EasingType.LINEAR.
+            on_complete (Optional[Callable], optional): Функция, вызываемая при завершении. По умолчанию None.
+            loop (bool, optional): Зациклить переход. По умолчанию False.
+            yoyo (bool, optional): Двигаться туда-обратно. По умолчанию False.
+            delay (float, optional): Задержка перед началом в секундах. По умолчанию 0.
+            on_update (Optional[Callable[[float], None]], optional): Функция, вызываемая при обновлении значения. По умолчанию None.
         """
         self.start_value = start_value
         self.end_value = end_value
@@ -121,13 +141,13 @@ class Tween:
         self.direction = 1  # 1 для движения вперед, -1 для движения назад
 
     def update(self, dt: Optional[float] = None) -> Optional[float]:
-        """Обновление перехода.
+        """Обновляет переход.
 
         Args:
-            dt: Время с последнего обновления
+            dt (Optional[float], optional): Время с последнего обновления. По умолчанию None.
 
         Returns:
-            Текущее значение или None если завершен
+            Optional[float]: Текущее значение или None, если завершен.
         """
         if not self.is_playing or self.is_paused:
             return self.current_value
@@ -167,23 +187,23 @@ class Tween:
         return self.current_value
 
     def pause(self) -> None:
-        """Пауза перехода."""
+        """Ставит переход на паузу."""
         if not self.is_paused:
             self.is_paused = True
             self.pause_time = time.time()
 
     def resume(self) -> None:
-        """Возобновление перехода."""
+        """Возобновляет переход с паузы."""
         if self.is_paused:
             self.is_paused = False
             self.start_time += time.time() - self.pause_time
 
     def stop(self) -> None:
-        """Остановка перехода."""
+        """Останавливает переход."""
         self.is_playing = False
 
     def reset(self) -> None:
-        """Сброс перехода в начальное состояние."""
+        """Сбрасывает переход в начальное состояние."""
         self.start_time = time.time()
         self.current_value = self.start_value
         self.is_playing = True
@@ -191,10 +211,10 @@ class Tween:
         self.direction = 1
 
     def get_progress(self) -> float:
-        """Получение прогресса перехода (0-1).
+        """Получает прогресс перехода (0-1).
 
         Returns:
-            Прогресс перехода от 0 до 1
+            float: Прогресс перехода от 0 до 1.
         """
         if not self.is_playing:
             return 1.0 if self.current_value == self.end_value else 0.0
@@ -209,22 +229,21 @@ class Tween:
 
 
 class TweenManager:
-    """Manager class for handling multiple tweens simultaneously.
+    """Менеджер для обработки нескольких переходов одновременно.
 
-    This class provides functionality for:
-    - Managing multiple tweens
-    - Group operations (pause, resume, stop)
-    - Automatic cleanup of completed tweens
-    - Independent control of each tween
-    - Progress tracking for all tweens
+    Предоставляет функциональность для:
+    - Управления несколькими переходами
+    - Групповых операций (пауза, возобновление, остановка)
+    - Автоматической очистки завершенных переходов
+    - Независимого управления каждым переходом
+    - Отслеживания прогресса для всех переходов
 
     Attributes:
-        tweens (Dict[str, Tween]): Dictionary of active tweens.
-        paused (bool): Whether all tweens are paused.
+        tweens (Dict[str, Tween]): Словарь активных переходов.
     """
 
     def __init__(self):
-        """Инициализация менеджера переходов."""
+        """Инициализирует менеджер переходов."""
         self.tweens: Dict[str, Tween] = {}
 
     def add_tween(
@@ -240,19 +259,19 @@ class TweenManager:
         delay: float = 0,
         on_update: Optional[Callable[[float], None]] = None,
     ) -> None:
-        """Добавление нового перехода.
+        """Добавляет новый переход.
 
         Args:
-            name: Имя перехода
-            start_value: Начальное значение
-            end_value: Конечное значение
-            duration: Длительность в секундах
-            easing: Тип плавности (из EasingType)
-            on_complete: Функция вызываемая при завершении
-            loop: Зациклить переход
-            yoyo: Двигаться туда-обратно
-            delay: Задержка перед началом
-            on_update: Функция вызываемая при обновлении
+            name (str): Имя перехода.
+            start_value (float): Начальное значение.
+            end_value (float): Конечное значение.
+            duration (float): Длительность в секундах.
+            easing (EasingType, optional): Тип плавности (из EasingType). По умолчанию EasingType.LINEAR.
+            on_complete (Optional[Callable], optional): Функция, вызываемая при завершении. По умолчанию None.
+            loop (bool, optional): Зациклить переход. По умолчанию False.
+            yoyo (bool, optional): Двигаться туда-обратно. По умолчанию False.
+            delay (float, optional): Задержка перед началом. По умолчанию 0.
+            on_update (Optional[Callable[[float], None]], optional): Функция, вызываемая при обновлении. По умолчанию None.
         """
         self.tweens[name] = Tween(
             start_value,
@@ -267,10 +286,10 @@ class TweenManager:
         )
 
     def update(self, dt: Optional[float] = None) -> None:
-        """Обновление всех переходов.
+        """Обновляет все переходы.
 
         Args:
-            dt: Время с последнего обновления
+            dt (Optional[float], optional): Время с последнего обновления. По умолчанию None.
         """
         for name in list(self.tweens.keys()):
             value = self.tweens[name].update(dt)
@@ -278,37 +297,37 @@ class TweenManager:
                 del self.tweens[name]
 
     def get_tween(self, name: str) -> Optional[Tween]:
-        """Получение перехода по имени.
+        """Получает переход по имени.
 
         Args:
-            name: Имя перехода
+            name (str): Имя перехода.
 
         Returns:
-            Переход или None если не найден
+            Optional[Tween]: Переход или None, если не найден.
         """
         return self.tweens.get(name)
 
     def remove_tween(self, name: str) -> None:
-        """Удаление перехода.
+        """Удаляет переход.
 
         Args:
-            name: Имя перехода
+            name (str): Имя перехода.
         """
         if name in self.tweens:
             del self.tweens[name]
 
     def pause_all(self) -> None:
-        """Пауза всех переходов."""
+        """Ставит все переходы на паузу."""
         for tween in self.tweens.values():
             tween.pause()
 
     def resume_all(self) -> None:
-        """Возобновление всех переходов."""
+        """Возобновляет все переходы с паузы."""
         for tween in self.tweens.values():
             tween.resume()
 
     def stop_all(self) -> None:
-        """Остановка всех переходов."""
+        """Останавливает все переходы и очищает словарь."""
         for tween in self.tweens.values():
             tween.stop()
         self.tweens.clear()

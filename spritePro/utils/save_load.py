@@ -1,24 +1,23 @@
-"""
-Save/Load System - SpritePro
+"""Система сохранения/загрузки для SpritePro.
 
-Professional save and load system supporting multiple data types and formats.
-Provides unified interface for saving and loading lists, dictionaries, numbers,
-strings, text, and custom classes with automatic format detection and error handling.
+Профессиональная система сохранения и загрузки, поддерживающая различные типы данных и форматы.
+Предоставляет унифицированный интерфейс для сохранения и загрузки списков, словарей, чисел,
+строк, текста и пользовательских классов с автоматическим определением формата и обработкой ошибок.
 
-Supported formats:
-- JSON (default) - for dictionaries, lists, numbers, strings
-- Pickle - for complex objects and classes
-- Text - for plain text data
-- Binary - for raw binary data
+Поддерживаемые форматы:
+- JSON (по умолчанию) - для словарей, списков, чисел, строк
+- Pickle - для сложных объектов и классов
+- Text - для обычных текстовых данных
+- Binary - для сырых бинарных данных
 
-Features:
-- Automatic format detection
-- Type validation
-- Error handling with detailed messages
-- Backup creation
-- Compression support
-- Custom class serialization
-- Thread-safe operations
+Возможности:
+- Автоматическое определение формата
+- Валидация типов
+- Обработка ошибок с подробными сообщениями
+- Создание резервных копий
+- Поддержка сжатия
+- Сериализация пользовательских классов
+- Потокобезопасные операции
 """
 
 import json
@@ -38,12 +37,17 @@ logger = logging.getLogger(__name__)
 
 
 class SaveLoadError(Exception):
-    """Custom exception for save/load operations."""
+    """Пользовательское исключение для операций сохранения/загрузки."""
     pass
 
 
 class DataSerializer:
-    """Handles serialization of custom classes and complex objects."""
+    """Обрабатывает сериализацию пользовательских классов и сложных объектов.
+    
+    Attributes:
+        _serializers (Dict[Type, Callable]): Словарь сериализаторов для классов.
+        _deserializers (Dict[str, Callable]): Словарь десериализаторов для классов.
+    """
     
     _serializers: Dict[Type, Callable] = {}
     _deserializers: Dict[str, Callable] = {}
@@ -52,12 +56,12 @@ class DataSerializer:
     def register_class(cls, target_class: Type, 
                       serializer: Callable = None, 
                       deserializer: Callable = None):
-        """Register custom serialization methods for a class.
+        """Регистрирует пользовательские методы сериализации для класса.
         
         Args:
-            target_class: Class to register
-            serializer: Function to serialize instance to dict
-            deserializer: Function to deserialize dict to instance
+            target_class (Type): Класс для регистрации.
+            serializer (Callable, optional): Функция для сериализации экземпляра в словарь.
+            deserializer (Callable, optional): Функция для десериализации словаря в экземпляр.
         """
         if serializer:
             cls._serializers[target_class] = serializer
@@ -66,13 +70,16 @@ class DataSerializer:
     
     @classmethod
     def serialize_object(cls, obj: Any) -> Dict:
-        """Serialize object to dictionary format.
+        """Сериализует объект в формат словаря.
         
         Args:
-            obj: Object to serialize
+            obj (Any): Объект для сериализации.
             
         Returns:
-            Dictionary representation of object
+            Dict: Словарное представление объекта.
+            
+        Raises:
+            SaveLoadError: Если объект не может быть сериализован.
         """
         obj_type = type(obj)
         
@@ -96,13 +103,16 @@ class DataSerializer:
     
     @classmethod
     def deserialize_object(cls, data: Dict) -> Any:
-        """Deserialize dictionary to object.
+        """Десериализует словарь в объект.
         
         Args:
-            data: Dictionary containing object data
+            data (Dict): Словарь, содержащий данные объекта.
             
         Returns:
-            Deserialized object
+            Any: Десериализованный объект.
+            
+        Raises:
+            SaveLoadError: Если объект не может быть десериализован.
         """
         class_name = data.get('__class__')
         module_name = data.get('__module__')
@@ -127,17 +137,24 @@ class DataSerializer:
 
 
 class SaveLoadManager:
-    """Main class for save/load operations with support for multiple formats."""
+    """Основной класс для операций сохранения/загрузки с поддержкой нескольких форматов.
+    
+    Attributes:
+        default_file (Path): Путь к файлу по умолчанию для операций сохранения.
+        auto_backup (bool): Создавать ли резервную копию перед перезаписью файлов.
+        compression (bool): Использовать ли сжатие gzip для файлов.
+        _lock (threading.Lock): Блокировка для потокобезопасности.
+    """
     
     def __init__(self, default_file: str = "game_data.json", 
                  auto_backup: bool = True,
                  compression: bool = False):
-        """Initialize SaveLoadManager.
+        """Инициализирует SaveLoadManager.
         
         Args:
-            default_file: Default filename for save operations
-            auto_backup: Create backup before overwriting files
-            compression: Use gzip compression for files
+            default_file (str, optional): Имя файла по умолчанию для операций сохранения. По умолчанию "game_data.json".
+            auto_backup (bool, optional): Создавать ли резервную копию перед перезаписью файлов. По умолчанию True.
+            compression (bool, optional): Использовать ли сжатие gzip для файлов. По умолчанию False.
         """
         self.default_file = Path(default_file)
         self.auto_backup = auto_backup
@@ -148,13 +165,13 @@ class SaveLoadManager:
         self.default_file.parent.mkdir(parents=True, exist_ok=True)
     
     def _get_format_from_extension(self, filepath: Path) -> str:
-        """Determine file format from extension.
+        """Определяет формат файла по расширению.
         
         Args:
-            filepath: Path to file
+            filepath (Path): Путь к файлу.
             
         Returns:
-            Format string ('json', 'pickle', 'text', 'binary')
+            str: Строка формата ('json', 'pickle', 'text', 'binary').
         """
         ext = filepath.suffix.lower()
         
@@ -171,13 +188,13 @@ class SaveLoadManager:
             return 'json'
     
     def _create_backup(self, filepath: Path) -> Optional[Path]:
-        """Create backup of existing file.
+        """Создает резервную копию существующего файла.
         
         Args:
-            filepath: Path to file to backup
+            filepath (Path): Путь к файлу для резервного копирования.
             
         Returns:
-            Path to backup file or None if no backup created
+            Optional[Path]: Путь к файлу резервной копии или None, если копия не создана.
         """
         if not filepath.exists():
             return None
@@ -194,11 +211,11 @@ class SaveLoadManager:
             return None
     
     def _save_json(self, data: Any, filepath: Path) -> None:
-        """Save data in JSON format.
+        """Сохраняет данные в формате JSON.
         
         Args:
-            data: Data to save
-            filepath: Path to save file
+            data (Any): Данные для сохранения.
+            filepath (Path): Путь к файлу для сохранения.
         """
         def json_serializer(obj):
             """Custom JSON serializer for complex objects."""
@@ -221,13 +238,13 @@ class SaveLoadManager:
                 f.write(json_data)
     
     def _load_json(self, filepath: Path) -> Any:
-        """Load data from JSON format.
+        """Загружает данные из формата JSON.
         
         Args:
-            filepath: Path to load file
+            filepath (Path): Путь к файлу для загрузки.
             
         Returns:
-            Loaded data
+            Any: Загруженные данные.
         """
         def json_deserializer(data):
             """Custom JSON deserializer for complex objects."""
@@ -272,11 +289,11 @@ class SaveLoadManager:
         return deserialize_recursive(data)
     
     def _save_pickle(self, data: Any, filepath: Path) -> None:
-        """Save data in Pickle format.
+        """Сохраняет данные в формате Pickle.
         
         Args:
-            data: Data to save
-            filepath: Path to save file
+            data (Any): Данные для сохранения.
+            filepath (Path): Путь к файлу для сохранения.
         """
         if self.compression:
             with gzip.open(filepath.with_suffix(filepath.suffix + '.gz'), 'wb') as f:
@@ -286,13 +303,13 @@ class SaveLoadManager:
                 pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
     
     def _load_pickle(self, filepath: Path) -> Any:
-        """Load data from Pickle format.
+        """Загружает данные из формата Pickle.
         
         Args:
-            filepath: Path to load file
+            filepath (Path): Путь к файлу для загрузки.
             
         Returns:
-            Loaded data
+            Any: Загруженные данные.
         """
         # Check for compressed file
         compressed_path = filepath.with_suffix(filepath.suffix + '.gz')
@@ -307,11 +324,11 @@ class SaveLoadManager:
                 return pickle.load(f)
     
     def _save_text(self, data: Any, filepath: Path) -> None:
-        """Save data as plain text.
+        """Сохраняет данные как обычный текст.
         
         Args:
-            data: Data to save (will be converted to string)
-            filepath: Path to save file
+            data (Any): Данные для сохранения (будут преобразованы в строку).
+            filepath (Path): Путь к файлу для сохранения.
         """
         text_data = str(data)
         
@@ -323,13 +340,13 @@ class SaveLoadManager:
                 f.write(text_data)
     
     def _load_text(self, filepath: Path) -> str:
-        """Load data from text file.
+        """Загружает данные из текстового файла.
         
         Args:
-            filepath: Path to load file
+            filepath (Path): Путь к файлу для загрузки.
             
         Returns:
-            Text content as string
+            str: Текстовое содержимое в виде строки.
         """
         # Check for compressed file
         compressed_path = filepath.with_suffix(filepath.suffix + '.gz')
@@ -344,11 +361,14 @@ class SaveLoadManager:
                 return f.read()
     
     def _save_binary(self, data: bytes, filepath: Path) -> None:
-        """Save binary data.
+        """Сохраняет бинарные данные.
         
         Args:
-            data: Binary data to save
-            filepath: Path to save file
+            data (bytes): Бинарные данные для сохранения.
+            filepath (Path): Путь к файлу для сохранения.
+            
+        Raises:
+            SaveLoadError: Если данные не являются байтами.
         """
         if not isinstance(data, bytes):
             raise SaveLoadError("Binary format requires bytes data")
@@ -361,13 +381,13 @@ class SaveLoadManager:
                 f.write(data)
     
     def _load_binary(self, filepath: Path) -> bytes:
-        """Load binary data.
+        """Загружает бинарные данные.
         
         Args:
-            filepath: Path to load file
+            filepath (Path): Путь к файлу для загрузки.
             
         Returns:
-            Binary data as bytes
+            bytes: Бинарные данные в виде байтов.
         """
         # Check for compressed file
         compressed_path = filepath.with_suffix(filepath.suffix + '.gz')
@@ -383,24 +403,27 @@ class SaveLoadManager:
     
     def save(self, data: Any, filename: Optional[str] = None, 
              format_type: Optional[str] = None) -> bool:
-        """Save data to file with automatic format detection.
+        """Сохраняет данные в файл с автоматическим определением формата.
         
         Args:
-            data: Data to save (lists, dicts, numbers, strings, objects)
-            filename: Optional filename (uses default if not provided)
-            format_type: Force specific format ('json', 'pickle', 'text', 'binary')
+            data (Any): Данные для сохранения (списки, словари, числа, строки, объекты).
+            filename (Optional[str], optional): Имя файла (используется значение по умолчанию, если не указано).
+            format_type (Optional[str], optional): Принудительный формат ('json', 'pickle', 'text', 'binary').
             
         Returns:
-            True if save successful, False otherwise
+            bool: True, если сохранение успешно, False в противном случае.
+            
+        Raises:
+            SaveLoadError: Если операция сохранения не удалась.
             
         Example:
-            # Save dictionary as JSON
+            # Сохранить словарь как JSON
             manager.save({'score': 100, 'level': 5})
             
-            # Save custom object as pickle
+            # Сохранить пользовательский объект как pickle
             manager.save(player_object, 'player.pkl')
             
-            # Save text with specific format
+            # Сохранить текст с указанным форматом
             manager.save("Game settings", 'config.txt', 'text')
         """
         with self._lock:
@@ -439,24 +462,27 @@ class SaveLoadManager:
     def load(self, filename: Optional[str] = None, 
              format_type: Optional[str] = None,
              default_value: Any = None) -> Any:
-        """Load data from file with automatic format detection.
+        """Загружает данные из файла с автоматическим определением формата.
         
         Args:
-            filename: Optional filename (uses default if not provided)
-            format_type: Force specific format ('json', 'pickle', 'text', 'binary')
-            default_value: Value to return if file doesn't exist
+            filename (Optional[str], optional): Имя файла (используется значение по умолчанию, если не указано).
+            format_type (Optional[str], optional): Принудительный формат ('json', 'pickle', 'text', 'binary').
+            default_value (Any, optional): Значение для возврата, если файл не существует.
             
         Returns:
-            Loaded data or default_value if file not found
+            Any: Загруженные данные или default_value, если файл не найден.
+            
+        Raises:
+            SaveLoadError: Если операция загрузки не удалась и default_value не указан.
             
         Example:
-            # Load default file
+            # Загрузить файл по умолчанию
             data = manager.load()
             
-            # Load specific file
+            # Загрузить конкретный файл
             player = manager.load('player.pkl')
             
-            # Load with default value
+            # Загрузить со значением по умолчанию
             settings = manager.load('settings.json', default_value={})
         """
         with self._lock:
@@ -503,13 +529,13 @@ class SaveLoadManager:
                 raise SaveLoadError(f"Load operation failed: {e}")
     
     def exists(self, filename: Optional[str] = None) -> bool:
-        """Check if save file exists.
+        """Проверяет, существует ли файл сохранения.
         
         Args:
-            filename: Optional filename (uses default if not provided)
+            filename (Optional[str], optional): Имя файла (используется значение по умолчанию, если не указано).
             
         Returns:
-            True if file exists, False otherwise
+            bool: True, если файл существует, False в противном случае.
         """
         filepath = Path(filename) if filename else self.default_file
         compressed_path = filepath.with_suffix(filepath.suffix + '.gz')
@@ -517,14 +543,14 @@ class SaveLoadManager:
     
     def delete(self, filename: Optional[str] = None, 
                include_backups: bool = False) -> bool:
-        """Delete save file.
+        """Удаляет файл сохранения.
         
         Args:
-            filename: Optional filename (uses default if not provided)
-            include_backups: Also delete backup files
+            filename (Optional[str], optional): Имя файла (используется значение по умолчанию, если не указано).
+            include_backups (bool, optional): Также удалить файлы резервных копий. По умолчанию False.
             
         Returns:
-            True if deletion successful, False otherwise
+            bool: True, если удаление успешно, False в противном случае.
         """
         with self._lock:
             try:
@@ -561,13 +587,13 @@ class SaveLoadManager:
                 return False
     
     def list_backups(self, filename: Optional[str] = None) -> List[Path]:
-        """List all backup files for a given file.
+        """Выводит список всех файлов резервных копий для указанного файла.
         
         Args:
-            filename: Optional filename (uses default if not provided)
+            filename (Optional[str], optional): Имя файла (используется значение по умолчанию, если не указано).
             
         Returns:
-            List of backup file paths
+            List[Path]: Список путей к файлам резервных копий.
         """
         filepath = Path(filename) if filename else self.default_file
         backup_pattern = f"{filepath.stem}.backup_*{filepath.suffix}"
@@ -575,12 +601,18 @@ class SaveLoadManager:
 
 
 class PlayerPrefs:
-    """
-    A singleton class for managing player preferences, such as game settings and save data.
-    It allows you to store and retrieve various data types, including integers, floats, strings, and booleans.
+    """Одиночный класс для управления настройками игрока, такими как настройки игры и данные сохранения.
     
-    You can get the instance by calling PlayerPrefs() or use the class methods directly, 
-    e.g. PlayerPrefs.get_int("score").
+    Позволяет хранить и получать различные типы данных, включая целые числа, числа с плавающей точкой,
+    строки и булевы значения.
+    
+    Можно получить экземпляр, вызвав PlayerPrefs(), или использовать методы класса напрямую,
+    например PlayerPrefs.get_int("score").
+    
+    Attributes:
+        _instance (PlayerPrefs | None): Единственный экземпляр класса.
+        _initialized (bool): Флаг инициализации.
+        _manager (SaveLoadManager): Менеджер сохранения/загрузки.
     """
     _instance = None
     _initialized = False
@@ -591,6 +623,13 @@ class PlayerPrefs:
         return cls._instance
 
     def __init__(self, filename: str = "player_prefs.json", auto_backup: bool = False, compression: bool = False):
+        """Инициализирует PlayerPrefs.
+        
+        Args:
+            filename (str, optional): Имя файла для настроек. По умолчанию "player_prefs.json".
+            auto_backup (bool, optional): Создавать ли резервные копии автоматически. По умолчанию False.
+            compression (bool, optional): Использовать ли сжатие. По умолчанию False.
+        """
         if self._initialized:
             return
         self._manager = SaveLoadManager(filename, auto_backup=auto_backup, compression=compression)
@@ -598,10 +637,20 @@ class PlayerPrefs:
 
     @classmethod
     def _get_instance(cls):
+        """Получает единственный экземпляр класса.
+        
+        Returns:
+            PlayerPrefs: Экземпляр PlayerPrefs.
+        """
         return cls()
 
     @classmethod
     def _load_data(cls) -> Dict[str, Any]:
+        """Загружает данные настроек.
+        
+        Returns:
+            Dict[str, Any]: Словарь с данными настроек.
+        """
         data = cls._get_instance()._manager.load(default_value={})
         if isinstance(data, dict):
             return dict(data)
@@ -609,21 +658,50 @@ class PlayerPrefs:
 
     @classmethod
     def _save_data(cls, data: Dict[str, Any]) -> None:
+        """Сохраняет данные настроек.
+        
+        Args:
+            data (Dict[str, Any]): Данные для сохранения.
+        """
         cls._get_instance()._manager.save(data)
 
     @classmethod
     def _get_value(cls, key: str, default: Any) -> Any:
+        """Получает значение по ключу.
+        
+        Args:
+            key (str): Ключ для получения значения.
+            default (Any): Значение по умолчанию.
+            
+        Returns:
+            Any: Значение по ключу или значение по умолчанию.
+        """
         data = cls._load_data()
         return data.get(key, default)
 
     @classmethod
     def _set_value(cls, key: str, value: Any) -> None:
+        """Устанавливает значение по ключу.
+        
+        Args:
+            key (str): Ключ для установки значения.
+            value (Any): Значение для установки.
+        """
         data = cls._load_data()
         data[key] = value
         cls._save_data(data)
 
     @classmethod
     def get_float(cls, key: str, default: float = 0.0) -> float:
+        """Получает значение с плавающей точкой по ключу.
+        
+        Args:
+            key (str): Ключ для получения значения.
+            default (float, optional): Значение по умолчанию. По умолчанию 0.0.
+            
+        Returns:
+            float: Значение с плавающей точкой.
+        """
         value = cls._get_value(key, default)
         try:
             return float(value)
@@ -632,6 +710,15 @@ class PlayerPrefs:
 
     @classmethod
     def set_float(cls, key: str, value: float) -> None:
+        """Устанавливает значение с плавающей точкой по ключу.
+        
+        Args:
+            key (str): Ключ для установки значения.
+            value (float): Значение для установки.
+            
+        Raises:
+            SaveLoadError: Если значение не является числом.
+        """
         try:
             numeric = float(value)
         except (TypeError, ValueError):
@@ -640,6 +727,15 @@ class PlayerPrefs:
 
     @classmethod
     def get_int(cls, key: str, default: int = 0) -> int:
+        """Получает целочисленное значение по ключу.
+        
+        Args:
+            key (str): Ключ для получения значения.
+            default (int, optional): Значение по умолчанию. По умолчанию 0.
+            
+        Returns:
+            int: Целочисленное значение.
+        """
         value = cls._get_value(key, default)
         try:
             return int(value)
@@ -648,6 +744,15 @@ class PlayerPrefs:
 
     @classmethod
     def set_int(cls, key: str, value: int) -> None:
+        """Устанавливает целочисленное значение по ключу.
+        
+        Args:
+            key (str): Ключ для установки значения.
+            value (int): Значение для установки.
+            
+        Raises:
+            SaveLoadError: Если значение не является целым числом.
+        """
         try:
             integer = int(value)
         except (TypeError, ValueError):
@@ -656,6 +761,15 @@ class PlayerPrefs:
 
     @classmethod
     def get_string(cls, key: str, default: str = "") -> str:
+        """Получает строковое значение по ключу.
+        
+        Args:
+            key (str): Ключ для получения значения.
+            default (str, optional): Значение по умолчанию. По умолчанию "".
+            
+        Returns:
+            str: Строковое значение.
+        """
         value = cls._get_value(key, default)
         if value is None:
             return default
@@ -663,12 +777,30 @@ class PlayerPrefs:
 
     @classmethod
     def set_string(cls, key: str, value: str) -> None:
+        """Устанавливает строковое значение по ключу.
+        
+        Args:
+            key (str): Ключ для установки значения.
+            value (str): Значение для установки.
+            
+        Raises:
+            SaveLoadError: Если значение равно None.
+        """
         if value is None:
             raise SaveLoadError(f"Value for {key} cannot be None")
         cls._set_value(key, str(value))
 
     @classmethod
     def get_vector2(cls, key: str, default: Tuple[int, int] = (0, 0)) -> Tuple[int, int]:
+        """Получает 2D координату (вектор) по ключу.
+        
+        Args:
+            key (str): Ключ для получения значения.
+            default (Tuple[int, int], optional): Значение по умолчанию. По умолчанию (0, 0).
+            
+        Returns:
+            Tuple[int, int]: 2D координата (x, y).
+        """
         value = cls._get_value(key, default)
         if isinstance(value, (list, tuple)) and len(value) == 2:
             try:
@@ -681,6 +813,15 @@ class PlayerPrefs:
 
     @classmethod
     def set_vector2(cls, key: str, value: Tuple[int, int]) -> None:
+        """Устанавливает 2D координату (вектор) по ключу.
+        
+        Args:
+            key (str): Ключ для установки значения.
+            value (Tuple[int, int]): 2D координата для установки.
+            
+        Raises:
+            SaveLoadError: Если значение не является 2D координатой.
+        """
         if not isinstance(value, (list, tuple)) or len(value) != 2:
             raise SaveLoadError(f"Value for {key} must be a 2D coordinate")
         try:
@@ -692,6 +833,11 @@ class PlayerPrefs:
 
     @classmethod
     def delete_key(cls, key: str) -> None:
+        """Удаляет ключ из настроек.
+        
+        Args:
+            key (str): Ключ для удаления.
+        """
         data = cls._load_data()
         if key in data:
             del data[key]
@@ -699,6 +845,7 @@ class PlayerPrefs:
 
     @classmethod
     def clear(cls) -> None:
+        """Очищает все настройки."""
         cls._save_data({})
 
 
@@ -708,15 +855,15 @@ save_manager = SaveLoadManager()
 # Convenience functions
 def save(data: Any, filename: Optional[str] = None, 
          format_type: Optional[str] = None) -> bool:
-    """Convenience function for saving data.
+    """Удобная функция для сохранения данных.
     
     Args:
-        data: Data to save
-        filename: Optional filename
-        format_type: Optional format type
+        data (Any): Данные для сохранения.
+        filename (Optional[str], optional): Имя файла.
+        format_type (Optional[str], optional): Тип формата.
         
     Returns:
-        True if successful, False otherwise
+        bool: True, если успешно, False в противном случае.
     """
     return save_manager.save(data, filename, format_type)
 
@@ -724,47 +871,47 @@ def save(data: Any, filename: Optional[str] = None,
 def load(filename: Optional[str] = None, 
          format_type: Optional[str] = None,
          default_value: Any = None) -> Any:
-    """Convenience function for loading data.
+    """Удобная функция для загрузки данных.
     
     Args:
-        filename: Optional filename
-        format_type: Optional format type
-        default_value: Default value if file not found
+        filename (Optional[str], optional): Имя файла.
+        format_type (Optional[str], optional): Тип формата.
+        default_value (Any, optional): Значение по умолчанию, если файл не найден.
         
     Returns:
-        Loaded data or default value
+        Any: Загруженные данные или значение по умолчанию.
     """
     return save_manager.load(filename, format_type, default_value)
 
 
 def exists(filename: Optional[str] = None) -> bool:
-    """Convenience function to check if file exists.
+    """Удобная функция для проверки существования файла.
     
     Args:
-        filename: Optional filename
+        filename (Optional[str], optional): Имя файла.
         
     Returns:
-        True if file exists, False otherwise
+        bool: True, если файл существует, False в противном случае.
     """
     return save_manager.exists(filename)
 
 
 def delete(filename: Optional[str] = None, include_backups: bool = False) -> bool:
-    """Convenience function to delete file.
+    """Удобная функция для удаления файла.
     
     Args:
-        filename: Optional filename
-        include_backups: Also delete backups
+        filename (Optional[str], optional): Имя файла.
+        include_backups (bool, optional): Также удалить резервные копии.
         
     Returns:
-        True if successful, False otherwise
+        bool: True, если успешно, False в противном случае.
     """
     return save_manager.delete(filename, include_backups)
 
 
 # Register common SpritePro classes for serialization
 def register_sprite_classes():
-    """Register SpritePro classes for automatic serialization."""
+    """Регистрирует классы SpritePro для автоматической сериализации."""
     try:
         import sys
         from pathlib import Path

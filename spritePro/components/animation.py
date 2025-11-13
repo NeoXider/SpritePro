@@ -22,6 +22,21 @@ class Animation:
     - Обратные вызовы
     - Циклические и однократные анимации
     - Параллельные анимации
+
+    Attributes:
+        owner: Спрайт-владелец анимации.
+        frames (List[pygame.Surface]): Список кадров анимации.
+        frame_duration (int): Длительность кадра в миллисекундах.
+        loop (bool): Зациклена ли анимация.
+        on_complete (Optional[Callable]): Функция, вызываемая при завершении анимации.
+        on_frame (Optional[Callable]): Функция, вызываемая при смене кадра.
+        current_frame (int): Индекс текущего кадра.
+        is_playing (bool): Воспроизводится ли анимация.
+        is_paused (bool): Находится ли анимация на паузе.
+        tween_manager (TweenManager): Менеджер плавных переходов.
+        parallel_animations (List[Animation]): Список параллельных анимаций.
+        states (Dict[str, List[pygame.Surface]]): Словарь состояний анимации.
+        current_state (Optional[str]): Текущее состояние анимации.
     """
 
     def __init__(
@@ -138,19 +153,19 @@ class Animation:
         delay: float = 0,
         on_update: Optional[Callable[[float], None]] = None,
     ) -> None:
-        """Add a smooth transition (tween).
+        """Добавляет плавный переход (tween).
 
         Args:
-            name: Name of the transition
-            start_value: Initial value
-            end_value: Target value
-            duration: Duration in seconds
-            easing: Type of easing (from EasingType)
-            on_complete: Callback function called on completion
-            loop: Whether to loop the transition
-            yoyo: Whether to reverse the transition
-            delay: Delay before starting in seconds
-            on_update: Callback function called on each update
+            name (str): Имя перехода.
+            start_value (float): Начальное значение.
+            end_value (float): Конечное значение.
+            duration (float): Длительность в секундах.
+            easing (EasingType, optional): Тип плавности (из EasingType). По умолчанию EasingType.LINEAR.
+            on_complete (Optional[Callable], optional): Функция обратного вызова при завершении. По умолчанию None.
+            loop (bool, optional): Зациклить ли переход. По умолчанию False.
+            yoyo (bool, optional): Обращать ли переход (туда-обратно). По умолчанию False.
+            delay (float, optional): Задержка перед началом в секундах. По умолчанию 0.
+            on_update (Optional[Callable[[float], None]], optional): Функция обратного вызова при каждом обновлении. По умолчанию None.
         """
         self.tween_manager.add_tween(
             name,
@@ -166,14 +181,14 @@ class Animation:
         )
 
     def update_tween(self, name: str, dt: Optional[float] = None) -> Optional[float]:
-        """Update a specific transition.
+        """Обновляет конкретный переход.
 
         Args:
-            name: Name of the transition
-            dt: Time since last update. If not specified, uses spritePro.dt
+            name (str): Имя перехода.
+            dt (Optional[float], optional): Время с последнего обновления. Если не указано, используется spritePro.dt.
 
         Returns:
-            Current value of the transition or None if completed
+            Optional[float]: Текущее значение перехода или None, если завершен.
         """
         tween = self.tween_manager.get_tween(name)
         if tween:
@@ -181,18 +196,18 @@ class Animation:
         return None
 
     def add_parallel_animation(self, animation: "Animation") -> None:
-        """Add a parallel animation.
+        """Добавляет параллельную анимацию.
 
         Args:
-            animation: Animation to run in parallel
+            animation (Animation): Анимация для запуска параллельно.
         """
         self.parallel_animations.append(animation)
 
     def update(self, dt: Optional[float] = None) -> None:
-        """Update the animation.
+        """Обновляет анимацию.
 
         Args:
-            dt: Time since last update. If not specified, uses spritePro.dt
+            dt (Optional[float], optional): Время с последнего обновления. Если не указано, используется spritePro.dt.
         """
         if not self.is_playing or self.is_paused:
             return
@@ -222,29 +237,29 @@ class Animation:
         self.tween_manager.update(dt if dt is not None else spritePro.dt)
 
     def get_current_frame(self) -> Optional[pygame.Surface]:
-        """Get the current animation frame.
+        """Получает текущий кадр анимации.
 
         Returns:
-            Current frame or None if no frames exist
+            Optional[pygame.Surface]: Текущий кадр или None, если кадров нет.
         """
         if not self.frames:
             return None
         return self.frames[self.current_frame]
 
     def set_frame_duration(self, duration: float) -> None:
-        """Set the duration of each frame.
+        """Устанавливает длительность каждого кадра.
 
         Args:
-            duration: Duration in seconds
+            duration (float): Длительность в секундах.
         """
         # Конвертируем секунды в миллисекунды для внутреннего использования
         self.frame_duration = int(duration * 1000)
 
     def set_loop(self, loop: bool) -> None:
-        """Set whether the animation should loop.
+        """Устанавливает, должна ли анимация зацикливаться.
 
         Args:
-            loop: Whether to loop the animation
+            loop (bool): Зациклить ли анимацию.
         """
         self.loop = loop
 

@@ -1,8 +1,7 @@
-"""
-Color Effects Module - SpritePro
+"""Модуль цветовых эффектов для SpritePro.
 
-This module provides various color effects and utilities for creating dynamic,
-animated colors in games. All effects are time-based and return RGB color tuples.
+Этот модуль предоставляет различные цветовые эффекты и утилиты для создания динамических,
+анимированных цветов в играх. Все эффекты основаны на времени и возвращают кортежи RGB цветов.
 """
 
 import math
@@ -12,7 +11,11 @@ import colorsys
 
 
 class ColorEffects:
-    """Static class containing various color effect methods."""
+    """Статический класс, содержащий различные методы цветовых эффектов.
+
+    Предоставляет набор статических методов для создания анимированных цветовых эффектов,
+    таких как пульсация, радуга, дыхание, мерцание и другие.
+    """
 
     @staticmethod
     def pulse(
@@ -22,17 +25,17 @@ class ColorEffects:
         intensity: float = 1.0,
         offset: float = 0.0,
     ) -> Tuple[int, int, int]:
-        """Create a pulsing color effect between two colors.
+        """Создает эффект пульсации цвета между двумя цветами.
 
         Args:
-            speed: Pulse speed multiplier (higher = faster)
-            base_color: Starting color RGB (default: black)
-            target_color: Target color RGB (default: white)
-            intensity: Pulse intensity 0.0-1.0 (default: 1.0)
-            offset: Time offset for multiple synchronized pulses
+            speed (float, optional): Множитель скорости пульсации (больше = быстрее). По умолчанию 1.0.
+            base_color (Tuple[int, int, int], optional): Начальный цвет RGB. По умолчанию (0, 0, 0).
+            target_color (Tuple[int, int, int], optional): Целевой цвет RGB. По умолчанию (255, 255, 255).
+            intensity (float, optional): Интенсивность пульсации 0.0-1.0. По умолчанию 1.0.
+            offset (float, optional): Смещение времени для множественных синхронизированных пульсаций. По умолчанию 0.0.
 
         Returns:
-            RGB color tuple
+            Tuple[int, int, int]: Кортеж RGB цвета.
         """
         t = time.time() * speed + offset
         pulse_value = (math.sin(t) + 1) / 2  # Normalize to 0-1
@@ -52,16 +55,16 @@ class ColorEffects:
         brightness: float = 1.0,
         offset: float = 0.0,
     ) -> Tuple[int, int, int]:
-        """Create a rainbow color effect cycling through the color spectrum.
+        """Создает эффект радуги, циклически проходящий через цветовой спектр.
 
         Args:
-            speed: Cycle speed multiplier (higher = faster)
-            saturation: Color saturation 0.0-1.0 (default: 1.0)
-            brightness: Color brightness 0.0-1.0 (default: 1.0)
-            offset: Time offset for multiple synchronized rainbows
+            speed (float, optional): Множитель скорости цикла (больше = быстрее). По умолчанию 1.0.
+            saturation (float, optional): Насыщенность цвета 0.0-1.0. По умолчанию 1.0.
+            brightness (float, optional): Яркость цвета 0.0-1.0. По умолчанию 1.0.
+            offset (float, optional): Смещение времени для множественных синхронизированных радуг. По умолчанию 0.0.
 
         Returns:
-            RGB color tuple
+            Tuple[int, int, int]: Кортеж RGB цвета.
         """
         t = time.time() * speed + offset
         hue = (t % (2 * math.pi)) / (2 * math.pi)  # Normalize to 0-1
@@ -77,16 +80,16 @@ class ColorEffects:
         intensity: float = 0.7,
         offset: float = 0.0,
     ) -> Tuple[int, int, int]:
-        """Create a breathing effect by varying brightness.
+        """Создает эффект дыхания путем изменения яркости.
 
         Args:
-            speed: Breathing speed multiplier
-            base_color: Base color RGB
-            intensity: Breathing intensity 0.0-1.0
-            offset: Time offset
+            speed (float, optional): Множитель скорости дыхания. По умолчанию 0.5.
+            base_color (Tuple[int, int, int], optional): Базовый цвет RGB. По умолчанию (100, 100, 100).
+            intensity (float, optional): Интенсивность дыхания 0.0-1.0. По умолчанию 0.7.
+            offset (float, optional): Смещение времени. По умолчанию 0.0.
 
         Returns:
-            RGB color tuple
+            Tuple[int, int, int]: Кортеж RGB цвета.
         """
         t = time.time() * speed + offset
         breath_value = (math.sin(t) + 1) / 2  # Normalize to 0-1
@@ -102,15 +105,15 @@ class ColorEffects:
     def wave(
         speed: float = 1.0, colors: list = None, offset: float = 0.0
     ) -> Tuple[int, int, int]:
-        """Create a wave effect cycling through multiple colors.
+        """Создает волновой эффект, циклически проходящий через несколько цветов.
 
         Args:
-            speed: Wave speed multiplier
-            colors: List of RGB color tuples to cycle through
-            offset: Time offset
+            speed (float, optional): Множитель скорости волны. По умолчанию 1.0.
+            colors (list, optional): Список кортежей RGB цветов для циклического перехода. По умолчанию None.
+            offset (float, optional): Смещение времени. По умолчанию 0.0.
 
         Returns:
-            RGB color tuple
+            Tuple[int, int, int]: Кортеж RGB цвета.
         """
         if colors is None:
             colors = [
@@ -154,17 +157,17 @@ class ColorEffects:
         intensity: float = 0.3,
         randomness: float = 0.5,
     ) -> Tuple[int, int, int]:
-        """Create a flickering effect like a candle or broken light.
+        """Создает эффект мерцания, как у свечи или сломанного света.
 
         Args:
-            speed: Flicker speed multiplier
-            base_color: Base color RGB
-            flicker_color: Flicker accent color RGB
-            intensity: Flicker intensity 0.0-1.0
-            randomness: Randomness factor 0.0-1.0
+            speed (float, optional): Множитель скорости мерцания. По умолчанию 10.0.
+            base_color (Tuple[int, int, int], optional): Базовый цвет RGB. По умолчанию (255, 255, 255).
+            flicker_color (Tuple[int, int, int], optional): Акцентный цвет мерцания RGB. По умолчанию (255, 255, 0).
+            intensity (float, optional): Интенсивность мерцания 0.0-1.0. По умолчанию 0.3.
+            randomness (float, optional): Фактор случайности 0.0-1.0. По умолчанию 0.5.
 
         Returns:
-            RGB color tuple
+            Tuple[int, int, int]: Кортеж RGB цвета.
         """
         t = time.time() * speed
 
@@ -190,17 +193,17 @@ class ColorEffects:
         duty_cycle: float = 0.5,
         offset: float = 0.0,
     ) -> Tuple[int, int, int]:
-        """Create a strobe effect alternating between two colors.
+        """Создает стробоскопический эффект, чередующийся между двумя цветами.
 
         Args:
-            speed: Strobe speed multiplier
-            on_color: Color when "on" RGB
-            off_color: Color when "off" RGB
-            duty_cycle: Fraction of time spent "on" (0.0-1.0)
-            offset: Time offset
+            speed (float, optional): Множитель скорости стробоскопа. По умолчанию 5.0.
+            on_color (Tuple[int, int, int], optional): Цвет когда "включен" RGB. По умолчанию (255, 255, 255).
+            off_color (Tuple[int, int, int], optional): Цвет когда "выключен" RGB. По умолчанию (0, 0, 0).
+            duty_cycle (float, optional): Доля времени в состоянии "включен" (0.0-1.0). По умолчанию 0.5.
+            offset (float, optional): Смещение времени. По умолчанию 0.0.
 
         Returns:
-            RGB color tuple
+            Tuple[int, int, int]: Кортеж RGB цвета.
         """
         t = time.time() * speed + offset
         cycle_position = (t % (2 * math.pi)) / (2 * math.pi)
@@ -215,17 +218,17 @@ class ColorEffects:
         max_alpha: float = 1.0,
         offset: float = 0.0,
     ) -> Tuple[int, int, int, int]:
-        """Create a fade in/out effect by varying alpha.
+        """Создает эффект плавного появления/исчезновения путем изменения альфа-канала.
 
         Args:
-            speed: Fade speed multiplier
-            color: Base color RGB
-            min_alpha: Minimum alpha value 0.0-1.0
-            max_alpha: Maximum alpha value 0.0-1.0
-            offset: Time offset
+            speed (float, optional): Множитель скорости затухания. По умолчанию 1.0.
+            color (Tuple[int, int, int], optional): Базовый цвет RGB. По умолчанию (255, 255, 255).
+            min_alpha (float, optional): Минимальное значение альфа 0.0-1.0. По умолчанию 0.0.
+            max_alpha (float, optional): Максимальное значение альфа 0.0-1.0. По умолчанию 1.0.
+            offset (float, optional): Смещение времени. По умолчанию 0.0.
 
         Returns:
-            RGBA color tuple
+            Tuple[int, int, int, int]: Кортеж RGBA цвета.
         """
         t = time.time() * speed + offset
         alpha_value = (math.sin(t) + 1) / 2  # Normalize to 0-1
@@ -241,17 +244,17 @@ class ColorEffects:
         cold_color: Tuple[int, int, int] = (0, 100, 255),
         hot_color: Tuple[int, int, int] = (255, 50, 0),
     ) -> Tuple[int, int, int]:
-        """Create a temperature-based color effect.
+        """Создает цветовой эффект на основе температуры.
 
         Args:
-            value: Current temperature value
-            min_temp: Minimum temperature
-            max_temp: Maximum temperature
-            cold_color: Color at minimum temperature RGB
-            hot_color: Color at maximum temperature RGB
+            value (float): Текущее значение температуры.
+            min_temp (float, optional): Минимальная температура. По умолчанию 0.0.
+            max_temp (float, optional): Максимальная температура. По умолчанию 100.0.
+            cold_color (Tuple[int, int, int], optional): Цвет при минимальной температуре RGB. По умолчанию (0, 100, 255).
+            hot_color (Tuple[int, int, int], optional): Цвет при максимальной температуре RGB. По умолчанию (255, 50, 0).
 
         Returns:
-            RGB color tuple
+            Tuple[int, int, int]: Кортеж RGB цвета.
         """
         # Normalize value to 0-1 range
         normalized = max(0, min(1, (value - min_temp) / (max_temp - min_temp)))
@@ -273,19 +276,19 @@ class ColorEffects:
         warning_threshold: float = 0.5,
         critical_threshold: float = 0.25,
     ) -> Tuple[int, int, int]:
-        """Create a health-based color effect.
+        """Создает цветовой эффект на основе здоровья.
 
         Args:
-            health: Current health value
-            max_health: Maximum health value
-            healthy_color: Color at full health RGB
-            warning_color: Color at warning threshold RGB
-            critical_color: Color at critical threshold RGB
-            warning_threshold: Health percentage for warning (0.0-1.0)
-            critical_threshold: Health percentage for critical (0.0-1.0)
+            health (float): Текущее значение здоровья.
+            max_health (float, optional): Максимальное значение здоровья. По умолчанию 100.0.
+            healthy_color (Tuple[int, int, int], optional): Цвет при полном здоровье RGB. По умолчанию (0, 255, 0).
+            warning_color (Tuple[int, int, int], optional): Цвет при пороге предупреждения RGB. По умолчанию (255, 255, 0).
+            critical_color (Tuple[int, int, int], optional): Цвет при критическом пороге RGB. По умолчанию (255, 0, 0).
+            warning_threshold (float, optional): Процент здоровья для предупреждения (0.0-1.0). По умолчанию 0.5.
+            critical_threshold (float, optional): Процент здоровья для критического состояния (0.0-1.0). По умолчанию 0.25.
 
         Returns:
-            RGB color tuple
+            Tuple[int, int, int]: Кортеж RGB цвета.
         """
         health_percent = max(0, min(1, health / max_health))
 
@@ -312,47 +315,119 @@ class ColorEffects:
 
 # Convenience functions for easier access
 def pulse(speed: float = 1.0, **kwargs) -> Tuple[int, int, int]:
-    """Convenience function for pulse effect."""
+    """Удобная функция для эффекта пульсации.
+
+    Args:
+        speed (float, optional): Множитель скорости пульсации. По умолчанию 1.0.
+        **kwargs: Дополнительные аргументы, передаваемые в ColorEffects.pulse.
+
+    Returns:
+        Tuple[int, int, int]: Кортеж RGB цвета.
+    """
     return ColorEffects.pulse(speed, **kwargs)
 
 
 def rainbow(speed: float = 1.0, **kwargs) -> Tuple[int, int, int]:
-    """Convenience function for rainbow effect."""
+    """Удобная функция для эффекта радуги.
+
+    Args:
+        speed (float, optional): Множитель скорости цикла. По умолчанию 1.0.
+        **kwargs: Дополнительные аргументы, передаваемые в ColorEffects.rainbow.
+
+    Returns:
+        Tuple[int, int, int]: Кортеж RGB цвета.
+    """
     return ColorEffects.rainbow(speed, **kwargs)
 
 
 def breathing(speed: float = 0.5, **kwargs) -> Tuple[int, int, int]:
-    """Convenience function for breathing effect."""
+    """Удобная функция для эффекта дыхания.
+
+    Args:
+        speed (float, optional): Множитель скорости дыхания. По умолчанию 0.5.
+        **kwargs: Дополнительные аргументы, передаваемые в ColorEffects.breathing.
+
+    Returns:
+        Tuple[int, int, int]: Кортеж RGB цвета.
+    """
     return ColorEffects.breathing(speed, **kwargs)
 
 
 def wave(speed: float = 1.0, **kwargs) -> Tuple[int, int, int]:
-    """Convenience function for wave effect."""
+    """Удобная функция для волнового эффекта.
+
+    Args:
+        speed (float, optional): Множитель скорости волны. По умолчанию 1.0.
+        **kwargs: Дополнительные аргументы, передаваемые в ColorEffects.wave.
+
+    Returns:
+        Tuple[int, int, int]: Кортеж RGB цвета.
+    """
     return ColorEffects.wave(speed, **kwargs)
 
 
 def flicker(speed: float = 10.0, **kwargs) -> Tuple[int, int, int]:
-    """Convenience function for flicker effect."""
+    """Удобная функция для эффекта мерцания.
+
+    Args:
+        speed (float, optional): Множитель скорости мерцания. По умолчанию 10.0.
+        **kwargs: Дополнительные аргументы, передаваемые в ColorEffects.flicker.
+
+    Returns:
+        Tuple[int, int, int]: Кортеж RGB цвета.
+    """
     return ColorEffects.flicker(speed, **kwargs)
 
 
 def strobe(speed: float = 5.0, **kwargs) -> Tuple[int, int, int]:
-    """Convenience function for strobe effect."""
+    """Удобная функция для стробоскопического эффекта.
+
+    Args:
+        speed (float, optional): Множитель скорости стробоскопа. По умолчанию 5.0.
+        **kwargs: Дополнительные аргументы, передаваемые в ColorEffects.strobe.
+
+    Returns:
+        Tuple[int, int, int]: Кортеж RGB цвета.
+    """
     return ColorEffects.strobe(speed, **kwargs)
 
 
 def fade_in_out(speed: float = 1.0, **kwargs) -> Tuple[int, int, int, int]:
-    """Convenience function for fade in/out effect."""
+    """Удобная функция для эффекта плавного появления/исчезновения.
+
+    Args:
+        speed (float, optional): Множитель скорости затухания. По умолчанию 1.0.
+        **kwargs: Дополнительные аргументы, передаваемые в ColorEffects.fade_in_out.
+
+    Returns:
+        Tuple[int, int, int, int]: Кортеж RGBA цвета.
+    """
     return ColorEffects.fade_in_out(speed, **kwargs)
 
 
 def temperature(value: float, **kwargs) -> Tuple[int, int, int]:
-    """Convenience function for temperature effect."""
+    """Удобная функция для температурного эффекта.
+
+    Args:
+        value (float): Текущее значение температуры.
+        **kwargs: Дополнительные аргументы, передаваемые в ColorEffects.temperature.
+
+    Returns:
+        Tuple[int, int, int]: Кортеж RGB цвета.
+    """
     return ColorEffects.temperature(value, **kwargs)
 
 
 def health_bar(health: float, **kwargs) -> Tuple[int, int, int]:
-    """Convenience function for health bar effect."""
+    """Удобная функция для эффекта полосы здоровья.
+
+    Args:
+        health (float): Текущее значение здоровья.
+        **kwargs: Дополнительные аргументы, передаваемые в ColorEffects.health_bar.
+
+    Returns:
+        Tuple[int, int, int]: Кортеж RGB цвета.
+    """
     return ColorEffects.health_bar(health, **kwargs)
 
 
@@ -360,15 +435,15 @@ def health_bar(health: float, **kwargs) -> Tuple[int, int, int]:
 def lerp_color(
     color1: Tuple[int, int, int], color2: Tuple[int, int, int], factor: float
 ) -> Tuple[int, int, int]:
-    """Linear interpolation between two colors.
+    """Линейная интерполяция между двумя цветами.
 
     Args:
-        color1: Starting color RGB
-        color2: Ending color RGB
-        factor: Interpolation factor 0.0-1.0
+        color1 (Tuple[int, int, int]): Начальный цвет RGB.
+        color2 (Tuple[int, int, int]): Конечный цвет RGB.
+        factor (float): Фактор интерполяции 0.0-1.0.
 
     Returns:
-        Interpolated RGB color tuple
+        Tuple[int, int, int]: Интерполированный кортеж RGB цвета.
     """
     factor = max(0, min(1, factor))
     r = int(color1[0] + (color2[0] - color1[0]) * factor)
@@ -380,14 +455,14 @@ def lerp_color(
 def adjust_brightness(
     color: Tuple[int, int, int], factor: float
 ) -> Tuple[int, int, int]:
-    """Adjust color brightness by a factor.
+    """Изменяет яркость цвета на заданный множитель.
 
     Args:
-        color: RGB color tuple
-        factor: Brightness multiplier (1.0 = no change, >1.0 = brighter, <1.0 = darker)
+        color (Tuple[int, int, int]): Кортеж RGB цвета.
+        factor (float): Множитель яркости (1.0 = без изменений, >1.0 = ярче, <1.0 = темнее).
 
     Returns:
-        Adjusted RGB color tuple
+        Tuple[int, int, int]: Скорректированный кортеж RGB цвета.
     """
     r = int(max(0, min(255, color[0] * factor)))
     g = int(max(0, min(255, color[1] * factor)))
@@ -398,14 +473,14 @@ def adjust_brightness(
 def adjust_saturation(
     color: Tuple[int, int, int], factor: float
 ) -> Tuple[int, int, int]:
-    """Adjust color saturation by a factor.
+    """Изменяет насыщенность цвета на заданный множитель.
 
     Args:
-        color: RGB color tuple
-        factor: Saturation multiplier (1.0 = no change, 0.0 = grayscale, >1.0 = more saturated)
+        color (Tuple[int, int, int]): Кортеж RGB цвета.
+        factor (float): Множитель насыщенности (1.0 = без изменений, 0.0 = оттенки серого, >1.0 = более насыщенный).
 
     Returns:
-        Adjusted RGB color tuple
+        Tuple[int, int, int]: Скорректированный кортеж RGB цвета.
     """
     # Convert to HSV
     r, g, b = [c / 255.0 for c in color]
@@ -420,25 +495,25 @@ def adjust_saturation(
 
 
 def invert_color(color: Tuple[int, int, int]) -> Tuple[int, int, int]:
-    """Invert a color.
+    """Инвертирует цвет.
 
     Args:
-        color: RGB color tuple
+        color (Tuple[int, int, int]): Кортеж RGB цвета.
 
     Returns:
-        Inverted RGB color tuple
+        Tuple[int, int, int]: Инвертированный кортеж RGB цвета.
     """
     return (255 - color[0], 255 - color[1], 255 - color[2])
 
 
 def to_grayscale(color: Tuple[int, int, int]) -> Tuple[int, int, int]:
-    """Convert color to grayscale.
+    """Преобразует цвет в оттенки серого.
 
     Args:
-        color: RGB color tuple
+        color (Tuple[int, int, int]): Кортеж RGB цвета.
 
     Returns:
-        Grayscale RGB color tuple
+        Tuple[int, int, int]: Кортеж RGB цвета в оттенках серого.
     """
     # Use luminance formula for better grayscale conversion
     gray = int(0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2])

@@ -17,13 +17,18 @@ DeathCallback = Callable[["Sprite"], None]
 
 
 class HealthComponent:
-    """
-    Компонент для управления здоровьем спрайта.
+    """Компонент для управления здоровьем спрайта.
 
     Предоставляет функционал для отслеживания текущего и максимального здоровья,
     получения урона, лечения, а также вызывает пользовательские функции (колбэки)
     при различных событиях (изменение HP, получение урона, лечение, смерть).
     Поддерживает сравнение и изменение здоровья с использованием операторов.
+
+    Attributes:
+        max_health (float): Максимальное количество здоровья.
+        current_health (float): Текущее количество здоровья.
+        is_alive (bool): Жив ли спрайт (текущее здоровье > 0).
+        owner_sprite (Optional[Sprite]): Спрайт-владелец компонента.
     """
 
     def __init__(
@@ -38,30 +43,18 @@ class HealthComponent:
         on_heal: Optional[Union[HealCallback, List[HealCallback]]] = None,
         on_death: Optional[Union[DeathCallback, List[DeathCallback]]] = None,
     ):
-        """
-        Инициализация компонента здоровья.
+        """Инициализирует компонент здоровья.
 
-        Аргументы:
+        Args:
             max_health (float): Максимальное количество здоровья. Должно быть > 0.
-            current_health (Optional[float]): Текущее количество здоровья. Если None,
-                                              устанавливается равным max_health.
-            owner_sprite (Optional['Sprite']): Ссылка на объект спрайта, которому
-                                              принадлежит этот компонент. Используется
-                                              в колбэке смерти.
-            on_hp_change (Optional[Union[HpChangeCallback, List[HpChangeCallback]]]):
-                Функция или список функций, вызываемых при ЛЮБОМ изменении здоровья
-                (урон или лечение). Принимает (новое_текущее_hp, разница_hp).
-            on_damage (Optional[Union[DamageCallback, List[DamageCallback]]]):
-                Функция или список функций, вызываемых при получении урона.
-                Принимает (количество_урона).
-            on_heal (Optional[Union[HealCallback, List[HealCallback]]]):
-                Функция или список функций, вызываемых при лечении. Принимает
-                (количество_лечения).
-            on_death (Optional[Union[DeathCallback, List[DeathCallback]]]):
-                Функция или список функций, вызываемых при смерти спрайта
-                (когда текущее здоровье становится <= 0). Принимает (sprite_владелец).
+            current_health (Optional[float], optional): Текущее количество здоровья. Если None, устанавливается равным max_health.
+            owner_sprite (Optional[Sprite], optional): Ссылка на объект спрайта, которому принадлежит этот компонент. Используется в колбэке смерти.
+            on_hp_change (Optional[Union[HpChangeCallback, List[HpChangeCallback]]], optional): Функция или список функций, вызываемых при ЛЮБОМ изменении здоровья (урон или лечение). Принимает (новое_текущее_hp, разница_hp).
+            on_damage (Optional[Union[DamageCallback, List[DamageCallback]]], optional): Функция или список функций, вызываемых при получении урона. Принимает (количество_урона).
+            on_heal (Optional[Union[HealCallback, List[HealCallback]]], optional): Функция или список функций, вызываемых при лечении. Принимает (количество_лечения).
+            on_death (Optional[Union[DeathCallback, List[DeathCallback]]], optional): Функция или список функций, вызываемых при смерти спрайта (когда текущее здоровье становится <= 0). Принимает (sprite_владелец).
 
-        Исключения:
+        Raises:
             ValueError: Если max_health <= 0.
         """
         if max_health <= 0:
@@ -111,20 +104,21 @@ class HealthComponent:
 
     @property
     def max_health(self) -> float:
-        """
-        float: Максимальное количество здоровья.
+        """Максимальное количество здоровья.
+        
+        Returns:
+            float: Максимальное количество здоровья.
         """
         return self._max_health
 
     @max_health.setter
     def max_health(self, value: float):
-        """
-        Устанавливает новое максимальное здоровье, корректируя текущее.
+        """Устанавливает новое максимальное здоровье, корректируя текущее.
 
-        Аргументы:
+        Args:
             value (float): Новое максимальное значение здоровья.
 
-        Исключения:
+        Raises:
             ValueError: Если value <= 0.
         """
         if value <= 0:
@@ -140,21 +134,22 @@ class HealthComponent:
 
     @property
     def current_health(self) -> float:
-        """
-        float: Текущее количество здоровья.
+        """Текущее количество здоровья.
+        
+        Returns:
+            float: Текущее количество здоровья.
         """
         return self._current_health
 
     @current_health.setter
     def current_health(self, value: float):
-        """
-        Устанавливает новое текущее здоровье.
+        """Устанавливает новое текущее здоровье.
 
         Этот сеттер автоматически вызывает колбэк изменения HP,
         ограничивает значение в пределах [0, max_health] и
         проверяет состояние смерти.
 
-        Аргументы:
+        Args:
             value (float): Новое значение текущего здоровья.
         """
         old_health = self._current_health
@@ -176,26 +171,26 @@ class HealthComponent:
 
     @property
     def is_alive(self) -> bool:
-        """
-        bool: Возвращает True, если спрайт жив (текущее здоровье > 0).
+        """Проверяет, жив ли спрайт.
+        
+        Returns:
+            bool: True, если спрайт жив (текущее здоровье > 0).
         """
         return self._is_alive
 
     # --- Методы изменения здоровья ---
 
     def take_damage(self, amount: float, damage_type: Optional[str] = None):
-        """
-        Наносит урон спрайту.
+        """Наносит урон спрайту.
 
         Если спрайт уже мертв, метод ничего не делает. Значение amount
         должно быть положительным.
 
-        Аргументы:
+        Args:
             amount (float): Количество урона. Должно быть > 0.
-            damage_type (Optional[str]): Тип урона (опционально, для
-                                        продвинутых систем резистов/уязвимостей).
+            damage_type (Optional[str], optional): Тип урона (опционально, для продвинутых систем резистов/уязвимостей).
 
-        Исключения:
+        Raises:
             ValueError: Если amount <= 0.
         """
         if amount <= 0:
@@ -219,18 +214,17 @@ class HealthComponent:
         )
 
     def heal(self, amount: float, heal_type: Optional[str] = None):
-        """
-        Лечит спрайт.
+        """Лечит спрайт.
 
         Если спрайт уже мертв и компонент не настроен на воскрешение
         (по умолчанию не настроен), метод ничего не делает. Значение amount
         должно быть положительным.
 
-        Аргументы:
+        Args:
             amount (float): Количество лечения. Должно быть > 0.
-            heal_type (Optional[str]): Тип лечения (опционально).
+            heal_type (Optional[str], optional): Тип лечения (опционально).
 
-        Исключения:
+        Raises:
             ValueError: Если amount <= 0.
         """
         if amount <= 0:
@@ -253,18 +247,13 @@ class HealthComponent:
         )
 
     def resurrect(self, heal_to_max: bool = True):
-        """
-        Воскрешает спрайт.
+        """Воскрешает спрайт.
 
         Если спрайт в данный момент мертв, этот метод устанавливает флаг is_alive
         в True и опционально восстанавливает здоровье до максимального значения.
 
-        Аргументы:
-            heal_to_max (bool): Если True (по умолчанию), устанавливает текущее
-                                здоровье равным максимальному после воскрешения.
-                                Если False, текущее здоровье остается как есть
-                                (например, если оно было > 0 до "мнимой" смерти
-                                или при особой логике воскрешения с низким HP).
+        Args:
+            heal_to_max (bool, optional): Если True (по умолчанию), устанавливает текущее здоровье равным максимальному после воскрешения. Если False, текущее здоровье остается как есть.
         """
         # print(f"Спрайт {self.owner_sprite} воскресает!")
         self._is_alive = True  # Устанавливаем флаг живости
@@ -278,7 +267,11 @@ class HealthComponent:
     # --- Методы управления колбэками ---
 
     def add_on_hp_change_callback(self, callback: HpChangeCallback):
-        """Добавляет функцию в список колбэков на изменение HP."""
+        """Добавляет функцию в список колбэков на изменение HP.
+        
+        Args:
+            callback (HpChangeCallback): Функция обратного вызова для добавления.
+        """
         if callable(callback):
             self._on_hp_change_callbacks.append(callback)
         else:
@@ -287,12 +280,20 @@ class HealthComponent:
             )
 
     def remove_on_hp_change_callback(self, callback: HpChangeCallback):
-        """Удаляет функцию из списка колбэков на изменение HP."""
+        """Удаляет функцию из списка колбэков на изменение HP.
+        
+        Args:
+            callback (HpChangeCallback): Функция обратного вызова для удаления.
+        """
         if callback in self._on_hp_change_callbacks:
             self._on_hp_change_callbacks.remove(callback)
 
     def add_on_damage_callback(self, callback: DamageCallback):
-        """Добавляет функцию в список колбэков на получение урона."""
+        """Добавляет функцию в список колбэков на получение урона.
+        
+        Args:
+            callback (DamageCallback): Функция обратного вызова для добавления.
+        """
         if callable(callback):
             self._on_damage_callbacks.append(callback)
         else:
@@ -301,31 +302,51 @@ class HealthComponent:
             )
 
     def remove_on_damage_callback(self, callback: DamageCallback):
-        """Удаляет функцию из списка колбэков на получение урона."""
+        """Удаляет функцию из списка колбэков на получение урона.
+        
+        Args:
+            callback (DamageCallback): Функция обратного вызова для удаления.
+        """
         if callback in self._on_damage_callbacks:
             self._on_damage_callbacks.remove(callback)
 
     def add_on_heal_callback(self, callback: HealCallback):
-        """Добавляет функцию в список колбэков на лечение."""
+        """Добавляет функцию в список колбэков на лечение.
+        
+        Args:
+            callback (HealCallback): Функция обратного вызова для добавления.
+        """
         if callable(callback):
             self._on_heal_callbacks.append(callback)
         else:
             print("Предупреждение: Попытка добавить некорректный колбэк на лечение.")
 
     def remove_on_heal_callback(self, callback: HealCallback):
-        """Удаляет функцию из списка колбэков на лечение."""
+        """Удаляет функцию из списка колбэков на лечение.
+        
+        Args:
+            callback (HealCallback): Функция обратного вызова для удаления.
+        """
         if callback in self._on_heal_callbacks:
             self._on_heal_callbacks.remove(callback)
 
     def add_on_death_callback(self, callback: DeathCallback):
-        """Добавляет функцию в список колбэков на смерть."""
+        """Добавляет функцию в список колбэков на смерть.
+        
+        Args:
+            callback (DeathCallback): Функция обратного вызова для добавления.
+        """
         if callable(callback):
             self._on_death_callbacks.append(callback)
         else:
             print("Предупреждение: Попытка добавить некорректный колбэк на смерть.")
 
     def remove_on_death_callback(self, callback: DeathCallback):
-        """Удаляет функцию из списка колбэков на смерть."""
+        """Удаляет функцию из списка колбэков на смерть.
+        
+        Args:
+            callback (DeathCallback): Функция обратного вызова для удаления.
+        """
         if callback in self._on_death_callbacks:
             self._on_death_callbacks.remove(callback)
 
@@ -443,17 +464,17 @@ class HealthComponent:
         return not result
 
     def __iadd__(self, amount: float) -> "HealthComponent":
-        """
-        Перегрузка оператора '+='. Лечит спрайт на указанное количество.
+        """Перегрузка оператора '+='. Лечит спрайт на указанное количество.
+        
         `health_component += amount` эквивалентно `health_component.heal(amount)`.
 
-        Аргументы:
+        Args:
             amount (float): Количество лечения. Должно быть > 0.
 
-        Возвращает:
+        Returns:
             HealthComponent: Сам объект компонента здоровья (для цепочки операций).
 
-        Исключения:
+        Raises:
             ValueError: Если amount <= 0.
         """
         # Важно: вызываем метод heal, чтобы использовать его логику (проверка живости, колбэки)
@@ -462,17 +483,17 @@ class HealthComponent:
         return self
 
     def __isub__(self, amount: float) -> "HealthComponent":
-        """
-        Перегрузка оператора '-='. Наносит урон спрайту на указанное количество.
+        """Перегрузка оператора '-='. Наносит урон спрайту на указанное количество.
+        
         `health_component -= amount` эквивалентно `health_component.take_damage(amount)`.
 
-        Аргументы:
+        Args:
             amount (float): Количество урона. Должно быть > 0.
 
-        Возвращает:
+        Returns:
             HealthComponent: Сам объект компонента здоровья.
 
-        Исключения:
+        Raises:
             ValueError: Если amount <= 0.
         """
         # Важно: вызываем метод take_damage, чтобы использовать его логику (проверка живости, колбэки)
@@ -481,11 +502,19 @@ class HealthComponent:
         return self
 
     def __str__(self) -> str:
-        """Возвращает строковое представление компонента здоровья."""
+        """Возвращает строковое представление компонента здоровья.
+        
+        Returns:
+            str: Строковое представление в формате "Health(текущее/максимальное, Alive: bool)".
+        """
         return f"Health({self._current_health}/{self._max_health}, Alive: {self._is_alive})"
 
     def __repr__(self) -> str:
-        """Возвращает формальное строковое представление компонента здоровья."""
+        """Возвращает формальное строковое представление компонента здоровья.
+        
+        Returns:
+            str: Формальное строковое представление компонента.
+        """
         return f"HealthComponent(max_health={self._max_health}, current_health={self._current_health}, is_alive={self._is_alive}, owner_sprite={self.owner_sprite})"
 
     # TODO: Реализовать метод update(self, dt: float) для обработки DoT/HoT эффектов

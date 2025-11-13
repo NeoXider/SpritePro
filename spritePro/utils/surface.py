@@ -1,15 +1,24 @@
+"""Утилиты для работы с поверхностями pygame.
+
+Этот модуль предоставляет функции для обработки и модификации поверхностей pygame,
+такие как скругление углов и применение масок.
+"""
+
 import pygame
 
 
 def round_corners(surface: pygame.Surface, radius: int = 10) -> pygame.Surface:
     """Возвращает новый Surface с тем же изображением, но со скруглёнными углами.
 
+    Создает копию исходной поверхности с применением маски для скругления углов.
+    Прозрачные области сохраняются благодаря использованию альфа-канала.
+
     Args:
         surface (pygame.Surface): Исходное изображение.
-        radius (int, optional): Радиус угла. Defaults to 10.
+        radius (int, optional): Радиус скругления углов в пикселях. По умолчанию 10.
 
     Returns:
-        pygame.Surface: Изображение скруглёнными углами.
+        pygame.Surface: Новое изображение со скруглёнными углами.
     """
     size = surface.get_size()
     # Создаём маску с альфа-каналом
@@ -21,15 +30,18 @@ def round_corners(surface: pygame.Surface, radius: int = 10) -> pygame.Surface:
 
 
 def set_mask(surface: pygame.Surface, mask: pygame.Surface) -> pygame.Surface:
-    """
-    Применяем маску к исходному изображению.
+    """Применяет маску к исходному изображению.
+
+    Создает новую поверхность с применением маски к исходному изображению.
+    Маска должна иметь альфа-канал для корректной работы. Используется
+    режим смешивания BLEND_RGBA_MULT для применения маски.
 
     Args:
-        surface (pygame.Surface): Исходное изображение
-        mask (pygame.Surface): Маска
+        surface (pygame.Surface): Исходное изображение.
+        mask (pygame.Surface): Маска с альфа-каналом для применения.
 
     Returns:
-        pygame.Surface: Изображение с применением маски
+        pygame.Surface: Новое изображение с примененной маской.
     """
     size = surface.get_size()
 

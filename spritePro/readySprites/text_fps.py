@@ -1,8 +1,7 @@
-"""
-Text_fps - Ready-to-use FPS counter sprite
+"""Готовый к использованию спрайт счетчика FPS.
 
-This module provides a Text_fps class that automatically displays and updates
-the current FPS (Frames Per Second) using SpritePro's TextSprite.
+Этот модуль предоставляет класс Text_fps, который автоматически отображает и обновляет
+текущий FPS (Frames Per Second) с использованием TextSprite из SpritePro.
 """
 
 import sys
@@ -19,50 +18,29 @@ from spritePro.components.text import TextSprite
 
 
 class Text_fps(TextSprite):
-    """A ready-to-use FPS counter that inherits from TextSprite.
+    """Готовый к использованию счетчик FPS, наследуемый от TextSprite.
 
-    This class automatically tracks and displays the current FPS with customizable
-    appearance and update behavior. It maintains a rolling average for smooth
-    FPS display and can be positioned anywhere on screen.
+    Автоматически отслеживает и отображает текущий FPS с настраиваемым
+    внешним видом и поведением обновления. Поддерживает скользящее среднее для плавного
+    отображения FPS и может быть размещен в любом месте экрана.
 
-    Features:
-    - Automatic FPS calculation using SpritePro's delta time
-    - Rolling average over configurable number of frames
-    - Customizable text format and appearance
-    - Optional prefix/suffix text
-    - Smooth FPS updates with configurable precision
+    Возможности:
+    - Автоматический расчет FPS с использованием delta time из SpritePro
+    - Скользящее среднее за настраиваемое количество кадров
+    - Настраиваемый формат текста и внешний вид
+    - Опциональный префикс/суффикс текста
+    - Плавные обновления FPS с настраиваемой точностью
 
-    Args:
-        pos (Tuple[int, int]): Position on screen (x, y). Defaults to (10, 10).
-        font_size (int): Font size in points. Defaults to 24.
-        color (Tuple[int, int, int]): Text color in RGB format. Defaults to (255, 255, 0).
-        font_name (Optional[Union[str, Path]]): Path to .ttf font file or None for system font.
-        prefix (str): Text to display before FPS value. Defaults to "FPS: ".
-        suffix (str): Text to display after FPS value. Defaults to "".
-        precision (int): Number of decimal places for FPS display. Defaults to 1.
-        average_frames (int): Number of frames to average FPS over. Defaults to 60.
-        update_interval (float): Minimum time between FPS updates in seconds. Defaults to 0.1.
-        **sprite_kwargs: Additional arguments passed to TextSprite.
-
-    Example:
-        # Basic FPS counter in top-left corner
-        fps_counter = Text_fps()
-
-        # Customized FPS counter
-        fps_counter = Text_fps(
-            pos=(800, 10),
-            color=(0, 255, 0),
-            prefix="Frame Rate: ",
-            suffix=" fps",
-            precision=0
-        )
-
-        # In game loop
-        while running:
-            # ... game logic ...
-
-            fps_counter.update_fps()  # Update FPS calculation
-            fps_counter.update(screen)  # Draw to screen
+    Attributes:
+        prefix (str): Текст перед значением FPS.
+        suffix (str): Текст после значения FPS.
+        precision (int): Количество знаков после запятой для отображения FPS.
+        average_frames (int): Количество кадров для усреднения FPS.
+        update_interval (float): Минимальное время между обновлениями FPS в секундах.
+        current_fps (float): Текущее среднее значение FPS.
+        min_fps (float): Минимальное значение FPS.
+        max_fps (float): Максимальное значение FPS.
+        total_frames (int): Общее количество обработанных кадров.
     """
 
     def __init__(
@@ -78,6 +56,20 @@ class Text_fps(TextSprite):
         update_interval: float = 0.1,
         **sprite_kwargs,
     ):
+        """Инициализирует счетчик FPS.
+
+        Args:
+            pos (Tuple[int, int], optional): Позиция на экране (x, y). По умолчанию (10, 10).
+            font_size (int, optional): Размер шрифта в пунктах. По умолчанию 24.
+            color (Tuple[int, int, int], optional): Цвет текста в формате RGB. По умолчанию (255, 255, 0).
+            font_name (Optional[Union[str, Path]], optional): Путь к файлу шрифта .ttf или None для системного шрифта.
+            prefix (str, optional): Текст перед значением FPS. По умолчанию "FPS: ".
+            suffix (str, optional): Текст после значения FPS. По умолчанию "".
+            precision (int, optional): Количество знаков после запятой для отображения FPS. По умолчанию 1.
+            average_frames (int, optional): Количество кадров для усреднения FPS. По умолчанию 60.
+            update_interval (float, optional): Минимальное время между обновлениями FPS в секундах. По умолчанию 0.1.
+            **sprite_kwargs: Дополнительные аргументы, передаваемые в TextSprite.
+        """
         # Initialize with default FPS text
         initial_text = f"{prefix}0{suffix}"
         super().__init__(
@@ -108,10 +100,10 @@ class Text_fps(TextSprite):
         self.total_frames = 0
 
     def update_fps(self):
-        """Update FPS calculation and display text.
+        """Обновляет расчет FPS и отображаемый текст.
 
-        This method should be called once per frame to maintain accurate FPS tracking.
-        It uses SpritePro's built-in delta time (s.dt) for calculations.
+        Этот метод должен вызываться один раз за кадр для поддержания точного отслеживания FPS.
+        Использует встроенное delta time из SpritePro (s.dt) для расчетов.
         """
         self.frame_count += 1
         self.total_frames += 1
@@ -141,24 +133,24 @@ class Text_fps(TextSprite):
                     self.last_update_time = current_time
 
     def _update_display_text(self):
-        """Update the displayed text with current FPS value."""
+        """Обновляет отображаемый текст текущим значением FPS."""
         fps_text = f"{self.current_fps:.{self.precision}f}"
         new_text = f"{self.prefix}{fps_text}{self.suffix}"
         self.set_text(new_text)
 
     def get_fps(self) -> float:
-        """Get the current FPS value.
+        """Получает текущее значение FPS.
 
         Returns:
-            float: Current average FPS value.
+            float: Текущее среднее значение FPS.
         """
         return self.current_fps
 
     def get_fps_stats(self) -> dict:
-        """Get comprehensive FPS statistics.
+        """Получает полную статистику FPS.
 
         Returns:
-            dict: Dictionary containing current, min, max FPS and frame count.
+            dict: Словарь, содержащий текущий, минимальный, максимальный FPS и количество кадров.
         """
         return {
             "current_fps": self.current_fps,
@@ -169,7 +161,7 @@ class Text_fps(TextSprite):
         }
 
     def reset_stats(self):
-        """Reset FPS statistics and history."""
+        """Сбрасывает статистику FPS и историю."""
         self.fps_history.clear()
         self.min_fps = float("inf")
         self.max_fps = 0.0
@@ -179,12 +171,12 @@ class Text_fps(TextSprite):
         self._update_display_text()
 
     def set_format(self, prefix: str = None, suffix: str = None, precision: int = None):
-        """Update the display format of the FPS counter.
+        """Обновляет формат отображения счетчика FPS.
 
         Args:
-            prefix (str, optional): New prefix text.
-            suffix (str, optional): New suffix text.
-            precision (int, optional): New decimal precision.
+            prefix (str, optional): Новый префикс текста.
+            suffix (str, optional): Новый суффикс текста.
+            precision (int, optional): Новая точность десятичных знаков.
         """
         if prefix is not None:
             self.prefix = prefix
@@ -196,11 +188,11 @@ class Text_fps(TextSprite):
         self._update_display_text()
 
     def set_averaging(self, frames: int, update_interval: float = None):
-        """Configure FPS averaging behavior.
+        """Настраивает поведение усреднения FPS.
 
         Args:
-            frames (int): Number of frames to average over.
-            update_interval (float, optional): Minimum time between display updates.
+            frames (int): Количество кадров для усреднения.
+            update_interval (float, optional): Минимальное время между обновлениями отображения.
         """
         self.average_frames = frames
         if update_interval is not None:
@@ -217,14 +209,14 @@ def create_fps_counter(
     color: Tuple[int, int, int] = (255, 255, 0),
     **kwargs,
 ) -> Text_fps:
-    """Create a ready-to-use FPS counter with common settings.
+    """Создает готовый к использованию счетчик FPS с общими настройками.
 
     Args:
-        pos (Tuple[int, int]): Position on screen.
-        color (Tuple[int, int, int]): Text color.
-        **kwargs: Additional arguments passed to Text_fps constructor.
+        pos (Tuple[int, int], optional): Позиция на экране. По умолчанию (35, 15).
+        color (Tuple[int, int, int], optional): Цвет текста. По умолчанию (255, 255, 0).
+        **kwargs: Дополнительные аргументы, передаваемые в конструктор Text_fps.
 
     Returns:
-        Text_fps: Configured FPS counter instance.
+        Text_fps: Настроенный экземпляр счетчика FPS.
     """
     return Text_fps(pos=pos, color=color, **kwargs)

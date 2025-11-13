@@ -26,33 +26,32 @@ Color = Tuple[int, int, int]
 
 @dataclass
 class ParticleConfig:
-    """Configuration for `ParticleEmitter.emit`.
+    """Конфигурация для `ParticleEmitter.emit`.
 
-    Field summary:
-    - amount: number of particles to spawn per emit.
-    - size_range: size bounds (pixels) used only for default circle particles.
-    - speed_range: initial speed magnitude range for velocity vector.
-    - angle_range: emission angle range in degrees (0 = right, 90 = down).
-    - lifetime_ms: fixed lifetime in milliseconds (overrides lifetime_range).
-    - lifetime_range: lifetime range in milliseconds (used if seconds not set).
-    - lifetime_s: fixed lifetime in seconds (overrides ms fields).
-    - lifetime_range_s: lifetime range in seconds (overrides ms range).
-    - fade_speed: alpha fade-out speed per second.
-    - gravity: acceleration vector applied each frame.
-    - screen_space: if True, particles ignore camera offset.
-    - sorting_order: layer for rendering order (higher draws in front).
-    - colors: color palette for default circle particles.
-    - image: ready surface to duplicate for each particle.
-    - image_factory: callback to build per-particle image from index.
-    - image_scale_range: uniform scale range applied to resulting image.
-    - spawn_rect: pygame.Rect defining spawn area (particles spawn within this rect).
-    - spawn_circle_radius: radius of circular spawn area centered at emit position.
-    - align_rotation_to_velocity: rotate image to travel direction.
-    - image_rotation_range: random initial rotation range (degrees).
-    - angular_velocity_range: continuous spin range (deg/sec).
-    - particle_class: custom `Particle` subclass to instantiate.
-    - custom_factory: post-create mutator called for each particle.
-    - factory: full override to create particle yourself.
+    Attributes:
+        amount (int): Количество частиц для создания при каждом вызове emit. По умолчанию 30.
+        size_range (Tuple[int, int]): Диапазон размеров (в пикселях), используется только для частиц-кругов по умолчанию. По умолчанию (4, 6).
+        speed_range (VectorRange): Диапазон начальной скорости (величина вектора скорости). По умолчанию (120.0, 260.0).
+        lifetime (Optional[float]): Фиксированное время жизни в секундах (переопределяет lifetime_range). По умолчанию None.
+        lifetime_range (Optional[Tuple[float, float]]): Диапазон времени жизни в секундах. По умолчанию (0.6, 1.2).
+        angle_range (VectorRange): Диапазон угла эмиссии в градусах (0 = вправо, 90 = вниз). По умолчанию (0.0, 360.0).
+        colors (Sequence[Color]): Палитра цветов для частиц-кругов по умолчанию. По умолчанию [(255, 255, 255)].
+        fade_speed (float): Скорость затухания альфа-канала в секунду. По умолчанию 220.0.
+        gravity (Vector2): Вектор ускорения, применяемый каждый кадр. По умолчанию (0, 0).
+        screen_space (bool): Если True, частицы игнорируют смещение камеры. По умолчанию False.
+        custom_factory (Optional[Callable]): Хук для изменения частицы после создания. По умолчанию None.
+        image (Union[Optional[pygame.Surface], Path]): Готовая поверхность для дублирования для каждой частицы. По умолчанию None.
+        image_factory (Optional[Callable[[int], pygame.Surface]]): Фабрика для создания изображения для каждой частицы по индексу. По умолчанию None.
+        particle_class (Optional[Type[Particle]]): Пользовательский подкласс Particle для создания. По умолчанию None.
+        factory (Optional[Callable]): Полное переопределение для создания частицы самостоятельно. По умолчанию None.
+        sorting_order (Optional[int]): Порядок отрисовки (слой), большие значения рисуются спереди. По умолчанию None.
+        image_scale_range (Optional[Tuple[float, float]]): Диапазон равномерного масштабирования для изображения. По умолчанию None.
+        spawn_rect (Optional[pygame.Rect]): Прямоугольник области спавна (частицы создаются внутри этого прямоугольника). По умолчанию None.
+        spawn_circle_radius (Optional[float]): Радиус круговой области спавна с центром в позиции эмиттера. По умолчанию None.
+        align_rotation_to_velocity (bool): Поворачивать изображение по направлению движения. По умолчанию False.
+        image_rotation_range (Optional[Tuple[float, float]]): Диапазон случайного начального поворота (градусы). По умолчанию None.
+        angular_velocity_range (Optional[Tuple[float, float]]): Диапазон непрерывного вращения (град/сек). По умолчанию None.
+        scale_velocity_range (Optional[Tuple[float, float]]): Диапазон скорости изменения масштаба (множитель в секунду). По умолчанию None.
     """
 
     amount: int = 30
@@ -90,16 +89,17 @@ class ParticleConfig:
 
 
 class Particle(spritePro.Sprite):
-    """Single particle sprite with velocity, gravity, fading, and rotation.
+    """Одиночная частица-спрайт с скоростью, гравитацией, затуханием и вращением.
 
     Attributes:
-        velocity: current velocity in pixels per second.
-        spawn_time: pygame ticks at creation time (ms).
-        lifetime: lifetime in milliseconds; particle dies after this.
-        fade_speed: alpha fade-out speed per second.
-        gravity: acceleration vector applied each frame.
-        screen_space: if True, ignores camera offset while drawing.
-        angular_velocity: spin speed in degrees per second.
+        velocity (Vector2): Текущая скорость в пикселях в секунду.
+        spawn_time (int): Время создания в тиках pygame (мс).
+        lifetime (int): Время жизни в миллисекундах; частица исчезает после этого.
+        fade_speed (float): Скорость затухания альфа-канала в секунду.
+        gravity (Vector2): Вектор ускорения, применяемый каждый кадр.
+        screen_space (bool): Если True, игнорирует смещение камеры при отрисовке.
+        angular_velocity (float): Скорость вращения в градусах в секунду.
+        scale_velocity (float): Скорость изменения масштаба (множитель в секунду).
     """
 
     def __init__(
@@ -113,6 +113,18 @@ class Particle(spritePro.Sprite):
         screen_space: bool,
         sorting_order: Optional[int] = None,
     ) -> None:
+        """Инициализирует новую частицу.
+
+        Args:
+            image (pygame.Surface): Изображение частицы.
+            pos (Union[Tuple[float, float], Vector2]): Начальная позиция частицы.
+            velocity (Vector2): Начальная скорость частицы.
+            lifetime_ms (int): Время жизни в миллисекундах.
+            fade_speed (float): Скорость затухания альфа-канала в секунду.
+            gravity (Vector2): Вектор гравитации (ускорения).
+            screen_space (bool): Игнорировать ли смещение камеры.
+            sorting_order (Optional[int], optional): Порядок отрисовки (слой). По умолчанию None.
+        """
         super().__init__(image, size=image.get_size(), pos=Vector2(pos), sorting_order=sorting_order)
         self.velocity = velocity
         self.spawn_time = pygame.time.get_ticks()
@@ -124,6 +136,14 @@ class Particle(spritePro.Sprite):
         self.scale_velocity: float = 0.0  # scale factor per second
 
     def update(self, screen: Optional[pygame.Surface] = None) -> None:
+        """Обновляет состояние частицы и отрисовывает её на экране.
+
+        Применяет гравитацию, обновляет позицию, вращение, масштаб и затухание.
+        Удаляет частицу, если истекло время жизни или альфа-канал достиг нуля.
+
+        Args:
+            screen (Optional[pygame.Surface], optional): Поверхность для отрисовки. Если None, используется глобальный экран.
+        """
         dt = spritePro.dt
         self.velocity += self.gravity * dt
         self.rect.centerx += self.velocity.x * dt
@@ -155,9 +175,20 @@ class Particle(spritePro.Sprite):
 
 
 class ParticleEmitter:
-    """Simple configurable particle emitter similar to Unity bursts."""
+    """Простой настраиваемый эмиттер частиц, аналогичный Unity bursts.
+
+    Attributes:
+        config (ParticleConfig): Конфигурация эмиттера частиц.
+        _position (Optional[Tuple[float, float] | Vector2]): Сохраненная позиция эмиттера.
+        _anchor (str): Якорь позиционирования.
+    """
 
     def __init__(self, config: Optional[ParticleConfig] = None) -> None:
+        """Инициализирует новый эмиттер частиц.
+
+        Args:
+            config (Optional[ParticleConfig], optional): Конфигурация эмиттера. Если None, используется конфигурация по умолчанию.
+        """
         self.config = config or ParticleConfig()
         if isinstance(self.config.image, str):
             try:
@@ -169,11 +200,11 @@ class ParticleEmitter:
         self._anchor: str = "center"
 
     def set_position(self, position: Tuple[float, float] | Vector2, anchor: str | Anchor = Anchor.CENTER) -> None:
-        """Sets the emitter's position for subsequent emit() calls without arguments.
+        """Устанавливает позицию эмиттера для последующих вызовов emit() без аргументов.
         
         Args:
-            position: Position coordinates (x, y)
-            anchor: Anchor point for positioning. Default: Anchor.CENTER
+            position (Tuple[float, float] | Vector2): Координаты позиции (x, y).
+            anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию Anchor.CENTER.
         """
         # Import Anchor here to avoid circular imports
         from .constants import Anchor
@@ -189,11 +220,19 @@ class ParticleEmitter:
         self._anchor = anchor_key
 
     def get_position(self) -> Optional[Tuple[float, float] | Vector2]:
-        """Gets the current emitter position."""
+        """Получает текущую позицию эмиттера.
+        
+        Returns:
+            Optional[Tuple[float, float] | Vector2]: Текущая позиция эмиттера или None.
+        """
         return self._position
 
     def update_config(self, **kwargs):
-        """Updates the emitter's configuration with the given values."""
+        """Обновляет конфигурацию эмиттера указанными значениями.
+        
+        Args:
+            **kwargs: Параметры для обновления конфигурации.
+        """
         self.config = replace(self.config, **kwargs)
 
     def emit(
@@ -201,6 +240,15 @@ class ParticleEmitter:
         position: Optional[Tuple[float, float] | Vector2] = None,
         overrides: Optional[ParticleConfig] = None,
     ) -> Sequence[Particle]:
+        """Создает и возвращает последовательность частиц согласно конфигурации.
+
+        Args:
+            position (Optional[Tuple[float, float] | Vector2], optional): Позиция эмиссии. Если None, используется сохраненная позиция или область спавна из конфигурации.
+            overrides (Optional[ParticleConfig], optional): Переопределения конфигурации для этого вызова. По умолчанию None.
+
+        Returns:
+            Sequence[Particle]: Последовательность созданных частиц.
+        """
         cfg = overrides or self.config
         # If no position provided, use emitter's stored position or spawn area from config
         if position is None:
@@ -328,16 +376,27 @@ class ParticleEmitter:
 # ------------------------------
 
 def particle_config_copy(cfg: ParticleConfig) -> ParticleConfig:
-    """Returns a shallow copy of a ParticleConfig for convenient tweaking.
+    """Возвращает поверхностную копию ParticleConfig для удобной настройки.
 
-    Note: Surfaces inside are not deep-copied. Adjust `image` in the copy if you
-    want a distinct surface instance.
+    Args:
+        cfg (ParticleConfig): Конфигурация для копирования.
+
+    Returns:
+        ParticleConfig: Копия конфигурации.
+
+    Note:
+        Поверхности внутри не копируются глубоко. Измените `image` в копии, если
+        нужен отдельный экземпляр поверхности.
     """
     return replace(cfg)
 
 
 def template_sparks() -> ParticleConfig:
-    """Small bright sparks burst in all directions, short lifetime."""
+    """Шаблон конфигурации: маленькие яркие искры во всех направлениях, короткое время жизни.
+    
+    Returns:
+        ParticleConfig: Конфигурация для эффекта искр.
+    """
     return ParticleConfig(
         amount=30,
         lifetime_range=(0.25, 0.6),
@@ -355,7 +414,11 @@ def template_sparks() -> ParticleConfig:
 
 
 def template_smoke() -> ParticleConfig:
-    """Soft gray smoke puffs drifting upward, long lifetime."""
+    """Шаблон конфигурации: мягкие серые клубы дыма, дрейфующие вверх, долгое время жизни.
+    
+    Returns:
+        ParticleConfig: Конфигурация для эффекта дыма.
+    """
     return ParticleConfig(
         amount=20,
         lifetime_range=(1.8, 3.0),
@@ -373,7 +436,11 @@ def template_smoke() -> ParticleConfig:
 
 
 def template_fire() -> ParticleConfig:
-    """Upward fiery burst with orange/red tones and medium lifetime."""
+    """Шаблон конфигурации: огненный взрыв вверх с оранжево-красными тонами, среднее время жизни.
+    
+    Returns:
+        ParticleConfig: Конфигурация для эффекта огня.
+    """
     return ParticleConfig(
         amount=40,
         lifetime_range=(0.5, 1.2),
@@ -392,7 +459,11 @@ def template_fire() -> ParticleConfig:
 
 
 def template_snowfall() -> ParticleConfig:
-    """Gentle snowfall: particles spawn in a wide rect above the view and fall down."""
+    """Шаблон конфигурации: мягкий снегопад, частицы создаются в широком прямоугольнике над экраном и падают вниз.
+    
+    Returns:
+        ParticleConfig: Конфигурация для эффекта снегопада.
+    """
     return ParticleConfig(
         amount=20,
         lifetime_range=(10, 10),
@@ -412,7 +483,11 @@ def template_snowfall() -> ParticleConfig:
 
 
 def template_circular_burst() -> ParticleConfig:
-    """Circular burst: particles spawn in a 100px radius circle and explode outward."""
+    """Шаблон конфигурации: круговой взрыв, частицы создаются в круге радиусом 100px и взрываются наружу.
+    
+    Returns:
+        ParticleConfig: Конфигурация для эффекта кругового взрыва.
+    """
     return ParticleConfig(
         amount=50,
         lifetime_range=(0.8, 1.5),

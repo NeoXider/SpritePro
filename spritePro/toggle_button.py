@@ -12,28 +12,20 @@ import spritePro
 
 
 class ToggleButton(Button):
-    """A toggle button that switches between ON/OFF states with different colors and text.
+    """Кнопка-переключатель, которая переключается между состояниями ВКЛ/ВЫКЛ с разными цветами и текстом.
 
-    This class extends Button to provide toggle functionality with customizable
-    ON/OFF states, colors, and text labels.
+    Расширяет Button для предоставления функциональности переключения с настраиваемыми
+    состояниями ВКЛ/ВЫКЛ, цветами и текстовыми метками.
 
-    Args:
-        sprite (str): Path to the sprite image. Defaults to empty string.
-        size (Tuple[int, int]): Button dimensions (width, height). Defaults to (250, 70).
-        pos (Tuple[int, int]): Button center position on screen. Defaults to (300, 200).
-        text_on (str): Text displayed when toggle is ON. Defaults to "ON".
-        text_off (str): Text displayed when toggle is OFF. Defaults to "OFF".
-        text_size (int): Base font size. Defaults to 24.
-        text_color (Tuple[int,int,int]): Text color in RGB. Defaults to (255, 255, 255).
-        font_name (Optional[Union[str, Path]]): Path to TTF font or None. Defaults to None.
-        on_toggle (Optional[Callable]): Toggle handler function. Defaults to None.
-        is_on (bool): Initial toggle state. Defaults to True.
-        color_on (Tuple[int,int,int]): Background color when ON. Defaults to (50, 150, 50).
-        color_off (Tuple[int,int,int]): Background color when OFF. Defaults to (150, 50, 50).
-        hover_brightness (float): Brightness multiplier on hover. Defaults to 1.2.
-        press_brightness (float): Brightness multiplier on press. Defaults to 0.8.
-        anim_speed (float): Animation speed multiplier. Defaults to 0.2.
-        animated (bool): Whether to enable animations. Defaults to True.
+    Attributes:
+        is_on (bool): Текущее состояние переключателя (True = ВКЛ, False = ВЫКЛ).
+        text_on (str): Текст, отображаемый когда переключатель ВКЛ.
+        text_off (str): Текст, отображаемый когда переключатель ВЫКЛ.
+        color_on (Tuple[int, int, int]): Цвет фона когда ВКЛ.
+        color_off (Tuple[int, int, int]): Цвет фона когда ВЫКЛ.
+        hover_brightness (float): Множитель яркости при наведении.
+        press_brightness (float): Множитель яркости при нажатии.
+        on_toggle (Optional[Callable[[bool], None]]): Функция обработчик переключения.
     """
 
     def __init__(
@@ -55,6 +47,26 @@ class ToggleButton(Button):
         anim_speed: float = 0.2,
         animated: bool = True,
     ):
+        """Инициализирует новую кнопку-переключатель.
+
+        Args:
+            sprite (str, optional): Путь к изображению спрайта. По умолчанию пустая строка.
+            size (Tuple[int, int], optional): Размеры кнопки (ширина, высота). По умолчанию (250, 70).
+            pos (Tuple[int, int], optional): Центральная позиция кнопки на экране. По умолчанию (300, 200).
+            text_on (str, optional): Текст, отображаемый когда переключатель ВКЛ. По умолчанию "ON".
+            text_off (str, optional): Текст, отображаемый когда переключатель ВЫКЛ. По умолчанию "OFF".
+            text_size (int, optional): Базовый размер шрифта. По умолчанию 24.
+            text_color (Tuple[int, int, int], optional): Цвет текста в RGB. По умолчанию (255, 255, 255).
+            font_name (Optional[Union[str, Path]], optional): Путь к TTF шрифту или None. По умолчанию None.
+            on_toggle (Optional[Callable[[bool], None]], optional): Функция обработчик переключения. По умолчанию None.
+            is_on (bool, optional): Начальное состояние переключателя. По умолчанию True.
+            color_on (Tuple[int, int, int], optional): Цвет фона когда ВКЛ. По умолчанию (50, 150, 50).
+            color_off (Tuple[int, int, int], optional): Цвет фона когда ВЫКЛ. По умолчанию (150, 50, 50).
+            hover_brightness (float, optional): Множитель яркости при наведении. По умолчанию 1.2.
+            press_brightness (float, optional): Множитель яркости при нажатии. По умолчанию 0.8.
+            anim_speed (float, optional): Множитель скорости анимации. По умолчанию 0.2.
+            animated (bool, optional): Включены ли анимации. По умолчанию True.
+        """
         # Store toggle-specific properties
         self.text_on = text_on
         self.text_off = text_off
@@ -90,40 +102,40 @@ class ToggleButton(Button):
     def _adjust_brightness(
         self, color: Tuple[int, int, int], factor: float
     ) -> Tuple[int, int, int]:
-        """Adjust color brightness by a factor.
+        """Изменяет яркость цвета на множитель.
 
         Args:
-            color: RGB color tuple
-            factor: Brightness multiplier (1.0 = no change, >1.0 = brighter, <1.0 = darker)
+            color (Tuple[int, int, int]): Кортеж RGB цвета.
+            factor (float): Множитель яркости (1.0 = без изменений, >1.0 = ярче, <1.0 = темнее).
 
         Returns:
-            Adjusted RGB color tuple
+            Tuple[int, int, int]: Скорректированный кортеж RGB цвета.
         """
         return tuple(min(255, max(0, int(c * factor))) for c in color)
 
     def _handle_toggle(self):
-        """Internal method to handle toggle state change."""
+        """Внутренний метод для обработки изменения состояния переключателя."""
         self.toggle()
         if self.on_toggle:
             self.on_toggle(self.is_on)
 
     def toggle(self):
-        """Toggle the button state between ON and OFF."""
+        """Переключает состояние кнопки между ВКЛ и ВЫКЛ."""
         self.is_on = not self.is_on
         self._update_appearance()
 
     def set_state(self, is_on: bool):
-        """Set the toggle state directly.
+        """Устанавливает состояние переключателя напрямую.
 
         Args:
-            is_on (bool): True for ON state, False for OFF state
+            is_on (bool): True для состояния ВКЛ, False для состояния ВЫКЛ.
         """
         if self.is_on != is_on:
             self.is_on = is_on
             self._update_appearance()
 
     def _update_appearance(self):
-        """Update button appearance based on current state."""
+        """Обновляет внешний вид кнопки на основе текущего состояния."""
         # Update text
         new_text = self.text_on if self.is_on else self.text_off
         self.text_sprite.set_text(new_text)
@@ -137,22 +149,22 @@ class ToggleButton(Button):
     def set_colors(
         self, color_on: Tuple[int, int, int], color_off: Tuple[int, int, int]
     ):
-        """Set the ON and OFF colors for the toggle button.
+        """Устанавливает цвета ВКЛ и ВЫКЛ для кнопки-переключателя.
 
         Args:
-            color_on: RGB color for ON state
-            color_off: RGB color for OFF state
+            color_on (Tuple[int, int, int]): RGB цвет для состояния ВКЛ.
+            color_off (Tuple[int, int, int]): RGB цвет для состояния ВЫКЛ.
         """
         self.color_on = color_on
         self.color_off = color_off
         self._update_appearance()
 
     def set_texts(self, text_on: str, text_off: str):
-        """Set the ON and OFF text labels for the toggle button.
+        """Устанавливает текстовые метки ВКЛ и ВЫКЛ для кнопки-переключателя.
 
         Args:
-            text_on: Text to display when ON
-            text_off: Text to display when OFF
+            text_on (str): Текст для отображения когда ВКЛ.
+            text_off (str): Текст для отображения когда ВЫКЛ.
         """
         self.text_on = text_on
         self.text_off = text_off

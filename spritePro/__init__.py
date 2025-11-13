@@ -77,11 +77,26 @@ DEFAULT_CAMERA_KEYS_NONE = {
 
 
 class SpriteProGame:
-    """Singleton game context with shared sprite group and camera."""
+    """Одиночный игровой контекст с общей группой спрайтов и камерой.
+
+    Управляет всеми спрайтами игры, камерой и их взаимодействием.
+    Использует паттерн Singleton для обеспечения единственного экземпляра.
+
+    Attributes:
+        all_sprites (pygame.sprite.LayeredUpdates): Группа всех спрайтов с поддержкой слоев.
+        camera (Vector2): Позиция камеры.
+        camera_target (pygame.sprite.Sprite | None): Целевой спрайт для следования камеры.
+        camera_offset (Vector2): Смещение камеры относительно цели.
+        _instance (SpriteProGame | None): Единственный экземпляр класса.
+    """
 
     _instance: "SpriteProGame | None" = None
 
     def __init__(self) -> None:
+        """Инициализирует SpriteProGame.
+
+        Создает группу спрайтов, инициализирует камеру и устанавливает экземпляр как единственный.
+        """
         if SpriteProGame._instance is not None:
             return
         self.all_sprites = pygame.sprite.LayeredUpdates()
@@ -92,11 +107,24 @@ class SpriteProGame:
 
     @classmethod
     def get(cls) -> "SpriteProGame":
+        """Получает единственный экземпляр SpriteProGame.
+
+        Returns:
+            SpriteProGame: Единственный экземпляр игрового контекста.
+        """
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     def register_sprite(self, sprite: pygame.sprite.Sprite) -> None:
+        """Регистрирует спрайт в игровом контексте.
+
+        Добавляет спрайт в группу всех спрайтов. Если у спрайта есть атрибут sorting_order,
+        он будет добавлен на соответствующий слой.
+
+        Args:
+            sprite (pygame.sprite.Sprite): Спрайт для регистрации.
+        """
         if sprite not in self.all_sprites:
             # If sprite has a declared sorting order, add it at that layer
             layer = getattr(sprite, "sorting_order", None)
@@ -112,18 +140,40 @@ class SpriteProGame:
             sprite._game_registered = True
 
     def unregister_sprite(self, sprite: pygame.sprite.Sprite) -> None:
+        """Отменяет регистрацию спрайта в игровом контексте.
+
+        Удаляет спрайт из группы всех спрайтов.
+
+        Args:
+            sprite (pygame.sprite.Sprite): Спрайт для отмены регистрации.
+        """
         self.all_sprites.remove(sprite)
         if hasattr(sprite, "_game_registered"):
             sprite._game_registered = False
 
     def enable_sprite(self, sprite: pygame.sprite.Sprite) -> None:
+        """Включает спрайт (регистрирует его).
+
+        Args:
+            sprite (pygame.sprite.Sprite): Спрайт для включения.
+        """
         self.register_sprite(sprite)
 
     def disable_sprite(self, sprite: pygame.sprite.Sprite) -> None:
+        """Отключает спрайт (отменяет его регистрацию).
+
+        Args:
+            sprite (pygame.sprite.Sprite): Спрайт для отключения.
+        """
         self.unregister_sprite(sprite)
 
     def set_sprite_layer(self, sprite: pygame.sprite.Sprite, layer: int) -> None:
-        """Sets the drawing layer for a sprite in the global layered group."""
+        """Устанавливает слой отрисовки для спрайта в глобальной группе со слоями.
+
+        Args:
+            sprite (pygame.sprite.Sprite): Спрайт для установки слоя.
+            layer (int): Номер слоя для отрисовки.
+        """
         try:
             # If sprite is not in the group yet, add with layer
             if sprite not in self.all_sprites:
@@ -135,6 +185,13 @@ class SpriteProGame:
             pass
 
     def set_camera(self, position: Vector2 | tuple[float, float]) -> None:
+        """Устанавливает позицию камеры.
+
+        Устанавливает камеру в указанную позицию и отменяет следование за целью.
+
+        Args:
+            position (Vector2 | tuple[float, float]): Позиция камеры (x, y).
+        """
         if isinstance(position, Vector2):
             self.camera.update(position)
         else:
@@ -143,6 +200,15 @@ class SpriteProGame:
         self.camera_offset.update(0.0, 0.0)
 
     def move_camera(self, dx: float, dy: float) -> None:
+        """Перемещает камеру на указанное смещение.
+
+        Если камера следует за целью, смещение добавляется к offset.
+        Иначе камера перемещается напрямую.
+
+        Args:
+            dx (float): Смещение по оси X.
+            dy (float): Смещение по оси Y.
+        """
         if self.camera_target is not None:
             self.camera_offset.x += dx
             self.camera_offset.y += dy
@@ -151,6 +217,11 @@ class SpriteProGame:
             self.camera.y += dy
 
     def get_camera(self) -> Vector2:
+        """Получает текущую позицию камеры.
+
+        Returns:
+            Vector2: Позиция камеры.
+        """
         return self.camera
 
     def set_camera_follow(
@@ -158,6 +229,14 @@ class SpriteProGame:
         target: pygame.sprite.Sprite | None,
         offset: Vector2 | tuple[float, float] = (0.0, 0.0),
     ) -> None:
+        """Устанавливает цель для следования камеры.
+
+        Камера будет автоматически следовать за указанным спрайтом с заданным смещением.
+
+        Args:
+            target (pygame.sprite.Sprite | None): Целевой спрайт для следования или None для отмены.
+            offset (Vector2 | tuple[float, float], optional): Смещение камеры относительно цели. По умолчанию (0.0, 0.0).
+        """
         if target is None:
             self.clear_camera_follow()
             return
@@ -169,10 +248,12 @@ class SpriteProGame:
         self._update_camera_follow()
 
     def clear_camera_follow(self) -> None:
+        """Отменяет следование камеры за целью."""
         self.camera_target = None
         self.camera_offset.update(0.0, 0.0)
 
     def _update_camera_follow(self) -> None:
+        """Обновляет позицию камеры при следовании за целью."""
         target = self.camera_target
         if not target:
             return
@@ -185,47 +266,99 @@ class SpriteProGame:
         self.camera.update(desired)
 
     def draw(self, surface: pygame.Surface) -> None:
+        """Отрисовывает все спрайты на указанной поверхности.
+
+        Args:
+            surface (pygame.Surface): Поверхность для отрисовки.
+        """
         self.all_sprites.draw(surface)
 
     def update(self, *args, **kwargs) -> None:
+        """Обновляет камеру и все спрайты.
+
+        Args:
+            *args: Позиционные аргументы для передачи в update спрайтов.
+            **kwargs: Именованные аргументы для передачи в update спрайтов.
+        """
         self._update_camera_follow()
         self.all_sprites.update(*args, **kwargs)
 
 
 def get_game() -> SpriteProGame:
-    """Returns the game singleton."""
+    """Возвращает единственный экземпляр игрового контекста.
+
+    Returns:
+        SpriteProGame: Единственный экземпляр SpriteProGame.
+    """
     return SpriteProGame.get()
 
 
 def register_sprite(sprite: pygame.sprite.Sprite) -> None:
+    """Регистрирует спрайт в игровом контексте.
+
+    Args:
+        sprite (pygame.sprite.Sprite): Спрайт для регистрации.
+    """
     get_game().register_sprite(sprite)
 
 
 def unregister_sprite(sprite: pygame.sprite.Sprite) -> None:
+    """Отменяет регистрацию спрайта в игровом контексте.
+
+    Args:
+        sprite (pygame.sprite.Sprite): Спрайт для отмены регистрации.
+    """
     get_game().unregister_sprite(sprite)
 
 
 def enable_sprite(sprite: pygame.sprite.Sprite) -> None:
+    """Включает спрайт (устанавливает active=True и регистрирует).
+
+    Args:
+        sprite (pygame.sprite.Sprite): Спрайт для включения.
+    """
     if hasattr(sprite, "active"):
         sprite.active = True
     get_game().enable_sprite(sprite)
 
 
 def disable_sprite(sprite: pygame.sprite.Sprite) -> None:
+    """Отключает спрайт (устанавливает active=False и отменяет регистрацию).
+
+    Args:
+        sprite (pygame.sprite.Sprite): Спрайт для отключения.
+    """
     if hasattr(sprite, "active"):
         sprite.active = False
     get_game().disable_sprite(sprite)
 
 
 def set_camera_position(x: float, y: float) -> None:
+    """Устанавливает позицию камеры.
+
+    Args:
+        x (float): Позиция по оси X.
+        y (float): Позиция по оси Y.
+    """
     get_game().set_camera((x, y))
 
 
 def move_camera(dx: float, dy: float) -> None:
+    """Перемещает камеру на указанное смещение.
+
+    Args:
+        dx (float): Смещение по оси X.
+        dy (float): Смещение по оси Y.
+    """
     get_game().move_camera(dx, dy)
 
 
 def get_camera_position() -> Vector2:
+    """Получает текущую позицию камеры.
+
+    Returns:
+        Vector2: Копия позиции камеры.
+    """
     return get_game().get_camera().copy()
 
 
@@ -233,10 +366,17 @@ def set_camera_follow(
     target: pygame.sprite.Sprite | None,
     offset: Vector2 | tuple[float, float] = (0.0, 0.0),
 ) -> None:
+    """Устанавливает цель для следования камеры.
+
+    Args:
+        target (pygame.sprite.Sprite | None): Целевой спрайт для следования или None для отмены.
+        offset (Vector2 | tuple[float, float], optional): Смещение камеры относительно цели. По умолчанию (0.0, 0.0).
+    """
     get_game().set_camera_follow(target, offset)
 
 
 def clear_camera_follow() -> None:
+    """Отменяет следование камеры за целью."""
     get_game().clear_camera_follow()
 
 
@@ -270,7 +410,22 @@ def process_camera_input(
     mouse_drag: bool = True,
     mouse_button: int = 1,
 ) -> Vector2:
-    """Обрабатывает клавиатуру/мышь и смещает камеру. Возвращает новую позицию."""
+    """Обрабатывает ввод с клавиатуры/мыши и смещает камеру.
+
+    Поддерживает управление камерой с клавиатуры (стрелки или настраиваемые клавиши)
+    и перетаскивание мышью.
+
+    Args:
+        speed (float, optional): Скорость перемещения камеры в пикселях в секунду. По умолчанию 250.0.
+        keys (dict | None, optional): Словарь с настройками клавиш для управления камерой.
+            Ключи: "left", "right", "up", "down". Значения: кортежи кодов клавиш pygame.
+            По умолчанию None (используются стрелки).
+        mouse_drag (bool, optional): Включить ли управление камерой перетаскиванием мыши. По умолчанию True.
+        mouse_button (int, optional): Номер кнопки мыши для перетаскивания (1=левая, 2=средняя, 3=правая). По умолчанию 1.
+
+    Returns:
+        Vector2: Новая позиция камеры после обработки ввода.
+    """
     pressed = pygame.key.get_pressed()
     mapping = _normalize_camera_keys(keys)
     move = Vector2()
@@ -305,6 +460,11 @@ def process_camera_input(
 
 
 def init():
+    """Инициализирует pygame и его модули.
+
+    Инициализирует основной модуль pygame, модуль шрифтов и модуль звука.
+    Вызывается автоматически при импорте модуля.
+    """
     try:
         pygame.init()
         pygame.font.init()
@@ -316,13 +476,17 @@ def init():
 def get_screen(
     size: tuple[int, int] = (800, 600), title: str = "Игра", icon: str = None
 ) -> pygame.Surface:
-    """
-    Инициализация экрана игры
+    """Инициализирует экран игры.
 
-    :param size: размер экрана
-    :param title: заголовок окна
-    :param icon: иконка окна
-    :return: экран
+    Создает окно игры с указанными параметрами и инициализирует глобальные переменные.
+
+    Args:
+        size (tuple[int, int], optional): Размер экрана (ширина, высота). По умолчанию (800, 600).
+        title (str, optional): Заголовок окна. По умолчанию "Игра".
+        icon (str, optional): Путь к файлу иконки окна. По умолчанию None.
+
+    Returns:
+        pygame.Surface: Поверхность экрана игры.
     """
     global events, screen, screen_rect, WH, WH_C
     screen = pygame.display.set_mode(size)
@@ -341,11 +505,15 @@ def get_screen(
 def update(
     fps: int = -1, update_display: bool = True, fill_color: tuple[int, int, int] = None
 ) -> None:
-    """
-    Обновление экрана и событий
+    """Обновляет экран и события игры.
 
-    :param fps: кадров в секунду
-    :param update_display: обновлять ли экран
+    Обновляет отображение, обрабатывает события, вычисляет delta time и обновляет игровой контекст.
+    Должна вызываться каждый кадр в игровом цикле.
+
+    Args:
+        fps (int, optional): Целевое количество кадров в секунду. Если -1, используется значение FPS по умолчанию. По умолчанию -1.
+        update_display (bool, optional): Обновлять ли экран (pygame.display.update). По умолчанию True.
+        fill_color (tuple[int, int, int], optional): Цвет заливки экрана (R, G, B). Если None, экран не заливается. По умолчанию None.
     """
     global events, dt
     if update_display:

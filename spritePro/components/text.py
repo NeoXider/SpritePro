@@ -14,20 +14,18 @@ from spritePro.sprite import Sprite
 
 
 class TextSprite(Sprite):
-    """A sprite that displays text with all base Sprite mechanics.
+    """Спрайт, отображающий текст со всеми базовыми механиками Sprite.
 
-    This class extends the base Sprite functionality to handle text rendering while maintaining
-    all core sprite features like movement, rotation, scaling, transparency, and collision detection.
-    Automatically redraws the sprite image when text, color, or font is updated.
+    Расширяет функциональность базового Sprite для обработки отрисовки текста, сохраняя
+    все основные функции спрайта, такие как движение, вращение, масштабирование, прозрачность и обнаружение коллизий.
+    Автоматически перерисовывает изображение спрайта при обновлении текста, цвета или шрифта.
 
-    Args:
-        text (str): Text to display.
-        font_size (int): Font size in points. Defaults to 24.
-        color (Tuple[int, int, int]): Text color in RGB format. Defaults to (255, 255, 255).
-        pos (Tuple[int, int]): Initial center position of the sprite (x, y). Defaults to (0, 0).
-        font_name (Optional[Union[str, Path]]): Path to .ttf font file or None for system font. Defaults to None.
-        speed (float): Base movement speed of the sprite. Defaults to 0.
-        **sprite_kwargs: Additional arguments passed to Sprite (e.g., auto_flip, stop_threshold).
+    Attributes:
+        text (str): Отображаемый текст.
+        color (Tuple[int, int, int]): Цвет текста в формате RGB.
+        font_size (int): Размер шрифта в пунктах.
+        font_path (Optional[Union[str, Path]]): Путь к файлу шрифта .ttf или None для системного шрифта.
+        font (pygame.font.Font): Объект шрифта pygame.
     """
 
     def __init__(
@@ -41,6 +39,18 @@ class TextSprite(Sprite):
         sorting_order: int = 1000,
         **sprite_kwargs,
     ):
+        """Инициализирует текстовый спрайт.
+
+        Args:
+            text (str): Текст для отображения.
+            font_size (int, optional): Размер шрифта в пунктах. По умолчанию 24.
+            color (Tuple[int, int, int], optional): Цвет текста в формате RGB. По умолчанию (255, 255, 255).
+            pos (Tuple[int, int], optional): Начальная центральная позиция спрайта (x, y). По умолчанию (0, 0).
+            font_name (Optional[Union[str, Path]], optional): Путь к файлу шрифта .ttf или None для системного шрифта. По умолчанию None.
+            speed (float, optional): Базовая скорость движения спрайта. По умолчанию 0.
+            sorting_order (int, optional): Порядок отрисовки (слой). По умолчанию 1000.
+            **sprite_kwargs: Дополнительные аргументы, передаваемые в Sprite (например, auto_flip, stop_threshold).
+        """
         # инициализируем Pygame Font-модуль
         pygame.font.init()
         self.auto_flip = False
@@ -60,24 +70,35 @@ class TextSprite(Sprite):
 
     @property
     def text(self) -> str:
+        """Текст спрайта.
+        
+        Returns:
+            str: Текущий текст спрайта.
+        """
         return self._text
 
     @text.setter
     def text(self, new_text: str) -> None:  # noqa: F811
+        """Устанавливает новый текст спрайта.
+        
+        Args:
+            new_text (str): Новый текст для отображения.
+        """
         if isinstance(new_text, str):
             self._text = new_text
             self.set_text()
 
     def input(self, k_delete: pygame.key = pygame.K_ESCAPE) -> str:
-        """Handles text input from keyboard events.
+        """Обрабатывает ввод текста с клавиатуры.
 
-        Processes keyboard input to modify the text content, supporting backspace and custom delete key.
+        Обрабатывает ввод с клавиатуры для изменения содержимого текста, поддерживая
+        backspace и пользовательскую клавишу удаления.
 
         Args:
-            k_delete (pygame.key, optional): Key to clear text. Defaults to pygame.K_ESCAPE.
+            k_delete (pygame.key, optional): Клавиша для очистки текста. По умолчанию pygame.K_ESCAPE.
 
         Returns:
-            str: The current text content after processing input.
+            str: Текущее содержимое текста после обработки ввода.
         """
         for e in spritePro.events:
             if e.type == pygame.KEYDOWN:
@@ -90,10 +111,10 @@ class TextSprite(Sprite):
         return self.text
 
     def set_text(self, new_text: str = None):
-        """Updates the sprite's text and redraws the image.
+        """Обновляет текст спрайта и перерисовывает изображение.
 
         Args:
-            new_text (str, optional): New text to display. If None, uses existing text. Defaults to None.
+            new_text (str, optional): Новый текст для отображения. Если None, используется существующий текст. По умолчанию None.
         """
         if new_text is not None:
             self._text = new_text
@@ -101,21 +122,21 @@ class TextSprite(Sprite):
         self.set_font(self.font_path, self.font_size)
 
     def set_color(self, new_color: Tuple[int, int, int]):
-        """Updates the text color and redraws the image.
+        """Обновляет цвет текста и перерисовывает изображение.
 
         Args:
-            new_color (Tuple[int, int, int]): New RGB color for the text.
+            new_color (Tuple[int, int, int]): Новый цвет текста в формате RGB.
         """
         self.color = new_color
         # перерисовываем с текущим шрифтом и текстом
         self.set_font(self.font_path, self.font_size)
 
     def set_font(self, font_name: Optional[Union[str, Path]], font_size: int):
-        """Sets the font and size, then renders the text to a new surface.
+        """Устанавливает шрифт и размер, затем отрисовывает текст на новой поверхности.
 
         Args:
-            font_name (Optional[Union[str, Path]]): Path to .ttf file or None for system font.
-            font_size (int): Font size in points.
+            font_name (Optional[Union[str, Path]]): Путь к файлу .ttf или None для системного шрифта.
+            font_size (int): Размер шрифта в пунктах.
         """
         self.font_size = font_size
         # загружаем шрифт

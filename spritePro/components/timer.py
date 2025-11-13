@@ -5,26 +5,22 @@ from typing import Callable, Optional, Tuple, Dict
 
 
 class Timer:
-    """A universal timer based on system time polling.
+    """Универсальный таймер на основе опроса системного времени.
 
-    Features:
-        - Call update() every frame with no parameters
-        - Callback on timer completion (one-time or repeating)
-        - Pause/resume/stop/reset functionality
-        - Get remaining time, elapsed time, and progress
-
-    Args:
-        duration (float): Timer duration in seconds.
-        callback (Optional[Callable]): Function to call when timer triggers. Can use args/kwargs.
-        args (Tuple, optional): Positional arguments for callback. Defaults to ().
-        kwargs (Dict, optional): Keyword arguments for callback. Defaults to {}.
-        repeat (bool, optional): If True, timer automatically restarts after triggering. Defaults to False.
-        autostart (bool, optional): If True, starts timer immediately on creation. Defaults to False.
+    Возможности:
+        - Вызов update() каждый кадр без параметров
+        - Обратный вызов при завершении таймера (однократный или повторяющийся)
+        - Функциональность паузы/возобновления/остановки/сброса
+        - Получение оставшегося времени, прошедшего времени и прогресса
 
     Attributes:
-        duration (float): Timer interval.
-        active (bool): True if timer is running and not paused.
-        done (bool): True if timer is completed (and not repeating).
+        duration (float): Длительность таймера в секундах.
+        callback (Optional[Callable]): Функция, вызываемая при срабатывании таймера. Может использовать args/kwargs.
+        args (Tuple): Позиционные аргументы для обратного вызова.
+        kwargs (Dict): Именованные аргументы для обратного вызова.
+        repeat (bool): Если True, таймер автоматически перезапускается после срабатывания.
+        active (bool): True, если таймер запущен и не на паузе.
+        done (bool): True, если таймер завершен (и не повторяется).
     """
 
     def __init__(
@@ -36,6 +32,16 @@ class Timer:
         repeat: bool = False,
         autostart: bool = False,
     ):
+        """Инициализирует таймер.
+
+        Args:
+            duration (float): Длительность таймера в секундах.
+            callback (Optional[Callable], optional): Функция, вызываемая при срабатывании таймера. Может использовать args/kwargs. По умолчанию None.
+            args (Tuple, optional): Позиционные аргументы для обратного вызова. По умолчанию ().
+            kwargs (Dict, optional): Именованные аргументы для обратного вызова. По умолчанию {}.
+            repeat (bool, optional): Если True, таймер автоматически перезапускается после срабатывания. По умолчанию False.
+            autostart (bool, optional): Если True, запускает таймер сразу при создании. По умолчанию False.
+        """
         self.duration = duration
         self.callback = callback
         self.args = args or ()
@@ -52,10 +58,10 @@ class Timer:
             self.start()
 
     def start(self, duration: Optional[float] = None) -> None:
-        """(Re)starts the timer.
+        """(Пере)запускает таймер.
 
         Args:
-            duration (Optional[float]): New duration to set before starting. Defaults to None.
+            duration (Optional[float], optional): Новая длительность для установки перед запуском. По умолчанию None.
         """
         if duration is not None:
             self.duration = duration
@@ -66,14 +72,14 @@ class Timer:
         self.done = False
 
     def pause(self) -> None:
-        """Pauses the timer, preserving remaining time."""
+        """Ставит таймер на паузу, сохраняя оставшееся время."""
         if self.active and not self.done:
             # сохраним остаток
             self._remaining = max(self._next_fire - time.monotonic(), 0.0)
             self.active = False
 
     def resume(self) -> None:
-        """Resumes the timer from pause, continuing with remaining time."""
+        """Возобновляет таймер с паузы, продолжая с оставшимся временем."""
         if not self.active and not self.done:
             now = time.monotonic()
             # восстановим возможность срабатывания через остаток
@@ -81,15 +87,16 @@ class Timer:
             self.active = True
 
     def stop(self) -> None:
-        """Stops the timer and marks it as completed."""
+        """Останавливает таймер и помечает его как завершенный."""
         self.active = False
         self.done = True
 
     def reset(self) -> None:
-        """Resets the timer state.
+        """Сбрасывает состояние таймера.
 
-        If active, resets elapsed time to 0 and sets next trigger to duration seconds from now.
-        If inactive, just clears the done flag.
+        Если активен, сбрасывает прошедшее время до 0 и устанавливает следующее срабатывание
+        на duration секунд от текущего момента.
+        Если неактивен, просто очищает флаг done.
         """
         if self.active:
             now = time.monotonic()
@@ -100,11 +107,11 @@ class Timer:
             self.done = False
 
     def update(self) -> None:
-        """Updates timer state, should be called every frame.
+        """Обновляет состояние таймера, должен вызываться каждый кадр.
 
-        If active and current time >= next_fire, executes callback and either:
-        - Pauses/completes the timer (if not repeating)
-        - Restarts the timer (if repeating)
+        Если активен и текущее время >= next_fire, выполняет обратный вызов и либо:
+        - Ставит на паузу/завершает таймер (если не повторяется)
+        - Перезапускает таймер (если повторяется)
         """
         if not self.active or self.done:
             return
@@ -130,20 +137,20 @@ class Timer:
                 self.active = False
 
     def time_left(self) -> float:
-        """Gets remaining time until trigger (>=0), excluding pauses.
+        """Получает оставшееся время до срабатывания (>=0), исключая паузы.
 
         Returns:
-            float: Remaining time in seconds, or 0 if timer is completed.
+            float: Оставшееся время в секундах или 0, если таймер завершен.
         """
         if self.done or not self.active or self._next_fire is None:
             return 0.0
         return max(self._next_fire - time.monotonic(), 0.0)
 
     def elapsed(self) -> float:
-        """Gets elapsed time since last (re)start, excluding pauses.
+        """Получает прошедшее время с последнего (пере)запуска, исключая паузы.
 
         Returns:
-            float: Elapsed time in seconds.
+            float: Прошедшее время в секундах.
         """
         if self._start_time is None:
             return 0.0
@@ -153,10 +160,10 @@ class Timer:
         return min(time.monotonic() - self._start_time, self.duration)
 
     def progress(self) -> float:
-        """Gets completion progress from 0.0 to 1.0.
+        """Получает прогресс завершения от 0.0 до 1.0.
 
         Returns:
-            float: Progress value between 0.0 and 1.0.
+            float: Значение прогресса от 0.0 до 1.0.
         """
         return min((self.duration - self.time_left()) / self.duration, 1.0)
 

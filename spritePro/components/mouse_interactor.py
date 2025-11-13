@@ -11,25 +11,23 @@ import spritePro
 
 
 class MouseInteractor:
-    """Adds hover/click/press interaction logic to sprites.
+    """Добавляет логику взаимодействия с мышью (наведение/клик/нажатие) для спрайтов.
 
-    This class handles mouse interaction events for a sprite, including:
-    - Hover detection (enter/exit)
-    - Mouse button press/release
-    - Click detection
-    - Custom callback support for all events
-
-    Args:
-        sprite (pygame.sprite.Sprite): Any sprite with a .rect attribute.
-        on_click (Optional[Callable[[], None]]): Called when mouse button is released over sprite.
-        on_mouse_down (Optional[Callable[[], None]]): Called when mouse button is pressed over sprite.
-        on_mouse_up (Optional[Callable[[], None]]): Called when mouse button is released (regardless of position).
-        on_hover_enter (Optional[Callable[[], None]]): Called when mouse first enters sprite area.
-        on_hover_exit (Optional[Callable[[], None]]): Called when mouse leaves sprite area.
+    Этот класс обрабатывает события взаимодействия с мышью для спрайта, включая:
+    - Обнаружение наведения (вход/выход)
+    - Нажатие/отпускание кнопки мыши
+    - Обнаружение клика
+    - Поддержка пользовательских обратных вызовов для всех событий
 
     Attributes:
-        is_hovered (bool): Whether mouse is currently over the sprite.
-        is_pressed (bool): Whether mouse button is currently pressed over the sprite.
+        sprite (pygame.sprite.Sprite): Спрайт с атрибутом .rect.
+        on_click (Optional[Callable[[], None]]): Функция, вызываемая при клике на спрайт.
+        on_mouse_down (Optional[Callable[[], None]]): Функция, вызываемая при нажатии кнопки мыши над спрайтом.
+        on_mouse_up (Optional[Callable[[], None]]): Функция, вызываемая при отпускании кнопки мыши (независимо от позиции).
+        on_hover_enter (Optional[Callable[[], None]]): Функция, вызываемая при первом входе мыши в область спрайта.
+        on_hover_exit (Optional[Callable[[], None]]): Функция, вызываемая при выходе мыши из области спрайта.
+        is_hovered (bool): Находится ли мышь в данный момент над спрайтом.
+        is_pressed (bool): Нажата ли кнопка мыши в данный момент над спрайтом.
     """
 
     def __init__(
@@ -41,6 +39,16 @@ class MouseInteractor:
         on_hover_enter: Optional[Callable[[], None]] = None,
         on_hover_exit: Optional[Callable[[], None]] = None,
     ):
+        """Инициализирует компонент взаимодействия с мышью.
+
+        Args:
+            sprite (pygame.sprite.Sprite): Спрайт с атрибутом .rect.
+            on_click (Optional[Callable[[], None]], optional): Функция, вызываемая при клике на спрайт. По умолчанию None.
+            on_mouse_down (Optional[Callable[[], None]], optional): Функция, вызываемая при нажатии кнопки мыши над спрайтом. По умолчанию None.
+            on_mouse_up (Optional[Callable[[], None]], optional): Функция, вызываемая при отпускании кнопки мыши. По умолчанию None.
+            on_hover_enter (Optional[Callable[[], None]], optional): Функция, вызываемая при первом входе мыши в область спрайта. По умолчанию None.
+            on_hover_exit (Optional[Callable[[], None]], optional): Функция, вызываемая при выходе мыши из области спрайта. По умолчанию None.
+        """
         self.sprite = sprite
         self.on_click = on_click
         self.on_mouse_down = on_mouse_down
@@ -53,21 +61,30 @@ class MouseInteractor:
 
     @property
     def is_hovered(self) -> bool:
+        """Проверяет, находится ли мышь над спрайтом.
+        
+        Returns:
+            bool: True, если мышь находится над спрайтом.
+        """
         return self._hovered
 
     @property
     def is_pressed(self) -> bool:
+        """Проверяет, нажата ли кнопка мыши над спрайтом.
+        
+        Returns:
+            bool: True, если кнопка мыши нажата над спрайтом.
+        """
         return self._pressed
 
     def update(self, events: Optional[List[pygame.event.Event]] = None):
-        """Updates interaction state based on mouse events.
+        """Обновляет состояние взаимодействия на основе событий мыши.
 
-        Should be called every frame before rendering:
+        Должен вызываться каждый кадр перед отрисовкой:
             inter.update(pygame.event.get())
 
         Args:
-            events (Optional[List[pygame.event.Event]]): List of pygame events to process.
-                If None, uses spritePro.events.
+            events (Optional[List[pygame.event.Event]], optional): Список событий pygame для обработки. Если None, используется spritePro.events.
         """
         events = events or spritePro.events
         pos = pygame.mouse.get_pos()

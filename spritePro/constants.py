@@ -1,6 +1,23 @@
-"""Common constants and enums for SpritePro."""
+"""Общие константы и перечисления для SpritePro."""
 
 class Anchor:
+    """Константы для якорей позиционирования спрайтов.
+    
+    Якорь определяет точку спрайта, которая используется для позиционирования.
+    
+    Attributes:
+        CENTER (str): Центр спрайта.
+        TOP_LEFT (str): Верхний левый угол.
+        TOP_RIGHT (str): Верхний правый угол.
+        BOTTOM_LEFT (str): Нижний левый угол.
+        BOTTOM_RIGHT (str): Нижний правый угол.
+        MID_TOP (str): Середина верхней стороны.
+        MID_BOTTOM (str): Середина нижней стороны.
+        MID_LEFT (str): Середина левой стороны.
+        MID_RIGHT (str): Середина правой стороны.
+        MAP (dict): Словарь для преобразования строковых значений в константы.
+        ALL (tuple): Кортеж всех доступных якорей.
+    """
     CENTER = "center"
     TOP_LEFT = "topleft"
     TOP_RIGHT = "topright"
@@ -27,7 +44,20 @@ class Anchor:
 
 
 class FillDirection:
-    """Constants for bar fill directions."""
+    """Константы для направлений заполнения полос прогресса.
+    
+    Attributes:
+        HORIZONTAL_LEFT_TO_RIGHT (str): Горизонтальное заполнение слева направо (по умолчанию).
+        HORIZONTAL_RIGHT_TO_LEFT (str): Горизонтальное заполнение справа налево.
+        VERTICAL_BOTTOM_TO_TOP (str): Вертикальное заполнение снизу вверх.
+        VERTICAL_TOP_TO_BOTTOM (str): Вертикальное заполнение сверху вниз.
+        LEFT_TO_RIGHT (str): Псевдоним для HORIZONTAL_LEFT_TO_RIGHT.
+        RIGHT_TO_LEFT (str): Псевдоним для HORIZONTAL_RIGHT_TO_LEFT.
+        BOTTOM_TO_TOP (str): Псевдоним для VERTICAL_BOTTOM_TO_TOP.
+        TOP_TO_BOTTOM (str): Псевдоним для VERTICAL_TOP_TO_BOTTOM.
+        MAP (dict): Словарь для преобразования строковых значений в константы.
+        ALL (tuple): Кортеж всех доступных направлений.
+    """
     
     # Горизонтальные направления
     HORIZONTAL_LEFT_TO_RIGHT = "horizontal_left_to_right"  # слева направо (default)

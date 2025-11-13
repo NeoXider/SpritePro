@@ -16,29 +16,24 @@ import random
 
 
 class Button(Sprite):
-    """A convenient UI button based on Sprite + TextSprite + MouseInteractor.
+    """Удобная UI кнопка на основе Sprite + TextSprite + MouseInteractor.
 
-    This class combines sprite functionality with text display and mouse interaction
-    to create an interactive button with hover and press animations.
+    Объединяет функциональность спрайта с отображением текста и взаимодействием с мышью
+    для создания интерактивной кнопки с анимациями при наведении и нажатии.
 
-    Args:
-        sprite (str): Path to the sprite image. Defaults to empty string.
-        size (Tuple[int, int]): Button dimensions (width, height). Defaults to (250, 70).
-        pos (Tuple[int, int]): Button center position on screen. Defaults to (300, 200).
-        text (str): Button label text. Defaults to "Button".
-        text_size (int): Base font size. Defaults to 24.
-        text_color (Tuple[int,int,int]): Text color in RGB. Defaults to (0, 0, 0).
-        font_name (Optional[Union[str, Path]]): Path to TTF font or None. Defaults to None.
-        on_click (Optional[Callable]): Click handler function. Defaults to None.
-        hover_scale_delta (float): Scale change on hover. Defaults to 0.05.
-        press_scale_delta (float): Scale change on press. Defaults to -0.08.
-        hover_color (Tuple[int,int,int]): Background color on hover. Defaults to (230, 230, 230).
-        press_color (Tuple[int,int,int]): Background color on press. Defaults to (180, 180, 180).
-        base_color (Tuple[int,int,int]): Default background color. Defaults to (255, 255, 255).
-        anim_speed (float): Animation speed multiplier. Defaults to 0.2.
-        animated (bool): Whether to enable animations. Defaults to True.
-        use_scale_fx (bool): Enables or disables the scaling effect on hover and press. Defaults to True.
-        use_color_fx (bool): Enables or disables the color change effect on hover and press. Defaults to True.
+    Attributes:
+        text_sprite (TextSprite): Спрайт текста кнопки.
+        interactor (MouseInteractor): Компонент для обработки взаимодействия с мышью.
+        base_color (Tuple[int, int, int]): Базовый цвет фона кнопки.
+        hover_color (Tuple[int, int, int]): Цвет фона при наведении.
+        press_color (Tuple[int, int, int]): Цвет фона при нажатии.
+        current_color (Tuple[int, int, int]): Текущий цвет фона.
+        hover_scale_delta (float): Изменение масштаба при наведении.
+        press_scale_delta (float): Изменение масштаба при нажатии.
+        anim_speed (float): Множитель скорости анимации.
+        animated (bool): Включены ли анимации.
+        use_scale_fx (bool): Включен ли эффект масштабирования.
+        use_color_fx (bool): Включен ли эффект изменения цвета.
     """
 
     def __init__(
@@ -62,6 +57,28 @@ class Button(Sprite):
         use_scale_fx: bool = True,
         use_color_fx: bool = True,
     ):
+        """Инициализирует новую кнопку.
+
+        Args:
+            sprite (str, optional): Путь к изображению спрайта. По умолчанию пустая строка.
+            size (Tuple[int, int], optional): Размеры кнопки (ширина, высота). По умолчанию (250, 70).
+            pos (Tuple[int, int], optional): Центральная позиция кнопки на экране. По умолчанию (300, 200).
+            text (str, optional): Текст метки кнопки. По умолчанию "Button".
+            text_size (int, optional): Базовый размер шрифта. По умолчанию 24.
+            text_color (Tuple[int, int, int], optional): Цвет текста в RGB. По умолчанию (0, 0, 0).
+            font_name (Optional[Union[str, Path]], optional): Путь к TTF шрифту или None. По умолчанию None.
+            on_click (Optional[Callable[[], None]], optional): Функция обработчик клика. По умолчанию None.
+            hover_scale_delta (float, optional): Изменение масштаба при наведении. По умолчанию 0.05.
+            press_scale_delta (float, optional): Изменение масштаба при нажатии. По умолчанию -0.08.
+            hover_color (Tuple[int, int, int], optional): Цвет фона при наведении. По умолчанию (230, 230, 230).
+            press_color (Tuple[int, int, int], optional): Цвет фона при нажатии. По умолчанию (180, 180, 180).
+            base_color (Tuple[int, int, int], optional): Базовый цвет фона. По умолчанию (255, 255, 255).
+            anim_speed (float, optional): Множитель скорости анимации. По умолчанию 0.2.
+            animated (bool, optional): Включены ли анимации. По умолчанию True.
+            sorting_order (int, optional): Порядок отрисовки (слой). По умолчанию 1000.
+            use_scale_fx (bool, optional): Включен ли эффект масштабирования. По умолчанию True.
+            use_color_fx (bool, optional): Включен ли эффект изменения цвета. По умолчанию True.
+        """
         # Инициализируем Sprite с пустым фоном
         super().__init__(sprite, size=size, pos=pos, sorting_order=sorting_order)
 
@@ -96,8 +113,10 @@ class Button(Sprite):
         self.interactor = MouseInteractor(sprite=self, on_click=on_click)
 
     def set_base_color(self, base_color: tuple = (255,255,255)):
-        """
-        Set base color
+        """Устанавливает базовый цвет кнопки.
+
+        Args:
+            base_color (tuple, optional): Кортеж из трех целых чисел, представляющий базовый цвет кнопки. По умолчанию (255, 255, 255).
         """
         self.base_color = base_color
 
@@ -105,9 +124,9 @@ class Button(Sprite):
         """Устанавливает все три состояния цвета для кнопки.
 
         Args:
-            base_color (tuple): a tuple of three integers representing the base color of the button.
-            press_color (tuple): a tuple of three integers representing the color of the button when pressed.
-            hover_color (tuple): a tuple of three integers representing the color of the button when hovered over.
+            base_color (tuple): Кортеж из трех целых чисел, представляющий базовый цвет кнопки.
+            press_color (tuple): Кортеж из трех целых чисел, представляющий цвет кнопки при нажатии.
+            hover_color (tuple): Кортеж из трех целых чисел, представляющий цвет кнопки при наведении.
         """
         self.base_color = base_color
         self.press_color = press_color
@@ -117,24 +136,24 @@ class Button(Sprite):
         """Устанавливает базовый, ховер и пресс масштабы для кнопки.
 
         Args:
-            base_scale (float): The base scale of the button.
-            hover_scale (float): The scale of the button when hovered over.
-            press_scale (float): The scale of the button when pressed.
+            base_scale (float): Базовый масштаб кнопки.
+            hover_scale (float): Масштаб кнопки при наведении.
+            press_scale (float): Масштаб кнопки при нажатии.
         """
         self.set_scale(base_scale, update=True)
         self.hover_scale_delta = hover_scale - base_scale
         self.press_scale_delta = press_scale - base_scale
 
     def update(self, screen: pygame.Surface = None):
-        """Updates button state and renders it to the screen.
+        """Обновляет состояние кнопки и отрисовывает её на экране.
 
-        This method handles:
-        - Mouse interaction updates
-        - Color and scale state changes
-        - Background, sprite and text rendering
+        Этот метод обрабатывает:
+        - Обновление взаимодействия с мышью
+        - Изменения состояния цвета и масштаба
+        - Отрисовку фона, спрайта и текста
 
         Args:
-            screen (pygame.Surface): The surface to render the button on.
+            screen (pygame.Surface, optional): Поверхность для отрисовки. Если None, используется глобальный экран.
         """
         screen = screen or spritePro.screen
 
@@ -187,11 +206,11 @@ class Button(Sprite):
             label.update(screen)
 
     def set_scale(self, scale: float, update: bool = True):
-        """Sets the button's scale.
+        """Устанавливает масштаб кнопки.
 
         Args:
-            scale (float): The new scale value.
-            update (bool, optional): Whether to update the base scale. Defaults to True.
+            scale (float): Новое значение масштаба.
+            update (bool, optional): Обновлять ли базовый масштаб. По умолчанию True.
         """
         if update:
             self.start_scale = scale
@@ -204,22 +223,26 @@ class Button(Sprite):
                 pass
 
     def on_click(self, func: Callable):
-        """Sets the click handler function for the button.
+        """Устанавливает функцию обработчик клика для кнопки.
 
         Args:
-            func (Callable): The function to call when the button is clicked.
+            func (Callable): Функция, которая будет вызвана при клике на кнопку.
         """
         self.interactor.on_click = func
 
     def on_hover(self, func: Callable):
-        """Sets the hover handler function for the button.
+        """Устанавливает функцию обработчик наведения для кнопки.
 
         Args:
-            func (Callable): The function to call when the button is hovered.
+            func (Callable): Функция, которая будет вызвана при наведении на кнопку.
         """
         self.interactor.on_hover_enter = func
 
     def kill(self) -> None:
+        """Удаляет кнопку из игры и освобождает все связанные ресурсы.
+        
+        Удаляет текстовый спрайт и интерактор, затем вызывает родительский метод kill().
+        """
         text_sprite = getattr(self, "text_sprite", None)
         if text_sprite is not None:
             text_sprite.set_parent(None, keep_world_position=True)
