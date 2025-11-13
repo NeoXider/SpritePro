@@ -15,26 +15,6 @@ TextSprite extends the base Sprite class to handle text rendering, making it eas
 - **Positioning**: Automatic text centering and positioning
 - **Performance**: Efficient text surface caching
 
-## Basic Usage
-
-```python
-import spritePro as s
-
-# Create a text sprite
-text = s.TextSprite(
-    text="Hello World!",
-    font_size=32,
-    color=(255, 255, 255),
-    pos=(400, 300)
-)
-
-# Update text content
-text.set_text("New Text!")
-
-# Update in game loop
-text.update()
-```
-
 ## Constructor Parameters
 
 - `text` (str): Initial text content. Default: "Text"
@@ -57,7 +37,35 @@ current_text = text.text
 # Update text with formatting
 text.set_text(f"Score: {player.score}")
 text.set_text(f"Health: {player.health}/100")
+
+# Set text using property
+text.text = "New text"  # Автоматически обновляет изображение
 ```
+
+### Text Input from Keyboard
+```python
+# Обработка ввода текста с клавиатуры
+text_sprite = s.TextSprite(
+    text="Введите текст",
+    pos=(400, 300)
+)
+
+# В игровом цикле
+while True:
+    spritePro.update()
+    # Обработка ввода (Backspace удаляет символ, ESC очищает весь текст)
+    text_sprite.input(k_delete=pygame.K_ESCAPE)
+    text_sprite.update()
+```
+
+**Параметры метода `input()`:**
+- `k_delete` (pygame.key): Клавиша для очистки всего текста. По умолчанию: `pygame.K_ESCAPE`
+- Возвращает: текущий текст после обработки ввода
+
+**Особенности:**
+- Backspace удаляет последний символ
+- Все остальные символы добавляются к тексту
+- Автоматически обновляет изображение спрайта
 
 ### Font Customization
 ```python
@@ -69,10 +77,14 @@ text = s.TextSprite(
 )
 
 # Change font at runtime
-text.set_font("assets/fonts/title_font.ttf", size=48)
+text.set_font("assets/fonts/title_font.ttf", font_size=48)
 
 # System fonts
-text.set_font(None, size=24)  # Use default system font
+text.set_font(None, font_size=24)  # Use default system font
+
+# Получить текущие параметры
+current_font_size = text.font_size
+current_font_path = text.font_path
 ```
 
 ### Color and Appearance
@@ -108,16 +120,15 @@ lines = ["Player Stats:", f"Health: {health}", f"Score: {score}"]
 text.set_text("\n".join(lines))
 ```
 
-### Text Alignment
+### Text Positioning
 ```python
-# Text alignment options
-text.set_alignment("center")  # Center alignment
-text.set_alignment("left")    # Left alignment
-text.set_alignment("right")   # Right alignment
+# Использование якорей для позиционирования (см. Sprite документацию)
+text.set_position((100, 200), anchor=s.Anchor.TOP_LEFT)
+text.set_position((400, 300), anchor=s.Anchor.CENTER)
 
-# Manual positioning
-text.set_position((100, 200))
-text.center_on(sprite.get_center())
+# Получение позиции
+pos = text.get_position()  # Возвращает центральную позицию
+world_pos = text.get_world_position()  # Мировая позиция с учетом иерархии
 ```
 
 ### Dynamic Text Updates
@@ -375,6 +386,26 @@ def load_font_with_fallback(font_paths, size):
         except:
             continue
     return pygame.font.Font(None, size)  # System font fallback
+```
+
+## Basic Usage
+
+```python
+import spritePro as s
+
+# Create a text sprite
+text = s.TextSprite(
+    text="Hello World!",
+    font_size=32,
+    color=(255, 255, 255),
+    pos=(400, 300)
+)
+
+# Update text content
+text.set_text("New Text!")
+
+# Update in game loop
+text.update()
 ```
 
 For more information on related components, see:

@@ -42,70 +42,28 @@ BarWithBackground(
 - **background_size**: Optional separate size for background image
 - **fill_size**: Optional separate size for fill image
 
-## Key Methods
+## Методы
 
-### Image Management
+### Управление изображениями
 
-```python
-# Set a new fill image
-bar.set_fill_image("path/to/fill.png")
+- `set_fill_image(fill_image: Union[str, Path, pygame.Surface])`: Установить новое изображение заполнения
+- `set_background_image(background_image: Union[str, Path, pygame.Surface])`: Установить новое фоновое изображение
 
-# Set a new background image
-bar.set_background_image("path/to/background.png")
-```
+### Управление размерами
 
-### Size Management
+- `set_background_size(size: Tuple[int, int])`: Установить новый размер фона
+- `set_fill_size(size: Tuple[int, int])`: Установить новый размер заполнения
+- `set_both_sizes(background_size: Tuple[int, int], fill_size: Tuple[int, int])`: Установить оба размера одновременно
 
-```python
-# Set background size only
-bar.set_background_size((400, 60))
+### Управление заполнением
 
-# Set fill size only
-bar.set_fill_size((350, 40))
+- `set_fill_amount(value: float, animate: bool = True)`: Установить количество заполнения
+- `get_fill_amount() -> float`: Получить текущее количество заполнения
+- `set_fill_type(fill_direction: Union[str, FillDirection], anchor: Union[str, Anchor] = Anchor.CENTER)`: Установить направление заполнения и якорь
 
-# Set both sizes at once
-bar.set_both_sizes(
-    background_size=(400, 60),
-    fill_size=(350, 40)
-)
-```
+## Примеры использования
 
-### Fill Control
-
-```python
-# Set fill amount with animation
-bar.set_fill_amount(0.75, animate=True)
-
-# Get current fill amount
-current_fill = bar.get_fill_amount()
-
-# Set fill direction and anchor
-bar.set_fill_type(FillDirection.BOTTOM_TO_TOP, s.Anchor.CENTER)
-```
-
-### Parent Sprite Integration
-
-```python
-# Attach bar to a hero sprite
-class Hero(s.Sprite):
-    def set_bar(self, bar, pos=(0, -150)):
-        self.bar = bar
-        self.bar.set_parent(self)
-        self.bar.local_offset = pos
-
-# Create hero and bar
-hero = Hero("hero.png", speed=5)
-health_bar = BarWithBackground(
-    background_image="bar_bg.png",
-    fill_image="bar_fill.png",
-    size=(200, 40)
-)
-hero.set_bar(health_bar)
-```
-
-## Examples
-
-### Basic Usage
+### Базовое использование
 
 ```python
 import spritePro as s
@@ -223,10 +181,71 @@ bar.set_fill_amount(0.5, animate=False)
 6. **Parent Attachment**: Use `set_parent()` and `local_offset` for character health bars
 7. **Camera**: Bar automatically follows parent sprite and respects camera movement
 
-## Demo
+### Примеры использования методов
 
-See `spritePro/demoGames/bar_simple_demo.py` for a complete example showcasing all features including:
-- Different fill directions
-- Image switching
-- Size management
-- Animation control
+#### Управление изображениями
+
+```python
+# Установить новое изображение заполнения
+bar.set_fill_image("path/to/fill.png")
+
+# Установить новое фоновое изображение
+bar.set_background_image("path/to/background.png")
+```
+
+#### Управление размерами
+
+```python
+# Установить размер фона
+bar.set_background_size((400, 60))
+
+# Установить размер заполнения
+bar.set_fill_size((350, 40))
+
+# Установить оба размера одновременно
+bar.set_both_sizes(
+    background_size=(400, 60),
+    fill_size=(350, 40)
+)
+```
+
+#### Управление заполнением
+
+```python
+# Установить количество заполнения с анимацией
+bar.set_fill_amount(0.75, animate=True)
+
+# Получить текущее количество заполнения
+current_fill = bar.get_fill_amount()
+
+# Установить направление заполнения и якорь
+bar.set_fill_type(FillDirection.BOTTOM_TO_TOP, s.Anchor.CENTER)
+```
+
+#### Интеграция с родительским спрайтом
+
+```python
+# Прикрепить полосу к спрайту героя
+class Hero(s.Sprite):
+    def set_bar(self, bar, pos=(0, -150)):
+        self.bar = bar
+        self.bar.set_parent(self)
+        self.bar.local_offset = pos
+
+# Создать героя и полосу
+hero = Hero("hero.png", speed=5)
+health_bar = BarWithBackground(
+    background_image="bar_bg.png",
+    fill_image="bar_fill.png",
+    size=(200, 40)
+)
+hero.set_bar(health_bar)
+```
+
+## Демо
+
+См. `spritePro/demoGames/bar_simple_demo.py` для полного примера, демонстрирующего все возможности:
+- Различные направления заполнения
+- Переключение изображений
+- Управление размерами
+- Управление анимацией

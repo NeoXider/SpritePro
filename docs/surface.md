@@ -17,49 +17,27 @@ Surface utilities extend Pygame's surface capabilities with common visual effect
 
 ### round_corners()
 
-Creates a new surface with rounded corners from an existing surface.
+Создает новую поверхность с закругленными углами из существующей поверхности.
 
-```python
-import spritePro.utils.surface as surface_utils
+**Параметры:**
+- `surface` (pygame.Surface): Исходная поверхность для закругления
+- `radius` (int): Радиус углов в пикселях. По умолчанию: 10
 
-# Load an image
-original = pygame.image.load("button.png")
-
-# Create rounded version
-rounded = surface_utils.round_corners(original, radius=15)
-
-# Use the rounded surface
-screen.blit(rounded, (100, 100))
-```
-
-**Parameters:**
-- `surface` (pygame.Surface): Source surface to round
-- `radius` (int): Corner radius in pixels. Default: 10
-
-**Returns:**
-- `pygame.Surface`: New surface with rounded corners
+**Возвращает:**
+- `pygame.Surface`: Новая поверхность с закругленными углами
 
 ### set_mask()
 
-Applies a mask to a surface using alpha blending.
+Применяет маску к поверхности с использованием альфа-смешивания.
 
-```python
-# Create a custom mask
-mask = pygame.Surface((100, 100), pygame.SRCALPHA)
-pygame.draw.circle(mask, (255, 255, 255, 255), (50, 50), 40)
+**Параметры:**
+- `surface` (pygame.Surface): Исходная поверхность
+- `mask` (pygame.Surface): Маска поверхности (белый = видимый, прозрачный = скрытый)
 
-# Apply mask to image
-masked_image = surface_utils.set_mask(original_image, mask)
-```
+**Возвращает:**
+- `pygame.Surface`: Поверхность с примененной маской
 
-**Parameters:**
-- `surface` (pygame.Surface): Source surface
-- `mask` (pygame.Surface): Mask surface (white = visible, transparent = hidden)
-
-**Returns:**
-- `pygame.Surface`: Surface with applied mask
-
-## Usage Examples
+## Примеры использования
 
 ### Rounded UI Elements
 
@@ -314,6 +292,28 @@ button = RoundedButton(
     radius=15,
     size=(200, 60)
 )
+```
+
+### Базовое использование
+
+```python
+import spritePro.utils.surface as surface_utils
+
+# Загрузить изображение
+original = pygame.image.load("button.png")
+
+# Создать закругленную версию
+rounded = surface_utils.round_corners(original, radius=15)
+
+# Использовать закругленную поверхность
+screen.blit(rounded, (100, 100))
+
+# Создать пользовательскую маску
+mask = pygame.Surface((100, 100), pygame.SRCALPHA)
+pygame.draw.circle(mask, (255, 255, 255, 255), (50, 50), 40)
+
+# Применить маску к изображению
+masked_image = surface_utils.set_mask(original_image, mask)
 ```
 
 For more information on related functionality, see:

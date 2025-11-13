@@ -14,24 +14,6 @@ All color effects are time-based and return RGB color tuples that can be used di
 - **Easy Integration**: Simple function calls that return RGB tuples
 - **Utility Functions**: Color manipulation and conversion utilities
 
-## Basic Usage
-
-```python
-import spritePro as s
-
-# Access through utils module
-color = s.utils.pulse(speed=2.0)
-sprite.set_color(color)
-
-# Or import specific functions
-from spritePro.utils.color_effects import pulse, rainbow, breathing
-
-# Use in game loop
-while True:
-    sprite.set_color(pulse(speed=1.5))
-    s.update()
-```
-
 ## Effect Functions
 
 ### Pulse Effect
@@ -428,5 +410,23 @@ text_sprite.set_color(s.utils.wave(speed=1.5, colors=[(255, 0, 0), (0, 255, 0), 
 See the interactive demonstrations:
 - `spritePro/demoGames/color_effects_demo.py` - Interactive color picker with all effects
 - `spritePro/demoGames/color_text_demo.py` - Text effects showcase with dynamic colors applied to TextSprite objects
+
+## Basic Usage
+
+```python
+import spritePro as s
+
+# Доступ через модуль utils
+color = s.utils.pulse(speed=2.0)
+sprite.set_color(color)
+
+# Или импортировать конкретные функции
+from spritePro.utils.color_effects import pulse, rainbow, breathing
+
+# Использование в игровом цикле
+while True:
+    sprite.set_color(pulse(speed=1.5))
+    s.update()
+```
 
 The color effects module provides a powerful toolkit for creating dynamic, engaging visual effects that enhance the player experience and provide important visual feedback in your games.

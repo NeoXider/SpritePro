@@ -14,24 +14,6 @@ ToggleButton is perfect for settings, options, and any binary state controls in 
 - **Smooth Animations**: Inherits all Button animation capabilities
 - **Flexible Styling**: Customizable brightness effects for hover/press states
 
-## Basic Usage
-
-```python
-import spritePro as s
-
-# Create a simple toggle button
-toggle = s.ToggleButton(
-    pos=(400, 300),
-    text_on="ON",
-    text_off="OFF",
-    is_on=True,  # Start in ON state
-    on_toggle=lambda state: print(f"Toggle is now {'ON' if state else 'OFF'}")
-)
-
-# Update in game loop
-toggle.update()
-```
-
 ## Constructor Parameters
 
 - `sprite` (str): Background image path. Default: "" (solid color)
@@ -256,5 +238,23 @@ class GameSettings:
 - `color_off` (tuple): Color when OFF
 - `text_on` (str): Text when ON
 - `text_off` (str): Text when OFF
+
+## Basic Usage
+
+```python
+import spritePro as s
+
+# Create a simple toggle button
+toggle = s.ToggleButton(
+    pos=(400, 300),
+    text_on="ON",
+    text_off="OFF",
+    is_on=True,  # Start in ON state
+    on_toggle=lambda state: print(f"Toggle is now {'ON' if state else 'OFF'}")
+)
+
+# Update in game loop
+toggle.update()
+```
 
 ToggleButton provides a complete solution for binary state controls in your games, with full customization and smooth animations inherited from the Button class.

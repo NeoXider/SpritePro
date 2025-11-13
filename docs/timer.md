@@ -1,142 +1,139 @@
-# Timer Component
+# Компонент Timer
 
-The `Timer` component provides precise timing functionality for game events, delays, and scheduling with support for callbacks, repetition, and pause/resume functionality.
+Компонент `Timer` предоставляет точную функциональность таймера для игровых событий, задержек и планирования с поддержкой обратных вызовов, повторения и функций паузы/возобновления.
 
-## Overview
+## Обзор
 
-The Timer component is essential for managing time-based events in games, such as cooldowns, delays, animations, and scheduled actions. It provides frame-rate independent timing with flexible callback support.
+Компонент Timer необходим для управления событиями, основанными на времени в играх, такими как перезарядка, задержки, анимации и запланированные действия. Он предоставляет независимую от частоты кадров систему времени с гибкой поддержкой обратных вызовов.
 
-## Key Features
+## Основные возможности
 
-- **Precise Timing**: Frame-rate independent timing system
-- **Callback Support**: Execute functions when timer completes
-- **Repeat Functionality**: One-shot or repeating timers
-- **Pause/Resume**: Full control over timer state
-- **Progress Tracking**: Monitor timer progress and remaining time
-- **Multiple Timers**: Manage multiple concurrent timers
+- **Точное время**: Система времени, независимая от частоты кадров
+- **Поддержка обратных вызовов**: Выполнение функций при завершении таймера
+- **Функциональность повторения**: Однократные или повторяющиеся таймеры
+- **Пауза/Возобновление**: Полный контроль над состоянием таймера
+- **Отслеживание прогресса**: Мониторинг прогресса таймера и оставшегося времени
+- **Множественные таймеры**: Управление несколькими одновременными таймерами
 
-## Basic Usage
+## Параметры конструктора
 
+- `duration` (float): Длительность таймера в секундах
+- `callback` (callable, optional): Функция для вызова при завершении таймера. По умолчанию: None
+- `args` (Tuple, optional): Позиционные аргументы для обратного вызова. По умолчанию: ()
+- `kwargs` (Dict, optional): Именованные аргументы для обратного вызова. По умолчанию: {}
+- `repeat` (bool): Должен ли таймер повторяться. По умолчанию: False
+- `autostart` (bool): Запустить таймер сразу при создании. По умолчанию: False
+
+## Свойства
+
+- `duration` (float): Интервал таймера в секундах
+- `active` (bool): True, если таймер запущен и не на паузе
+- `done` (bool): True, если таймер завершен (и не повторяется)
+- `repeat` (bool): Повторяется ли таймер
+- `callback` (Callable | None): Функция обратного вызова
+- `args` (Tuple): Позиционные аргументы для обратного вызова
+- `kwargs` (Dict): Именованные аргументы для обратного вызова
+
+## Управление таймером
+
+### Базовые операции с таймером
 ```python
-import spritePro as s
-
-# Create a simple timer
-def timer_finished():
-    print("Timer completed!")
-
-timer = s.Timer(
-    duration=3.0,  # 3 seconds
-    callback=timer_finished
-)
-
-# Start the timer
-timer.start()
-
-# Update in game loop
-timer.update()
-```
-
-## Constructor Parameters
-
-- `duration` (float): Timer duration in seconds
-- `callback` (callable, optional): Function to call when timer completes
-- `repeat` (bool): Whether timer should repeat. Default: False
-- `auto_start` (bool): Start timer immediately. Default: False
-
-## Timer Control
-
-### Basic Timer Operations
-```python
-# Create timer
+# Создать таймер
 timer = s.Timer(duration=5.0)
 
-# Start timer
-timer.start()
+# Запустить таймер (можно указать новую длительность)
+timer.start()  # Запустить с текущей длительностью
+timer.start(duration=10.0)  # Запустить с новой длительностью
 
-# Pause timer
+# Поставить таймер на паузу
 timer.pause()
 
-# Resume timer
+# Возобновить таймер
 timer.resume()
 
-# Stop timer
+# Остановить таймер
 timer.stop()
 
-# Reset timer
+# Сбросить таймер
 timer.reset()
-
-# Restart timer
-timer.restart()
 ```
 
-### Timer State Checking
+### Проверка состояния таймера
 ```python
-# Check timer state
+# Проверить состояние таймера
 if timer.active:
-    print("Timer is active")
+    print("Таймер активен")
 
 if timer.done:
-    print("Timer is completed")
+    print("Таймер завершен")
 
-# Get timer information
-time_left = timer.time_left()
-elapsed_time = timer.elapsed()
-progress = timer.progress()
+# Получить информацию о таймере
+time_left = timer.time_left()  # Оставшееся время в секундах
+elapsed_time = timer.elapsed()  # Прошедшее время в секундах
+progress = timer.progress()  # Прогресс от 0.0 до 1.0
 
-print(f"Progress: {progress:.2f}")  # 0.0 to 1.0
-print(f"Time left: {time_left:.2f} seconds")
-print(f"Elapsed: {elapsed_time:.2f} seconds")
-
+print(f"Прогресс: {progress:.2f}")  # 0.0 до 1.0
+print(f"Осталось: {time_left:.2f} секунд")
+print(f"Прошло: {elapsed_time:.2f} секунд")
 ```
 
-## Callback System
+## Система обратных вызовов
 
-### Simple Callbacks
+### Простые обратные вызовы
 ```python
 def explosion_timer():
-    print("Boom!")
+    print("Бум!")
     create_explosion()
 
 timer = s.Timer(3.0, explosion_timer)
 timer.start()
 ```
 
-### Callbacks with Parameters
+### Обратные вызовы с параметрами
 ```python
-def damage_player(damage_amount):
-    player.take_damage(damage_amount)
+def damage_player(damage_amount, damage_type="normal"):
+    player.take_damage(damage_amount, damage_type)
 
-# Use lambda for parameters
-timer = s.Timer(2.0, lambda: damage_player(25))
+# Использовать args и kwargs
+timer = s.Timer(
+    2.0,
+    damage_player,
+    args=(25,),  # Позиционные аргументы
+    kwargs={"damage_type": "fire"}  # Именованные аргументы
+)
 timer.start()
 
-# Or use functools.partial
+# Или использовать lambda
+timer = s.Timer(2.0, lambda: damage_player(25, "fire"))
+timer.start()
+
+# Или использовать functools.partial
 from functools import partial
-timer = s.Timer(2.0, partial(damage_player, 25))
+timer = s.Timer(2.0, partial(damage_player, 25, damage_type="fire"))
 timer.start()
 ```
 
-### Multiple Callbacks
+### Множественные обратные вызовы
 ```python
 def callback1():
-    print("First callback")
+    print("Первый обратный вызов")
 
 def callback2():
-    print("Second callback")
+    print("Второй обратный вызов")
 
-# Chain callbacks
+# Цепочка обратных вызовов
 timer = s.Timer(1.0, lambda: [callback1(), callback2()])
 timer.start()
 ```
 
-## Repeating Timers
+## Повторяющиеся таймеры
 
-### Basic Repeating Timer
+### Базовый повторяющийся таймер
 ```python
 def spawn_enemy():
     enemies.append(Enemy())
 
-# Spawn enemy every 5 seconds
+# Создавать врага каждые 5 секунд
 spawn_timer = s.Timer(
     duration=5.0,
     callback=spawn_enemy,
@@ -145,30 +142,31 @@ spawn_timer = s.Timer(
 spawn_timer.start()
 ```
 
-### Limited Repetitions
+### Автозапуск таймера
 ```python
-class LimitedTimer(s.Timer):
-    def __init__(self, duration, callback, max_repeats):
-        super().__init__(duration, callback, repeat=True)
-        self.max_repeats = max_repeats
-        self.repeat_count = 0
-        
-    def on_complete(self):
-        super().on_complete()
-        self.repeat_count += 1
-        
-        if self.repeat_count >= self.max_repeats:
-            self.stop()
-
-# Timer that repeats 3 times
-limited_timer = LimitedTimer(2.0, spawn_powerup, 3)
-limited_timer.start()
+# Таймер запустится автоматически при создании
+timer = s.Timer(
+    duration=2.0,
+    callback=lambda: print("Тик"),
+    repeat=True,
+    autostart=True  # Автоматический запуск
+)
 ```
 
-## Advanced Features
+## Продвинутые возможности
 
-### Timer with Progress Callbacks
+### Таймер с изменением длительности
 ```python
+# Можно изменить длительность при запуске
+timer = s.Timer(duration=5.0)
+timer.start(duration=10.0)  # Запустить с новой длительностью
+```
+
+### Таймер с отслеживанием прогресса
+```python
+def update_progress_bar(progress):
+    progress_bar.width = int(200 * progress)
+
 class ProgressTimer(s.Timer):
     def __init__(self, duration, callback, progress_callback=None):
         super().__init__(duration, callback)
@@ -177,19 +175,16 @@ class ProgressTimer(s.Timer):
     def update(self):
         super().update()
         
-        if self.progress_callback and self.is_running():
-            progress = self.get_progress()
+        if self.progress_callback and self.active:
+            progress = self.progress()
             self.progress_callback(progress)
 
-def update_progress_bar(progress):
-    progress_bar.set_width(int(200 * progress))
-
-# Timer with progress updates
+# Таймер с обновлениями прогресса
 timer = ProgressTimer(10.0, game_over, update_progress_bar)
 timer.start()
 ```
 
-### Conditional Timers
+### Условные таймеры
 ```python
 class ConditionalTimer(s.Timer):
     def __init__(self, duration, callback, condition):
@@ -202,7 +197,7 @@ class ConditionalTimer(s.Timer):
         else:
             self.pause()
 
-# Timer that only runs when player is alive
+# Таймер, который работает только когда игрок жив
 def player_alive():
     return player.health > 0
 
@@ -214,7 +209,7 @@ conditional_timer = ConditionalTimer(
 conditional_timer.start()
 ```
 
-### Timer Chains
+### Цепочки таймеров
 ```python
 class TimerChain:
     def __init__(self, timer_configs):
@@ -223,10 +218,11 @@ class TimerChain:
         
         for i, (duration, callback) in enumerate(timer_configs):
             if i == len(timer_configs) - 1:
-                # Last timer
+                # Последний таймер
                 timer = s.Timer(duration, callback)
             else:
-                # Chain to next timer
+                # Связать со следующим таймером
+                next_callback = timer_configs[i + 1][1]
                 timer = s.Timer(duration, lambda: self.next_timer())
             self.timers.append(timer)
             
@@ -244,18 +240,18 @@ class TimerChain:
         if self.current_index < len(self.timers):
             self.timers[self.current_index].update()
 
-# Create timer sequence
+# Создать последовательность таймеров
 sequence = TimerChain([
-    (2.0, lambda: print("Phase 1")),
-    (3.0, lambda: print("Phase 2")),
-    (1.0, lambda: print("Phase 3 Complete"))
+    (2.0, lambda: print("Фаза 1")),
+    (3.0, lambda: print("Фаза 2")),
+    (1.0, lambda: print("Фаза 3 завершена"))
 ])
 sequence.start()
 ```
 
-## Game Integration Examples
+## Примеры интеграции в игру
 
-### Cooldown System
+### Система перезарядки
 ```python
 class Weapon:
     def __init__(self, cooldown_time):
@@ -265,25 +261,26 @@ class Weapon:
         
     def fire(self):
         if self.can_fire:
-            # Fire weapon
+            # Выстрелить
             self.shoot_projectile()
             
-            # Start cooldown
+            # Начать перезарядку
             self.can_fire = False
-            self.cooldown_timer.restart()
-            self.cooldown_timer.set_callback(self.cooldown_finished)
+            self.cooldown_timer.reset()
+            self.cooldown_timer.start()
             
-    def cooldown_finished(self):
-        self.can_fire = True
-        
     def update(self):
         self.cooldown_timer.update()
         
+        # Проверить завершение перезарядки
+        if self.cooldown_timer.done:
+            self.can_fire = True
+            
     def get_cooldown_progress(self):
-        return self.cooldown_timer.get_progress()
+        return self.cooldown_timer.progress()
 ```
 
-### Power-up Duration
+### Длительность усиления
 ```python
 class PowerUp:
     def __init__(self, duration):
@@ -301,41 +298,41 @@ class PowerUp:
         self.remove_effect()
         
     def apply_effect(self):
-        player.speed *= 2  # Double speed
+        player.speed *= 2  # Удвоить скорость
         
     def remove_effect(self):
-        player.speed /= 2  # Return to normal
+        player.speed /= 2  # Вернуть к нормальной
         
     def update(self):
         self.timer.update()
 ```
 
-### Animation Timing
+### Тайминг анимации
 ```python
 class AnimatedSprite(s.Sprite):
     def __init__(self, frames, frame_duration):
-        super().__init__(frames[0])
+        super().__init__(frames[0], size=frames[0].get_size())
         self.frames = frames
         self.current_frame = 0
         
-        # Timer for frame switching
+        # Таймер для смены кадров
         self.frame_timer = s.Timer(
             frame_duration,
             self.next_frame,
-            repeat=True
+            repeat=True,
+            autostart=True
         )
-        self.frame_timer.start()
         
     def next_frame(self):
         self.current_frame = (self.current_frame + 1) % len(self.frames)
-        self.load_image(self.frames[self.current_frame])
+        self.set_image(self.frames[self.current_frame])
         
-    def update(self):
-        super().update()
+    def update(self, screen=None):
+        super().update(screen)
         self.frame_timer.update()
 ```
 
-### Game State Timing
+### Тайминг состояний игры
 ```python
 class GameStateManager:
     def __init__(self):
@@ -353,15 +350,15 @@ class GameStateManager:
             self.state_timer.start()
             
     def show_game_over(self):
-        self.change_state("game_over", 5.0)  # Return to menu after 5 seconds
+        self.change_state("game_over", 5.0)  # Вернуться в меню через 5 секунд
         
     def update(self):
         self.state_timer.update()
 ```
 
-## Timer Manager
+## Менеджер таймеров
 
-### Managing Multiple Timers
+### Управление несколькими таймерами
 ```python
 class TimerManager:
     def __init__(self):
@@ -375,12 +372,12 @@ class TimerManager:
             self.timers.remove(timer)
             
     def update_all(self):
-        # Update all timers
-        for timer in self.timers[:]:  # Copy list to avoid modification issues
+        # Обновить все таймеры
+        for timer in self.timers[:]:  # Копия списка для избежания проблем с изменением
             timer.update()
             
-            # Remove finished non-repeating timers
-            if timer.is_finished() and not timer.repeat:
+            # Удалить завершенные неповторяющиеся таймеры
+            if timer.done and not timer.repeat:
                 self.timers.remove(timer)
                 
     def pause_all(self):
@@ -396,51 +393,95 @@ class TimerManager:
             timer.stop()
         self.timers.clear()
 
-# Global timer manager
+# Глобальный менеджер таймеров
 timer_manager = TimerManager()
 
-# Add timers
+# Добавить таймеры
 timer_manager.add_timer(spawn_timer)
 timer_manager.add_timer(powerup_timer)
 
-# Update all timers in game loop
+# Обновить все таймеры в игровом цикле
 timer_manager.update_all()
 ```
 
-## Performance Considerations
+## Соображения производительности
 
-- Timers are lightweight and efficient
-- Use timer manager for better organization
-- Remove finished timers to prevent memory leaks
-- Consider pooling timers for frequently created/destroyed timers
+- Таймеры легковесны и эффективны
+- Используйте менеджер таймеров для лучшей организации
+- Удаляйте завершенные таймеры для предотвращения утечек памяти
+- Рассмотрите пул таймеров для часто создаваемых/удаляемых таймеров
 
-## Integration with Other Components
+## Интеграция с другими компонентами
 
-### With Animation System
+### С системой анимации
 ```python
-# Timed animation sequences
+# Временные последовательности анимации
 def create_explosion_sequence():
-    # Start explosion animation
+    # Начать анимацию взрыва
     explosion.play_animation("explode")
     
-    # Remove explosion after animation
+    # Удалить взрыв после анимации
     cleanup_timer = s.Timer(2.0, lambda: explosion.kill())
     cleanup_timer.start()
 ```
 
-### With Health System
+### С системой здоровья
 ```python
-# Health regeneration timer
+# Таймер регенерации здоровья
 def setup_health_regen():
     regen_timer = s.Timer(
-        1.0,  # Every second
+        1.0,  # Каждую секунду
         lambda: player.heal(5),
-        repeat=True
+        repeat=True,
+        autostart=True
     )
-    regen_timer.start()
 ```
 
-For more information on related components, see:
-- [Health Documentation](health.md) - Health regeneration timing
-- [Animation Documentation](animation.md) - Animation frame timing
-- [Tween Documentation](tween.md) - Smooth animation timing
+## Методы
+
+### Управление
+- `start(duration: Optional[float] = None)`: Запустить таймер (можно указать новую длительность)
+- `pause()`: Поставить таймер на паузу, сохраняя оставшееся время
+- `resume()`: Возобновить таймер с паузы, продолжая с оставшегося времени
+- `stop()`: Остановить таймер и пометить как завершенный
+- `reset()`: Сбросить состояние таймера
+- `update()`: Обновить состояние таймера (вызывать каждый кадр)
+
+### Получение информации
+- `time_left() -> float`: Получить оставшееся время до срабатывания (>=0), исключая паузы
+- `elapsed() -> float`: Получить прошедшее время с последнего запуска, исключая паузы
+- `progress() -> float`: Получить прогресс завершения от 0.0 до 1.0
+
+## Важные нюансы
+
+1. **Независимость от частоты кадров**: Таймер использует `time.monotonic()` для точного времени, независимого от FPS
+2. **Пауза сохраняет время**: При паузе сохраняется оставшееся время, которое восстанавливается при возобновлении
+3. **Повторение**: При `repeat=True` таймер автоматически перезапускается после срабатывания
+4. **Обратные вызовы**: Callback вызывается с аргументами `args` и `kwargs`, переданными в конструктор
+5. **Изменение длительности**: Можно изменить длительность при вызове `start(duration=...)`
+
+## Базовое использование
+
+```python
+import spritePro as s
+
+# Создать простой таймер
+def timer_finished():
+    print("Таймер завершен!")
+
+timer = s.Timer(
+    duration=3.0,  # 3 секунды
+    callback=timer_finished
+)
+
+# Запустить таймер
+timer.start()
+
+# Обновлять в игровом цикле
+timer.update()
+```
+
+Для более подробной информации о связанных компонентах см.:
+- [Документация по здоровью](health.md) - Тайминг регенерации здоровья
+- [Документация по анимации](animation.md) - Тайминг кадров анимации
+- [Документация по твинингу](tween.md) - Плавный тайминг анимации

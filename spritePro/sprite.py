@@ -249,6 +249,65 @@ class Sprite(pygame.sprite.Sprite):
         """Gets the current position of the sprite (center coordinates)."""
         return self.rect.center
 
+    @property
+    def position(self) -> Tuple[int, int]:
+        """Центральная позиция спрайта (x, y)."""
+        return self.rect.center
+
+    @position.setter
+    def position(self, value: VectorInput):
+        """Устанавливает центральную позицию спрайта."""
+        vec = _coerce_vector2(value, (0, 0))
+        self.set_position((int(vec.x), int(vec.y)), anchor=Anchor.CENTER)
+
+    @property
+    def x(self) -> int:
+        """X координата центра спрайта."""
+        return self.rect.centerx
+
+    @x.setter
+    def x(self, value: float):
+        """Устанавливает X координату центра спрайта."""
+        self.rect.centerx = int(value)
+        self._set_world_center(Vector2(self.rect.center))
+        if self.parent:
+            self.local_offset = self.get_world_position() - self.parent.get_world_position()
+
+    @property
+    def y(self) -> int:
+        """Y координата центра спрайта."""
+        return self.rect.centery
+
+    @y.setter
+    def y(self, value: float):
+        """Устанавливает Y координату центра спрайта."""
+        self.rect.centery = int(value)
+        self._set_world_center(Vector2(self.rect.center))
+        if self.parent:
+            self.local_offset = self.get_world_position() - self.parent.get_world_position()
+
+    @property
+    def width(self) -> int:
+        """Ширина спрайта."""
+        return self.size[0]
+
+    @width.setter
+    def width(self, value: float):
+        """Устанавливает ширину спрайта."""
+        new_size = (int(value), self.size[1])
+        self.set_image(self._image_source, size=new_size)
+
+    @property
+    def height(self) -> int:
+        """Высота спрайта."""
+        return self.size[1]
+
+    @height.setter
+    def height(self, value: float):
+        """Устанавливает высоту спрайта."""
+        new_size = (self.size[0], int(value))
+        self.set_image(self._image_source, size=new_size)
+
     def get_size(self) -> Tuple[int, int]:
         """Gets the current size of the sprite (width, height)."""
         return self.size

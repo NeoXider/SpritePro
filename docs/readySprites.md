@@ -15,26 +15,14 @@ Ready Sprites are pre-configured sprite classes that solve common game developme
 ## Available Ready Sprites
 
 ### [Text_fps](text_fps.md)
-Automatic FPS (Frames Per Second) counter display with rolling averages and performance statistics.
+Автоматический счетчик FPS (кадров в секунду) с скользящим средним и статистикой производительности.
 
-**Key Features:**
-- Automatic FPS calculation using SpritePro's delta time
-- Rolling average over configurable number of frames
-- Customizable text format, colors, and positioning
-- Performance statistics tracking (min, max, average)
-- Minimal performance overhead
-
-**Quick Example:**
-```python
-from spritePro.readySprites import Text_fps
-
-# Create FPS counter
-fps_counter = Text_fps(pos=(10, 10))
-
-# In game loop
-fps_counter.update_fps()
-fps_counter.update(screen)
-```
+**Основные возможности:**
+- Автоматический расчет FPS с использованием delta time SpritePro
+- Скользящее среднее за настраиваемое количество кадров
+- Настраиваемый формат текста, цвета и позиционирование
+- Отслеживание статистики производительности (мин, макс, среднее)
+- Минимальные накладные расходы на производительность
 
 ## Design Philosophy
 
@@ -55,55 +43,14 @@ Implementations prioritize performance and minimize resource usage while maintai
 ### 5. **Documentation Complete**
 Every Ready Sprite includes comprehensive documentation, examples, and integration guides.
 
-## Usage Patterns
-
-### Basic Usage
-```python
-# Import the ready sprite
-from spritePro.readySprites import Text_fps
-
-# Create with defaults
-component = Text_fps()
-
-# Use in game loop
-component.update_fps()  # Update component logic
-component.update(screen)  # Draw to screen
-```
-
-### Customized Usage
-```python
-# Create with custom configuration
-component = Text_fps(
-    pos=(800, 10),
-    color=(0, 255, 0),
-    font_size=20,
-    precision=0
-)
-```
-
-### Integration with Game Classes
-```python
-class Game:
-    def __init__(self):
-        self.fps_counter = Text_fps(pos=(10, 10))
-        # ... other components
-    
-    def update(self, screen):
-        # ... game logic
-        
-        # Update ready sprites
-        self.fps_counter.update_fps()
-        self.fps_counter.update(screen)
-```
-
 ## Convenience Functions
 
-Many Ready Sprites also provide convenience functions for quick setup:
+Многие Ready Sprites также предоставляют удобные функции для быстрой настройки:
 
 ```python
 from spritePro.readySprites import create_fps_counter
 
-# Quick setup with common configurations
+# Быстрая настройка с общими конфигурациями
 fps_counter = create_fps_counter(
     pos=(10, 10),
     color=(255, 255, 0)
@@ -183,6 +130,47 @@ from spritePro.readySprites import create_fps_counter
 # Import entire module
 from spritePro import readySprites
 fps_counter = readySprites.Text_fps()
+```
+
+## Базовое использование
+
+```python
+from spritePro.readySprites import Text_fps
+
+# Создать счетчик FPS
+fps_counter = Text_fps(pos=(10, 10))
+
+# В игровом цикле
+fps_counter.update_fps()
+fps_counter.update(screen)
+```
+
+### Пользовательская конфигурация
+
+```python
+# Создать с пользовательской конфигурацией
+component = Text_fps(
+    pos=(800, 10),
+    color=(0, 255, 0),
+    font_size=20,
+    precision=0
+)
+```
+
+### Интеграция с игровыми классами
+
+```python
+class Game:
+    def __init__(self):
+        self.fps_counter = Text_fps(pos=(10, 10))
+        # ... другие компоненты
+    
+    def update(self, screen):
+        # ... игровая логика
+        
+        # Обновить готовые спрайты
+        self.fps_counter.update_fps()
+        self.fps_counter.update(screen)
 ```
 
 Ready Sprites provide a foundation for rapid game development while maintaining the flexibility and power of the underlying SpritePro framework.

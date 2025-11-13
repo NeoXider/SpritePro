@@ -1,5 +1,3 @@
-from .gameSprite import GameSprite
-from .physicSprite import PhysicalSprite
 from .sprite import Sprite
 from .button import Button
 from .toggle_button import ToggleButton
@@ -23,8 +21,6 @@ from pygame.math import Vector2
 import sys
 
 __all__ = [
-    "GameSprite",
-    "PhysicalSprite",
     "Sprite",
     "Button",
     "ToggleButton",

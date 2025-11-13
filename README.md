@@ -1,6 +1,6 @@
 # SpritePro
 
-SpritePro - a powerful and flexible game development library built on top of Pygame. Provides a comprehensive set of tools for creating 2D games with advanced capabilities.
+SpritePro - мощная и гибкая библиотека для разработки игр, построенная на основе Pygame. Предоставляет комплексный набор инструментов для создания 2D игр с расширенными возможностями.
 ![gg0c31829550](https://github.com/user-attachments/assets/db56e1fd-0db5-4353-945d-c4a31c6b9d7f)
 
 
@@ -13,42 +13,95 @@ https://github.com/user-attachments/assets/f8760a4e-b511-480d-907e-b4e67077d673
 https://github.com/user-attachments/assets/21a13ee8-bfac-41fb-9b38-3df40f4a62fa
 
 
-## 🎮 Key Features
+## 🎮 Основные возможности
 
-- **Sprite System**: Flexible sprite management with built-in physics and game logic
-- **Physics Engine**: Realistic physics simulation with collision detection and handling
-- **Animation System**: Smooth animations with tweening and state management
-- **UI Components**: Ready-to-use buttons, text elements, and interactive components
-- **Timer System**: Precise time management for game events and animations
-- **Health System**: Complete health management with damage, healing, and callbacks
-- **Mouse Interaction**: Simple mouse handling with hover and click detection
-- **Surface Utilities**: Advanced tools for working with surfaces
-- **Color Effects**: Dynamic color effects and animations for visual appeal
-- **Save/Load System**: Professional data persistence with multiple formats and automatic backups
+- **Система спрайтов**: Гибкое управление спрайтами со встроенной физикой и игровой логикой
+- **Движок физики**: Реалистичная физическая симуляция с обнаружением и обработкой столкновений
+- **Система анимации**: Плавные анимации с твинингом и управлением состояниями
+- **UI компоненты**: Готовые к использованию кнопки, текстовые элементы и интерактивные компоненты
+- **Система таймеров**: Точное управление временем для игровых событий и анимаций
+- **Система здоровья**: Полное управление здоровьем с уроном, лечением и обратными вызовами
+- **Взаимодействие с мышью**: Простая обработка действий мыши с обнаружением наведения и клика
+- **Утилиты для поверхностей**: Продвинутые инструменты для работы с поверхностями
+- **Цветовые эффекты**: Динамические цветовые эффекты и анимации для визуальной привлекательности
+- **Система сохранения/загрузки**: Профессиональное сохранение данных с множеством форматов и автоматическими резервными копиями
 
 ## 🚀 Quick Start
 
 ### Installation
 
+#### Способ 1: Скачивание архива
+
+1. **Скачайте архив** проекта с GitHub:
+   - Перейдите на страницу репозитория
+   - Нажмите кнопку `Code` → `Download ZIP`
+
+2. **Распакуйте архив** в удобную папку на вашем компьютере
+
+3. **Скопируйте папку `spritePro`** из распакованного архива в корень вашего проекта:
+   ```
+   your_project/
+   ├── spritePro/        # ← Скопируйте эту папку сюда
+   ├── main.py
+   └── ...
+   ```
+
+4. **Установите зависимость**:
+   ```bash
+   pip install pygame
+   ```
+
+5. **Используйте в вашем коде**:
+   ```python
+   import spritePro as s
+   ```
+
+#### Способ 2: Клонирование только папки spritePro через Git (рекомендуется)
+
+Самый простой способ через Git - клонировать только нужную папку:
+
 ```bash
 pip install pygame
-git clone https://github.com/NeoXider/SpritePro.git
+git clone --filter=blob:none --sparse https://github.com/NeoXider/SpritePro.git
 cd SpritePro
+git sparse-checkout set spritePro
 ```
 
-### Basic Usage
+Затем скопируйте папку `spritePro` в корень вашего проекта:
+```
+your_project/
+├── spritePro/        # ← Скопируйте эту папку сюда
+├── main.py
+└── ...
+```
+
+Используйте в вашем коде:
+```python
+import spritePro as s
+```
+
+### Проверка установки
+
+Убедитесь, что установка прошла успешно:
+
+```python
+import spritePro as s
+print(f"SpritePro успешно установлен!")
+```
+
+### Базовый пример
 
 ```python
 import spritePro as s
 import pygame
 
-# Initialize the library
+# Инициализируем библиотеку
 s.init()
 
-# Create a window
+# Создаем окно игры
 s.get_screen((800, 600), "My Game")
 
-# Create a basic sprite
+# Создаем базовый спрайт
 player = s.Sprite(
     "",
     size=(100, 100),
@@ -56,21 +109,15 @@ player = s.Sprite(
     speed=3,
 )
 
-# Main game loop
+# Основной игровой цикл
 while True:
     s.update(fill_color=(0, 0, 100))
     player.handle_keyboard_input()
 ```
 
-### PlayerPrefs Quick Save
-### Camera Helpers
+### Примеры быстрого старта
 
-SpriteProGame управляет глобальной камерой. Для перемещения достаточно вызвать `s.process_camera_input()` и передать скорость или свои клавиши. Для слежения за объектом используйте `s.set_camera_follow(sprite, offset=(0, 0))`; `s.clear_camera_follow()` возвращает ручной режим. Внутри `s.update(...)` камера обновляется автоматически, поэтому дополнительный код не требуется.
-
-### Particle Emitter
-
-Модуль `spritePro.particles` предоставляет `ParticleEmitter`. Создайте конфигурацию `ParticleConfig`, затем вызовите `emit(position)` для быстрого запуска эффекта. Частицы — полноценные `Sprite`, поддерживающие камеру и `set_screen_space`.
-
+#### Система сохранения (PlayerPrefs)
 
 SpritePro предлагает удобный механизм сохранения данных с помощью `PlayerPrefs`. Он позволяет легко сохранять и загружать различные типы данных (векторы, числа, строки) в формате JSON, что упрощает управление состоянием игры между сессиями.
 
@@ -97,78 +144,92 @@ prefs.set_string("profile/name", "Hero")
 
 `PlayerPrefs` также может использовать сложные ключи, которые можно организовать по типу `раздел/название` (например, `audio/master`, `profile/name`). Внутренне используется `SaveLoadManager`, так что данные хранятся в обычном JSON-файле для легкого редактирования.
 
-## 📚 Documentation
+#### Система камеры (Camera Helpers)
 
-### 📋 Project Documentation
-- [📖 Documentation Index](DOCUMENTATION_INDEX.md) - Complete documentation guide
-- [📋 Changelog](CHANGELOG.md) - Version history and changes
-- [Roadmap](ROADMAP.md) - Future features and development plans
-- [Technical Specifications](TECHNICAL_SPECS.md) - Detailed technical specs for planned features
-- [Contributing Guide](CONTRIBUTING.md) - How to contribute to the project
-- [Game Ideas](GAME_IDEAS.md) - Ideas for demo games and examples
-- [Performance Guide](PERFORMANCE.md) - Performance optimization strategies
+SpriteProGame управляет глобальной камерой. Для перемещения достаточно вызвать `s.process_camera_input()` и передать скорость или свои клавиши. Для слежения за объектом используйте `s.set_camera_follow(sprite, offset=(0, 0))`; `s.clear_camera_follow()` возвращает ручной режим. Внутри `s.update(...)` камера обновляется автоматически, поэтому дополнительный код не требуется.
 
-### Core Components
-- [Sprite System](docs/sprite.md) - Basic sprite functionality
-- [Game Sprite](docs/gameSprite.md) - Extended sprites with game logic
-- [Physics Sprite](docs/physicSprite.md) - Sprites with physics support
+#### Система частиц (Particle Emitter)
 
-### UI Components
-- [Button](docs/button.md) - Interactive button component
-- [ToggleButton](docs/toggle_button.md) - Toggle switch component
-- [Text](docs/text.md) - Text rendering and management
-- [Mouse Interaction](docs/mouse_interactor.md) - Mouse interaction handling
+Модуль `spritePro.particles` предоставляет `ParticleEmitter`. Создайте конфигурацию `ParticleConfig`, затем вызовите `emit(position)` для быстрого запуска эффекта. Частицы — полноценные `Sprite`, поддерживающие камеру и `set_screen_space`.
 
-### Game Systems
-- [Animation](docs/animation.md) - Animation and state management
-- [Tweening](docs/tween.md) - Smooth transitions and easing
-- [Timer](docs/timer.md) - Time system and scheduling
-- [Health](docs/health.md) - Health and damage management
+## 📚 Документация
 
-### Utilities
-- [Surface Utilities](docs/surface.md) - Tools for working with surfaces
-- [Color Effects](docs/color_effects.md) - Dynamic color effects and animations
-- [Save/Load System](docs/save_load.md) - Professional save and load system for game data
-- [Camera & Particles](docs/camera_and_particles.md) - Camera helpers and configurable particle emitter
+### 📋 Документация проекта
+- [📖 Индекс документации](DOCUMENTATION_INDEX.md) - Полное руководство
+- [📋 История изменений](CHANGELOG.md) - Версии и изменения
+- [Дорожная карта](ROADMAP.md) - Планы развития и новые возможности
+- [Технические спецификации](TECHNICAL_SPECS.md) - Детальные спецификации запланированных функций
+- [Руководство по внесению вклада](CONTRIBUTING.md) - Как участвовать в проекте
+- [Идеи игр](GAME_IDEAS.md) - Идеи для демо-игр и примеров
+- [Руководство по оптимизации](PERFORMANCE.md) - Стратегии оптимизации производительности
 
-### Ready Sprites
-- [Ready Sprites Overview](docs/readySprites.md) - Pre-built game components guide
-- [Text_fps](docs/text_fps.md) - Ready-to-use FPS counter with automatic updates
+### Основные компоненты
+- [Система спрайтов](docs/sprite.md) - Базовая функциональность спрайтов
 
-## 🎯 Demo Games
+### UI компоненты
+- [Кнопка](docs/button.md) - Интерактивная кнопка
+- [ToggleButton](docs/toggle_button.md) - Переключатель
+- [Текст](docs/text.md) - Отрисовка и управление текстом
+- [Взаимодействие мышью](docs/mouse_interactor.md) - Обработка действий мышью
 
-Explore our demo games to see SpritePro in action:
+### Игровые системы
+- [Анимация](docs/animation.md) - Анимация и управление состояниями
+- [Tweening](docs/tween.md) - Плавные переходы и easing
+- [Таймер](docs/timer.md) - Система времени и планирование
+- [Здоровье](docs/health.md) - Управление здоровьем и урон
 
-- [Animation Demo](spritePro/demoGames/animationDemo.py) - Sprite animation demonstration
-- [Physics Demo](spritePro/demoGames/demo_physics.py) - Physics simulation example
-- [Pymunk Demo](spritePro/demoGames/demo_pymunk.py) - Advanced physics with Pymunk
-- [Ping Pong](spritePro/demoGames/ping_pong.py) - Classic Pong game
-- [Tweening Demo](spritePro/demoGames/tweenDemo.py) - Animation tweening examples
-- [Toggle Demo](spritePro/demoGames/toggle_demo.py) - Interactive toggle buttons showcase
-- [Color Effects Demo](spritePro/demoGames/color_effects_demo.py) - Dynamic color effects showcase
-- [Color Text Demo](spritePro/demoGames/color_text_demo.py) - Text with color effects
-- [Fireworks Demo](spritePro/demoGames/fireworks_demo.py) - Camera controls and particle emitter in action
-- [Particle Demo](spritePro/demoGames/particle_demo.py) - Minimal example of ParticleEmitter usage
-- [FPS Camera Demo](spritePro/demoGames/fps_camera_demo/fps_camera_demo.py) - FPS counter and camera system
-- [Text FPS Demo](spritePro/demoGames/text_fps_demo.py) - Ready-to-use FPS counter showcase
-- [Save/Load Demo](spritePro/demoGames/save_load_demo.py) - Comprehensive save and load system demonstration
+### Утилиты
+- [Инструменты для работы с поверхностями](docs/surface.md) - Инструменты работы с поверхностями
+- [Цветные эффекты](docs/color_effects.md) - Динамические цветные эффекты и анимации
+- [Система сохранения/загрузки](docs/save_load.md) - Профессиональная система сохранения данных
+- [Камера и частицы](docs/camera_and_particles.md) - Система камеры и генератор частиц
+
+### Готовые спрайты
+- [Обзор готовых спрайтов](docs/readySprites.md) - Руководство по встроенным компонентам
+- [Text_fps](docs/text_fps.md) - Готовый счётчик FPS с автоматическим обновлением
+
+## 🎯 Демо-игры
+
+Изучите наши демо-игры, чтобы увидеть SpritePro в действии:
+
+- [Демо анимации](spritePro/demoGames/animationDemo.py) - Демонстрация анимации спрайтов
+- [Демо физики](spritePro/demoGames/demo_physics.py) - Пример физической симуляции
+- [Демо Pymunk](spritePro/demoGames/demo_pymunk.py) - Продвинутая физика с Pymunk
+- [Пинг-Понг](spritePro/demoGames/ping_pong.py) - Классическая игра Pong
+- [Демо твининга](spritePro/demoGames/tweenDemo.py) - Примеры анимационного твининга
+- [Демо переключателей](spritePro/demoGames/toggle_demo.py) - Интерактивные переключатели
+- [Демо цветовых эффектов](spritePro/demoGames/color_effects_demo.py) - Динамические цветовые эффекты
+- [Демо цветного текста](spritePro/demoGames/color_text_demo.py) - Текст с цветовыми эффектами
+- [Демо фейерверков](spritePro/demoGames/fireworks_demo.py) - Управление камерой и генератор частиц в действии
+- [Демо частиц](spritePro/demoGames/particle_demo.py) - Минимальный пример использования ParticleEmitter
+- [Демо FPS камеры](spritePro/demoGames/fps_camera_demo/fps_camera_demo.py) - Счётчик FPS и система камеры
+- [Демо текстового FPS](spritePro/demoGames/text_fps_demo.py) - Готовый счётчик FPS
+- [Демо сохранения/загрузки](spritePro/demoGames/save_load_demo.py) - Комплексная демонстрация системы сохранения и загрузки
 
 ## 🛠️ Requirements
 
+**Обязательные зависимости:**
 - Python 3.7+
 - Pygame 2.0+
-- Optional: Pymunk (for advanced physics)
 
-## 📖 API Reference
+**Опциональные зависимости:**
+- Pymunk (для расширенной физики и симуляций)
 
-For detailed API documentation, visit our [documentation folder](docs/).
+**Установка всех зависимостей:**
+```bash
+pip install pygame pymunk
+```
 
-## 🤝 Contributing
+## 📖 Справочник API
 
-We welcome contributions! Please feel free to submit issues, feature requests, or pull requests.
+Для подробной документации API посетите нашу [папку документации](docs/).
 
-## 📄 License
+## 🤝 Внесение вклада
 
-This project is open source. Please check the license file for more information.
+Мы приветствуем вклад в проект! Пожалуйста, не стесняйтесь отправлять проблемы, запросы функций или pull requests.
 
-Start working with SpritePro today and bring your game ideas to life! 🚀
+## 📄 Лицензия
+
+Этот проект с открытым исходным кодом. Пожалуйста, проверьте файл лицензии для получения дополнительной информации.
+
+Начните работать со SpritePro сегодня и воплотите свои игровые идеи в жизнь! 🚀

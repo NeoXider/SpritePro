@@ -38,7 +38,7 @@ def run_animation_demo():
     animation = Animation(
         sprite,
         frames=frames,
-        frame_duration=10,  # 100 мс на кадр
+        frame_duration=0.01,  # 0.01 секунды = 10 мс на кадр
         loop=True
     )
     

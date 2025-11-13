@@ -1,292 +1,312 @@
-# MouseInteractor Component
+# Компонент MouseInteractor
 
-The `MouseInteractor` component provides comprehensive mouse interaction handling for sprites, including hover detection, click events, and state management.
+Компонент `MouseInteractor` предоставляет комплексную обработку взаимодействия с мышью для спрайтов, включая обнаружение наведения, события клика и управление состоянием.
 
-## Overview
+## Обзор
 
-MouseInteractor is a component that can be attached to any sprite to add mouse interaction capabilities. It handles hover states, click detection, and provides callbacks for various mouse events.
+MouseInteractor - это компонент, который можно прикрепить к любому спрайту для добавления возможностей взаимодействия с мышью. Он обрабатывает состояния наведения, обнаружение клика и предоставляет обратные вызовы для различных событий мыши.
 
-## Key Features
+## Основные возможности
 
-- **Hover Detection**: Automatic mouse hover state tracking
-- **Click Handling**: Left, right, and middle mouse button support
-- **State Management**: Press, release, and hold state tracking
-- **Event Callbacks**: Customizable event handlers
-- **Collision Detection**: Pixel-perfect or rectangle-based collision
-- **Multi-button Support**: Handle multiple mouse buttons simultaneously
+- **Обнаружение наведения**: Автоматическое отслеживание состояния наведения мыши
+- **Обработка клика**: Поддержка левой, правой и средней кнопок мыши
+- **Управление состоянием**: Отслеживание состояния нажатия, отпускания и удержания
+- **Обратные вызовы событий**: Настраиваемые обработчики событий
+- **Обнаружение столкновений**: Обнаружение на основе прямоугольника (rect)
 
-## Basic Usage
+## Параметры конструктора
+
+- `sprite` (pygame.sprite.Sprite): Спрайт для прикрепления взаимодействия мыши
+- `on_click` (Optional[Callable[[], None]]): Вызывается при отпускании кнопки мыши над спрайтом. По умолчанию: None
+- `on_mouse_down` (Optional[Callable[[], None]]): Вызывается при нажатии кнопки мыши над спрайтом. По умолчанию: None
+- `on_mouse_up` (Optional[Callable[[], None]]): Вызывается при отпускании кнопки мыши (независимо от позиции). По умолчанию: None
+- `on_hover_enter` (Optional[Callable[[], None]]): Вызывается, когда мышь впервые входит в область спрайта. По умолчанию: None
+- `on_hover_exit` (Optional[Callable[[], None]]): Вызывается, когда мышь покидает область спрайта. По умолчанию: None
+
+## Свойства
+
+- `is_hovered` (bool): Находится ли мышь в данный момент над спрайтом
+- `is_pressed` (bool): Нажата ли кнопка мыши в данный момент над спрайтом
+
+## Методы
+
+- `update(events: Optional[List[pygame.event.Event]] = None)`: Обновить состояние взаимодействия на основе событий мыши. Если `events` не указан, использует `spritePro.events`
+
+## Обработка событий
+
+### Проверка состояния
+
+```python
+# Проверить состояние взаимодействия мыши
+if mouse_handler.is_hovered:
+    print("Мышь над спрайтом")
+
+if mouse_handler.is_pressed:
+    print("Кнопка мыши нажата на спрайте")
+
+# Обновить обработчик мыши (вызывать в игровом цикле)
+mouse_handler.update()  # Использует spritePro.events автоматически
+# или
+mouse_handler.update(pygame.event.get())  # Передать события вручную
+```
+
+### Обратные вызовы событий
+
+```python
+def on_click():
+    print("Клик!")
+
+def on_mouse_down():
+    print("Кнопка нажата")
+
+def on_mouse_up():
+    print("Кнопка отпущена")
+
+def on_hover_enter():
+    print("Мышь вошла в область")
+
+def on_hover_exit():
+    print("Мышь покинула область")
+
+mouse_handler = s.MouseInteractor(
+    sprite=sprite,
+    on_click=on_click,
+    on_mouse_down=on_mouse_down,
+    on_mouse_up=on_mouse_up,
+    on_hover_enter=on_hover_enter,
+    on_hover_exit=on_hover_exit
+)
+```
+
+## Примеры интеграции
+
+### Интерактивная кнопка
+
+```python
+class InteractiveButton(s.Sprite):
+    def __init__(self, image_path, pos, on_click_callback):
+        super().__init__(image_path, pos=pos)
+        
+        # Создать обработчик мыши
+        self.interactor = s.MouseInteractor(
+            sprite=self,
+            on_click=on_click_callback,
+            on_hover_enter=self.on_hover,
+            on_hover_exit=self.on_hover_exit
+        )
+        
+    def on_hover(self):
+        self.scale = 1.1  # Увеличить при наведении
+        
+    def on_hover_exit(self):
+        self.scale = 1.0  # Вернуть нормальный размер
+        
+    def update(self, screen=None):
+        super().update(screen)
+        self.interactor.update()  # Обновить взаимодействие
+```
+
+### Кнопка с визуальной обратной связью
+
+```python
+button = s.Sprite("button.png", pos=(400, 300))
+button.base_color = (100, 150, 255)
+
+interactor = s.MouseInteractor(
+    sprite=button,
+    on_click=lambda: print("Кнопка нажата!"),
+    on_hover_enter=lambda: button.set_color((150, 200, 255)),
+    on_hover_exit=lambda: button.set_color(button.base_color),
+    on_mouse_down=lambda: button.set_color((50, 100, 200)),
+    on_mouse_up=lambda: button.set_color((150, 200, 255))
+)
+
+# В игровом цикле
+while True:
+    s.update()
+    interactor.update()
+```
+
+### Множественные спрайты с взаимодействием
+
+```python
+# Создать несколько интерактивных спрайтов
+sprites = []
+interactors = []
+
+for i in range(5):
+    sprite = s.Sprite(f"item_{i}.png", pos=(100 + i * 150, 300))
+    interactor = s.MouseInteractor(
+        sprite=sprite,
+        on_click=lambda idx=i: print(f"Кликнут элемент {idx}")
+    )
+    sprites.append(sprite)
+    interactors.append(interactor)
+
+# Обновить все в игровом цикле
+while True:
+    s.update()
+    for interactor in interactors:
+        interactor.update()
+```
+
+### Условное взаимодействие
+
+```python
+class ConditionalInteractor:
+    def __init__(self, sprite, condition_func):
+        self.sprite = sprite
+        self.condition = condition_func
+        self.interactor = s.MouseInteractor(
+            sprite=sprite,
+            on_click=self.on_click
+        )
+        
+    def on_click(self):
+        if self.condition():
+            print("Клик обработан")
+        else:
+            print("Клик проигнорирован")
+            
+    def update(self):
+        self.interactor.update()
+
+# Использование
+def can_interact():
+    return player.health > 0
+
+interactor = ConditionalInteractor(sprite, can_interact)
+```
+
+## Интеграция с другими компонентами
+
+### С компонентом Button
+
+Класс `Button` уже использует `MouseInteractor` внутри, поэтому вам не нужно создавать его отдельно:
+
+```python
+button = s.Button(
+    text="Нажми меня",
+    on_click=lambda: print("Кнопка нажата")
+)
+# MouseInteractor уже создан внутри Button
+```
+
+### С компонентом ToggleButton
+
+`ToggleButton` также использует `MouseInteractor`:
+
+```python
+toggle = s.ToggleButton(
+    text="Переключатель",
+    on_toggle=lambda state: print(f"Состояние: {state}")
+)
+```
+
+## Важные нюансы
+
+1. **Обновление в игровом цикле**: Всегда вызывайте `update()` в игровом цикле для правильной работы
+2. **События**: Если не передаете события в `update()`, компонент автоматически использует `spritePro.events`
+3. **Обнаружение столкновений**: Используется прямоугольное обнаружение столкновений (`rect.collidepoint`)
+4. **Состояния**: `is_hovered` и `is_pressed` - это свойства, а не методы
+5. **Обратные вызовы**: Все обратные вызовы вызываются без параметров
+
+## Производительность
+
+- MouseInteractor легковесен и эффективен
+- Обнаружение столкновений основано на прямоугольниках для максимальной производительности
+- Для большого количества интерактивных спрайтов рассмотрите использование пространственного разбиения
+
+## Примеры использования
+
+### Меню с наведением
+
+```python
+menu_items = []
+menu_interactors = []
+
+def create_menu_item(text, pos, action):
+    sprite = s.Sprite("", size=(200, 50), pos=pos)
+    sprite.set_color((100, 100, 100))
+    
+    interactor = s.MouseInteractor(
+        sprite=sprite,
+        on_click=action,
+        on_hover_enter=lambda: sprite.set_color((150, 150, 150)),
+        on_hover_exit=lambda: sprite.set_color((100, 100, 100))
+    )
+    
+    menu_items.append(sprite)
+    menu_interactors.append(interactor)
+    return sprite, interactor
+
+# Создать элементы меню
+create_menu_item("Начать игру", (400, 200), start_game)
+create_menu_item("Настройки", (400, 260), open_settings)
+create_menu_item("Выход", (400, 320), exit_game)
+
+# Обновить все в игровом цикле
+while True:
+    s.update()
+    for interactor in menu_interactors:
+        interactor.update()
+```
+
+### Инвентарь с перетаскиванием
+
+```python
+class DraggableItem:
+    def __init__(self, sprite, pos):
+        self.sprite = sprite
+        self.sprite.position = pos
+        self.dragging = False
+        self.offset = (0, 0)
+        
+        self.interactor = s.MouseInteractor(
+            sprite=sprite,
+            on_mouse_down=self.start_drag,
+            on_mouse_up=self.stop_drag
+        )
+        
+    def start_drag(self):
+        mouse_pos = pygame.mouse.get_pos()
+        self.dragging = True
+        self.offset = (
+            mouse_pos[0] - self.sprite.x,
+            mouse_pos[1] - self.sprite.y
+        )
+        
+    def stop_drag(self):
+        self.dragging = False
+        
+    def update(self):
+        self.interactor.update()
+        if self.dragging:
+            mouse_pos = pygame.mouse.get_pos()
+            self.sprite.position = (
+                mouse_pos[0] - self.offset[0],
+                mouse_pos[1] - self.offset[1]
+            )
+```
+
+## Базовое использование
 
 ```python
 import spritePro as s
 
-# Create a sprite with mouse interaction
+# Создать спрайт с взаимодействием мыши
 sprite = s.Sprite("button.png", pos=(400, 300))
 
-# Add mouse interaction
-mouse_handler = s.MouseInteractor(sprite)
+# Добавить взаимодействие мыши
+mouse_handler = s.MouseInteractor(
+    sprite=sprite,
+    on_click=lambda: print("Спрайт кликнут!")
+)
 
-# Set click callback
-def on_click():
-    print("Sprite clicked!")
-
-mouse_handler.set_click_callback(on_click)
-
-# Update in game loop
+# Обновлять в игровом цикле
 mouse_handler.update()
 ```
 
-## Constructor Parameters
-
-- `sprite`: The sprite to attach mouse interaction to
-- `collision_type` (str): "rect" or "pixel" collision detection. Default: "rect"
-
-## Event Handling
-
-### State Checking
-```python
-# Check mouse interaction state
-if mouse_handler.is_hovered():
-    print("Mouse is over sprite")
-
-if mouse_handler.is_pressed():
-    print("Mouse is pressed on sprite")
-
-# Update mouse handler (call in game loop)
-mouse_handler.update(events)  # Pass pygame events
-```
-
-## Advanced Features
-
-### Collision Detection Types
-```python
-# Rectangle-based collision (faster)
-rect_handler = s.MouseInteractor(sprite, collision_type="rect")
-
-# Pixel-perfect collision (more accurate)
-pixel_handler = s.MouseInteractor(sprite, collision_type="pixel")
-```
-
-### Custom Collision Areas
-```python
-# Define custom collision rectangle
-custom_rect = pygame.Rect(0, 0, 100, 50)  # Smaller than sprite
-mouse_handler.set_collision_rect(custom_rect)
-
-# Circular collision area
-def circular_collision(mouse_pos, sprite_center, radius):
-    distance = math.sqrt(
-        (mouse_pos[0] - sprite_center[0]) ** 2 +
-        (mouse_pos[1] - sprite_center[1]) ** 2
-    )
-    return distance <= radius
-
-mouse_handler.set_custom_collision(circular_collision)
-```
-
-### Mouse Button Filtering
-```python
-# Only respond to specific mouse buttons
-mouse_handler.set_allowed_buttons([1, 3])  # Only left and right clicks
-
-# Ignore specific buttons
-mouse_handler.set_ignored_buttons([2])  # Ignore middle click
-```
-
-## Integration Examples
-
-### Interactive Button
-```python
-class InteractiveButton(s.Sprite):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Add mouse interaction
-        self.mouse_handler = s.MouseInteractor(self)
-        
-        # Set up callbacks
-        self.mouse_handler.set_hover_enter_callback(self.on_hover_enter)
-        self.mouse_handler.set_hover_exit_callback(self.on_hover_exit)
-        self.mouse_handler.set_click_callback(self.on_click)
-        
-        # Visual states
-        self.normal_scale = 1.0
-        self.hover_scale = 1.1
-        
-    def on_hover_enter(self):
-        self.set_scale(self.hover_scale)
-        
-    def on_hover_exit(self):
-        self.set_scale(self.normal_scale)
-        
-    def on_click(self):
-        print("Button clicked!")
-        
-    def update(self):
-        super().update()
-        self.mouse_handler.update()
-```
-
-### Draggable Sprite
-```python
-class DraggableSprite(s.Sprite):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        self.mouse_handler = s.MouseInteractor(self)
-        self.mouse_handler.set_press_callback(self.start_drag)
-        self.mouse_handler.set_release_callback(self.stop_drag)
-        
-        self.dragging = False
-        self.drag_offset = (0, 0)
-        
-    def start_drag(self, button):
-        if button == 1:  # Left click only
-            self.dragging = True
-            mouse_pos = pygame.mouse.get_pos()
-            sprite_pos = self.get_center()
-            self.drag_offset = (
-                mouse_pos[0] - sprite_pos[0],
-                mouse_pos[1] - sprite_pos[1]
-            )
-            
-    def stop_drag(self, button):
-        if button == 1:
-            self.dragging = False
-            
-    def update(self):
-        super().update()
-        self.mouse_handler.update()
-        
-        if self.dragging:
-            mouse_pos = pygame.mouse.get_pos()
-            new_pos = (
-                mouse_pos[0] - self.drag_offset[0],
-                mouse_pos[1] - self.drag_offset[1]
-            )
-            self.set_center(new_pos)
-```
-
-### Context Menu
-```python
-class ContextMenuSprite(s.Sprite):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        self.mouse_handler = s.MouseInteractor(self)
-        self.mouse_handler.set_click_callback(self.handle_click)
-        
-        self.context_menu = None
-        
-    def handle_click(self, button):
-        if button == 1:  # Left click
-            self.hide_context_menu()
-        elif button == 3:  # Right click
-            self.show_context_menu()
-            
-    def show_context_menu(self):
-        mouse_pos = pygame.mouse.get_pos()
-        self.context_menu = ContextMenu(mouse_pos)
-        
-    def hide_context_menu(self):
-        if self.context_menu:
-            self.context_menu.hide()
-            self.context_menu = None
-```
-
-### Tooltip System
-```python
-class TooltipSprite(s.Sprite):
-    def __init__(self, tooltip_text, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        self.tooltip_text = tooltip_text
-        self.tooltip = None
-        self.hover_timer = 0
-        self.tooltip_delay = 1.0  # Show tooltip after 1 second
-        
-        self.mouse_handler = s.MouseInteractor(self)
-        self.mouse_handler.set_hover_enter_callback(self.start_hover)
-        self.mouse_handler.set_hover_exit_callback(self.end_hover)
-        
-    def start_hover(self):
-        self.hover_timer = time.time()
-        
-    def end_hover(self):
-        self.hide_tooltip()
-        self.hover_timer = 0
-        
-    def update(self):
-        super().update()
-        self.mouse_handler.update()
-        
-        # Show tooltip after delay
-        if (self.hover_timer > 0 and 
-            time.time() - self.hover_timer > self.tooltip_delay and 
-            not self.tooltip):
-            self.show_tooltip()
-            
-    def show_tooltip(self):
-        mouse_pos = pygame.mouse.get_pos()
-        self.tooltip = TooltipText(self.tooltip_text, mouse_pos)
-        
-    def hide_tooltip(self):
-        if self.tooltip:
-            self.tooltip.hide()
-            self.tooltip = None
-```
-
-## Performance Considerations
-
-### Efficient Collision Detection
-```python
-# Use rectangle collision for better performance
-mouse_handler = s.MouseInteractor(sprite, collision_type="rect")
-
-# Only check collision when mouse is in general area
-def optimized_update():
-    mouse_pos = pygame.mouse.get_pos()
-    sprite_rect = sprite.rect
-    
-    # Quick bounds check first
-    if sprite_rect.collidepoint(mouse_pos):
-        mouse_handler.update()
-```
-
-### Event Batching
-```python
-# Batch mouse events for multiple sprites
-class MouseManager:
-    def __init__(self):
-        self.interactive_sprites = []
-        
-    def add_sprite(self, sprite, mouse_handler):
-        self.interactive_sprites.append((sprite, mouse_handler))
-        
-    def update_all(self):
-        mouse_pos = pygame.mouse.get_pos()
-        
-        for sprite, handler in self.interactive_sprites:
-            if sprite.rect.collidepoint(mouse_pos):
-                handler.update()
-```
-
-## Event Summary
-
-### Available Callbacks
-- `on_click`: Called when sprite is clicked
-- `on_hover_enter`: Called when mouse enters sprite
-- `on_hover_exit`: Called when mouse leaves sprite
-- `on_press`: Called when mouse button is pressed on sprite
-- `on_release`: Called when mouse button is released
-- `on_drag`: Called when sprite is being dragged
-
-### Mouse Button Constants
-- `1`: Left mouse button
-- `2`: Middle mouse button (scroll wheel)
-- `3`: Right mouse button
-
-For more information on related components, see:
-- [Button Documentation](button.md) - Built-in mouse interaction
-- [Sprite Documentation](sprite.md) - Base sprite functionality
-- [Animation Documentation](animation.md) - Animating interactive sprites
+Для более подробной информации о связанных компонентах см.:
+- [Документация по кнопкам](button.md) - Использование MouseInteractor в кнопках
+- [Документация по спрайтам](sprite.md) - Базовые спрайты

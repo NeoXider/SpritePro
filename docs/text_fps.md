@@ -10,41 +10,6 @@ The `Text_fps` class is a ready-to-use sprite that automatically displays and up
 - **Performance Statistics**: Track min, max, and average FPS values
 - **Easy Integration**: Drop-in solution that works with existing SpritePro projects
 
-## Basic Usage
-
-```python
-import spritePro as s
-from spritePro.readySprites import Text_fps
-
-# Initialize SpritePro
-s.init()
-screen = s.get_screen((800, 600), "FPS Counter Demo")
-
-# Create FPS counter
-fps_counter = Text_fps()
-
-# Game loop
-running = True
-while running:
-    for event in s.events:
-        if event.type == pygame.QUIT:
-            running = False
-    
-    # Clear screen
-    screen.fill((0, 0, 0))
-    
-    # Update FPS calculation
-    fps_counter.update_fps()
-    
-    # Draw FPS counter
-    fps_counter.update(screen)
-    
-    # Update display
-    s.update(fps=60)
-
-pygame.quit()
-```
-
 ## Constructor Parameters
 
 ```python
@@ -284,3 +249,38 @@ See the complete demonstration in [text_fps_demo.py](../spritePro/demoGames/text
 - Integration examples
 
 The demo includes controls for switching between different FPS counter styles and testing performance under various conditions.
+
+## Basic Usage
+
+```python
+import spritePro as s
+from spritePro.readySprites import Text_fps
+
+# Initialize SpritePro
+s.init()
+screen = s.get_screen((800, 600), "FPS Counter Demo")
+
+# Create FPS counter
+fps_counter = Text_fps()
+
+# Game loop
+running = True
+while running:
+    for event in s.events:
+        if event.type == pygame.QUIT:
+            running = False
+    
+    # Clear screen
+    screen.fill((0, 0, 0))
+    
+    # Update FPS calculation
+    fps_counter.update_fps()
+    
+    # Draw FPS counter
+    fps_counter.update(screen)
+    
+    # Update display
+    s.update(fps=60)
+
+pygame.quit()
+```

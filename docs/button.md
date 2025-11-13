@@ -1,180 +1,201 @@
-# Button Module
+# Модуль Button
 
-The `Button` class provides an easy-to-use interactive UI button with hover effects, animations, and customizable appearance.
+Класс `Button` предоставляет простую в использовании интерактивную UI-кнопку с эффектами наведения, анимациями и настраиваемым внешним видом.
 
-## Overview
+## Обзор
 
-Button combines the Sprite class with TextSprite and MouseInteractor to create a complete interactive button solution. It handles mouse events, visual feedback, and text display automatically.
+Button объединяет класс Sprite с TextSprite и MouseInteractor для создания полного интерактивного решения для кнопок. Он автоматически обрабатывает события мыши, визуальную обратную связь и отображение текста.
 
-## Key Features
+## Основные возможности
 
-- **Interactive UI**: Hover and click detection with visual feedback
-- **Customizable Appearance**: Colors, fonts, sizes, and animations
-- **Event Handling**: Click callbacks and state management
-- **Smooth Animations**: Hover and press animations with configurable speed
-- **Text Integration**: Built-in text rendering with font support
+- **Интерактивный UI**: Обнаружение наведения и клика с визуальной обратной связью
+- **Настраиваемый внешний вид**: Цвета, шрифты, размеры и анимации
+- **Обработка событий**: Обратные вызовы клика и управление состоянием
+- **Плавные анимации**: Анимации наведения и нажатия с настраиваемой скоростью
+- **Интеграция текста**: Встроенная отрисовка текста с поддержкой шрифтов
 
-## Basic Usage
+## Параметры конструктора
 
-```python
-import spritePro as s
+- `sprite` (str): Путь к фоновому изображению. По умолчанию: "" (сплошной цвет)
+- `size` (tuple): Размеры кнопки (ширина, высота). По умолчанию: (250, 70)
+- `pos` (tuple): Центральная позиция кнопки. По умолчанию: (300, 200)
+- `text` (str): Текст метки кнопки. По умолчанию: "Button"
+- `text_size` (int): Размер шрифта. По умолчанию: 24
+- `text_color` (tuple): Цвет текста RGB. По умолчанию: (0, 0, 0)
+- `font_name` (str/Path): Путь к файлу шрифта. По умолчанию: None (системный шрифт)
+- `on_click` (callable): Обработчик события клика. По умолчанию: None
+- `sorting_order` (int): Порядок слоя отрисовки для кнопки и её метки. По умолчанию: 1000
+- `hover_scale_delta` (float): Изменение масштаба при наведении. По умолчанию: 0.05
+- `press_scale_delta` (float): Изменение масштаба при нажатии. По умолчанию: -0.08
+- `hover_color` (tuple): Цвет фона при наведении. По умолчанию: (230, 230, 230)
+- `press_color` (tuple): Цвет фона при нажатии. По умолчанию: (180, 180, 180)
+- `base_color` (tuple): Цвет фона по умолчанию. По умолчанию: (255, 255, 255)
+- `anim_speed` (float): Множитель скорости анимации. По умолчанию: 0.2
+- `animated` (bool): Включить ли анимации. По умолчанию: True
+- `use_scale_fx` (bool): Включить/выключить эффект масштабирования при наведении и нажатии. По умолчанию: True
+- `use_color_fx` (bool): Включить/выключить эффект изменения цвета при наведении и нажатии. По умолчанию: True
 
-# Create a simple button
-button = s.Button(
-    text="Click Me!",
-    pos=(400, 300),
-    on_click=lambda: print("Button clicked!")
-)
+## Визуальная настройка
 
-# Update in game loop
-button.update()
-```
-
-## Constructor Parameters
-
-- `sprite` (str): Background image path. Default: "" (solid color)
-- `size` (tuple): Button dimensions (width, height). Default: (250, 70)
-- `pos` (tuple): Button center position. Default: (300, 200)
-- `text` (str): Button label text. Default: "Button"
-- `text_size` (int): Font size. Default: 24
-- `text_color` (tuple): Text color RGB. Default: (0, 0, 0)
-- `font_name` (str/Path): Font file path. Default: None (system font)
-- `on_click` (callable): Click event handler. Default: None
-- `sorting_order` (int): Render layer order for button and its label. Default: 1000
-
-## Visual Customization
-
-### Colors
+### Цвета
 ```python
 button = s.Button(
-    text="Styled Button",
-    base_color=(100, 150, 255),      # Normal state
-    hover_color=(120, 170, 255),     # Mouse hover
-    press_color=(80, 130, 235),      # Mouse press
-    text_color=(255, 255, 255)       # White text
+    text="Стилизованная кнопка",
+    base_color=(100, 150, 255),      # Обычное состояние
+    hover_color=(120, 170, 255),     # Наведение мыши
+    press_color=(80, 130, 235),      # Нажатие мыши
+    text_color=(255, 255, 255)       # Белый текст
 )
 ```
 
-### Animation Settings
+### Настройки анимации
 ```python
 button = s.Button(
-    text="Animated Button",
-    hover_scale_delta=0.1,    # Grow 10% on hover
-    press_scale_delta=-0.05,  # Shrink 5% on press
-    anim_speed=0.3,          # Animation speed
-    animated=True            # Enable animations
+    text="Анимированная кнопка",
+    hover_scale_delta=0.1,    # Увеличить на 10% при наведении
+    press_scale_delta=-0.05,  # Уменьшить на 5% при нажатии
+    anim_speed=0.3,          # Скорость анимации
+    animated=True            # Включить анимации
 )
 ```
 
-### Custom Fonts
+### Пользовательские шрифты
 ```python
 button = s.Button(
-    text="Custom Font",
+    text="Пользовательский шрифт",
     font_name="assets/fonts/custom.ttf",
     text_size=28
 )
 ```
 
-## Event Handling
+### Управление цветами и масштабами
+```python
+# Установить базовый цвет
+button.set_base_color((100, 150, 255))
 
-### Click Events
+# Установить все цвета сразу
+button.set_all_colors(
+    base_color=(255, 255, 255),    # Обычное состояние
+    hover_color=(230, 230, 230),    # При наведении
+    press_color=(180, 180, 180)    # При нажатии
+)
+
+# Установить все масштабы сразу
+button.set_all_scales(
+    base_scale=1.0,    # Обычный масштаб
+    hover_scale=1.1,   # При наведении
+    press_scale=0.95  # При нажатии
+)
+
+# Отключить эффекты масштабирования или цвета
+button.use_scale_fx = False  # Отключить масштабирование
+button.use_color_fx = False  # Отключить изменение цвета
+```
+
+## Обработка событий
+
+### События клика
 ```python
 def button_clicked():
-    print("Button was clicked!")
-    # Add your button logic here
+    print("Кнопка была нажата!")
+    # Добавьте вашу логику кнопки здесь
 
 button = s.Button(
-    text="Action Button",
+    text="Кнопка действия",
     on_click=button_clicked
 )
 ```
 
-### Advanced Event Handling
+### Продвинутая обработка событий
 ```python
 def hover_handler():
-    print("Mouse is hovering over button")
+    print("Мышь наведена на кнопку")
 
-button = s.Button(text="Hover Button")
+button = s.Button(text="Кнопка наведения")
 button.on_hover(hover_handler)
 
-# Or set click handler after creation
+# Или установить обработчик клика после создания
 def click_handler():
-    print("Button clicked!")
+    print("Кнопка нажата!")
     
 button.on_click(click_handler)
 ```
 
-## Button States
+## Состояния кнопки
 
-## Activation
+## Активация
 
-Calling `button.set_active(False)` now also forwards the inactive state to the embedded text label and any other children attached to the button. Re-enable with `button.set_active(True)` to bring both the button body and its label back into the sprite system.
+Вызов `button.set_active(False)` теперь также передает неактивное состояние встроенной текстовой метке и любым другим дочерним элементам, прикрепленным к кнопке. Повторно включите с помощью `button.set_active(True)`, чтобы вернуть и тело кнопки, и её метку в систему спрайтов.
 
-
-### State Management
+### Управление состоянием
 ```python
-# Scale button
-button.set_scale(1.2)  # Make button 20% larger
+# Масштабировать кнопку
+button.set_scale(1.2, update=True)  # Сделать кнопку на 20% больше и обновить базовый масштаб
+button.set_scale(1.2, update=False)  # Временно изменить масштаб без обновления базового
 
-# Access button properties
+# Доступ к свойствам кнопки
 current_scale = button.scale
 button_rect = button.rect
-button_text = button.text
+button_text = button.text_sprite.text
+
+# Доступ к внутренним компонентам
+text_sprite = button.text_sprite  # TextSprite для текста
+interactor = button.interactor    # MouseInteractor для мыши
 ```
 
-## Sprite Hierarchy
+## Иерархия спрайтов
 
-Buttons automatically parent their internal `TextSprite` label to the button sprite. This keeps the label aligned with transforms and ensures that calling `button.kill()` also removes the label from the scene. If you need to reuse the label elsewhere, detach it first with `button.text_sprite.set_parent(None)` before killing the button.
+Кнопки автоматически делают свою внутреннюю метку `TextSprite` дочерним элементом спрайта кнопки. Это сохраняет метку выровненной с преобразованиями и гарантирует, что вызов `button.kill()` также удаляет метку из сцены. Если вам нужно повторно использовать метку в другом месте, сначала отсоедините её с помощью `button.text_sprite.set_parent(None)` перед удалением кнопки.
 
-## Advanced Features
+## Продвинутые возможности
 
-### Multi-line Text
+### Многострочный текст
 ```python
 button = s.Button(
-    text="Line 1\nLine 2\nLine 3",
+    text="Строка 1\nСтрока 2\nСтрока 3",
     size=(300, 120),
     text_size=20
 )
 ```
 
-### Dynamic Button Updates
+### Динамические обновления кнопки
 ```python
-# Update button based on game state
+# Обновить кнопку на основе состояния игры
 def update_button():
     if player.health > 50:
-        button.text_sprite.set_text("Healthy")
+        button.text_sprite.set_text("Здоров")
         button.set_color((100, 255, 100))
     else:
-        button.text_sprite.set_text("Injured")
+        button.text_sprite.set_text("Ранен")
         button.set_color((255, 100, 100))
 
-# Call in game loop
+# Вызвать в игровом цикле
 update_button()
 ```
 
-### Toggle Buttons
-For buttons that need to switch between states, use ToggleButton:
+### Переключатели
+Для кнопок, которым нужно переключаться между состояниями, используйте ToggleButton:
 ```python
-# Create a toggle button
+# Создать переключатель
 toggle = s.ToggleButton(
     pos=(400, 300),
-    text_on="Sound ON",
-    text_off="Sound OFF",
+    text_on="Звук ВКЛ",
+    text_off="Звук ВЫКЛ",
     color_on=(50, 200, 50),
     color_off=(200, 50, 50),
     is_on=True,
-    on_toggle=lambda state: print(f"Sound {'enabled' if state else 'disabled'}")
+    on_toggle=lambda state: print(f"Звук {'включен' if state else 'выключен'}")
 )
 ```
 
-See [ToggleButton documentation](toggle_button.md) for detailed information.
+См. [Документацию ToggleButton](toggle_button.md) для подробной информации.
 
-### Button Groups
+### Группы кнопок
 ```python
-# Create multiple buttons
+# Создать несколько кнопок
 buttons = []
 
-for i, text in enumerate(["Start", "Options", "Quit"]):
+for i, text in enumerate(["Старт", "Настройки", "Выход"]):
     button = s.Button(
         text=text,
         pos=(400, 200 + i * 80),
@@ -183,20 +204,20 @@ for i, text in enumerate(["Start", "Options", "Quit"]):
     buttons.append(button)
 
 def handle_menu_click(button_text):
-    if button_text == "Start":
+    if button_text == "Старт":
         start_game()
-    elif button_text == "Options":
+    elif button_text == "Настройки":
         show_options()
-    elif button_text == "Quit":
+    elif button_text == "Выход":
         quit_game()
 ```
 
-## Styling Examples
+## Примеры стилизации
 
-### Game Menu Button
+### Кнопка игрового меню
 ```python
 menu_button = s.Button(
-    text="PLAY",
+    text="ИГРАТЬ",
     size=(200, 60),
     pos=(400, 300),
     text_size=32,
@@ -209,18 +230,18 @@ menu_button = s.Button(
 )
 ```
 
-### Inventory Slot Button
+### Кнопка слота инвентаря
 ```python
 slot_button = s.Button(
     sprite="slot_background.png",
     size=(64, 64),
     pos=(100, 100),
-    text="",  # No text for item slots
+    text="",  # Нет текста для слотов предметов
     on_click=lambda: use_item(slot_index)
 )
 ```
 
-### Toggle Button
+### Переключатель
 ```python
 class ToggleButton(s.Button):
     def __init__(self, *args, **kwargs):
@@ -234,18 +255,34 @@ class ToggleButton(s.Button):
         
     def update_appearance(self):
         if self.is_toggled:
-            self.set_text("ON")
+            self.set_text("ВКЛ")
             self.set_colors(base=(100, 255, 100))
         else:
-            self.set_text("OFF")
+            self.set_text("ВЫКЛ")
             self.set_colors(base=(255, 100, 100))
 ```
 
-## Integration with Other Components
+## Базовое использование
 
-### With Animation System
 ```python
-# Animate button appearance
+import spritePro as s
+
+# Создать простую кнопку
+button = s.Button(
+    text="Нажми меня!",
+    pos=(400, 300),
+    on_click=lambda: print("Кнопка нажата!")
+)
+
+# Обновить в игровом цикле
+button.update()
+```
+
+## Интеграция с другими компонентами
+
+### С системой анимации
+```python
+# Анимировать внешний вид кнопки
 button.add_component(s.Animation([
     "button_frame1.png",
     "button_frame2.png",
@@ -253,9 +290,9 @@ button.add_component(s.Animation([
 ], frame_duration=0.2))
 ```
 
-### With Timer System
+### С системой таймеров
 ```python
-# Cooldown button
+# Кнопка с перезарядкой
 class CooldownButton(s.Button):
     def __init__(self, cooldown_time=3.0, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -264,10 +301,10 @@ class CooldownButton(s.Button):
         
     def on_click(self):
         if self.cooldown_timer is None:
-            # Execute button action
+            # Выполнить действие кнопки
             self.execute_action()
             
-            # Start cooldown
+            # Начать перезарядку
             self.set_enabled(False)
             self.cooldown_timer = s.Timer(
                 self.cooldown_time,
@@ -280,14 +317,14 @@ class CooldownButton(s.Button):
         self.cooldown_timer = None
 ```
 
-## Performance Tips
+## Советы по производительности
 
-- Use button groups for better organization
-- Disable unused buttons to save processing
-- Consider using sprite sheets for button backgrounds
-- Cache font objects for better performance
+- Используйте группы кнопок для лучшей организации
+- Отключайте неиспользуемые кнопки для экономии обработки
+- Рассмотрите использование спрайт-листов для фонов кнопок
+- Кэшируйте объекты шрифтов для лучшей производительности
 
-For more information on related components, see:
-- [Text Component Documentation](text.md)
-- [MouseInteractor Documentation](mouse_interactor.md)
-- [Animation Component Documentation](animation.md)
+Для получения дополнительной информации о связанных компонентах см.:
+- [Документация компонента Text](text.md)
+- [Документация MouseInteractor](mouse_interactor.md)
+- [Документация компонента Animation](animation.md)

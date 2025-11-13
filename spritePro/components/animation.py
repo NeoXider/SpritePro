@@ -28,7 +28,7 @@ class Animation:
         self,
         owner_sprite,
         frames: Optional[List[pygame.Surface]] = None,
-        frame_duration: int = 100,
+        frame_duration: float = 0.1,
         loop: bool = True,
         on_complete: Optional[Callable] = None,
         on_frame: Optional[Callable] = None,
@@ -38,14 +38,15 @@ class Animation:
         Args:
             owner_sprite: Спрайт-владелец анимации
             frames: Список кадров анимации
-            frame_duration: Длительность кадра в мс
+            frame_duration: Длительность кадра в секундах
             loop: Зациклить анимацию
             on_complete: Функция вызываемая при завершении
             on_frame: Функция вызываемая при смене кадра
         """
         self.owner = owner_sprite
         self.frames = frames or []
-        self.frame_duration = frame_duration
+        # Конвертируем секунды в миллисекунды для внутреннего использования
+        self.frame_duration = int(frame_duration * 1000)
         self.loop = loop
         self.on_complete = on_complete
         self.on_frame = on_frame
@@ -230,13 +231,14 @@ class Animation:
             return None
         return self.frames[self.current_frame]
 
-    def set_frame_duration(self, duration: int) -> None:
+    def set_frame_duration(self, duration: float) -> None:
         """Set the duration of each frame.
 
         Args:
-            duration: Duration in milliseconds
+            duration: Duration in seconds
         """
-        self.frame_duration = duration
+        # Конвертируем секунды в миллисекунды для внутреннего использования
+        self.frame_duration = int(duration * 1000)
 
     def set_loop(self, loop: bool) -> None:
         """Set whether the animation should loop.
@@ -291,7 +293,7 @@ if __name__ == "__main__":
     animation = Animation(
         sprite,
         frames=idle_frames,  # Начинаем с idle состояния
-        frame_duration=200,
+        frame_duration=0.2,  # 0.2 секунды = 200 мс
         loop=True,
         on_frame=lambda frame: print(f"Frame: {frame}"),
         on_complete=lambda: print("Animation complete!"),

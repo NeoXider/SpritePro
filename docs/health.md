@@ -1,202 +1,183 @@
-# Health Component
+# Компонент здоровья
 
-The `HealthComponent` provides comprehensive health management for game sprites, including damage, healing, regeneration, and death handling.
+`HealthComponent` предоставляет комплексное управление здоровьем для игровых спрайтов, включая урон, лечение, регенерацию и обработку смерти.
 
-## Overview
+## Обзор
 
-The HealthComponent is a modular system that can be attached to any sprite to add health functionality. It supports damage callbacks, death events, and healing.
+HealthComponent — это модульная система, которую можно прикрепить к любому спрайту для добавления функциональности здоровья. Она поддерживает обратные вызовы урона, события смерти и лечение.
 
-## Key Features
+## Основные возможности
 
-- **Health Management**: Track current and maximum health
-- **Damage System**: Take damage with customizable callbacks
-- **Healing System**: Restore health with limits and callbacks
-- **Death Handling**: Automatic death detection and callbacks
-- **Operator Overloading**: Use +, -, ==, <, > operators for health operations
+- **Управление здоровьем**: Отслеживание текущего и максимального здоровья
+- **Система урона**: Получение урона с настраиваемыми обратными вызовами
+- **Система лечения**: Восстановление здоровья с ограничениями и обратными вызовами
+- **Обработка смерти**: Автоматическое обнаружение смерти и обратные вызовы
+- **Перегрузка операторов**: Использование операторов +, -, ==, <, > для операций со здоровьем
 
-## Basic Usage
+## Параметры конструктора
 
+- `max_health` (int): Максимальные очки здоровья. По умолчанию: 100
+- `current_health` (int, опционально): Начальное здоровье. По умолчанию: max_health
+
+## Операции со здоровьем
+
+### Базовое управление здоровьем
 ```python
-import spritePro as s
-
-# Create health component
-health = s.HealthComponent(max_health=100)
-
-# Take damage
-health.take_damage(25)
-
-# Heal damage
-health.heal(10)
-
-# Check status
-if health.is_alive():
-    print(f"Health: {health.current_health}/{health.max_health}")
-```
-
-## Constructor Parameters
-
-- `max_health` (int): Maximum health points. Default: 100
-- `current_health` (int, optional): Starting health. Default: max_health
-
-## Health Operations
-
-### Basic Health Management
-```python
-# Set health values
+# Установить значения здоровья
 health.current_health = 75
 health.max_health = 150
 
-# Get health information
+# Получить информацию о здоровье
 current = health.current_health
 maximum = health.max_health
 is_alive = health.is_alive
 
-# Check status
+# Проверить статус
 is_alive = health.is_alive
 is_full_health = (health.current_health == health.max_health)
 ```
 
-### Damage System
+### Система урона
 ```python
-# Take damage
+# Получить урон
 health.take_damage(30)
 
-# Take damage with source information
+# Получить урон с информацией об источнике
 health.take_damage(20, damage_source="fire")
 
-# Check if damage was actually applied
+# Проверить, был ли урон действительно применен
 damage_applied = health.take_damage(50)
 if damage_applied:
-    print("Damage was applied")
+    print("Урон был применен")
 ```
 
-### Healing System
+### Система лечения
 ```python
-# Heal damage
+# Вылечить урон
 health.heal(25)
 
-# Heal with maximum limit
-health.heal(100)  # Won't exceed max_health
+# Вылечить с максимальным ограничением
+health.heal(100)  # Не превысит max_health
 
-# Check if healing was applied
+# Проверить, было ли лечение применено
 healing_applied = health.heal(30)
 if healing_applied:
-    print("Healing was applied")
+    print("Лечение было применено")
 ```
 
-## Callbacks and Events
+## Обратные вызовы и события
 
-### Damage Callbacks
+### Обратные вызовы урона
 ```python
 def on_damage(health_component, damage_amount, new_health):
-    print(f"Took {damage_amount} damage! Health: {new_health}")
+    print(f"Получено {damage_amount} урона! Здоровье: {new_health}")
     
-    # Visual feedback
-    sprite.set_color((255, 100, 100))  # Red flash
+    # Визуальная обратная связь
+    sprite.set_color((255, 100, 100))  # Красная вспышка
     
-    # Sound effect
+    # Звуковой эффект
     play_sound("hit.wav")
 
 health.set_damage_callback(on_damage)
 ```
 
-### Death Callbacks
+### Обратные вызовы смерти
 ```python
 def on_death(health_component):
-    print("Entity died!")
+    print("Сущность умерла!")
     
-    # Death animation
+    # Анимация смерти
     sprite.play_animation("death")
     
-    # Remove from game
+    # Удалить из игры
     sprite.set_active(False)
 
 health.set_death_callback(on_death)
 ```
 
-### Healing Callbacks
+### Обратные вызовы лечения
 ```python
 def on_heal(health_component, heal_amount, new_health):
-    print(f"Healed {heal_amount} HP! Health: {new_health}")
+    print(f"Вылечено {heal_amount} HP! Здоровье: {new_health}")
     
-    # Visual feedback
-    sprite.set_color((100, 255, 100))  # Green flash
+    # Визуальная обратная связь
+    sprite.set_color((100, 255, 100))  # Зеленая вспышка
 
 health.set_heal_callback(on_heal)
 ```
 
-## Regeneration System
+## Система регенерации
 
-### Basic Regeneration
+### Базовая регенерация
 ```python
-# Enable health regeneration
+# Включить регенерацию здоровья
 health.enable_regeneration(
-    regen_rate=2,        # 2 HP per second
-    regen_delay=3.0,     # Wait 3 seconds after damage
-    max_regen_health=80  # Only regen up to 80% of max health
+    regen_rate=2,        # 2 HP в секунду
+    regen_delay=3.0,     # Ждать 3 секунды после урона
+    max_regen_health=80  # Регенерировать только до 80% от максимального здоровья
 )
 
-# Disable regeneration
+# Выключить регенерацию
 health.disable_regeneration()
 
-# Check regeneration status
+# Проверить статус регенерации
 if health.is_regenerating():
-    print("Currently regenerating health")
+    print("В настоящее время регенерируется здоровье")
 ```
 
-### Advanced Regeneration
+### Продвинутая регенерация
 ```python
-# Regeneration with custom conditions
+# Регенерация с пользовательскими условиями
 def can_regenerate():
     return not player.in_combat and player.is_resting
 
 health.set_regeneration_condition(can_regenerate)
 
-# Regeneration callbacks
+# Обратные вызовы регенерации
 def on_regen_start():
-    print("Started regenerating health")
+    print("Началась регенерация здоровья")
 
 def on_regen_stop():
-    print("Stopped regenerating health")
+    print("Остановлена регенерация здоровья")
 
 health.set_regen_start_callback(on_regen_start)
 health.set_regen_stop_callback(on_regen_stop)
 ```
 
-## Invincibility System
+## Система неуязвимости
 
-### Basic Invincibility
+### Базовая неуязвимость
 ```python
-# Make invincible for 2 seconds
+# Сделать неуязвимым на 2 секунды
 health.set_invincible(duration=2.0)
 
-# Check invincibility status
+# Проверить статус неуязвимости
 if health.is_invincible():
-    print("Currently invincible")
+    print("В настоящее время неуязвим")
 
-# Get remaining invincibility time
+# Получить оставшееся время неуязвимости
 time_left = health.get_invincibility_time_left()
 ```
 
-### Invincibility with Visual Effects
+### Неуязвимость с визуальными эффектами
 ```python
 def apply_invincibility_effect():
     if health.is_invincible():
-        # Flashing effect
+        # Эффект мигания
         alpha = 128 if (time.time() * 10) % 2 < 1 else 255
         sprite.set_alpha(alpha)
     else:
         sprite.set_alpha(255)
 
-# Call in update loop
+# Вызвать в цикле обновления
 apply_invincibility_effect()
 ```
 
-## Advanced Features
+## Продвинутые возможности
 
-### Health Modifiers
+### Модификаторы здоровья
 ```python
-# Temporary health modifiers
+# Временные модификаторы здоровья
 class HealthModifier:
     def __init__(self, multiplier, duration):
         self.multiplier = multiplier
@@ -209,32 +190,32 @@ class HealthModifier:
     def apply_damage(self, damage):
         return damage * self.multiplier
 
-# Add damage resistance
-resistance_modifier = HealthModifier(0.5, 10.0)  # 50% damage for 10 seconds
+# Добавить сопротивление урону
+resistance_modifier = HealthModifier(0.5, 10.0)  # 50% урона на 10 секунд
 health.add_modifier(resistance_modifier)
 ```
 
-### Health Zones
+### Зоны здоровья
 ```python
-# Different behavior based on health percentage
+# Разное поведение в зависимости от процента здоровья
 def update_health_effects():
     health_percent = health.get_health_percentage()
     
     if health_percent > 0.75:
-        # High health - normal state
+        # Высокое здоровье - нормальное состояние
         sprite.set_color(None)
     elif health_percent > 0.25:
-        # Medium health - yellow tint
+        # Среднее здоровье - желтая тонировка
         sprite.set_color((255, 255, 100))
     else:
-        # Low health - red tint and screen shake
+        # Низкое здоровье - красная тонировка и тряска экрана
         sprite.set_color((255, 100, 100))
         screen.shake(intensity=2)
 ```
 
-### Health Barriers
+### Барьеры здоровья
 ```python
-# Shield/barrier system
+# Система щита/барьера
 class HealthBarrier:
     def __init__(self, barrier_health):
         self.barrier_health = barrier_health
@@ -243,47 +224,47 @@ class HealthBarrier:
     def absorb_damage(self, damage):
         absorbed = min(damage, self.barrier_health)
         self.barrier_health -= absorbed
-        return damage - absorbed  # Remaining damage
+        return damage - absorbed  # Оставшийся урон
 
-# Add barrier to health component
+# Добавить барьер к компоненту здоровья
 barrier = HealthBarrier(50)
 health.add_barrier(barrier)
 ```
 
-## Integration Examples
+## Примеры интеграции
 
-### With GameSprite
+### Со Sprite
 ```python
-class Player(s.GameSprite):
+class Player(s.Sprite):
     def __init__(self):
-        super().__init__(
-            "player.png",
-            max_health=100
-        )
+        super().__init__("player.png")
         
-        # Setup health callbacks
+        # Добавить компонент здоровья
+        self.health_component = s.HealthComponent(max_health=100)
+        
+        # Настроить обратные вызовы здоровья
         self.health_component.set_damage_callback(self.on_damage)
         self.health_component.set_death_callback(self.on_death)
         
-        # Enable regeneration
+        # Включить регенерацию
         self.health_component.enable_regeneration(
             regen_rate=1,
             regen_delay=5.0
         )
     
     def on_damage(self, health_comp, damage, new_health):
-        # Screen shake on damage
+        # Тряска экрана при уроне
         screen.shake(intensity=damage / 10)
         
-        # Invincibility frames
+        # Кадры неуязвимости
         self.health_component.set_invincible(1.0)
     
     def on_death(self, health_comp):
-        # Game over
+        # Конец игры
         game.show_game_over_screen()
 ```
 
-### Health Bar UI
+### UI полосы здоровья
 ```python
 class HealthBar:
     def __init__(self, health_component, pos, size):
@@ -292,42 +273,61 @@ class HealthBar:
         self.size = size
     
     def draw(self, screen):
-        # Background
+        # Фон
         bg_rect = pygame.Rect(self.pos, self.size)
         pygame.draw.rect(screen, (100, 100, 100), bg_rect)
         
-        # Health bar
+        # Полоса здоровья
         health_percent = self.health_component.get_health_percentage()
         health_width = int(self.size[0] * health_percent)
         health_rect = pygame.Rect(self.pos, (health_width, self.size[1]))
         
-        # Color based on health
+        # Цвет в зависимости от здоровья
         if health_percent > 0.6:
-            color = (100, 255, 100)  # Green
+            color = (100, 255, 100)  # Зеленый
         elif health_percent > 0.3:
-            color = (255, 255, 100)  # Yellow
+            color = (255, 255, 100)  # Желтый
         else:
-            color = (255, 100, 100)  # Red
+            color = (255, 100, 100)  # Красный
             
         pygame.draw.rect(screen, color, health_rect)
 ```
 
-## Performance Considerations
+## Соображения производительности
 
-- Health components are lightweight and efficient
-- Regeneration uses delta time for frame-rate independence
-- Callbacks are optional and only called when needed
-- Invincibility tracking is optimized for frequent checks
+- Компоненты здоровья легковесны и эффективны
+- Регенерация использует delta time для независимости от частоты кадров
+- Обратные вызовы опциональны и вызываются только при необходимости
+- Отслеживание неуязвимости оптимизировано для частых проверок
 
-## Events Summary
+## Сводка событий
 
-- `on_damage`: Called when damage is taken
-- `on_heal`: Called when health is restored
-- `on_death`: Called when health reaches zero
-- `on_regen_start`: Called when regeneration begins
-- `on_regen_stop`: Called when regeneration ends
+- `on_damage`: Вызывается при получении урона
+- `on_heal`: Вызывается при восстановлении здоровья
+- `on_death`: Вызывается при достижении здоровья нуля
+- `on_regen_start`: Вызывается при начале регенерации
+- `on_regen_stop`: Вызывается при окончании регенерации
 
-For more information on related systems, see:
-- [GameSprite Documentation](gameSprite.md) - Health integration
-- [Timer Component](timer.md) - For health-related timing
-- [Animation Component](animation.md) - For health-based animations
+## Базовое использование
+
+```python
+import spritePro as s
+
+# Создать компонент здоровья
+health = s.HealthComponent(max_health=100)
+
+# Получить урон
+health.take_damage(25)
+
+# Вылечить урон
+health.heal(10)
+
+# Проверить статус
+if health.is_alive():
+    print(f"Здоровье: {health.current_health}/{health.max_health}")
+```
+
+Для получения дополнительной информации о связанных системах см.:
+- [Документация Sprite](sprite.md) - Интеграция здоровья
+- [Компонент таймера](timer.md) - Для тайминга, связанного со здоровьем
+- [Компонент анимации](animation.md) - Для анимаций на основе здоровья

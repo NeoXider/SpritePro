@@ -1,109 +1,101 @@
-# SpritePro Documentation
+# Документация SpritePro
 
-Welcome to SpritePro documentation! Here you will find detailed information about all modules and components of the library.
+Добро пожаловать в документацию SpritePro! Здесь вы найдете подробную информацию о всех модулях и компонентах библиотеки.
 
-## Module Overview
+## Обзор модулей
 
-SpritePro consists of several core modules, each providing specific functionality for game development.
+SpritePro состоит из нескольких основных модулей, каждый из которых предоставляет специфическую функциональность для разработки игр.
 
-### Core Components
+### Основные компоненты
 
 #### [Sprite](sprite.md)
-Base sprite class with core functionality: positioning, rendering, updating, and component management.
+Базовый класс спрайта с основной функциональностью: позиционирование, отрисовка, обновление и управление компонентами.
 
-#### [GameSprite](gameSprite.md) 
-Extended sprite with game logic, including health system, mouse interaction, and additional game capabilities.
-
-#### [PhysicSprite](physicSprite.md)
-Sprite with physics support: gravity, velocity, acceleration, friction, and collision detection.
-
-### UI Components
+### UI компоненты
 
 #### [Button](button.md)
-Interactive button with support for different states (normal, hover, pressed) and event handling.
+Интерактивная кнопка с поддержкой различных состояний (обычное, наведение, нажатие) и обработкой событий.
 
 #### [ToggleButton](toggle_button.md)
-Toggle button that switches between ON/OFF states with different colors and text labels.
+Переключатель, который переключается между состояниями ВКЛ/ВЫКЛ с разными цветами и текстовыми метками.
 
 #### [Text](text.md)
-Component for text rendering and management with support for different fonts, sizes, and colors.
+Компонент для отрисовки и управления текстом с поддержкой различных шрифтов, размеров и цветов.
 
 #### [Mouse Interactor](mouse_interactor.md)
-Component for handling mouse interaction: hover detection, clicks, and other mouse events.
+Компонент для обработки взаимодействия с мышью: обнаружение наведения, клики и другие события мыши.
 
-### Game Systems
+### Игровые системы
 
 #### [Animation](animation.md)
-Animation system with support for states, frames, parallel animations, and tweening integration.
+Система анимации с поддержкой состояний, кадров, параллельных анимаций и интеграции с tweening.
 
 #### [Tween](tween.md)
-System for smooth transitions and animations with various easing types and time management.
+Система для плавных переходов и анимаций с различными типами easing и управлением временем.
 
 #### [Timer](timer.md)
-Timer system for precise time management in games: countdowns, delays, repeating events.
+Система таймеров для точного управления временем в играх: обратный отсчет, задержки, повторяющиеся события.
 
 #### [Particles](particles.md)
-Configurable particle bursts with lifetimes (seconds or ms), gravity, sorting order, image-based particles, rotation and scaling.
+Настраиваемые всплески частиц с временем жизни (секунды или мс), гравитацией, порядком сортировки, частицами на основе изображений, вращением и масштабированием.
 
 #### [Health](health.md)
-Health management system: damage, healing, regeneration, maximum health, and death handling.
+Система управления здоровьем: урон, лечение, регенерация, максимальное здоровье и обработка смерти.
 
-### Utilities
+### Утилиты
 
 #### [Surface](surface.md)
-Set of utilities for working with Pygame surfaces: rounded corners, masking, and other effects.
+Набор утилит для работы с поверхностями Pygame: скругленные углы, маскирование и другие эффекты.
 
 #### [Color Effects](color_effects.md)
-Dynamic color effects and animations: pulse, rainbow, breathing, wave, and other visual effects.
+Динамические цветовые эффекты и анимации: пульсация, радуга, дыхание, волна и другие визуальные эффекты.
 
-### Ready Sprites
+### Готовые спрайты
 
-#### [Ready Sprites Overview](readySprites.md)
-Complete guide to pre-built game components with immediate usability and full customization.
+#### [Обзор готовых спрайтов](readySprites.md)
+Полное руководство по предустановленным игровым компонентам с немедленной готовностью к использованию и полной настройкой.
 
 #### [Text_fps](text_fps.md)
-Ready-to-use FPS counter sprite that automatically displays and updates frame rate with customizable appearance.
+Готовый спрайт-счетчик FPS, который автоматически отображает и обновляет частоту кадров с настраиваемым внешним видом.
 
-## Quick Navigation
+## Быстрая навигация
 
-### By Functionality Type
+### По типу функциональности
 
-**Base Components:**
-- [Sprite](sprite.md) - Foundation of all game objects
-- [GameSprite](gameSprite.md) - Game objects with logic
-- [PhysicSprite](physicSprite.md) - Objects with physics
+**Базовые компоненты:**
+- [Sprite](sprite.md) - Основа всех игровых объектов
 
-**User Interface:**
-- [Button](button.md) - Interactive buttons
-- [ToggleButton](toggle_button.md) - Toggle switches
-- [Text](text.md) - Text elements
-- [Mouse Interactor](mouse_interactor.md) - Mouse handling
+**Пользовательский интерфейс:**
+- [Button](button.md) - Интерактивные кнопки
+- [ToggleButton](toggle_button.md) - Переключатели
+- [Text](text.md) - Текстовые элементы
+- [Mouse Interactor](mouse_interactor.md) - Обработка мыши
 
-**Animation and Effects:**
-- [Animation](animation.md) - Frame-based animation
-- [Tween](tween.md) - Smooth transitions
+**Анимация и эффекты:**
+- [Animation](animation.md) - Анимация на основе кадров
+- [Tween](tween.md) - Плавные переходы
 
-**Game Logic:**
-- [Timer](timer.md) - Time management
-- [Health](health.md) - Health system
+**Игровая логика:**
+- [Timer](timer.md) - Управление временем
+- [Health](health.md) - Система здоровья
 
-**Helper Tools:**
-- [Surface](surface.md) - Surface operations
-- [Color Effects](color_effects.md) - Dynamic color effects and utilities
+**Вспомогательные инструменты:**
+- [Surface](surface.md) - Операции с поверхностями
+- [Color Effects](color_effects.md) - Динамические цветовые эффекты и утилиты
 
-**Ready Sprites:**
-- [Ready Sprites Overview](readySprites.md) - Pre-built game components guide
-- [Text_fps](text_fps.md) - Automatic FPS counter display
+**Готовые спрайты:**
+- [Обзор готовых спрайтов](readySprites.md) - Руководство по предустановленным игровым компонентам
+- [Text_fps](text_fps.md) - Автоматический отображение счетчика FPS
 
-## Usage Examples
+## Примеры использования
 
-Each module contains detailed usage examples and API explanations. It's recommended to start with [Sprite](sprite.md) as the foundation, then study specialized components based on your needs.
+Каждый модуль содержит подробные примеры использования и объяснения API. Рекомендуется начать с [Sprite](sprite.md) как основы, затем изучить специализированные компоненты в зависимости от ваших потребностей.
 
-## Module Integration
+## Интеграция модулей
 
-SpritePro modules are designed to work together. For example:
-- `GameSprite` can use `Health`, `MouseInteractor`, and `Timer` components
-- `Animation` can integrate with `Tween` to create complex effects
-- `PhysicSprite` can use `Timer` for temporary effects
+Модули SpritePro разработаны для совместной работы. Например:
+- `Sprite` может использовать компоненты `Health`, `MouseInteractor` и `Timer`
+- `Animation` может интегрироваться с `Tween` для создания сложных эффектов
+- Компоненты могут использоваться вместе для создания сложных игровых систем
 
-Study the documentation of each module to understand integration possibilities.
+Изучите документацию каждого модуля, чтобы понять возможности интеграции.

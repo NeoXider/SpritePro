@@ -1,8 +1,234 @@
-# Particles
+# Система частиц
 
-SpritePro includes a lightweight particle system designed for quick bursts and simple effects, with flexible configuration for visuals, motion, sorting order, and lifetimes.
+SpritePro включает легковесную систему частиц, разработанную для быстрых вспышек и простых эффектов, с гибкой конфигурацией для визуализации, движения, порядка отрисовки и времени жизни.
 
-## Quick Start
+## Обзор
+
+Система частиц SpritePro предоставляет гибкую и производительную систему для создания визуальных эффектов. Каждая частица является полноценным спрайтом, что обеспечивает полную интеграцию с камерой, иерархией спрайтов и системой отрисовки.
+
+## Основные возможности
+
+- **Гибкая конфигурация**: Настройка всех параметров через ParticleConfig
+- **Изображения и цвета**: Поддержка как изображений, так и цветных кругов
+- **Движение и физика**: Скорость, углы, гравитация и вращение
+- **Время жизни**: Настраиваемое время жизни с затуханием
+- **Порядок отрисовки**: Интеграция с системой sorting_order
+- **Экранное пространство**: Поддержка UI-частиц
+
+## ParticleConfig
+
+### Параметры конструктора
+
+Основные параметры:
+- `amount` (int): Количество частиц для создания при каждом emit. По умолчанию: 30
+- `size_range` (tuple[int, int]): Размер для частиц по умолчанию (круги). По умолчанию: (4, 6)
+- `speed_range` (tuple[float, float]): Диапазон начальной скорости. По умолчанию: (120.0, 260.0)
+- `angle_range` (tuple[float, float]): Диапазон угла выброса в градусах (0 = вправо, 90 = вниз). По умолчанию: (0.0, 360.0)
+
+Время жизни:
+- `lifetime` (float | None): Фиксированное время жизни в секундах. По умолчанию: None
+- `lifetime_range` (tuple[float, float] | None): Диапазон времени жизни в секундах. По умолчанию: (0.6, 1.2)
+- `fade_speed` (float): Скорость затухания альфа-канала в секунду. По умолчанию: 220.0
+
+Движение:
+- `gravity` (Vector2): Вектор ускорения, применяемый каждый кадр. По умолчанию: Vector2(0, 0)
+- `screen_space` (bool): Игнорировать камеру, если True. По умолчанию: False
+
+Визуализация:
+- `colors` (Sequence[Color]): Палитра цветов для частиц по умолчанию (круги). По умолчанию: [(255, 255, 255)]
+- `image` (pygame.Surface | Path | None): Использовать эту поверхность для каждой частицы. По умолчанию: None
+- `image_factory` (Callable[[int], Surface] | None): Фабрика для создания изображения для каждой частицы. По умолчанию: None
+- `image_scale_range` (tuple[float, float] | None): Диапазон случайного равномерного масштаба для изображения. По умолчанию: None
+
+Вращение:
+- `align_rotation_to_velocity` (bool): Поворачивать изображение в направлении скорости. По умолчанию: False
+- `image_rotation_range` (tuple[float, float] | None): Диапазон случайного начального поворота в градусах. По умолчанию: None
+- `angular_velocity_range` (tuple[float, float] | None): Диапазон непрерывного вращения (град/сек). По умолчанию: None
+
+Масштабирование:
+- `scale_velocity_range` (tuple[float, float] | None): Диапазон скорости изменения масштаба (коэффициент в секунду). По умолчанию: None
+
+Порядок отрисовки:
+- `sorting_order` (int | None): Слой для порядка отрисовки (больше = спереди). По умолчанию: None
+
+Область появления:
+- `spawn_rect` (pygame.Rect | None): Прямоугольная область появления относительно позиции emit. По умолчанию: None
+- `spawn_circle_radius` (float | None): Радиус круглой области появления относительно позиции emit. По умолчанию: None
+
+Расширенные параметры:
+- `particle_class` (type[Particle] | None): Пользовательский подкласс Particle. По умолчанию: None
+- `custom_factory` (Callable[[Particle, int], None] | None): Хук для изменения частицы после создания. По умолчанию: None
+- `factory` (Callable[[Vector2, Vector2, int, ParticleConfig, int], Particle] | None): Полная переопределение фабрики создания частиц. По умолчанию: None
+
+## ParticleEmitter
+
+### Методы
+
+- `emit(position: Optional[Tuple[float, float] | Vector2] = None, overrides: Optional[ParticleConfig] = None) -> Sequence[Particle]`: Выпустить частицы. Если `position` не указан, используется позиция, установленная через `set_position()`
+- `set_position(position: Tuple[float, float] | Vector2, anchor: str | Anchor = Anchor.CENTER)`: Установить позицию эмиттера для последующих вызовов `emit()` без аргументов
+- `get_position() -> Optional[Tuple[float, float] | Vector2]`: Получить текущую позицию эмиттера
+- `update_config(**kwargs)`: Обновить конфигурацию эмиттера с заданными значениями
+
+## Particle
+
+Наследуется от `spritePro.Sprite`.
+
+### Атрибуты
+
+- `velocity` (Vector2): Текущая скорость в пикселях в секунду
+- `spawn_time` (int): Время создания в миллисекундах (pygame ticks)
+- `lifetime` (int): Время жизни в миллисекундах; частица умирает после этого
+- `fade_speed` (float): Скорость затухания альфа-канала в секунду
+- `gravity` (Vector2): Вектор ускорения, применяемый каждый кадр
+- `screen_space` (bool): Игнорировать камеру, если True
+- `angular_velocity` (float): Скорость вращения в градусах в секунду
+- `scale_velocity` (float): Скорость изменения масштаба (коэффициент в секунду)
+
+### Поведение
+
+- Позиция интегрирует скорость и гравитацию
+- Альфа-канал затухает на `fade_speed * dt`
+- Автоматически удаляется при истечении времени жизни или полной прозрачности
+- Применяет вращение, если `angular_velocity != 0`
+- Применяет масштабирование, если `scale_velocity != 0`
+
+## Использование изображений
+
+Вы можете использовать готовую `pygame.Surface` или генерировать её для каждой частицы через фабрику.
+
+```python
+star_img = pygame.image.load("assets/star.png").convert_alpha()
+
+cfg = ParticleConfig(
+    amount=30,
+    image=star_img,                    # использовать эту поверхность для каждой частицы
+    image_scale_range=(0.5, 1.4),      # случайный равномерный масштаб для каждой частицы
+)
+
+# Или динамические изображения для каждого индекса
+def image_factory(i: int) -> pygame.Surface:
+    size = 8 + (i % 6)
+    surf = pygame.Surface((size, size), pygame.SRCALPHA)
+    pygame.draw.circle(surf, (255, 220, 80), (size//2, size//2), size//2)
+    return surf
+
+cfg2 = ParticleConfig(amount=50, image_factory=image_factory)
+```
+
+## Вращение
+
+- `align_rotation_to_velocity=True` поворачивает изображение в направлении движения.
+- `image_rotation_range=(min_deg, max_deg)` устанавливает случайный начальный поворот.
+- `angular_velocity_range=(min_deg_s, max_deg_s)` добавляет непрерывное вращение.
+
+```python
+cfg = ParticleConfig(
+    amount=25,
+    image=star_img,
+    align_rotation_to_velocity=True,
+    angular_velocity_range=(-180.0, 180.0),
+)
+```
+
+## Порядок отрисовки
+
+Частицы интегрируются с глобальным порядком отрисовки по слоям:
+
+- Меньший `sorting_order` рисуется сзади; больший спереди.
+
+```python
+cfg_back = ParticleConfig(sorting_order=-100)  # Сзади
+cfg_ui = ParticleConfig(sorting_order=1200)    # Спереди (UI)
+```
+
+## Время жизни и затухание
+
+Вы можете указать время жизни в секундах или миллисекундах. Секунды имеют приоритет:
+
+- `lifetime`: фиксированное время жизни (секунды)
+- `lifetime_range`: диапазон времени жизни (секунды)
+- `fade_speed`: скорость затухания альфа-канала в секунду
+
+Альфа-канал затухает каждый кадр на `fade_speed * dt`.
+
+## Движение
+
+- `speed_range` с `angle_range` определяет начальную скорость.
+- `gravity` добавляется к скорости каждый кадр.
+- Позиции обновляются в мировом пространстве, если только `screen_space=True`.
+
+```python
+cfg = ParticleConfig(
+    amount=50,
+    speed_range=(100.0, 200.0),      # Диапазон скорости
+    angle_range=(0.0, 360.0),        # Диапазон угла выброса
+    gravity=Vector2(0, 300.0),       # Гравитация вниз
+    screen_space=False                # В мировом пространстве
+)
+```
+
+## Область появления
+
+Вы можете указать область появления частиц:
+
+```python
+# Прямоугольная область
+cfg = ParticleConfig(
+    amount=30,
+    spawn_rect=pygame.Rect(-50, -50, 100, 100)  # Относительно позиции emit
+)
+
+# Круглая область
+cfg = ParticleConfig(
+    amount=30,
+    spawn_circle_radius=50.0  # Радиус круга относительно позиции emit
+)
+```
+
+## Масштабирование
+
+Частицы могут масштабироваться со временем:
+
+```python
+cfg = ParticleConfig(
+    amount=30,
+    image=star_img,
+    scale_velocity_range=(-0.5, -1.0)  # Уменьшение масштаба в секунду
+)
+```
+
+## Пользовательский класс частиц
+
+Предоставьте пользовательский подкласс или полную фабрику:
+
+```python
+from spritePro.particles import Particle
+
+class MyParticle(Particle):
+    def update(self, screen=None):
+        super().update(screen)
+        # Свечение, след и т.д.
+
+cfg = ParticleConfig(particle_class=MyParticle)
+
+# Или полная фабрика
+def build(pos, vel, life, cfg, idx) -> Particle:
+    return MyParticle(
+        image=star_img.copy(),
+        pos=pos,
+        velocity=vel,
+        lifetime_ms=life,
+        fade_speed=cfg.fade_speed,
+        gravity=cfg.gravity,
+        screen_space=cfg.screen_space,
+        sorting_order=cfg.sorting_order,
+    )
+
+cfg2 = ParticleConfig(factory=build)
+```
+
+
+## Быстрый старт
 
 ```python
 import spritePro as s
@@ -10,14 +236,14 @@ from spritePro.particles import ParticleEmitter, ParticleConfig
 from pygame.math import Vector2
 
 s.init()
-s.get_screen((900, 600), "Particles Quick Start")
+s.get_screen((900, 600), "Система частиц")
 
 cfg = ParticleConfig(
     amount=40,
-    lifetime_range_s=(0.6, 1.5),       # lifetime in seconds
+    lifetime_range=(0.6, 1.5),       # время жизни в секундах
     speed_range=(140.0, 280.0),
     angle_range=(0.0, 360.0),
-    fade_speed=260.0,                  # alpha per second
+    fade_speed=260.0,                  # альфа в секунду
     gravity=Vector2(0, 240.0),
 )
 
@@ -28,144 +254,96 @@ while True:
     s.update(fps=60, update_display=True, fill_color=(18, 22, 28))
 ```
 
-## Using Images
+## Примеры использования
 
-You can use a ready `pygame.Surface` or generate one per particle via a factory.
+### Базовые частицы
 
 ```python
-star_img = pygame.image.load("assets/star.png").convert_alpha()
-
 cfg = ParticleConfig(
-    amount=30,
-    image=star_img,                    # use this surface for each particle
-    image_scale_range=(0.5, 1.4),      # random uniform scale per particle
+    amount=50,
+    colors=[(255, 100, 100), (100, 255, 100), (100, 100, 255)],
+    speed_range=(100.0, 200.0),
+    angle_range=(0.0, 360.0),
+    lifetime_range=(1.0, 2.0),
+    fade_speed=200.0
 )
 
-# Or dynamic images per index
-def image_factory(i: int) -> pygame.Surface:
-    size = 8 + (i % 6)
-    surf = pygame.Surface((size, size), pygame.SRCALPHA)
-    pygame.draw.circle(surf, (255, 220, 80), (size//2, size//2), size//2)
-    return surf
-
-cfg2 = ParticleConfig(amount=50, image_factory=image_factory)
+emitter = ParticleEmitter(cfg)
+emitter.emit((400, 300))
 ```
 
-## Rotation
-
-- `align_rotation_to_velocity=True` rotates the image towards the travel direction.
-- `image_rotation_range=(min_deg, max_deg)` sets a random initial rotation.
-- `angular_velocity_range=(min_deg_s, max_deg_s)` adds continuous spin.
+### Частицы с гравитацией
 
 ```python
 cfg = ParticleConfig(
-    amount=25,
-    align_rotation_to_velocity=True,
-    angular_velocity_range=(-180.0, 180.0),
+    amount=30,
+    speed_range=(50.0, 150.0),
+    angle_range=(270.0, 270.0),  # Вниз
+    gravity=Vector2(0, 400.0),   # Гравитация вниз
+    lifetime_range=(2.0, 3.0)
 )
+
+emitter = ParticleEmitter(cfg)
+emitter.emit((400, 100))
 ```
 
-## Sorting Order
-
-Particles integrate with the global layered draw order:
-
-- Lower `sorting_order` draws behind; higher draws in front.
+### Частицы с изображениями
 
 ```python
-cfg_back = ParticleConfig(sorting_order=-100)
-cfg_ui = ParticleConfig(sorting_order=1200)
+star_img = pygame.image.load("star.png").convert_alpha()
+
+cfg = ParticleConfig(
+    amount=40,
+    image=star_img,
+    image_scale_range=(0.3, 1.0),
+    speed_range=(100.0, 200.0),
+    angular_velocity_range=(-90.0, 90.0)  # Вращение
+)
+
+emitter = ParticleEmitter(cfg)
+emitter.emit((400, 300))
 ```
 
-## Lifetimes and Fading
-
-You can specify lifetime in seconds or milliseconds. Seconds take priority:
-
-- `lifetime_s`: fixed lifetime (seconds)
-- `lifetime_range_s`: range (seconds)
-- `lifetime_ms`: fixed lifetime (milliseconds)
-- `lifetime_range`: range (milliseconds)
-
-Alpha fades out each frame by `fade_speed * dt`.
-
-## Motion
-
-- `speed_range` with `angle_range` defines initial velocity.
-- `gravity` is added to velocity each frame.
-- Positions update in world space unless `screen_space=True`.
-
-## Custom Particle Class
-
-Provide a custom subclass or a full factory:
+### Частицы в экранном пространстве (UI)
 
 ```python
-from spritePro.particles import Particle
+cfg = ParticleConfig(
+    amount=20,
+    screen_space=True,  # Игнорировать камеру
+    sorting_order=1500,  # Рисовать поверх всего
+    speed_range=(50.0, 100.0)
+)
 
-class MyParticle(Particle):
-    def update(self, screen=None):
-        super().update(screen)
-        # glow, trail, etc.
-
-cfg = ParticleConfig(particle_class=MyParticle)
-
-def build(pos, vel, life, cfg, idx) -> Particle:
-    return MyParticle(
-        image=star_img.copy(), pos=pos, velocity=vel, lifetime_ms=life,
-        fade_speed=cfg.fade_speed, gravity=cfg.gravity,
-        screen_space=cfg.screen_space, sorting_order=cfg.sorting_order,
-    )
-
-cfg2 = ParticleConfig(factory=build)
+emitter = ParticleEmitter(cfg)
+emitter.set_position((400, 300))
+emitter.emit()
 ```
 
-## API Reference
+### Примеры использования эмиттера
 
-### ParticleConfig
+```python
+# Создать эмиттер
+emitter = ParticleEmitter(cfg)
 
-- `amount: int` — number of particles to spawn per emit
-- `size_range: tuple[int, int]` — size for default circle particles
-- `speed_range: tuple[float, float]` — initial speed magnitude
-- `angle_range: tuple[float, float]` — emission angle (deg)
-- `lifetime_ms: int | None` — fixed lifetime in ms
-- `lifetime_range: tuple[int, int]` — lifetime range in ms
-- `lifetime_s: float | None` — fixed lifetime in seconds (priority)
-- `lifetime_range_s: tuple[float, float] | None` — range in seconds (priority)
-- `fade_speed: float` — alpha fade speed per second
-- `gravity: Vector2` — acceleration each frame
-- `screen_space: bool` — ignore camera if True
-- `sorting_order: int | None` — layer for draw order
-- `colors: Sequence[Color]` — palette for default circles
-- `image: pygame.Surface | None` — use this surface for each particle
-- `image_factory: Callable[[int], Surface] | None` — build per-particle image
-- `image_scale_range: tuple[float, float] | None` — random scale per particle
-- `align_rotation_to_velocity: bool` — face along velocity
-- `image_rotation_range: tuple[float, float] | None` — random initial rotation
-- `angular_velocity_range: tuple[float, float] | None` — spin (deg/sec)
-- `particle_class: type[Particle] | None` — custom particle subtype
-- `custom_factory: Callable[[Particle, int], None] | None` — post-create hook
-- `factory: Callable[[Vector2, Vector2, int, ParticleConfig, int], Particle] | None` — full override
+# Выпустить частицы в конкретной позиции
+particles = emitter.emit((400, 300))
 
-### Particle
+# Установить позицию эмиттера
+emitter.set_position((400, 300), anchor=s.Anchor.CENTER)
 
-Inherits from `spritePro.Sprite`.
+# Выпустить частицы в установленной позиции
+particles = emitter.emit()
 
-Attributes:
-- `velocity: Vector2`
-- `spawn_time: int` (ms)
-- `lifetime: int` (ms)
-- `fade_speed: float`
-- `gravity: Vector2`
-- `screen_space: bool`
-- `angular_velocity: float` (deg/sec)
+# Обновить конфигурацию
+emitter.update_config(amount=50, speed_range=(200.0, 300.0))
+```
 
-Behavior:
-- Position integrates velocity and gravity
-- Alpha fades by `fade_speed * dt`
-- Auto-kills when lifetime expires or fully transparent
-- Applies rotation if `angular_velocity != 0`
+## Демо
 
-## Demos
+- `spritePro/demoGames/particle_demo.py` — базовые частицы
+- `spritePro/demoGames/particles_images_demo.py` — частицы с использованием изображений, масштабирования и вращения
+- `spritePro/demoGames/fireworks_demo.py` — фейерверки с использованием системы частиц
 
-- `spritePro/demoGames/particle_demo.py` — basic particles
-- `spritePro/demoGames/particles_images_demo.py` — particles using images, scaling, rotation
-
-
+Для более подробной информации о связанных компонентах см.:
+- [Документация по камере и частицам](camera_and_particles.md) - Система камеры и генератор частиц
+- [Документация по спрайтам](sprite.md) - Базовые спрайты
