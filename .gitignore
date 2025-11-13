@@ -158,3 +158,13 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# Временные тестовые файлы
+1.py
+5.py
+bl.py
+blinker_documentation.md
+events.py
+player_prefs.json
+reactive_example.py
+reactive_variables.md
