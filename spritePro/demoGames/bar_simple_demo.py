@@ -25,11 +25,11 @@ def main():
     s.init()
     screen = s.get_screen((800, 400), "Simple Bar Demo - SpritePro")
 
-    # Create bar with background - можно использовать пустые строки и установить цвета через bg.color и fill.color
+    # Create bar with background
     path_sprites = "spritePro\\demoGames\\Sprites\\"
     bar = BarWithBackground(
-        background_image="",  # Пустая строка - можно установить цвет через bg.color
-        fill_image="",  # Пустая строка - можно установить цвет через fill.color
+        background_image=path_sprites + "fon.jpeg",
+        fill_image=path_sprites + "background_game.png",
         size=(300, 50),
         pos=(400, 200),
         fill_amount=0.5,
@@ -39,13 +39,12 @@ def main():
     )
     # Устанавливаем цвета через удобные свойства
     bar.bg.color = (139, 0, 0)  # Темно-красный фон
-    bar.fill.color = (255, 0, 0)  # Красный fill
+    bar.fill.color = (255, 200, 200)  # теплый fill
     bar.set_fill_type(FillDirection.LEFT_TO_RIGHT, s.Anchor.CENTER)
 
-    # Create second bar with right-to-left direction - также используем пустые строки
     bar2 = BarWithBackground(
-        background_image="",  # Пустая строка
-        fill_image="",  # Пустая строка
+        background_image=path_sprites + "bar_bg.png",
+        fill_image=path_sprites + "bar_fill.png",
         size=(300, 50),
         pos=(400, 300),  # Below the first bar
         fill_amount=0.3,  # Different initial fill

@@ -349,23 +349,64 @@ class _ColorWrapper:
         rgba_color = (r, g, b, a)
         
         if self._is_background:
-            # Обновляем цвет фона через родительский Sprite
-            self._bar.color = rgb_color
-            # Обновляем изображение фона
-            # Используем текущий размер или размер по умолчанию
-            bg_size = getattr(self._bar, 'size', (100, 20))
-            bg_surface = pygame.Surface(bg_size, pygame.SRCALPHA)
-            bg_surface.fill(rgba_color)
-            self._bar.set_image(bg_surface, bg_size)
+            # Проверяем, есть ли уже загруженное изображение (не пустая строка)
+            # Если изображение было загружено из файла или Surface, используем тонировку через Sprite.color
+            # Если изображения не было (пустая строка), создаем цветную поверхность
+            has_loaded_image = False
+            if hasattr(self._bar, '_image_source'):
+                img_source = self._bar._image_source
+                # Изображение загружено, если это не пустая строка и не None
+                # (может быть путь к файлу или pygame.Surface)
+                if img_source and img_source != "":
+                    # Проверяем, что это не просто созданная нами цветная поверхность
+                    # Если original_image имеет тот же размер, что и текущий размер, и это не Surface из файла,
+                    # то возможно это созданная нами поверхность
+                    has_loaded_image = True
+            
+            if has_loaded_image:
+                # Используем базовый механизм тонировки Sprite (не заменяем изображение!)
+                self._bar.color = rgb_color
+                if a != 255:
+                    self._bar.alpha = a
+            else:
+                # Создаем новую поверхность с цветом (если изображения не было)
+                bg_size = getattr(self._bar, 'size', (100, 20))
+                bg_surface = pygame.Surface(bg_size, pygame.SRCALPHA)
+                bg_surface.fill(rgba_color)
+                self._bar.set_image(bg_surface, bg_size)
         else:
             # Обновляем цвет fill
             self._bar._fill_color = rgb_color
             self._bar._fill_alpha = a
-            # Создаем новую поверхность с указанным цветом и альфа-каналом
-            fill_surface = pygame.Surface(self._bar._fill_size, pygame.SRCALPHA)
-            fill_surface.fill(rgba_color)
-            # Обновляем fill поверхность
-            self._bar._fill_surface = pygame.transform.scale(fill_surface, self._bar._fill_size)
+            
+            # Проверяем, есть ли уже загруженное изображение fill
+            has_loaded_fill_image = False
+            if hasattr(self._bar, '_fill_image_source'):
+                fill_source = self._bar._fill_image_source
+                if fill_source and fill_source != "":
+                    has_loaded_fill_image = True
+            
+            if has_loaded_fill_image:
+                # Если изображение было загружено, применяем тонировку к нему
+                # Пересоздаем fill sprite, а затем применяем тонировку
+                self._bar._create_fill_sprite()
+                # Применяем тонировку к загруженному изображению
+                if rgb_color != (255, 255, 255):
+                    # Создаем поверхность для тонировки
+                    tint_surface = pygame.Surface(self._bar._fill_surface.get_size(), pygame.SRCALPHA)
+                    tint_surface.fill(rgb_color)
+                    # Применяем тонировку через BLEND_RGBA_MULT
+                    self._bar._fill_surface.blit(tint_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+                # Применяем альфа-канал
+                if a != 255:
+                    self._bar._fill_surface.set_alpha(a)
+            else:
+                # Создаем новую поверхность с цветом (если изображения не было)
+                fill_surface = pygame.Surface(self._bar._fill_size, pygame.SRCALPHA)
+                fill_surface.fill(rgba_color)
+                # Обновляем fill поверхность
+                self._bar._fill_surface = pygame.transform.scale(fill_surface, self._bar._fill_size)
+            
             self._bar._update_clipped_image()
     
     @property
