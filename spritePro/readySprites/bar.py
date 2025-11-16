@@ -81,8 +81,9 @@ class Bar(Sprite):
         self._is_animating = False
         self._animation_timer = 0.0
 
-        # Store original image for clipping (use parent's scaled image)
-        self._original_image = self.original_image.copy()
+        # Store base original image for clipping (before any fill clipping)
+        # This is the image that will be clipped based on fill_amount
+        self._base_original_image = self.original_image.copy()
 
         # Set initial image
         self._update_clipped_image()
@@ -111,6 +112,24 @@ class Bar(Sprite):
             float: Текущее значение заполнения (0.0-1.0).
         """
         return self._current_fill
+
+    @property
+    def amount(self) -> float:
+        """Получает текущее значение заполнения.
+
+        Returns:
+            float: Текущее значение заполнения (0.0-1.0).
+        """
+        return self._current_fill
+
+    @amount.setter
+    def amount(self, value: float):
+        """Устанавливает значение заполнения полосы.
+
+        Args:
+            value (float): Значение заполнения от 0.0 до 1.0.
+        """
+        self.set_fill_amount(value, animate=True)
 
     def set_fill_direction(self, direction: Union[str, FillDirection]) -> None:
         """Устанавливает направление заполнения полосы.
@@ -154,62 +173,67 @@ class Bar(Sprite):
         # Use parent's set_image method (handles loading, fallback, and scaling properly)
         super().set_image(image_source, size)
         
-        # Update the original image for clipping (use parent's scaled image)
-        self._original_image = self.original_image.copy()
+        # Update the base original image for clipping (use parent's scaled image)
+        # This is the image that will be clipped based on fill_amount
+        self._base_original_image = self.original_image.copy()
         
         # Recalculate clipping with new image (only if attributes are initialized)
         if hasattr(self, '_current_fill'):
             self._update_clipped_image()
 
     def _update_clipped_image(self) -> None:
-        """Обновляет изображение полосы на основе текущего значения заполнения и направления."""
+        """Обновляет изображение полосы на основе текущего значения заполнения и направления.
+        
+        Обновляет original_image, чтобы базовый Sprite мог применить трансформации (поворот, масштаб и т.д.).
+        """
+        # Получаем базовое изображение для обрезки (до любых трансформаций)
+        base_image = getattr(self, '_base_original_image', self.original_image)
+        
         if self._current_fill <= 0:
             # Empty bar - create transparent surface
-            self.image = pygame.Surface(self._original_image.get_size(), pygame.SRCALPHA)
-            return
-
-        if self._current_fill >= 1:
+            clipped_surface = pygame.Surface(base_image.get_size(), pygame.SRCALPHA)
+        elif self._current_fill >= 1:
             # Full bar - use original image
-            self.image = self._original_image.copy()
-            return
-
-        # Calculate clip rectangle based on direction
-        original_width = self._original_image.get_width()
-        original_height = self._original_image.get_height()
-        
-        if self._fill_direction in [FillDirection.HORIZONTAL_LEFT_TO_RIGHT, "horizontal_left_to_right"]:
-            # Left to right
-            clip_width = int(original_width * self._current_fill)
-            clip_rect = pygame.Rect(0, 0, clip_width, original_height)
-            
-        elif self._fill_direction in [FillDirection.HORIZONTAL_RIGHT_TO_LEFT, "horizontal_right_to_left"]:
-            # Right to left
-            clip_width = int(original_width * self._current_fill)
-            clip_rect = pygame.Rect(original_width - clip_width, 0, clip_width, original_height)
-            
-        elif self._fill_direction in [FillDirection.VERTICAL_BOTTOM_TO_TOP, "vertical_bottom_to_top"]:
-            # Bottom to top
-            clip_height = int(original_height * self._current_fill)
-            clip_rect = pygame.Rect(0, original_height - clip_height, original_width, clip_height)
-            
-        elif self._fill_direction in [FillDirection.VERTICAL_TOP_TO_BOTTOM, "vertical_top_to_bottom"]:
-            # Top to bottom
-            clip_height = int(original_height * self._current_fill)
-            clip_rect = pygame.Rect(0, 0, original_width, clip_height)
-            
+            clipped_surface = base_image.copy()
         else:
-            # Default to left to right
-            clip_width = int(original_width * self._current_fill)
-            clip_rect = pygame.Rect(0, 0, clip_width, original_height)
+            # Calculate clip rectangle based on direction
+            original_width = base_image.get_width()
+            original_height = base_image.get_height()
+            
+            if self._fill_direction in [FillDirection.HORIZONTAL_LEFT_TO_RIGHT, "horizontal_left_to_right"]:
+                # Left to right
+                clip_width = int(original_width * self._current_fill)
+                clip_rect = pygame.Rect(0, 0, clip_width, original_height)
+                
+            elif self._fill_direction in [FillDirection.HORIZONTAL_RIGHT_TO_LEFT, "horizontal_right_to_left"]:
+                # Right to left
+                clip_width = int(original_width * self._current_fill)
+                clip_rect = pygame.Rect(original_width - clip_width, 0, clip_width, original_height)
+                
+            elif self._fill_direction in [FillDirection.VERTICAL_BOTTOM_TO_TOP, "vertical_bottom_to_top"]:
+                # Bottom to top
+                clip_height = int(original_height * self._current_fill)
+                clip_rect = pygame.Rect(0, original_height - clip_height, original_width, clip_height)
+                
+            elif self._fill_direction in [FillDirection.VERTICAL_TOP_TO_BOTTOM, "vertical_top_to_bottom"]:
+                # Top to bottom
+                clip_height = int(original_height * self._current_fill)
+                clip_rect = pygame.Rect(0, 0, original_width, clip_height)
+                
+            else:
+                # Default to left to right
+                clip_width = int(original_width * self._current_fill)
+                clip_rect = pygame.Rect(0, 0, clip_width, original_height)
 
-        # Create clipped surface
-        self.image = pygame.Surface(clip_rect.size, pygame.SRCALPHA)
-        self.image.blit(self._original_image, (0, 0), clip_rect)
-
-        # Update rect with proper anchor positioning
-        old_anchor_pos = getattr(self.rect, self.anchor_key)
-        self.rect = self.image.get_rect()
-        setattr(self.rect, self.anchor_key, old_anchor_pos)
+            # Create clipped surface
+            clipped_surface = pygame.Surface(clip_rect.size, pygame.SRCALPHA)
+            clipped_surface.blit(base_image, (0, 0), clip_rect)
+        
+        # Обновляем original_image, чтобы базовый Sprite мог применить трансформации
+        self.original_image = clipped_surface
+        # Помечаем, что нужно обновить трансформации
+        self._transform_dirty = True
+        self._color_dirty = True
 
     def _update_animation(self, dt: float) -> None:
         """Обновляет анимацию заполнения.
@@ -285,10 +309,11 @@ class _ColorWrapper:
         """
         self._bar = bar_instance
         self._is_background = is_background
+        self._alpha = 255  # По умолчанию полностью непрозрачный
     
     @property
     def color(self) -> Optional[Tuple[int, int, int]]:
-        """Получает текущий цвет.
+        """Получает текущий цвет (RGB).
         
         Returns:
             Optional[Tuple[int, int, int]]: Текущий цвет в RGB или None.
@@ -299,27 +324,71 @@ class _ColorWrapper:
             return getattr(self._bar, '_fill_color', None)
     
     @color.setter
-    def color(self, value: Optional[Tuple[int, int, int]]):
+    def color(self, value: Optional[Union[Tuple[int, int, int], Tuple[int, int, int, int]]]):
         """Устанавливает цвет и обновляет соответствующее изображение.
         
+        Поддерживает как RGB (r, g, b), так и RGBA (r, g, b, a) кортежи.
+        Если передан RGBA, альфа-канал будет использован.
+        
         Args:
-            value (Optional[Tuple[int, int, int]]): Новый цвет в RGB или None.
+            value (Optional[Union[Tuple[int, int, int], Tuple[int, int, int, int]]]): 
+                Новый цвет в RGB или RGBA формате, или None.
         """
+        if value is None:
+            return
+        
+        # Определяем RGB и альфа
+        if len(value) == 4:
+            r, g, b, a = value
+            self._alpha = max(0, min(255, a))
+        else:
+            r, g, b = value[:3]
+            a = self._alpha
+        
+        rgb_color = (r, g, b)
+        rgba_color = (r, g, b, a)
+        
         if self._is_background:
             # Обновляем цвет фона через родительский Sprite
-            self._bar.color = value
+            self._bar.color = rgb_color
             # Обновляем изображение фона
-            if value is not None:
-                # Используем текущий размер или размер по умолчанию
-                bg_size = getattr(self._bar, 'size', (100, 20))
-                bg_surface = pygame.Surface(bg_size, pygame.SRCALPHA)
-                bg_surface.fill(value)
-                self._bar.set_image(bg_surface, bg_size)
+            # Используем текущий размер или размер по умолчанию
+            bg_size = getattr(self._bar, 'size', (100, 20))
+            bg_surface = pygame.Surface(bg_size, pygame.SRCALPHA)
+            bg_surface.fill(rgba_color)
+            self._bar.set_image(bg_surface, bg_size)
         else:
             # Обновляем цвет fill
-            self._bar._fill_color = value
-            if value is not None:
-                self._bar.set_fill_color(value)
+            self._bar._fill_color = rgb_color
+            self._bar._fill_alpha = a
+            # Создаем новую поверхность с указанным цветом и альфа-каналом
+            fill_surface = pygame.Surface(self._bar._fill_size, pygame.SRCALPHA)
+            fill_surface.fill(rgba_color)
+            # Обновляем fill поверхность
+            self._bar._fill_surface = pygame.transform.scale(fill_surface, self._bar._fill_size)
+            self._bar._update_clipped_image()
+    
+    @property
+    def alpha(self) -> int:
+        """Получает текущую прозрачность.
+        
+        Returns:
+            int: Текущая прозрачность (0-255, где 255 = непрозрачный).
+        """
+        return self._alpha
+    
+    @alpha.setter
+    def alpha(self, value: int):
+        """Устанавливает прозрачность и обновляет изображение.
+        
+        Args:
+            value (int): Новая прозрачность (0-255, где 255 = непрозрачный).
+        """
+        self._alpha = max(0, min(255, value))
+        # Обновляем изображение с новой прозрачностью
+        current_color = self.color
+        if current_color is not None:
+            self.color = current_color  # Переустановим цвет с новым альфа-каналом
 
 
 class BarWithBackground(Bar):
@@ -381,6 +450,7 @@ class BarWithBackground(Bar):
         self._is_animating = False
         self._animation_timer = 0.0
         self._fill_color = None  # Цвет fill изображения
+        self._fill_alpha = 255  # Альфа-канал fill изображения
         
         # Create fill sprite (will be clipped)
         self._fill_sprite = None
@@ -389,6 +459,9 @@ class BarWithBackground(Bar):
         # Create color wrappers for easy access
         self.bg = _ColorWrapper(self, is_background=True)
         self.fill = _ColorWrapper(self, is_background=False)
+        # Инициализируем альфа-канал для fill из существующего значения
+        if hasattr(self, '_fill_alpha'):
+            self.fill._alpha = self._fill_alpha
         
         # Update initial display
         self._update_clipped_image()
@@ -428,9 +501,10 @@ class BarWithBackground(Bar):
         elif not self._fill_image_source:  # Empty string or None
             # Create fallback surface (transparent)
             fill_surface = pygame.Surface(self._fill_size, pygame.SRCALPHA)
-            # Fill with color if sprite has color attribute
-            if hasattr(self, 'color') and self.color is not None:
-                fill_surface.fill(self.color)
+            # Fill with color if fill color is set
+            if hasattr(self, '_fill_color') and self._fill_color is not None:
+                alpha = getattr(self, '_fill_alpha', 255)
+                fill_surface.fill((*self._fill_color, alpha))
         else:
             try:
                 fill_surface = pygame.image.load(str(self._fill_image_source)).convert_alpha()
@@ -440,9 +514,10 @@ class BarWithBackground(Bar):
                 )
                 # Create fallback surface (transparent)
                 fill_surface = pygame.Surface(self._fill_size, pygame.SRCALPHA)
-                # Fill with color if sprite has color attribute
-                if hasattr(self, 'color') and self.color is not None:
-                    fill_surface.fill(self.color)
+                # Fill with color if fill color is set
+                if hasattr(self, '_fill_color') and self._fill_color is not None:
+                    alpha = getattr(self, '_fill_alpha', 255)
+                    fill_surface.fill((*self._fill_color, alpha))
         
         # Scale to bar size
         self._fill_surface = pygame.transform.scale(fill_surface, self._fill_size)
@@ -500,19 +575,29 @@ class BarWithBackground(Bar):
         self._create_fill_sprite()
         self._update_clipped_image()
     
-    def set_fill_color(self, color: Tuple[int, int, int]):
+    def set_fill_color(self, color: Union[Tuple[int, int, int], Tuple[int, int, int, int]], alpha: Optional[int] = None):
         """Устанавливает цвет изображения заполнения.
         
         Создает новую поверхность с указанным цветом для fill изображения.
-        Также можно использовать fill.color = (r, g, b).
+        Также можно использовать fill.color = (r, g, b) или fill.color = (r, g, b, a).
         
         Args:
-            color (Tuple[int, int, int]): Цвет в формате RGB (0-255).
+            color (Union[Tuple[int, int, int], Tuple[int, int, int, int]]): Цвет в формате RGB или RGBA (0-255).
+            alpha (Optional[int], optional): Альфа-канал (0-255). Используется только если color в формате RGB. По умолчанию None (255).
         """
-        self._fill_color = color
-        # Создаем новую поверхность с указанным цветом
+        # Определяем RGB и альфа
+        if len(color) == 4:
+            r, g, b, a = color
+            self._fill_color = (r, g, b)
+            self._fill_alpha = max(0, min(255, a))
+        else:
+            r, g, b = color[:3]
+            self._fill_color = (r, g, b)
+            self._fill_alpha = max(0, min(255, alpha)) if alpha is not None else 255
+        
+        # Создаем новую поверхность с указанным цветом и альфа-каналом
         fill_surface = pygame.Surface(self._fill_size, pygame.SRCALPHA)
-        fill_surface.fill(color)
+        fill_surface.fill((r, g, b, self._fill_alpha))
         
         # Обновляем fill поверхность
         self._fill_surface = pygame.transform.scale(fill_surface, self._fill_size)
@@ -635,17 +720,41 @@ class BarWithBackground(Bar):
         Args:
             screen (pygame.Surface): Поверхность экрана для отрисовки.
         """
-        # Draw background (parent's image)
+        # Draw background (parent's image) - это уже включает все трансформации (поворот, масштаб и т.д.)
         super().draw(screen)
         
-        # Draw clipped fill on top
-        if hasattr(self, '_clipped_fill_surface'):
-            # Use the same position as the background sprite
-            fill_rect = self._clipped_fill_surface.get_rect()
-            # Get the actual screen position (accounting for camera)
+        # Draw clipped fill on top with same transformations
+        if hasattr(self, '_clipped_fill_surface') and self.active:
+            # Apply same transformations as the main sprite
+            fill_img = self._clipped_fill_surface.copy()
+            
+            # Apply flip
+            if self.flipped_h or self.flipped_v:
+                fill_img = pygame.transform.flip(fill_img, self.flipped_h, self.flipped_v)
+            
+            # Apply scale
+            if self._scale != 1.0:
+                new_size = (
+                    int(fill_img.get_width() * self._scale),
+                    int(fill_img.get_height() * self._scale),
+                )
+                fill_img = pygame.transform.scale(fill_img, new_size)
+            
+            # Apply rotation
+            if self._angle != 0:
+                fill_img = pygame.transform.rotate(fill_img, self._angle)
+            
+            # Get screen position (accounting for camera)
+            fill_rect = fill_img.get_rect()
             screen_pos = self.get_position()
             fill_rect.center = screen_pos
-            screen.blit(self._clipped_fill_surface, fill_rect)
+            
+            # Apply alpha if needed
+            if self._alpha != 255:
+                fill_img.set_alpha(self._alpha)
+            
+            # Draw the transformed fill surface
+            screen.blit(fill_img, fill_rect)
 
 
 def create_bar_with_background(background_image: Union[str, Path, pygame.Surface] = "",

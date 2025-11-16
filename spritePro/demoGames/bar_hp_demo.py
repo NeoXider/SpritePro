@@ -39,6 +39,7 @@ def main():
     )
     # Устанавливаем цвета через bg и fill свойства
     hp_bar.bg.color = (139, 0, 0)  # Темно-красный фон (DarkRed)
+    hp_bar.bg.alpha = 50
     hp_bar.fill.color = (255, 0, 0)  # Красный fill
     hp_bar.set_fill_type(FillDirection.LEFT_TO_RIGHT, s.Anchor.CENTER)
     
@@ -127,6 +128,12 @@ def main():
             font_size=14,
             color=(200, 200, 200)
         ),
+        s.TextSprite(
+            text="T: Изменить прозрачность (альфа-канал)",
+            pos=(500, 590),
+            font_size=14,
+            color=(200, 200, 200)
+        ),
     ]
     
     # Состояние для изменения цвета
@@ -138,6 +145,24 @@ def main():
     ]
     color_names = ["Красный", "Зеленый", "Синий"]
     
+    # Демонстрация альфа-канала - создаем полупрозрачный бар
+    hp_bar_transparent = BarWithBackground(
+        background_image="",
+        fill_image="",
+        size=(400, 50),
+        pos=(500, 500),
+        fill_amount=0.6,
+        fill_direction=FillDirection.LEFT_TO_RIGHT,
+        animate_duration=0.3,
+        sorting_order=1,
+    )
+    # Используем RGBA для установки цвета с альфа-каналом
+    hp_bar_transparent.bg.color = (139, 0, 0, 200)  # Темно-красный фон с альфа=200
+    hp_bar_transparent.fill.color = (255, 0, 0, 180)  # Красный fill с альфа=180
+    
+    # Или можно использовать отдельное свойство alpha
+    # hp_bar_transparent.fill.alpha = 180
+    
     # Основной цикл
     running = True
     while running:
@@ -146,28 +171,24 @@ def main():
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:
-                    # Уменьшить HP всех баров
+                    # Уменьшить HP всех баров (используем удобное свойство amount)
                     for bar in [hp_bar, hp_bar2, hp_bar3]:
-                        current = bar.get_fill_amount()
-                        new = max(0.0, current - 0.1)
-                        bar.set_fill_amount(new, animate=True)
+                        bar.amount = max(0.0, bar.amount - 0.1)
                     
-                    # Обновить метки
-                    hp_label1.text = f"HP: {int(hp_bar.get_fill_amount() * 100)}%"
-                    hp_label2.text = f"HP: {int(hp_bar2.get_fill_amount() * 100)}%"
-                    hp_label3.text = f"HP: {int(hp_bar3.get_fill_amount() * 100)}%"
+                    # Обновить метки (используем свойство amount)
+                    hp_label1.text = f"HP: {int(hp_bar.amount * 100)}%"
+                    hp_label2.text = f"HP: {int(hp_bar2.amount * 100)}%"
+                    hp_label3.text = f"HP: {int(hp_bar3.amount * 100)}%"
                     
                 elif event.key == pygame.K_d:
-                    # Увеличить HP всех баров
+                    # Увеличить HP всех баров (используем удобное свойство amount)
                     for bar in [hp_bar, hp_bar2, hp_bar3]:
-                        current = bar.get_fill_amount()
-                        new = min(1.0, current + 0.1)
-                        bar.set_fill_amount(new, animate=True)
+                        bar.amount = min(1.0, bar.amount + 0.1)
                     
-                    # Обновить метки
-                    hp_label1.text = f"HP: {int(hp_bar.get_fill_amount() * 100)}%"
-                    hp_label2.text = f"HP: {int(hp_bar2.get_fill_amount() * 100)}%"
-                    hp_label3.text = f"HP: {int(hp_bar3.get_fill_amount() * 100)}%"
+                    # Обновить метки (используем свойство amount)
+                    hp_label1.text = f"HP: {int(hp_bar.amount * 100)}%"
+                    hp_label2.text = f"HP: {int(hp_bar2.amount * 100)}%"
+                    hp_label3.text = f"HP: {int(hp_bar3.amount * 100)}%"
                     
                 elif event.key == pygame.K_c:
                     # Изменить цвет fill всех баров
@@ -181,14 +202,22 @@ def main():
                     print(f"Цвет fill изменен на: {color_names[color_index]}")
                     
                 elif event.key == pygame.K_r:
-                    # Сбросить HP на 100%
+                    # Сбросить HP на 100% (используем удобное свойство amount)
                     for bar in [hp_bar, hp_bar2, hp_bar3]:
-                        bar.set_fill_amount(1.0, animate=True)
+                        bar.amount = 1.0
                     
                     # Обновить метки
                     hp_label1.text = "HP: 100%"
                     hp_label2.text = "HP: 100%"
                     hp_label3.text = "HP: 100%"
+                    
+                elif event.key == pygame.K_t:
+                    # Изменить прозрачность (альфа-канал)
+                    current_alpha = hp_bar_transparent.fill.alpha
+                    new_alpha = 255 if current_alpha < 128 else 128  # Переключаем между 255 и 128
+                    hp_bar_transparent.fill.alpha = new_alpha
+                    hp_bar_transparent.bg.alpha = new_alpha + 20  # Фон чуть более непрозрачный
+                    print(f"Альфа-канал изменен на: {new_alpha}")
         
         # Обновление и отрисовка
         s.update(fps=60, update_display=True, fill_color=(20, 20, 30))

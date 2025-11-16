@@ -83,6 +83,23 @@ current_fill = bar.get_fill_amount()
 print(f"Полоса заполнена на {current_fill * 100:.1f}%")
 ```
 
+### `amount` (property)
+
+Удобное свойство для получения и установки значения заполнения.
+
+```python
+# Получить текущее значение
+current = bar.amount
+
+# Установить новое значение (с анимацией)
+bar.amount = 0.75
+
+# Использовать в вычислениях
+bar.amount = bar.amount - 0.1  # Уменьшить на 10%
+```
+
+**Примечание:** Установка через `amount` всегда использует анимацию. Для установки без анимации используйте `set_fill_amount(value, animate=False)`.
+
 ### `set_fill_direction(direction: Union[str, FillDirection])`
 
 Изменить направление заполнения.
@@ -194,6 +211,9 @@ mana_bar = Bar(
 
 # Обновить ману
 mana_bar.set_fill_amount(0.9)  # Восстановить до 90%
+
+# Или использовать удобное свойство amount
+mana_bar.amount = 0.9  # Восстановить до 90%
 ```
 
 ### Несколько полос

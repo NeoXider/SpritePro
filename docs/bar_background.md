@@ -57,9 +57,11 @@ BarWithBackground(
 
 ### Управление цветами
 
-- `bg.color = (r, g, b)`: Установить цвет фона (создает поверхность с указанным цветом)
-- `fill.color = (r, g, b)`: Установить цвет fill (создает поверхность с указанным цветом)
-- `set_fill_color(color: Tuple[int, int, int])`: Установить цвет fill (альтернативный способ)
+- `bg.color = (r, g, b)` или `bg.color = (r, g, b, a)`: Установить цвет фона (RGB или RGBA)
+- `fill.color = (r, g, b)` или `fill.color = (r, g, b, a)`: Установить цвет fill (RGB или RGBA)
+- `bg.alpha = value`: Установить прозрачность фона (0-255, где 255 = непрозрачный)
+- `fill.alpha = value`: Установить прозрачность fill (0-255, где 255 = непрозрачный)
+- `set_fill_color(color, alpha=None)`: Установить цвет fill (альтернативный способ, поддерживает RGBA)
 
 ### Управление размерами
 
@@ -69,6 +71,7 @@ BarWithBackground(
 
 ### Управление заполнением
 
+- `amount` (property): Удобное свойство для получения и установки значения заполнения (с анимацией)
 - `set_fill_amount(value: float, animate: bool = True)`: Установить количество заполнения
 - `get_fill_amount() -> float`: Получить текущее количество заполнения
 - `set_fill_type(fill_direction: Union[str, FillDirection], anchor: Union[str, Anchor] = Anchor.CENTER)`: Установить направление заполнения и якорь
@@ -239,12 +242,21 @@ bar.bg.color = (139, 0, 0)  # Темно-красный
 # Установить цвет fill через fill.color
 bar.fill.color = (255, 0, 0)  # Красный
 
-# Получить текущий цвет
+# Установить цвет с альфа-каналом (RGBA)
+bar.fill.color = (255, 0, 0, 180)  # Красный с прозрачностью 180/255
+
+# Или использовать отдельное свойство alpha
+bar.fill.alpha = 180  # Установить прозрачность отдельно
+
+# Получить текущий цвет и прозрачность
 bg_color = bar.bg.color
 fill_color = bar.fill.color
+fill_alpha = bar.fill.alpha  # Получить текущую прозрачность
 
 # Альтернативный способ через метод
-bar.set_fill_color((255, 0, 0))
+bar.set_fill_color((255, 0, 0))  # RGB
+bar.set_fill_color((255, 0, 0, 180))  # RGBA
+bar.set_fill_color((255, 0, 0), alpha=180)  # RGB + отдельный alpha
 ```
 
 #### Управление размерами
@@ -269,8 +281,13 @@ bar.set_both_sizes(
 # Установить количество заполнения с анимацией
 bar.set_fill_amount(0.75, animate=True)
 
+# Или использовать удобное свойство amount (всегда с анимацией)
+bar.amount = 0.75
+
 # Получить текущее количество заполнения
 current_fill = bar.get_fill_amount()
+# Или через свойство
+current_fill = bar.amount
 
 # Установить направление заполнения и якорь
 bar.set_fill_type(FillDirection.BOTTOM_TO_TOP, s.Anchor.CENTER)
