@@ -44,7 +44,7 @@ class Bar(Sprite):
 
     def __init__(
         self,
-        image: Union[str, Path, pygame.Surface],
+        image: Union[str, Path, pygame.Surface] = "",
         pos: Tuple[int, int] = (0, 0),
         size: Optional[Tuple[int, int]] = None,
         fill_direction: Union[str, FillDirection] = FillDirection.HORIZONTAL_LEFT_TO_RIGHT,
@@ -55,30 +55,20 @@ class Bar(Sprite):
         """Инициализирует полосу прогресса.
 
         Args:
-            image (Union[str, Path, pygame.Surface]): Путь к изображению полосы или pygame Surface.
+            image (Union[str, Path, pygame.Surface], optional): Путь к изображению полосы, pygame Surface или пустая строка для создания по умолчанию. По умолчанию "".
             pos (Tuple[int, int], optional): Позиция на экране. По умолчанию (0, 0).
-            size (Optional[Tuple[int, int]], optional): Размеры полосы. Если None, используется размер изображения.
+            size (Optional[Tuple[int, int]], optional): Размеры полосы. Если None, используется размер изображения или (100, 20) по умолчанию.
             fill_direction (Union[str, FillDirection], optional): Направление заполнения. По умолчанию HORIZONTAL_LEFT_TO_RIGHT.
             fill_amount (float, optional): Начальное значение заполнения (0.0-1.0). По умолчанию 1.0.
             animate_duration (float, optional): Длительность анимации в секундах. По умолчанию 0.3.
             sorting_order (Optional[int], optional): Порядок отрисовки (слой).
         """
-        # Load image if path provided
-        if isinstance(image, (str, Path)):
-            try:
-                image_surface = pygame.image.load(str(image)).convert_alpha()
-            except pygame.error as e:
-                print(f"Error loading bar image: {image}\n{e}")
-                # Create fallback surface
-                image_surface = pygame.Surface((100, 20), pygame.SRCALPHA)
-                image_surface.fill((255, 0, 0))  # Red fallback
-        else:
-            image_surface = image
-
-        # Initialize parent Sprite with proper image loading
+        # Initialize parent Sprite with image path/string (Sprite handles loading and fallback)
+        # Use default size if not provided
+        default_size = size if size is not None else (100, 20)
         super().__init__(
-            sprite=image_surface,  # Pass the image directly
-            size=size,  # Let parent handle scaling
+            sprite=image,  # Pass path/string directly, Sprite will handle loading
+            size=default_size,
             pos=pos,
             sorting_order=sorting_order,
         )
@@ -154,14 +144,14 @@ class Bar(Sprite):
         if current_pos:
             self.set_position(current_pos, anchor)
 
-    def set_image(self, image_source: Union[str, Path, pygame.Surface], size: Optional[Tuple[int, int]] = None) -> None:
+    def set_image(self, image_source: Union[str, Path, pygame.Surface] = "", size: Optional[Tuple[int, int]] = None) -> None:
         """Устанавливает новое изображение для полосы и обновляет обрезку.
 
         Args:
-            image_source (Union[str, Path, pygame.Surface]): Путь к файлу изображения или pygame Surface.
+            image_source (Union[str, Path, pygame.Surface], optional): Путь к файлу изображения, pygame Surface или пустая строка. По умолчанию "".
             size (Optional[Tuple[int, int]], optional): Новые размеры (ширина, высота) или None для сохранения оригинального размера.
         """
-        # Use parent's set_image method (handles scaling properly)
+        # Use parent's set_image method (handles loading, fallback, and scaling properly)
         super().set_image(image_source, size)
         
         # Update the original image for clipping (use parent's scaled image)
@@ -264,7 +254,7 @@ class Bar(Sprite):
 
 # Convenience function for quick bar creation
 def create_bar(
-    image: Union[str, Path, pygame.Surface],
+    image: Union[str, Path, pygame.Surface] = "",
     pos: Tuple[int, int] = (0, 0),
     fill_amount: float = 1.0,
     **kwargs,
@@ -272,7 +262,7 @@ def create_bar(
     """Создает готовую к использованию полосу прогресса с общими настройками.
 
     Args:
-        image (Union[str, Path, pygame.Surface]): Путь к изображению полосы или поверхность.
+        image (Union[str, Path, pygame.Surface], optional): Путь к изображению полосы, поверхность или пустая строка. По умолчанию "".
         pos (Tuple[int, int], optional): Позиция на экране. По умолчанию (0, 0).
         fill_amount (float, optional): Начальное значение заполнения (0.0-1.0). По умолчанию 1.0.
         **kwargs: Дополнительные аргументы, передаваемые в конструктор Bar.
@@ -283,17 +273,70 @@ def create_bar(
     return Bar(image=image, pos=pos, fill_amount=fill_amount, **kwargs)
 
 
+class _ColorWrapper:
+    """Внутренний класс-обертка для изменения цвета фона или fill."""
+    
+    def __init__(self, bar_instance, is_background: bool):
+        """Инициализирует обертку цвета.
+        
+        Args:
+            bar_instance: Экземпляр BarWithBackground.
+            is_background (bool): True для фона, False для fill.
+        """
+        self._bar = bar_instance
+        self._is_background = is_background
+    
+    @property
+    def color(self) -> Optional[Tuple[int, int, int]]:
+        """Получает текущий цвет.
+        
+        Returns:
+            Optional[Tuple[int, int, int]]: Текущий цвет в RGB или None.
+        """
+        if self._is_background:
+            return self._bar.color
+        else:
+            return getattr(self._bar, '_fill_color', None)
+    
+    @color.setter
+    def color(self, value: Optional[Tuple[int, int, int]]):
+        """Устанавливает цвет и обновляет соответствующее изображение.
+        
+        Args:
+            value (Optional[Tuple[int, int, int]]): Новый цвет в RGB или None.
+        """
+        if self._is_background:
+            # Обновляем цвет фона через родительский Sprite
+            self._bar.color = value
+            # Обновляем изображение фона
+            if value is not None:
+                # Используем текущий размер или размер по умолчанию
+                bg_size = getattr(self._bar, 'size', (100, 20))
+                bg_surface = pygame.Surface(bg_size, pygame.SRCALPHA)
+                bg_surface.fill(value)
+                self._bar.set_image(bg_surface, bg_size)
+        else:
+            # Обновляем цвет fill
+            self._bar._fill_color = value
+            if value is not None:
+                self._bar.set_fill_color(value)
+
+
 class BarWithBackground(Bar):
     """Полоса прогресса с фоновым изображением и наложением заполнения.
     
     Расширяет Bar для включения фонового изображения, которое остается видимым,
     в то время как область заполнения обрезается поверх него.
+    
+    Attributes:
+        bg (_ColorWrapper): Обертка для изменения цвета фона через bg.color.
+        fill (_ColorWrapper): Обертка для изменения цвета fill через fill.color.
     """
     
     def __init__(self, 
-                 background_image: Union[str, Path, pygame.Surface],
-                 fill_image: Union[str, Path, pygame.Surface],
-                 size: Tuple[int, int],
+                 background_image: Union[str, Path, pygame.Surface] = "",
+                 fill_image: Union[str, Path, pygame.Surface] = "",
+                 size: Tuple[int, int] = (100, 20),
                  pos: Tuple[float, float] = (0, 0),
                  fill_amount: float = 1.0,
                  fill_direction: Union[str, FillDirection] = FillDirection.LEFT_TO_RIGHT,
@@ -304,9 +347,9 @@ class BarWithBackground(Bar):
         """Инициализирует полосу с фоновым изображением и изображением заполнения.
         
         Args:
-            background_image (Union[str, Path, pygame.Surface]): Изображение для фона (всегда видимо).
-            fill_image (Union[str, Path, pygame.Surface]): Изображение для области заполнения (обрезается на основе fill_amount).
-            size (Tuple[int, int]): Размер полосы по умолчанию (ширина, высота).
+            background_image (Union[str, Path, pygame.Surface], optional): Изображение для фона (всегда видимо) или пустая строка. По умолчанию "".
+            fill_image (Union[str, Path, pygame.Surface], optional): Изображение для области заполнения (обрезается на основе fill_amount) или пустая строка. По умолчанию "".
+            size (Tuple[int, int], optional): Размер полосы по умолчанию (ширина, высота). По умолчанию (100, 20).
             pos (Tuple[float, float], optional): Позиция на экране. По умолчанию (0, 0).
             fill_amount (float, optional): Начальное значение заполнения (0.0-1.0). По умолчанию 1.0.
             fill_direction (Union[str, FillDirection], optional): Направление заполнения (left_to_right, right_to_left и т.д.). По умолчанию LEFT_TO_RIGHT.
@@ -316,6 +359,7 @@ class BarWithBackground(Bar):
             fill_size (Optional[Tuple[int, int]], optional): Опциональный отдельный размер для изображения заполнения.
         """
         # Initialize background sprite (always visible)
+        # Bar.__init__ will handle image loading with fallback
         super().__init__(
             image=background_image,
             size=size,
@@ -336,10 +380,15 @@ class BarWithBackground(Bar):
         self._animate_duration = animate_duration
         self._is_animating = False
         self._animation_timer = 0.0
+        self._fill_color = None  # Цвет fill изображения
         
         # Create fill sprite (will be clipped)
         self._fill_sprite = None
         self._create_fill_sprite()
+        
+        # Create color wrappers for easy access
+        self.bg = _ColorWrapper(self, is_background=True)
+        self.fill = _ColorWrapper(self, is_background=False)
         
         # Update initial display
         self._update_clipped_image()
@@ -369,22 +418,34 @@ class BarWithBackground(Bar):
             return direction  # Already a FillDirection constant
     
     def _create_fill_sprite(self):
-        """Создает спрайт заполнения из изображения заполнения."""
-        try:
-            if isinstance(self._fill_image_source, str) or isinstance(self._fill_image_source, Path):
-                # Load image from file
+        """Создает спрайт заполнения из изображения заполнения.
+        
+        Использует ту же логику загрузки, что и Sprite.set_image - если загрузка не удалась,
+        создается прозрачная поверхность с размером fill_size.
+        """
+        if isinstance(self._fill_image_source, pygame.Surface):
+            fill_surface = self._fill_image_source.copy()
+        elif not self._fill_image_source:  # Empty string or None
+            # Create fallback surface (transparent)
+            fill_surface = pygame.Surface(self._fill_size, pygame.SRCALPHA)
+            # Fill with color if sprite has color attribute
+            if hasattr(self, 'color') and self.color is not None:
+                fill_surface.fill(self.color)
+        else:
+            try:
                 fill_surface = pygame.image.load(str(self._fill_image_source)).convert_alpha()
-            else:
-                # Use provided surface
-                fill_surface = self._fill_image_source.copy()
-            
-            # Scale to bar size
-            self._fill_surface = pygame.transform.scale(fill_surface, self._fill_size)
-        except Exception as e:
-            print(f"Error loading fill image: {e}")
-            # Fallback to colored surface
-            self._fill_surface = pygame.Surface(self._fill_size, pygame.SRCALPHA)
-            self._fill_surface.fill((100, 150, 255))  # Blue fill color
+            except Exception:
+                print(
+                    f"[BarWithBackground] не удалось загрузить изображение заполнения из '{self._fill_image_source}'"
+                )
+                # Create fallback surface (transparent)
+                fill_surface = pygame.Surface(self._fill_size, pygame.SRCALPHA)
+                # Fill with color if sprite has color attribute
+                if hasattr(self, 'color') and self.color is not None:
+                    fill_surface.fill(self.color)
+        
+        # Scale to bar size
+        self._fill_surface = pygame.transform.scale(fill_surface, self._fill_size)
     
     def _update_clipped_image(self):
         """Обновляет спрайт заполнения с правильной обрезкой."""
@@ -429,21 +490,39 @@ class BarWithBackground(Bar):
         else:
             return pygame.Rect(0, 0, fill_width, height)
     
-    def set_fill_image(self, fill_image: Union[str, Path, pygame.Surface]):
+    def set_fill_image(self, fill_image: Union[str, Path, pygame.Surface] = ""):
         """Устанавливает новое изображение заполнения.
         
         Args:
-            fill_image (Union[str, Path, pygame.Surface]): Новый путь к изображению заполнения или поверхность.
+            fill_image (Union[str, Path, pygame.Surface], optional): Новый путь к изображению заполнения, поверхность или пустая строка. По умолчанию "".
         """
         self._fill_image_source = fill_image
         self._create_fill_sprite()
         self._update_clipped_image()
     
-    def set_background_image(self, background_image: Union[str, Path, pygame.Surface]):
+    def set_fill_color(self, color: Tuple[int, int, int]):
+        """Устанавливает цвет изображения заполнения.
+        
+        Создает новую поверхность с указанным цветом для fill изображения.
+        Также можно использовать fill.color = (r, g, b).
+        
+        Args:
+            color (Tuple[int, int, int]): Цвет в формате RGB (0-255).
+        """
+        self._fill_color = color
+        # Создаем новую поверхность с указанным цветом
+        fill_surface = pygame.Surface(self._fill_size, pygame.SRCALPHA)
+        fill_surface.fill(color)
+        
+        # Обновляем fill поверхность
+        self._fill_surface = pygame.transform.scale(fill_surface, self._fill_size)
+        self._update_clipped_image()
+    
+    def set_background_image(self, background_image: Union[str, Path, pygame.Surface] = ""):
         """Устанавливает новое фоновое изображение.
         
         Args:
-            background_image (Union[str, Path, pygame.Surface]): Новый путь к фоновому изображению или поверхность.
+            background_image (Union[str, Path, pygame.Surface], optional): Новый путь к фоновому изображению, поверхность или пустая строка. По умолчанию "".
         """
         self.set_image(background_image)
     
@@ -566,21 +645,19 @@ class BarWithBackground(Bar):
             # Get the actual screen position (accounting for camera)
             screen_pos = self.get_position()
             fill_rect.center = screen_pos
-            # Debug: Draw a border around the fill to see if it's being drawn
-            pygame.draw.rect(screen, (255, 0, 0), fill_rect, 2)  # Red border for debugging
             screen.blit(self._clipped_fill_surface, fill_rect)
 
 
-def create_bar_with_background(background_image: Union[str, Path, pygame.Surface],
-                              fill_image: Union[str, Path, pygame.Surface],
+def create_bar_with_background(background_image: Union[str, Path, pygame.Surface] = "",
+                              fill_image: Union[str, Path, pygame.Surface] = "",
                               pos: Tuple[float, float] = (0, 0),
                               fill_amount: float = 1.0,
                               **kwargs) -> BarWithBackground:
     """Создает готовую к использованию полосу с фоновым изображением и изображением заполнения.
 
     Args:
-        background_image (Union[str, Path, pygame.Surface]): Путь к фоновому изображению или поверхность.
-        fill_image (Union[str, Path, pygame.Surface]): Путь к изображению заполнения или поверхность.
+        background_image (Union[str, Path, pygame.Surface], optional): Путь к фоновому изображению, поверхность или пустая строка. По умолчанию "".
+        fill_image (Union[str, Path, pygame.Surface], optional): Путь к изображению заполнения, поверхность или пустая строка. По умолчанию "".
         pos (Tuple[float, float], optional): Позиция на экране. По умолчанию (0, 0).
         fill_amount (float, optional): Начальное значение заполнения (0.0-1.0). По умолчанию 1.0.
         **kwargs: Дополнительные аргументы, передаваемые в конструктор BarWithBackground.

@@ -11,6 +11,7 @@ The `BarWithBackground` class provides a progress bar with separate background a
 - **Independent Sizing**: Background and fill can have different sizes
 - **All Bar Features**: Inherits all functionality from the base `Bar` class
 - **Flexible Images**: Support for different image formats and sources
+- **Easy Color Control**: Change colors via `bg.color` and `fill.color` properties
 
 ## Constructor
 
@@ -31,8 +32,8 @@ BarWithBackground(
 
 ### Parameters
 
-- **background_image**: Image for the background (always visible)
-- **fill_image**: Image for the fill area (clipped based on fill_amount)
+- **background_image**: Image for the background (always visible). Can be path string, empty string (""), or pygame.Surface
+- **fill_image**: Image for the fill area (clipped based on fill_amount). Can be path string, empty string (""), or pygame.Surface
 - **size**: Default size of the bar (width, height)
 - **pos**: Position on screen
 - **fill_amount**: Initial fill amount (0.0-1.0)
@@ -42,12 +43,23 @@ BarWithBackground(
 - **background_size**: Optional separate size for background image
 - **fill_size**: Optional separate size for fill image
 
+### Attributes
+
+- **bg** (`_ColorWrapper`): Обертка для изменения цвета фона через `bg.color`
+- **fill** (`_ColorWrapper`): Обертка для изменения цвета fill через `fill.color`
+
 ## Методы
 
 ### Управление изображениями
 
-- `set_fill_image(fill_image: Union[str, Path, pygame.Surface])`: Установить новое изображение заполнения
-- `set_background_image(background_image: Union[str, Path, pygame.Surface])`: Установить новое фоновое изображение
+- `set_fill_image(fill_image: Union[str, Path, pygame.Surface] = "")`: Установить новое изображение заполнения
+- `set_background_image(background_image: Union[str, Path, pygame.Surface] = "")`: Установить новое фоновое изображение
+
+### Управление цветами
+
+- `bg.color = (r, g, b)`: Установить цвет фона (создает поверхность с указанным цветом)
+- `fill.color = (r, g, b)`: Установить цвет fill (создает поверхность с указанным цветом)
+- `set_fill_color(color: Tuple[int, int, int])`: Установить цвет fill (альтернативный способ)
 
 ### Управление размерами
 
@@ -82,6 +94,28 @@ bar = BarWithBackground(
 
 # Update in game loop
 s.update()
+```
+
+### Использование цветов через bg.color и fill.color
+
+```python
+# Создать бар с пустыми изображениями и установить цвета
+hp_bar = BarWithBackground(
+    background_image="",  # Пустая строка - создастся по умолчанию
+    fill_image="",  # Пустая строка - создастся по умолчанию
+    size=(400, 50),
+    pos=(500, 200),
+    fill_amount=0.75,
+    fill_direction=FillDirection.LEFT_TO_RIGHT
+)
+
+# Установить цвета через удобные свойства
+hp_bar.bg.color = (139, 0, 0)  # Темно-красный фон (DarkRed)
+hp_bar.fill.color = (255, 0, 0)  # Красный fill
+
+# Изменить цвет во время выполнения
+hp_bar.fill.color = (0, 255, 0)  # Зеленый fill
+hp_bar.bg.color = (0, 100, 0)  # Темно-зеленый фон
 ```
 
 ### Multiple Bars
@@ -191,6 +225,26 @@ bar.set_fill_image("path/to/fill.png")
 
 # Установить новое фоновое изображение
 bar.set_background_image("path/to/background.png")
+
+# Использовать пустую строку для создания по умолчанию
+bar.set_fill_image("")  # Создаст прозрачную поверхность
+```
+
+#### Управление цветами
+
+```python
+# Установить цвет фона через bg.color
+bar.bg.color = (139, 0, 0)  # Темно-красный
+
+# Установить цвет fill через fill.color
+bar.fill.color = (255, 0, 0)  # Красный
+
+# Получить текущий цвет
+bg_color = bar.bg.color
+fill_color = bar.fill.color
+
+# Альтернативный способ через метод
+bar.set_fill_color((255, 0, 0))
 ```
 
 #### Управление размерами
@@ -244,8 +298,14 @@ hero.set_bar(health_bar)
 
 ## Демо
 
-См. `spritePro/demoGames/bar_simple_demo.py` для полного примера, демонстрирующего все возможности:
+См. демо-файлы для полных примеров:
+- `spritePro/demoGames/bar_simple_demo.py` - демонстрация всех возможностей BarWithBackground
+- `spritePro/demoGames/bar_hp_demo.py` - демонстрация HP бара с использованием bg.color и fill.color
+
+Демо показывают:
 - Различные направления заполнения
 - Переключение изображений
 - Управление размерами
 - Управление анимацией
+- Использование пустых строк для изображений
+- Изменение цветов через bg.color и fill.color
