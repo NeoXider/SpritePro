@@ -18,7 +18,7 @@ s.get_screen((1280, 960), "My Game")
 score = 0
 
 bg = s.Sprite("", s.WH, s.WH_C)
-bg.set_color((200,0,180))
+bg.set_color((0,0,180))
 bg.set_screen_space(True)
 # text
 text = s.TextSprite("", 74, (255, 255, 255), s.WH_C)
@@ -51,3 +51,4 @@ while True:
     s.update(fill_color=(0, 0, 100))
     s.process_camera_input()
     button.limit_movement(bg.rect)
+    text.color = s.utils.ColorEffects.wave()

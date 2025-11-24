@@ -807,7 +807,7 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             speed (Optional[float]): Скорость движения. Если None, используется self.speed.
         """
-        self.velocity.y = -(speed or self.speed)
+        self.velocity.y = -(speed if speed is not None else self.speed)
         self.state = "moving"
 
     def move_down(self, speed: Optional[float] = None):
@@ -816,7 +816,7 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             speed (Optional[float]): Скорость движения. Если None, используется self.speed.
         """
-        self.velocity.y = speed or self.speed
+        self.velocity.y = speed if speed is not None else self.speed
         self.state = "moving"
 
     def move_left(self, speed: Optional[float] = None):

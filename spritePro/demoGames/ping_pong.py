@@ -6,7 +6,7 @@ current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
 sys.path.append(str(parent_dir))
 
-from spritePro.gameSprite import GameSprite
+from spritePro import Sprite
 from spritePro import Anchor
 from spritePro.utils.surface import round_corners
 import spritePro
@@ -32,7 +32,7 @@ MUSIC_VOLUME = 0.4
 SFX_VOLUME = 1
 
 
-class Ball(GameSprite):
+class Ball(Sprite):
     add_speed_per_frame = 0.005
     max_speed = 5
     speed_rotate = 2
@@ -64,20 +64,12 @@ class Ball(GameSprite):
 
 def render_game():
     SCREEN.blit(BGS[STATE_GAME], (0, 0))
-    player_left.update(SCREEN)
-    player_right.update(SCREEN)
-    ball.update(SCREEN)
 
 
 def render_text():
     score_text_l.set_text(f"{leftScore}")
-    score_text_l.rect.topleft = (10, 10)
 
     score_text_r.set_text(f"{rightScore}")
-    score_text_r.rect.topright = (WIDTH - 10, 10)
-
-    score_text_l.update(SCREEN)
-    score_text_r.update(SCREEN)
 
 
 def ball_bounch():
@@ -89,10 +81,10 @@ def ball_bounch():
         bounch_sound.play()
         ball.dir_y = -1
 
-    if ball.collide_with(player_right):
+    if ball.rect.colliderect(player_right.rect):
         ball.baunch_x(right=False)
 
-    if ball.collide_with(player_left):
+    if ball.rect.colliderect(player_left.rect):
         ball.baunch_x(right=True)
 
 
@@ -141,15 +133,13 @@ def create_music():
     pygame.mixer.music.set_volume(MUSIC_VOLUME)
 
 
-def win(player: GameSprite):
+def win(player: Sprite):
     text = "Победа левого" if player == player_left else "Победа правого"
     text += " игрока!"
     textWin.set_text(text)
     textWin.set_position((WIDTH // 2, HEIGHT // 2), spritePro.Anchor.CENTER)
-    textWin.update(SCREEN)
 
     player.rotate_by(-8)
-    player.update(SCREEN)
 
 
 def start_game():
@@ -186,21 +176,13 @@ def shop():
 def logic_shop():
     SCREEN.blit(BGS[current_state], (0, 0))
     textShop.set_position((WIDTH // 2, 10), spritePro.Anchor.MID_TOP)
-    textShop.update(SCREEN)
     bts[STATE_MENU].set_color(COLOR_EFX[STATE_MENU]())
-    bts[STATE_MENU].update(SCREEN)
 
 
 def logic_menu():
     SCREEN.blit(BGS[current_state], (0, 0))
     bts[STATE_GAME].set_color(COLOR_EFX[STATE_GAME]())
-    bts[STATE_GAME].update(SCREEN)
-
     bts[STATE_SHOP].set_color(COLOR_EFX[STATE_SHOP]())
-    bts[STATE_SHOP].update(SCREEN)
-
-    for toggle in TOGGLES.values():
-        toggle.update(SCREEN)
 
 
 def logic_game():
@@ -210,7 +192,6 @@ def logic_game():
     ball_fail()
     check_win()
     bts[STATE_MENU].set_color(COLOR_EFX[STATE_MENU]())
-    bts[STATE_MENU].update(SCREEN)
 
 
 def music_toggle(is_on: bool) -> None:
@@ -222,6 +203,37 @@ def audio_toggle(is_on: bool) -> None:
     for sound in efxs:
         sound.set_volume(SFX_VOLUME if is_on else 0)
     bounch_sound.play()
+
+
+def update_sprite_visibility():
+    """Управляет видимостью спрайтов в зависимости от состояния игры."""
+    # Игровые спрайты (показываются в игре и при победе)
+    is_game_or_win = current_state in (STATE_GAME, STATE_WIN_LEFT, STATE_WIN_RIGHT)
+    player_left.active = is_game_or_win
+    player_right.active = is_game_or_win
+    ball.active = current_state == STATE_GAME  # Мяч только в игре
+    score_text_l.active = current_state == STATE_GAME
+    score_text_r.active = current_state == STATE_GAME
+
+    # Кнопки меню
+    bts[STATE_GAME].active = current_state == STATE_MENU
+    bts[STATE_SHOP].active = current_state == STATE_MENU
+    bts[STATE_MENU].active = current_state in (
+        STATE_GAME,
+        STATE_SHOP,
+        STATE_WIN_LEFT,
+        STATE_WIN_RIGHT,
+    )
+
+    # Переключатели (показываются только в меню)
+    for toggle in TOGGLES.values():
+        toggle.active = current_state == STATE_MENU
+
+    # Текст магазина
+    textShop.active = current_state == STATE_SHOP
+
+    # Текст победы
+    textWin.active = current_state in (STATE_WIN_LEFT, STATE_WIN_RIGHT)
 
 
 efxs = []
@@ -245,15 +257,17 @@ ball = Ball(path / "Sprites" / "ball.png", (50, 50), (WIDTH // 2, HEIGHT // 2), 
 ball.set_color((255, 255, 255))
 
 print(f"Создаем левую платформу с позицией: ({pading_x_player}, {HEIGHT // 2})")
-player_left = GameSprite(
+player_left = Sprite(
     path / "Sprites" / "platforma.png",
     (120, 50),
     (pading_x_player, HEIGHT // 2),
     6,
 )
 
-print(f"Создаем правую платформу с позицией: ({WIDTH - pading_x_player}, {HEIGHT // 2})")
-player_right = GameSprite(
+print(
+    f"Создаем правую платформу с позицией: ({WIDTH - pading_x_player}, {HEIGHT // 2})"
+)
+player_right = Sprite(
     path / "Sprites" / "platforma.png",
     (120, 50),
     (WIDTH - pading_x_player, HEIGHT // 2),
@@ -350,17 +364,25 @@ print(f"Позиция левой платформы: {player_left.rect.center}"
 print(f"Позиция правой платформы: {player_right.rect.center}")
 print(f"Камера: {spritePro.get_camera_position()}")
 
+# Устанавливаем начальную видимость спрайтов
+update_sprite_visibility()
+
 while True:
     fps_text.update()
     fps_text.update_fps()
 
+    # Обновляем видимость спрайтов перед отрисовкой
+    update_sprite_visibility()
+
+    # Сначала рисуем фон
+    render_game()
+    render_text()
+
+    # Затем обновляем и рисуем все спрайты (включая кнопки) поверх фона
     spritePro.update()
 
     for e in spritePro.events:
         pass
-
-    render_game()
-    render_text()
 
     if current_state == STATE_MENU:
         logic_menu()
@@ -373,8 +395,6 @@ while True:
 
     elif current_state == STATE_WIN_LEFT:
         win(player_left)
-        bts[STATE_MENU].update(SCREEN)
 
     elif current_state == STATE_WIN_RIGHT:
         win(player_right)
-        bts[STATE_MENU].update(SCREEN)

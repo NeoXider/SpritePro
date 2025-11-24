@@ -63,9 +63,8 @@ def run_single_tween_demo(tween_manager, sprite, is_initialized):
         )
         return True
     
-    # Рисуем круг траектории
-    pygame.draw.circle(spritePro.screen, (50, 50, 50), (400, 300), 150, 2)
-    sprite.update(spritePro.screen)
+    # Круг траектории будет нарисован в основном цикле
+    # Спрайт отрисовывается автоматически через spritePro.update()
     return is_initialized
 
 def run_dual_tween_demo(tween_manager, sprites, is_initialized):
@@ -141,14 +140,8 @@ def run_dual_tween_demo(tween_manager, sprites, is_initialized):
         )
         return True
     
-    # Рисуем линии траектории
-    pygame.draw.line(spritePro.screen, (50, 50, 50), (200, 100), (200, 500), 2)  # Для sprite1
-    pygame.draw.line(spritePro.screen, (50, 50, 50), (200, 300), (600, 300), 2)  # Для sprite2
-    pygame.draw.line(spritePro.screen, (50, 50, 50), (600, 100), (600, 500), 2)  # Для sprite2 вертикаль
-    
-    sprite1, sprite2 = sprites
-    sprite1.update(spritePro.screen)
-    sprite2.update(spritePro.screen)
+    # Линии траектории будут нарисованы в основном цикле
+    # Спрайты отрисовываются автоматически через spritePro.update()
     return is_initialized
 
 if __name__ == "__main__":
@@ -174,25 +167,44 @@ if __name__ == "__main__":
     # Инициализация спрайтов и твин-менеджера
     tween_manager = TweenManager()
     single_sprite = spritePro.Sprite("", size=(50, 50), pos=(400, 300))
+    single_sprite.active = True
     sprite1 = spritePro.Sprite("", size=(50, 50), pos=(200, 300))
+    sprite1.active = True
     sprite2 = spritePro.Sprite("", size=(50, 50), pos=(600, 300))
+    sprite2.active = True
     
     # Флаги инициализации для каждого демо
     single_demo_initialized = False
     dual_demo_initialized = False
     
     while True:
-        spritePro.update(fill_color=(0, 0, 0))
-        
         # Обновляем твины
         if not paused:
             tween_manager.update(spritePro.dt)
         
-        # Запускаем текущее демо
+        # Управляем видимостью спрайтов в зависимости от текущего демо
+        single_sprite.active = (current_demo == 1)
+        sprite1.active = (current_demo == 2)
+        sprite2.active = (current_demo == 2)
+        
+        # Запускаем текущее демо (рисует траектории)
         if current_demo == 1:
             single_demo_initialized = run_single_tween_demo(tween_manager, single_sprite, single_demo_initialized)
         else:
             dual_demo_initialized = run_dual_tween_demo(tween_manager, (sprite1, sprite2), dual_demo_initialized)
+        
+        # Заливаем экран черным
+        spritePro.screen.fill((0, 0, 0))
+        
+        # Рисуем траектории для текущего демо
+        if current_demo == 1:
+            # Рисуем круг траектории для одиночного демо
+            pygame.draw.circle(spritePro.screen, (50, 50, 50), (400, 300), 150, 2)
+        else:
+            # Рисуем линии траектории для двойного демо
+            pygame.draw.line(spritePro.screen, (50, 50, 50), (200, 100), (200, 500), 2)  # Для sprite1
+            pygame.draw.line(spritePro.screen, (50, 50, 50), (200, 300), (600, 300), 2)  # Для sprite2
+            pygame.draw.line(spritePro.screen, (50, 50, 50), (600, 100), (600, 500), 2)  # Для sprite2 вертикаль
         
         # Отображаем общие инструкции
         spritePro.screen.blit(demo_instructions, instructions_pos)
@@ -204,6 +216,9 @@ if __name__ == "__main__":
         else:
             spritePro.screen.blit(demo2_title, (20, 50))
             spritePro.screen.blit(demo2_desc, (20, 90))
+        
+        # Обновляем и отрисовываем все спрайты, затем обновляем экран
+        spritePro.update(fill_color=None)
         
         for event in spritePro.events:
             if event.type == pygame.QUIT:
@@ -224,6 +239,4 @@ if __name__ == "__main__":
                         tween_manager.pause_all()
                     else:
                         tween_manager.resume_all()
-                elif event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    sys.exit() 
+                

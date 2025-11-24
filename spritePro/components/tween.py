@@ -107,6 +107,8 @@ class Tween:
         yoyo: bool = False,
         delay: float = 0,
         on_update: Optional[Callable[[float], None]] = None,
+        auto_start: bool = True,
+        auto_register: bool = True,
     ):
         """Инициализирует переход.
 
@@ -120,6 +122,8 @@ class Tween:
             yoyo (bool, optional): Двигаться туда-обратно. По умолчанию False.
             delay (float, optional): Задержка перед началом в секундах. По умолчанию 0.
             on_update (Optional[Callable[[float], None]], optional): Функция, вызываемая при обновлении значения. По умолчанию None.
+            auto_start (bool, optional): Автоматически запускать переход при создании. По умолчанию True.
+            auto_register (bool, optional): Автоматически регистрировать твин для обновления в spritePro.update(). По умолчанию True.
         """
         self.start_value = start_value
         self.end_value = end_value
@@ -135,22 +139,36 @@ class Tween:
 
         self.start_time = time.time()
         self.current_value = start_value
-        self.is_playing = True
+        self.is_playing = auto_start
         self.is_paused = False
         self.pause_time = 0
         self.direction = 1  # 1 для движения вперед, -1 для движения назад
+        
+        # Автоматическая регистрация для обновления
+        if auto_register:
+            try:
+                spritePro.register_update_object(self)
+            except (ImportError, AttributeError):
+                pass
 
     def update(self, dt: Optional[float] = None) -> Optional[float]:
         """Обновляет переход.
 
         Args:
-            dt (Optional[float], optional): Время с последнего обновления. По умолчанию None.
+            dt (Optional[float], optional): Время с последнего обновления. 
+                Если не указано, берется из spritePro.dt. По умолчанию None.
 
         Returns:
             Optional[float]: Текущее значение или None, если завершен.
         """
         if not self.is_playing or self.is_paused:
             return self.current_value
+
+        if dt is None:
+            try:
+                dt = getattr(spritePro, 'dt', None)
+            except AttributeError:
+                dt = None
 
         now = time.time()
         elapsed = now - self.start_time - self.delay
@@ -202,6 +220,12 @@ class Tween:
         """Останавливает переход."""
         self.is_playing = False
 
+    def start(self) -> None:
+        """Запускает переход."""
+        self.start_time = time.time()
+        self.is_playing = True
+        self.is_paused = False
+
     def reset(self) -> None:
         """Сбрасывает переход в начальное состояние."""
         self.start_time = time.time()
@@ -242,9 +266,20 @@ class TweenManager:
         tweens (Dict[str, Tween]): Словарь активных переходов.
     """
 
-    def __init__(self):
-        """Инициализирует менеджер переходов."""
+    def __init__(self, auto_register: bool = True):
+        """Инициализирует менеджер переходов.
+
+        Args:
+            auto_register (bool, optional): Если True, автоматически регистрирует менеджер для обновления в spritePro.update(). По умолчанию True.
+        """
         self.tweens: Dict[str, Tween] = {}
+        
+        # Автоматическая регистрация для обновления
+        if auto_register:
+            try:
+                spritePro.register_update_object(self)
+            except (ImportError, AttributeError):
+                pass
 
     def add_tween(
         self,
@@ -258,6 +293,7 @@ class TweenManager:
         yoyo: bool = False,
         delay: float = 0,
         on_update: Optional[Callable[[float], None]] = None,
+        auto_start: bool = True,
     ) -> None:
         """Добавляет новый переход.
 
@@ -272,8 +308,10 @@ class TweenManager:
             yoyo (bool, optional): Двигаться туда-обратно. По умолчанию False.
             delay (float, optional): Задержка перед началом. По умолчанию 0.
             on_update (Optional[Callable[[float], None]], optional): Функция, вызываемая при обновлении. По умолчанию None.
+            auto_start (bool, optional): Автоматически запускать переход при создании. По умолчанию True.
         """
-        self.tweens[name] = Tween(
+        # Твины в менеджере не регистрируются отдельно - они обновляются через менеджер
+        tween = Tween(
             start_value,
             end_value,
             duration,
@@ -283,14 +321,25 @@ class TweenManager:
             yoyo,
             delay,
             on_update,
+            auto_start,
+            auto_register=False,  # Твины в менеджере не регистрируются отдельно
         )
+        self.tweens[name] = tween
 
     def update(self, dt: Optional[float] = None) -> None:
         """Обновляет все переходы.
 
         Args:
-            dt (Optional[float], optional): Время с последнего обновления. По умолчанию None.
+            dt (Optional[float], optional): Время с последнего обновления. 
+                Если не указано, берется из spritePro.dt. По умолчанию None.
         """
+        # Если dt не передан, пытаемся взять из spritePro.dt
+        if dt is None:
+            try:
+                dt = getattr(spritePro, 'dt', None)
+            except AttributeError:
+                dt = None
+        
         for name in list(self.tweens.keys()):
             value = self.tweens[name].update(dt)
             if value is None:
@@ -316,6 +365,15 @@ class TweenManager:
         if name in self.tweens:
             del self.tweens[name]
 
+    def start_tween(self, name: str) -> None:
+        """Запускает переход по имени.
+
+        Args:
+            name (str): Имя перехода.
+        """
+        if name in self.tweens:
+            self.tweens[name].start()
+
     def pause_all(self) -> None:
         """Ставит все переходы на паузу."""
         for tween in self.tweens.values():
@@ -331,6 +389,11 @@ class TweenManager:
         for tween in self.tweens.values():
             tween.stop()
         self.tweens.clear()
+
+    def reset_all(self) -> None:
+        """Сбрасывает все переходы в начальное состояние."""
+        for tween in self.tweens.values():
+            tween.reset()
 
 
 if __name__ == "__main__":

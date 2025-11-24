@@ -47,6 +47,7 @@ class Animation:
         loop: bool = True,
         on_complete: Optional[Callable] = None,
         on_frame: Optional[Callable] = None,
+        auto_register: bool = True,
     ):
         """Инициализация анимации.
 
@@ -57,6 +58,7 @@ class Animation:
             loop: Зациклить анимацию
             on_complete: Функция вызываемая при завершении
             on_frame: Функция вызываемая при смене кадра
+            auto_register (bool, optional): Если True, автоматически регистрирует анимацию для обновления в spritePro.update(). По умолчанию True.
         """
         self.owner = owner_sprite
         self.frames = frames or []
@@ -71,8 +73,8 @@ class Animation:
         self.is_playing = False
         self.is_paused = False
 
-        # Для плавных переходов
-        self.tween_manager = TweenManager()
+        # Для плавных переходов (не регистрируем отдельно, т.к. Animation уже регистрируется)
+        self.tween_manager = TweenManager(auto_register=False)
 
         # Параллельные анимации
         self.parallel_animations: List["Animation"] = []
@@ -84,6 +86,13 @@ class Animation:
         # Устанавливаем первый кадр если есть
         if self.frames:
             self.owner.set_image(self.frames[0])
+        
+        # Автоматическая регистрация для обновления
+        if auto_register:
+            try:
+                spritePro.register_update_object(self)
+            except (ImportError, AttributeError):
+                pass
 
     def add_state(self, name: str, frames: List[pygame.Surface]) -> None:
         """Добавление состояния анимации.

@@ -30,7 +30,8 @@ class Timer:
         args: Tuple = (),
         kwargs: Dict = None,
         repeat: bool = False,
-        autostart: bool = False,
+        autostart: bool = True,
+        auto_register: bool = True,
     ):
         """Инициализирует таймер.
 
@@ -40,7 +41,8 @@ class Timer:
             args (Tuple, optional): Позиционные аргументы для обратного вызова. По умолчанию ().
             kwargs (Dict, optional): Именованные аргументы для обратного вызова. По умолчанию {}.
             repeat (bool, optional): Если True, таймер автоматически перезапускается после срабатывания. По умолчанию False.
-            autostart (bool, optional): Если True, запускает таймер сразу при создании. По умолчанию False.
+            autostart (bool, optional): Если True, запускает таймер сразу при создании. По умолчанию True.
+            auto_register (bool, optional): Если True, автоматически регистрирует таймер для обновления в spritePro.update(). По умолчанию True.
         """
         self.duration = duration
         self.callback = callback
@@ -56,6 +58,14 @@ class Timer:
 
         if autostart:
             self.start()
+        
+        # Автоматическая регистрация для обновления
+        if auto_register:
+            try:
+                import spritePro
+                spritePro.register_update_object(self)
+            except (ImportError, AttributeError):
+                pass
 
     def start(self, duration: Optional[float] = None) -> None:
         """(Пере)запускает таймер.

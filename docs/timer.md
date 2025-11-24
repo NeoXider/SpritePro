@@ -477,8 +477,17 @@ timer = s.Timer(
 # Запустить таймер
 timer.start()
 
-# Обновлять в игровом цикле
-timer.update()
+# Таймер автоматически регистрируется при создании (auto_register=True по умолчанию)
+# В игровом цикле - вариант 1: автоматическое обновление (по умолчанию)
+timer = s.Timer(duration=3.0, callback=timer_finished)  # Автоматически запускается и регистрируется
+while True:
+    s.update()  # Таймер обновится автоматически
+
+# В игровом цикле - вариант 2: без автоматической регистрации
+timer = s.Timer(duration=3.0, callback=timer_finished, auto_register=False)
+while True:
+    s.update()
+    timer.update()  # Обновить таймер вручную
 ```
 
 Для более подробной информации о связанных компонентах см.:

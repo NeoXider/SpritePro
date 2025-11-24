@@ -113,10 +113,17 @@ for i in range(8):
 animation = s.Animation(sprite, frames=frames, frame_duration=0.1)  # 0.1 секунды = 100 мс
 animation.play()
 
-# В игровом цикле
+# Анимация автоматически регистрируется при создании (auto_register=True по умолчанию)
+# В игровом цикле - вариант 1: автоматическое обновление (по умолчанию)
+animation = s.Animation(sprite, frames=frames, frame_duration=0.1)  # Автоматически регистрируется
+while True:
+    s.update()  # Анимация обновится автоматически с dt
+
+# В игровом цикле - вариант 2: без автоматической регистрации
+animation = s.Animation(sprite, frames=frames, frame_duration=0.1, auto_register=False)
 while True:
     s.update()
-    animation.update()  # Обновить анимацию
+    animation.update()  # dt автоматически берется из spritePro.dt, если не указан
 ```
 
 ### Анимация на основе состояний
@@ -145,10 +152,18 @@ animation.add_tween(
     yoyo=True
 )
 
-# В игровом цикле обновлять твининг
+# В игровом цикле обновлять твининг - вариант 1: автоматическое обновление
+s.register_update_object(animation)
+while True:
+    s.update()  # Анимация обновится автоматически
+    
+    # Применить значение твининга к спрайту
+    scale_value = animation.update_tween("scale")
+
+# В игровом цикле обновлять твининг - вариант 2: ручное обновление
 while True:
     s.update()
-    animation.update()
+    animation.update()  # dt автоматически берется из spritePro.dt
     
     # Применить значение твининга к спрайту
     scale_value = animation.update_tween("scale")

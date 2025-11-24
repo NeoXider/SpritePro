@@ -49,6 +49,8 @@ __all__ = [
     "set_camera_follow",
     "clear_camera_follow",
     "process_camera_input",
+    "register_update_object",
+    "unregister_update_object",
     "utils",
     "readySprites",
     # methods
@@ -103,6 +105,7 @@ class SpriteProGame:
         self.camera = Vector2()
         self.camera_target: pygame.sprite.Sprite | None = None
         self.camera_offset = Vector2()
+        self.update_objects: list = []  # Объекты для автоматического обновления
         SpriteProGame._instance = self
 
     @classmethod
@@ -273,6 +276,26 @@ class SpriteProGame:
         """
         self.all_sprites.draw(surface)
 
+    def register_update_object(self, obj) -> None:
+        """Регистрирует объект для автоматического обновления.
+
+        Объект должен иметь метод update(), который будет вызываться каждый кадр с dt.
+
+        Args:
+            obj: Объект для обновления (TweenManager, Animation, Timer и т.д.).
+        """
+        if obj not in self.update_objects:
+            self.update_objects.append(obj)
+
+    def unregister_update_object(self, obj) -> None:
+        """Отменяет регистрацию объекта для автоматического обновления.
+
+        Args:
+            obj: Объект для отмены регистрации.
+        """
+        if obj in self.update_objects:
+            self.update_objects.remove(obj)
+
     def update(self, *args, **kwargs) -> None:
         """Обновляет камеру и все спрайты.
 
@@ -281,6 +304,44 @@ class SpriteProGame:
             **kwargs: Именованные аргументы для передачи в update спрайтов.
         """
         self._update_camera_follow()
+        
+        # Автоматически обновляем зарегистрированные объекты
+        dt = kwargs.pop('dt', None)
+        if dt is None:
+            try:
+                import spritePro as sp
+                dt = sp.dt
+            except (AttributeError, NameError):
+                dt = None
+        
+        for obj in self.update_objects:
+            if hasattr(obj, 'update'):
+                # Пытаемся вызвать update с dt, если доступен
+                try:
+                    import inspect
+                    sig = inspect.signature(obj.update)
+                    params = list(sig.parameters.keys())
+                    # Убираем 'self' из параметров
+                    if 'self' in params:
+                        params.remove('self')
+                    
+                    if params and dt is not None:
+                        # Метод принимает параметры, передаем dt
+                        obj.update(dt)
+                    else:
+                        # Метод не принимает параметров или dt недоступен
+                        obj.update()
+                except (TypeError, ValueError):
+                    # Если не удалось определить сигнатуру, пробуем вызвать без параметров
+                    try:
+                        obj.update()
+                    except TypeError:
+                        try: 
+                            obj.update(dt)
+                        except TypeError:
+                            print(f"Error update object {obj}")
+                         
+        
         self.all_sprites.update(*args, **kwargs)
 
 
@@ -378,6 +439,26 @@ def set_camera_follow(
 def clear_camera_follow() -> None:
     """Отменяет следование камеры за целью."""
     get_game().clear_camera_follow()
+
+
+def register_update_object(obj) -> None:
+    """Регистрирует объект для автоматического обновления в spritePro.update().
+
+    Объект должен иметь метод update(), который будет вызываться каждый кадр с dt.
+
+    Args:
+        obj: Объект для обновления (TweenManager, Animation, Timer и т.д.).
+    """
+    get_game().register_update_object(obj)
+
+
+def unregister_update_object(obj) -> None:
+    """Отменяет регистрацию объекта для автоматического обновления.
+
+    Args:
+        obj: Объект для отмены регистрации.
+    """
+    get_game().unregister_update_object(obj)
 
 
 def _normalize_camera_keys(custom: dict | None) -> dict[str, tuple[int, ...]]:
@@ -503,7 +584,10 @@ def get_screen(
 
 
 def update(
-    fps: int = -1, update_display: bool = True, fill_color: tuple[int, int, int] = None
+    fps: int = 60, 
+    fill_color: tuple[int, int, int] = None,
+    update_display: bool = True,
+    *update_objects
 ) -> None:
     """Обновляет экран и события игры.
 
@@ -512,13 +596,11 @@ def update(
 
     Args:
         fps (int, optional): Целевое количество кадров в секунду. Если -1, используется значение FPS по умолчанию. По умолчанию -1.
-        update_display (bool, optional): Обновлять ли экран (pygame.display.update). По умолчанию True.
         fill_color (tuple[int, int, int], optional): Цвет заливки экрана (R, G, B). Если None, экран не заливается. По умолчанию None.
+        update_display (bool, optional): Обновлять ли экран. По умолчанию True. Оставлено для обратной совместимости.
+        *update_objects: Объекты для автоматического обновления (TweenManager, Animation, Timer и т.д.).
     """
     global events, dt
-    if update_display:
-        pygame.display.update()
-
     fps = fps if fps >= 0 else FPS
     dt = clock.tick(fps) / 1000.0
 
@@ -530,7 +612,17 @@ def update(
         if event.type == pygame.QUIT:
             sys.exit()
 
-    get_game().update(screen)
+    # Регистрируем объекты для обновления, если они переданы
+    game = get_game()
+    for obj in update_objects:
+        game.register_update_object(obj)
+    
+    # Передаем dt в update для автоматического обновления объектов
+    game.update(screen, dt=dt)
+    
+    # Обновляем экран ПОСЛЕ того, как все спрайты отрисованы
+    if update_display:
+        pygame.display.update()
 
 
 events: List[pygame.event.Event] = None

@@ -18,11 +18,13 @@ tween_manager = s.TweenManager()
 
 #### Методы
 
-- `add_tween(name: str, start_value: float, end_value: float, duration: float, easing: EasingType = EasingType.LINEAR, on_complete: Optional[Callable] = None, loop: bool = False, yoyo: bool = False, delay: float = 0, on_update: Optional[Callable[[float], None]] = None)`: Добавить новый твин
-- `update(dt: Optional[float] = None)`: Обновить все активные твины
+- `add_tween(name: str, start_value: float, end_value: float, duration: float, easing: EasingType = EasingType.LINEAR, on_complete: Optional[Callable] = None, loop: bool = False, yoyo: bool = False, delay: float = 0, on_update: Optional[Callable[[float], None]] = None, auto_start: bool = True)`: Добавить новый твин (твины в менеджере не регистрируются отдельно, обновляются через менеджер)
+- `update(dt: Optional[float] = None)`: Обновить все активные твины (dt автоматически берется из spritePro.dt, если не указан)
 - `pause_all()`: Поставить на паузу все твины
 - `resume_all()`: Возобновить все твины
 - `stop_all()`: Остановить и удалить все твины
+- `reset_all()`: Сбросить все твины в начальное состояние
+- `start_tween(name: str)`: Запустить конкретный твин по имени
 - `get_tween(name: str) -> Optional[Tween]`: Получить конкретный твин
 - `remove_tween(name: str)`: Удалить конкретный твин
 
@@ -41,10 +43,13 @@ tween_manager = s.TweenManager()
 - `on_update` (Optional[Callable[[float], None]]): Обратный вызов для обновлений значения. По умолчанию: None
 - `on_complete` (Optional[Callable]): Обратный вызов при завершении анимации. По умолчанию: None
 - `delay` (float): Задержка перед началом в секундах. По умолчанию: 0
+- `auto_start` (bool): Автоматически запускать твин при создании. По умолчанию: True
+- `auto_register` (bool): Автоматически регистрировать твин для обновления в spritePro.update(). По умолчанию: True
 
 #### Методы Tween
 
-- `update(dt: Optional[float] = None) -> Optional[float]`: Обновить твин и получить текущее значение
+- `start()`: Запустить твин (если был создан с auto_start=False)
+- `update(dt: Optional[float] = None) -> Optional[float]`: Обновить твин и получить текущее значение (dt автоматически берется из spritePro.dt, если не указан)
 - `pause()`: Поставить твин на паузу
 - `resume()`: Возобновить твин
 - `stop()`: Остановить твин
@@ -98,10 +103,17 @@ tween_manager.add_tween(
     on_update=lambda x: setattr(sprite, 'x', x)
 )
 
-# В игровом цикле
+# TweenManager автоматически регистрируется при создании (auto_register=True по умолчанию)
+# В игровом цикле - вариант 1: автоматическое обновление (по умолчанию)
+tween_manager = s.TweenManager()  # Автоматически регистрируется
+while True:
+    s.update()  # Автоматически обновит твины с dt
+
+# В игровом цикле - вариант 2: без автоматической регистрации
+tween_manager = s.TweenManager(auto_register=False)
 while True:
     s.update()
-    tween_manager.update()  # Обновить все твины
+    tween_manager.update()  # dt автоматически берется из spritePro.dt
 ```
 
 ### Переход цвета
@@ -169,7 +181,7 @@ tween_manager.add_tween(
 ### Управление отдельным твином
 
 ```python
-# Создать твин напрямую
+# Создать твин напрямую (автоматически запускается)
 tween = s.Tween(
     start_value=0,
     end_value=100,
@@ -177,14 +189,24 @@ tween = s.Tween(
     easing=s.EasingType.EASE_IN_OUT
 )
 
+# Создать твин без автоматического запуска
+tween = s.Tween(
+    start_value=0,
+    end_value=100,
+    duration=2.0,
+    auto_start=False  # Не запускается автоматически
+)
+tween.start()  # Запустить вручную
+
 # Управление
 tween.pause()
 tween.resume()
 tween.stop()
 tween.reset()
+tween.start()  # Запустить заново
 
 # Обновление и получение значения
-current_value = tween.update(dt=s.dt)
+current_value = tween.update()  # dt автоматически берется из spritePro.dt
 if current_value is not None:
     sprite.x = current_value
 ```
@@ -209,14 +231,70 @@ tween_manager.add_tween(
 )
 ```
 
+### Создание твина без автоматического запуска
+
+```python
+# Создать твин, который не запускается автоматически
+tween_manager.add_tween(
+    "fade_in",
+    start_value=0,
+    end_value=255,
+    duration=1.0,
+    auto_start=False  # Не запускается при создании
+)
+
+# Запустить в нужный момент
+def show_sprite():
+    tween_manager.start_tween("fade_in")
+    sprite.active = True
+```
+
+### Сброс всех твинов
+
+```python
+# Сбросить все твины в начальное состояние
+tween_manager.reset_all()
+
+# Полезно при перезапуске уровня или сцены
+def restart_level():
+    tween_manager.reset_all()  # Все твины вернутся к начальным значениям
+```
+
+## Автоматическое обновление
+
+По умолчанию все компоненты (TweenManager, Animation, Timer, Tween) автоматически регистрируются для обновления при создании:
+
+```python
+import spritePro as s
+
+# Все эти объекты автоматически регистрируются при создании
+tween_manager = s.TweenManager()  # auto_register=True по умолчанию
+animation = s.Animation(...)  # auto_register=True по умолчанию
+timer = s.Timer(...)  # auto_register=True по умолчанию, autostart=True по умолчанию
+
+# В игровом цикле - все зарегистрированные объекты обновятся автоматически с dt
+while True:
+    s.update()  # Автоматически обновит все зарегистрированные объекты
+
+# Если нужно отключить автоматическую регистрацию
+tween_manager = s.TweenManager(auto_register=False)
+animation = s.Animation(..., auto_register=False)
+timer = s.Timer(..., auto_register=False)
+
+# Или отменить регистрацию вручную
+s.unregister_update_object(tween_manager)
+```
+
 ## Лучшие практики
 
-1. **Всегда обновляйте твины в игровом цикле** используя `tween_manager.update(dt)` или `tween.update(dt)`
-2. **Используйте уникальные идентификаторы** для каждого твина
-3. **Очищайте твины**, когда они больше не нужны, используя `remove_tween()` или `stop_all()`
-4. **Используйте подходящие функции плавности** для разных типов анимаций
-5. **Рассмотрите использование обратных вызовов** для сложных анимаций
-6. **Используйте `dt` (delta time)** для независимой от частоты кадров анимации
+1. **Используйте автоматическое обновление** - передавайте твины, анимации и таймеры в `spritePro.update()` или регистрируйте через `register_update_object()`
+2. **Параметр `dt` необязателен** - он автоматически берется из `spritePro.dt`, если не указан явно
+3. **Используйте `auto_start=False`** для твинов, которые нужно запускать вручную в определенный момент
+4. **Используйте уникальные идентификаторы** для каждого твина
+5. **Очищайте твины**, когда они больше не нужны, используя `remove_tween()` или `stop_all()`
+6. **Используйте `reset_all()`** для сброса всех твинов в начальное состояние
+7. **Используйте подходящие функции плавности** для разных типов анимаций
+8. **Рассмотрите использование обратных вызовов** для сложных анимаций
 
 ## Соображения производительности
 
