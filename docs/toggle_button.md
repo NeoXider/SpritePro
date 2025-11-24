@@ -18,7 +18,7 @@ ToggleButton is perfect for settings, options, and any binary state controls in 
 
 - `sprite` (str): Background image path. Default: "" (solid color)
 - `size` (tuple): Button dimensions (width, height). Default: (250, 70)
-- `pos` (tuple): Button center position. Default: (300, 200)
+- `pos` (tuple): Button position. Default: (300, 200)
 - `text_on` (str): Text displayed when ON. Default: "ON"
 - `text_off` (str): Text displayed when OFF. Default: "OFF"
 - `text_size` (int): Font size. Default: 24
@@ -32,6 +32,13 @@ ToggleButton is perfect for settings, options, and any binary state controls in 
 - `press_brightness` (float): Brightness multiplier on press. Default: 0.8
 - `anim_speed` (float): Animation speed. Default: 0.2
 - `animated` (bool): Enable animations. Default: True
+- `anchor` (str | Anchor): Anchor for positioning. Default: Anchor.CENTER
+
+**Пример использования якоря:**
+```python
+# Переключатель в левом верхнем углу
+music_toggle = s.ToggleButton("", (150, 40), (10, 10), "music: ON", "music: OFF", anchor=s.Anchor.TOP_LEFT)
+```
 
 ## State Management
 

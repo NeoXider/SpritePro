@@ -23,6 +23,37 @@ TextSprite extends the base Sprite class to handle text rendering, making it eas
 - `font_name` (str/Path): Path to TTF font file. Default: None (system font)
 - `pos` (tuple): Text position (x, y). Default: (0, 0)
 - `sorting_order` (int): Render layer order. Default: 1000 (drawn above typical sprites)
+- `anchor` (str | Anchor): Anchor for positioning. Default: Anchor.CENTER
+
+**Пример использования якоря:**
+```python
+# Текст в левом верхнем углу
+text_score = s.TextSprite(
+    f"Score: {score}", 
+    36, 
+    (255, 255, 255), 
+    (10, 10), 
+    anchor=s.Anchor.TOP_LEFT
+)
+
+# Текст в правом верхнем углу
+text_lost = s.TextSprite(
+    f"Lost: {lost}", 
+    36, 
+    (255, 255, 255), 
+    (s.WH.x - 10, 10),  # Правильно: просто s.WH.x
+    anchor=s.Anchor.TOP_RIGHT
+)
+
+# Или можно использовать WH_C для центра экрана
+text_center = s.TextSprite(
+    "Center", 
+    36, 
+    (255, 255, 255), 
+    s.WH_C, 
+    anchor=s.Anchor.CENTER
+)
+```
 
 ## Text Management
 

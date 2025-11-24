@@ -76,6 +76,7 @@ class Sprite(pygame.sprite.Sprite):
         pos: VectorInput = (0, 0),
         speed: float = 0,
         sorting_order: int | None = None,
+        anchor: str | Anchor = Anchor.CENTER,
     ):
         """Инициализирует новый экземпляр спрайта.
 
@@ -85,6 +86,7 @@ class Sprite(pygame.sprite.Sprite):
             pos (VectorInput, optional): Начальная позиция (x, y). По умолчанию (0, 0).
             speed (float, optional): Скорость движения. По умолчанию 0.
             sorting_order (int | None, optional): Порядок отрисовки (слой). По умолчанию None.
+            anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию Anchor.CENTER.
         """
         super().__init__()
         self.size_vector = _coerce_vector2(size, (50, 50))
@@ -119,7 +121,8 @@ class Sprite(pygame.sprite.Sprite):
         self.mask = None
 
         self.set_image(sprite, self.size_vector)
-        self.rect.center = self.start_pos
+        # Устанавливаем позицию с указанным якорем
+        self.set_position(self.start_pos, anchor=anchor)
         spritePro.register_sprite(self)
         # Apply initial sorting order if provided
         if self.sorting_order is not None:
@@ -1136,15 +1139,4 @@ class Sprite(pygame.sprite.Sprite):
         """Отключает все коллизии для этого спрайта."""
         self.collision_targets = None
 
-    def play_sound(self, sound_file: str):
-        """Воспроизводит звуковой эффект.
-
-        Args:
-            sound_file (str): Путь к файлу звука.
-        """
-        try:
-            self.sound = pygame.mixer.Sound(sound_file)
-            self.sound.play()
-        except:
-            print("Ошибка загрузки звука: " + sound_file)
 

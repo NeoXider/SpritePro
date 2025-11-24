@@ -1,7 +1,10 @@
 import sys
 from pathlib import Path
 import pygame
-from typing import Tuple, Optional, Callable, Union
+from typing import Tuple, Optional, Callable, Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from spritePro.constants import Anchor
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
@@ -46,13 +49,14 @@ class ToggleButton(Button):
         press_brightness: float = 0.8,
         anim_speed: float = 0.2,
         animated: bool = True,
+        anchor: Union[str, "Anchor", None] = None,
     ):
         """Инициализирует новую кнопку-переключатель.
 
         Args:
             sprite (str, optional): Путь к изображению спрайта. По умолчанию пустая строка.
             size (Tuple[int, int], optional): Размеры кнопки (ширина, высота). По умолчанию (250, 70).
-            pos (Tuple[int, int], optional): Центральная позиция кнопки на экране. По умолчанию (300, 200).
+            pos (Tuple[int, int], optional): Позиция кнопки на экране. По умолчанию (300, 200).
             text_on (str, optional): Текст, отображаемый когда переключатель ВКЛ. По умолчанию "ON".
             text_off (str, optional): Текст, отображаемый когда переключатель ВЫКЛ. По умолчанию "OFF".
             text_size (int, optional): Базовый размер шрифта. По умолчанию 24.
@@ -66,6 +70,7 @@ class ToggleButton(Button):
             press_brightness (float, optional): Множитель яркости при нажатии. По умолчанию 0.8.
             anim_speed (float, optional): Множитель скорости анимации. По умолчанию 0.2.
             animated (bool, optional): Включены ли анимации. По умолчанию True.
+            anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию None (используется Anchor.CENTER).
         """
         # Store toggle-specific properties
         self.text_on = text_on
@@ -82,6 +87,10 @@ class ToggleButton(Button):
         hover_color = self._adjust_brightness(base_color, hover_brightness)
         press_color = self._adjust_brightness(base_color, press_brightness)
 
+        # Определяем якорь (если не передан, используем CENTER для обратной совместимости)
+        if anchor is None:
+            anchor = spritePro.Anchor.CENTER
+        
         # Initialize parent Button with current state
         super().__init__(
             sprite=sprite,
@@ -97,6 +106,7 @@ class ToggleButton(Button):
             press_color=press_color,
             anim_speed=anim_speed,
             animated=animated,
+            anchor=anchor,
         )
 
     def _adjust_brightness(

@@ -29,6 +29,7 @@ Bar(
     fill_amount: float = 1.0,
     animate_duration: float = 0.3,
     sorting_order: Optional[int] = None,
+    anchor: Union[str, Anchor] = None,
 )
 ```
 
@@ -41,6 +42,16 @@ Bar(
 - **`fill_amount`**: Начальное количество заполнения (0.0-1.0). По умолчанию: 1.0
 - **`animate_duration`**: Длительность анимации в секундах. По умолчанию: 0.3
 - **`sorting_order`**: Порядок слоя отрисовки. Опционально
+- **`anchor`**: Якорь для позиционирования. По умолчанию: Anchor.CENTER
+
+**Пример использования якоря:**
+```python
+# Полоса в левом верхнем углу
+health_bar = s.Bar("", pos=(10, 10), size=(200, 20), anchor=s.Anchor.TOP_LEFT)
+
+# Полоса в правом верхнем углу
+mana_bar = s.Bar("", pos=(s.WH.x - 10, 10), size=(200, 20), anchor=s.Anchor.TOP_RIGHT)
+```
 
 ## Направления заполнения
 

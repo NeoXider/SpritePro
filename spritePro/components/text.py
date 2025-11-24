@@ -1,7 +1,7 @@
 # text_sprite.py
 
 import pygame
-from typing import Tuple, Optional, Union
+from typing import Tuple, Optional, Union, TYPE_CHECKING
 import sys
 from pathlib import Path
 
@@ -11,6 +11,9 @@ sys.path.append(str(parent_dir))
 
 import spritePro
 from spritePro.sprite import Sprite
+
+if TYPE_CHECKING:
+    from spritePro.constants import Anchor
 
 
 class TextSprite(Sprite):
@@ -37,6 +40,7 @@ class TextSprite(Sprite):
         font_name: Optional[Union[str, Path]] = None,
         speed: float = 0,
         sorting_order: int = 1000,
+        anchor: Union[str, "Anchor", None] = None,
         **sprite_kwargs,
     ):
         """Инициализирует текстовый спрайт.
@@ -45,19 +49,24 @@ class TextSprite(Sprite):
             text (str): Текст для отображения.
             font_size (int, optional): Размер шрифта в пунктах. По умолчанию 24.
             color (Tuple[int, int, int], optional): Цвет текста в формате RGB. По умолчанию (255, 255, 255).
-            pos (Tuple[int, int], optional): Начальная центральная позиция спрайта (x, y). По умолчанию (0, 0).
+            pos (Tuple[int, int], optional): Начальная позиция спрайта (x, y). По умолчанию (0, 0).
             font_name (Optional[Union[str, Path]], optional): Путь к файлу шрифта .ttf или None для системного шрифта. По умолчанию None.
             speed (float, optional): Базовая скорость движения спрайта. По умолчанию 0.
             sorting_order (int, optional): Порядок отрисовки (слой). По умолчанию 1000.
+            anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию None (используется Anchor.CENTER).
             **sprite_kwargs: Дополнительные аргументы, передаваемые в Sprite (например, auto_flip, stop_threshold).
         """
         # инициализируем Pygame Font-модуль
         pygame.font.init()
         self.auto_flip = False
 
+        # Определяем якорь (если не передан, используем CENTER для обратной совместимости)
+        if anchor is None:
+            anchor = spritePro.Anchor.CENTER
+
         # сначала создаём базовый Sprite с временным изображением
         dummy = pygame.Surface((1, 1), pygame.SRCALPHA)
-        super().__init__(sprite=dummy, pos=pos, speed=speed, sorting_order=sorting_order, **sprite_kwargs)
+        super().__init__(sprite=dummy, pos=pos, speed=speed, sorting_order=sorting_order, anchor=anchor, **sprite_kwargs)
 
         # сохраняем параметры текста
         self._text = text

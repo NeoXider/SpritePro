@@ -1,7 +1,10 @@
 import sys
 from pathlib import Path
 import pygame
-from typing import Tuple, Optional, Callable, Union, List
+from typing import Tuple, Optional, Callable, Union, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from spritePro.constants import Anchor
 
 
 current_dir = Path(__file__).parent
@@ -11,6 +14,7 @@ sys.path.append(str(parent_dir))
 from spritePro.sprite import Sprite
 from spritePro.components.text import TextSprite
 from spritePro.components.mouse_interactor import MouseInteractor
+from spritePro.constants import Anchor
 import spritePro
 import random
 
@@ -56,13 +60,14 @@ class Button(Sprite):
         sorting_order: int = 1000,
         use_scale_fx: bool = True,
         use_color_fx: bool = True,
+        anchor: Union[str, "Anchor", None] = None,
     ):
         """Инициализирует новую кнопку.
 
         Args:
             sprite (str, optional): Путь к изображению спрайта. По умолчанию пустая строка.
             size (Tuple[int, int], optional): Размеры кнопки (ширина, высота). По умолчанию (250, 70).
-            pos (Tuple[int, int], optional): Центральная позиция кнопки на экране. По умолчанию (300, 200).
+            pos (Tuple[int, int], optional): Позиция кнопки на экране. По умолчанию (300, 200).
             text (str, optional): Текст метки кнопки. По умолчанию "Button".
             text_size (int, optional): Базовый размер шрифта. По умолчанию 24.
             text_color (Tuple[int, int, int], optional): Цвет текста в RGB. По умолчанию (0, 0, 0).
@@ -78,9 +83,14 @@ class Button(Sprite):
             sorting_order (int, optional): Порядок отрисовки (слой). По умолчанию 1000.
             use_scale_fx (bool, optional): Включен ли эффект масштабирования. По умолчанию True.
             use_color_fx (bool, optional): Включен ли эффект изменения цвета. По умолчанию True.
+            anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию None (используется Anchor.CENTER).
         """
+        # Определяем якорь (если не передан, используем CENTER для обратной совместимости)
+        if anchor is None:
+            anchor = spritePro.Anchor.CENTER
+        
         # Инициализируем Sprite с пустым фоном
-        super().__init__(sprite, size=size, pos=pos, sorting_order=sorting_order)
+        super().__init__(sprite, size=size, pos=pos, sorting_order=sorting_order, anchor=anchor)
 
         # Параметры анимации и цвета
         self.set_color(base_color)

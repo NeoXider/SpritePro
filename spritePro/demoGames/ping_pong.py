@@ -13,10 +13,6 @@ import spritePro
 
 path = Path(__file__).parent
 
-pygame.init()
-pygame.font.init()
-pygame.mixer.init()
-
 SCREEN = spritePro.get_screen((960, 720))
 WIDTH, HEIGHT = int(spritePro.WH.x), int(spritePro.WH.y)
 
@@ -28,8 +24,9 @@ STATE_SHOP = 1
 STATE_GAME = 2
 STATE_WIN_LEFT = 3
 STATE_WIN_RIGHT = 4
-MUSIC_VOLUME = 0.4
-SFX_VOLUME = 1
+
+# Получаем глобальный AudioManager
+audio = spritePro.audio_manager
 
 
 class Ball(Sprite):
@@ -45,11 +42,10 @@ class Ball(Sprite):
         self.start_speed = speed
 
     def baunch_x(self, right: bool):
-        global bounch_sound
         ball.dir_x = 1 if right else -1
         if ball.x_bounch != ball.dir_x:
             ball.x_bounch = ball.dir_x
-            bounch_sound.play()
+            bounce_sound.play()
 
     def move(self, dx: float, dy: float):
         self.speed = min(self.speed + self.add_speed_per_frame, self.max_speed)
@@ -74,11 +70,11 @@ def render_text():
 
 def ball_bounch():
     if ball.rect.top <= 0:
-        bounch_sound.play()
+        bounce_sound.play()
         ball.dir_y = 1
 
     if ball.rect.bottom >= HEIGHT:
-        bounch_sound.play()
+        bounce_sound.play()
         ball.dir_y = -1
 
     if ball.rect.colliderect(player_right.rect):
@@ -128,9 +124,15 @@ def check_win():
 
 
 def create_music():
-    pygame.mixer.music.load(path / "Audio" / "fon_musik.mp3")
-    pygame.mixer.music.play(-1)
-    pygame.mixer.music.set_volume(MUSIC_VOLUME)
+    """Инициализирует музыку и звуки через AudioManager."""
+    audio.set_music_volume(0.4)
+    audio.set_sfx_volume(1.0)
+    audio.play_music(str(path / "Audio" / "fon_musik.mp3"))
+    audio.load_sound("bounce", str(path / "Audio" / "baunch.mp3"))
+    
+    # Создаем обертку Sound для удобного использования
+    global bounce_sound
+    bounce_sound = audio.get_sound("bounce")
 
 
 def win(player: Sprite):
@@ -154,7 +156,7 @@ def start_game():
     player_left.rotate_to(-90)
     player_right.rotate_to(90)
     ball.reset()
-    bounch_sound.play()
+    bounce_sound.play()
 
 
 def menu():
@@ -162,7 +164,7 @@ def menu():
     current_state = STATE_MENU
     # Сбрасываем камеру в начало координат
     spritePro.set_camera_position(0, 0)
-    bounch_sound.play()
+    bounce_sound.play()
 
 
 def shop():
@@ -170,7 +172,7 @@ def shop():
     current_state = STATE_SHOP
     # Сбрасываем камеру в начало координат
     spritePro.set_camera_position(0, 0)
-    bounch_sound.play()
+    bounce_sound.play()
 
 
 def logic_shop():
@@ -195,14 +197,15 @@ def logic_game():
 
 
 def music_toggle(is_on: bool) -> None:
-    pygame.mixer.music.unpause() if is_on else pygame.mixer.music.pause()
-    bounch_sound.play()
+    """Переключить музыку через AudioManager."""
+    spritePro.audio_manager.set_music_enabled(is_on)
+    bounce_sound.play()
 
 
 def audio_toggle(is_on: bool) -> None:
-    for sound in efxs:
-        sound.set_volume(SFX_VOLUME if is_on else 0)
-    bounch_sound.play()
+    """Переключить звуковые эффекты через AudioManager."""
+    spritePro.audio_manager.set_sfx_enabled(is_on)
+    bounce_sound.play()
 
 
 def update_sprite_visibility():
@@ -236,13 +239,10 @@ def update_sprite_visibility():
     textWin.active = current_state in (STATE_WIN_LEFT, STATE_WIN_RIGHT)
 
 
-efxs = []
-
 pygame.display.set_caption("pin pong")
-bounch_sound = pygame.mixer.Sound(path / "Audio" / "baunch.mp3")
-bounch_sound.set_volume(SFX_VOLUME)
-efxs.append(bounch_sound)
 
+# Инициализируем музыку и звуки
+bounce_sound = None  # Будет создан в create_music()
 create_music()
 
 leftScore = 0
@@ -276,8 +276,10 @@ player_right = Sprite(
 
 textWin = spritePro.TextSprite("", 72, (255, 255, 100), (WIDTH // 2, HEIGHT // 2))
 textShop = spritePro.TextSprite("Shop", 72, (255, 255, 100))
-score_text_l = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))
-score_text_r = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255))
+# Текст счета левого игрока (слева вверху)
+score_text_l = spritePro.TextSprite(f"{leftScore}", 72, (255, 255, 255), (50, 50), anchor=spritePro.Anchor.TOP_LEFT)
+# Текст счета правого игрока (справа вверху)
+score_text_r = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255), (WIDTH - 50, 50), anchor=spritePro.Anchor.TOP_RIGHT)
 
 btn_size = 210, 50
 

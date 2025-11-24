@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field, replace
-from typing import Callable, Optional, Sequence, Tuple, Type, List, Union
+from typing import Callable, Optional, Sequence, Tuple, Type, List, Union, TYPE_CHECKING
 from .constants import Anchor
+
+if TYPE_CHECKING:
+    from .constants import Anchor as AnchorType
 
 import pygame
 from pygame.math import Vector2
@@ -43,6 +46,7 @@ class ParticleConfig:
         image (Union[Optional[pygame.Surface], Path]): Готовая поверхность для дублирования для каждой частицы. По умолчанию None.
         image_factory (Optional[Callable[[int], pygame.Surface]]): Фабрика для создания изображения для каждой частицы по индексу. По умолчанию None.
         particle_class (Optional[Type[Particle]]): Пользовательский подкласс Particle для создания. По умолчанию None.
+        particle_template (Optional[Particle]): Готовый экземпляр Particle как шаблон для создания новых частиц. Копируются свойства шаблона, но позиция, скорость и время жизни берутся из конфига. По умолчанию None.
         factory (Optional[Callable]): Полное переопределение для создания частицы самостоятельно. По умолчанию None.
         sorting_order (Optional[int]): Порядок отрисовки (слой), большие значения рисуются спереди. По умолчанию None.
         image_scale_range (Optional[Tuple[float, float]]): Диапазон равномерного масштабирования для изображения. По умолчанию None.
@@ -72,6 +76,8 @@ class ParticleConfig:
     image_factory: Optional[Callable[[int], pygame.Surface]] = None
     # Provide a custom Particle subclass to instantiate
     particle_class: Optional[Type["Particle"]] = None
+    # Provide a ready Particle instance as template (properties are copied, but pos/velocity/lifetime are set from config)
+    particle_template: Optional["Particle"] = None
     # Full factory override: create and return a Particle yourself
     factory: Optional[Callable[[Vector2, Vector2, int, "ParticleConfig", int], "Particle"]] = None
     # Sorting order for created particles (higher draws in front); None keeps default
@@ -199,7 +205,7 @@ class ParticleEmitter:
         self._position: Optional[Tuple[float, float] | Vector2] = None
         self._anchor: str = "center"
 
-    def set_position(self, position: Tuple[float, float] | Vector2, anchor: str | Anchor = Anchor.CENTER) -> None:
+    def set_position(self, position: Union[Tuple[float, float], Vector2], anchor: Union[str, "Anchor", None] = None) -> None:
         """Устанавливает позицию эмиттера для последующих вызовов emit() без аргументов.
         
         Args:
@@ -207,9 +213,12 @@ class ParticleEmitter:
             anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию Anchor.CENTER.
         """
         # Import Anchor here to avoid circular imports
-        from .constants import Anchor
+        from .constants import Anchor as AnchorConst
         
         # Handle anchor positioning same as Sprite
+        if anchor is None:
+            anchor = AnchorConst.CENTER
+        
         if isinstance(anchor, str):
             anchor_key = anchor.lower()
         else:
@@ -325,6 +334,43 @@ class ParticleEmitter:
             # Create particle
             if cfg.factory is not None:
                 particle = cfg.factory(spawn_pos, direction, lifetime, cfg, index)
+            elif cfg.particle_template is not None:
+                # Используем шаблон частицы: копируем его свойства, но обновляем позицию, скорость и время жизни
+                template = cfg.particle_template
+                # Создаем новую частицу того же класса с теми же параметрами
+                particle_cls = type(template)
+                # Используем изображение из шаблона или из конфига
+                template_image = image if image is not None else template.image.copy()
+                particle = particle_cls(
+                    image=template_image,
+                    pos=spawn_pos,
+                    velocity=direction,
+                    lifetime_ms=lifetime,
+                    fade_speed=cfg.fade_speed,
+                    gravity=cfg.gravity,
+                    screen_space=cfg.screen_space,
+                    sorting_order=cfg.sorting_order if cfg.sorting_order is not None else template.sorting_order,
+                )
+                # Копируем дополнительные свойства из шаблона
+                particle.angular_velocity = template.angular_velocity
+                particle.scale_velocity = template.scale_velocity
+                particle.scale = template.scale
+                particle.angle = template.angle
+                particle.alpha = template.alpha
+                particle.color = template.color
+                # Копируем любые дополнительные атрибуты, которые могут быть в пользовательских подклассах
+                for attr_name in dir(template):
+                    if not attr_name.startswith('_') and attr_name not in [
+                        'image', 'rect', 'velocity', 'spawn_time', 'lifetime', 
+                        'fade_speed', 'gravity', 'screen_space', 'sorting_order',
+                        'angular_velocity', 'scale_velocity', 'scale', 'angle', 'alpha', 'color',
+                        'update', 'kill', 'active', 'position', 'x', 'y', 'width', 'height'
+                    ]:
+                        try:
+                            if hasattr(template, attr_name) and not callable(getattr(template, attr_name, None)):
+                                setattr(particle, attr_name, getattr(template, attr_name))
+                        except (AttributeError, TypeError):
+                            pass
             else:
                 particle_cls: Type[Particle] = cfg.particle_class or Particle  # type: ignore[assignment]
                 particle = particle_cls(

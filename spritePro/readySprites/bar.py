@@ -51,6 +51,7 @@ class Bar(Sprite):
         fill_amount: float = 1.0,
         animate_duration: float = 0.3,
         sorting_order: Optional[int] = None,
+        anchor: Union[str, "Anchor"] = None,
     ):
         """Инициализирует полосу прогресса.
 
@@ -62,7 +63,12 @@ class Bar(Sprite):
             fill_amount (float, optional): Начальное значение заполнения (0.0-1.0). По умолчанию 1.0.
             animate_duration (float, optional): Длительность анимации в секундах. По умолчанию 0.3.
             sorting_order (Optional[int], optional): Порядок отрисовки (слой).
+            anchor (Union[str, Anchor], optional): Якорь для позиционирования. По умолчанию None (используется Anchor.CENTER).
         """
+        # Определяем якорь (если не передан, используем CENTER для обратной совместимости)
+        if anchor is None:
+            anchor = Anchor.CENTER
+        
         # Initialize parent Sprite with image path/string (Sprite handles loading and fallback)
         # Use default size if not provided
         default_size = size if size is not None else (100, 20)
@@ -71,6 +77,7 @@ class Bar(Sprite):
             size=default_size,
             pos=pos,
             sorting_order=sorting_order,
+            anchor=anchor,
         )
 
         # Initialize bar-specific attributes first
@@ -453,7 +460,8 @@ class BarWithBackground(Bar):
                  animate_duration: float = 0.3,
                  sorting_order: int = 0,
                  background_size: Optional[Tuple[int, int]] = None,
-                 fill_size: Optional[Tuple[int, int]] = None):
+                 fill_size: Optional[Tuple[int, int]] = None,
+                 anchor: Union[str, "Anchor"] = None):
         """Инициализирует полосу с фоновым изображением и изображением заполнения.
         
         Args:
@@ -467,6 +475,7 @@ class BarWithBackground(Bar):
             sorting_order (int, optional): Порядок отрисовки (больше = сверху). По умолчанию 0.
             background_size (Optional[Tuple[int, int]], optional): Опциональный отдельный размер для фонового изображения.
             fill_size (Optional[Tuple[int, int]], optional): Опциональный отдельный размер для изображения заполнения.
+            anchor (Union[str, Anchor], optional): Якорь для позиционирования. По умолчанию None (используется Anchor.CENTER).
         """
         # Initialize background sprite (always visible)
         # Bar.__init__ will handle image loading with fallback
@@ -477,7 +486,8 @@ class BarWithBackground(Bar):
             fill_amount=1.0,  # Background is always 100% visible
             fill_direction=FillDirection.LEFT_TO_RIGHT,  # Background doesn't need fill direction
             animate_duration=0.0,  # No animation for background
-            sorting_order=sorting_order
+            sorting_order=sorting_order,
+            anchor=anchor
         )
         
         # Store fill properties
