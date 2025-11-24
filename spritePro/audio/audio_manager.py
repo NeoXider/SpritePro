@@ -70,57 +70,83 @@ class AudioManager:
         self.sounds: dict[str, pygame.mixer.Sound] = {}
         self.current_music: Optional[str] = None
         
-    def load_sound(self, name: str, path: str) -> None:
-        """Загрузить звуковой эффект.
+    def load_sound(self, name: str, path: str) -> 'Sound':
+        """Загрузить звуковой эффект и вернуть объект Sound.
         
         Args:
             name (str): Имя звука для последующего использования.
             path (str): Путь к файлу звука.
             
+        Returns:
+            Sound: Объект Sound для воспроизведения.
+            
         Example:
-            >>> audio.load_sound("bounce", "sounds/bounce.mp3")
+            >>> jump_sound = audio.load_sound("jump", "sounds/jump.mp3")
+            >>> jump_sound.play()  # Можно сразу использовать!
         """
         try:
             self.sounds[name] = pygame.mixer.Sound(path)
+            return Sound(self, name)
         except pygame.error as e:
             print(f"Error loading sound '{name}' from '{path}': {e}")
+            return Sound(self, name)  # Возвращаем объект даже при ошибке
         
-    def play_sound(self, name: str, volume: Optional[float] = None) -> None:
+    def play_sound(self, name_or_path: str, volume: Optional[float] = None) -> None:
         """Воспроизвести звуковой эффект.
         
+        Может воспроизвести звук по имени (если он был загружен через load_sound)
+        или напрямую по пути к файлу (автоматически загрузит и воспроизведет).
+        
         Args:
-            name (str): Имя звука, загруженного через load_sound().
+            name_or_path (str): Имя звука (загруженного через load_sound) или путь к файлу звука.
             volume (float, optional): Громкость (0.0 - 1.0). Если None, используется sfx_volume.
             
         Example:
+            >>> # Воспроизведение загруженного звука
+            >>> audio.load_sound("bounce", "sounds/bounce.mp3")
             >>> audio.play_sound("bounce")
-            >>> audio.play_sound("bounce", volume=0.5)
+            
+            >>> # Прямое воспроизведение по пути (автоматическая загрузка)
+            >>> audio.play_sound("sounds/jump.mp3")
+            >>> audio.play_sound("sounds/coin.wav", volume=0.8)
         """
         if not self.sfx_enabled:
             return
-        if name in self.sounds:
-            sound = self.sounds[name]
+        
+        # Проверяем, есть ли звук в словаре (загружен ранее)
+        if name_or_path in self.sounds:
+            sound = self.sounds[name_or_path]
             sound.set_volume(volume if volume is not None else self.sfx_volume)
             sound.play()
         else:
-            print(f"Sound '{name}' not found. Load it first with load_sound().")
+            # Пытаемся загрузить и воспроизвести напрямую из файла
+            try:
+                sound = pygame.mixer.Sound(name_or_path)
+                sound.set_volume(volume if volume is not None else self.sfx_volume)
+                sound.play()
+            except pygame.error as e:
+                print(f"Error playing sound from '{name_or_path}': {e}")
+                print("Hint: Load the sound first with load_sound() or provide a valid file path.")
     
-    def play_music(self, path: str, loop: bool = True) -> None:
+    def play_music(self, path: str, loop: bool = True, volume: Optional[float] = None) -> None:
         """Воспроизвести музыку.
         
         Args:
             path (str): Путь к файлу музыки.
             loop (bool, optional): Зациклить ли музыку. По умолчанию True.
+            volume (float, optional): Громкость (0.0 - 1.0). Если None, используется music_volume.
             
         Example:
             >>> audio.play_music("music/background.mp3")
-            >>> audio.play_music("music/intro.mp3", loop=False)
+            >>> audio.play_music("music/intro.mp3", loop=False, volume=0.7)
         """
         if not self.music_enabled:
             return
         try:
             pygame.mixer.music.load(path)
-            pygame.mixer.music.set_volume(self.music_volume)
+            # Используем переданную громкость или текущую настройку
+            music_vol = volume if volume is not None else self.music_volume
+            pygame.mixer.music.set_volume(music_vol)
             pygame.mixer.music.play(-1 if loop else 0)
             self.current_music = path
         except pygame.error as e:

@@ -11,13 +11,13 @@ import spritePro as s
 audio = s.audio_manager
 
 # Загружаем звук
-audio.load_sound("bounce", "sounds/bounce.mp3")
+# Загружаем звук и сразу получаем объект Sound
+bounce_sound = audio.load_sound("bounce", "sounds/bounce.mp3")
 
 # Воспроизводим звук напрямую
 audio.play_sound("bounce")
 
-# Или создаем обертку Sound для удобного использования
-bounce_sound = audio.get_sound("bounce")
+# Или используем объект Sound
 bounce_sound.play()  # Воспроизвести с настройками AudioManager
 
 # Воспроизводим музыку
@@ -28,48 +28,65 @@ audio.play_music("music/background.mp3")
 
 ### Загрузка и воспроизведение звуков
 
-#### `load_sound(name: str, path: str) -> None`
+#### `load_sound(name: str, path: str) -> Sound`
 
-Загружает звуковой эффект для последующего использования.
+Загружает звуковой эффект и возвращает объект `Sound` для удобного использования.
 
 **Параметры:**
 - `name` (str): Имя звука для последующего использования
 - `path` (str): Путь к файлу звука
 
+**Возвращает:**
+- `Sound`: Объект Sound для воспроизведения
+
 **Пример:**
 ```python
-audio.load_sound("jump", "sounds/jump.mp3")
-audio.load_sound("coin", "sounds/coin.wav")
+# Сохраняем объект Sound при загрузке
+jump_sound = audio.load_sound("jump", "sounds/jump.mp3")
+coin_sound = audio.load_sound("coin", "sounds/coin.wav")
+
+# Можно сразу использовать
+jump_sound.play()
+
+# Или в одну строку для быстрого воспроизведения
+audio.load_sound("explosion", "sounds/explosion.mp3").play()
 ```
 
-#### `play_sound(name: str, volume: float = None) -> None`
+#### `play_sound(name_or_path: str, volume: float = None) -> None`
 
-Воспроизводит загруженный звуковой эффект.
+Воспроизводит звуковой эффект. Может воспроизвести звук по имени (если он был загружен) или напрямую по пути к файлу (автоматически загрузит и воспроизведет).
 
 **Параметры:**
-- `name` (str): Имя звука, загруженного через `load_sound()`
+- `name_or_path` (str): Имя звука (загруженного через `load_sound()`) или путь к файлу звука
 - `volume` (float, optional): Громкость (0.0 - 1.0). Если `None`, используется `sfx_volume`
 
 **Пример:**
 ```python
-audio.play_sound("jump")
-audio.play_sound("coin", volume=0.5)  # Воспроизвести с уменьшенной громкостью
+# Воспроизведение загруженного звука
+audio.load_sound("bounce", "sounds/bounce.mp3")
+audio.play_sound("bounce")
+
+# Прямое воспроизведение по пути (без предварительной загрузки!)
+audio.play_sound("sounds/jump.mp3")
+audio.play_sound("sounds/coin.wav", volume=0.8)
 ```
 
 ### Управление музыкой
 
-#### `play_music(path: str, loop: bool = True) -> None`
+#### `play_music(path: str, loop: bool = True, volume: float = None) -> None`
 
 Воспроизводит музыку из файла.
 
 **Параметры:**
 - `path` (str): Путь к файлу музыки
 - `loop` (bool): Зациклить ли музыку. По умолчанию `True`
+- `volume` (float, optional): Громкость (0.0 - 1.0). Если `None`, используется `music_volume`
 
 **Пример:**
 ```python
 audio.play_music("music/background.mp3")  # Зацикленная музыка
-audio.play_music("music/intro.mp3", loop=False)  # Один раз
+audio.play_music("music/intro.mp3", loop=False, volume=0.7)  # С указанной громкостью
+audio.play_music("music/background.mp3", volume=0.5)  # Сразу с нужной громкостью!
 ```
 
 #### `stop_music() -> None`
@@ -167,8 +184,7 @@ audio.set_sfx_enabled(False)  # Выключить звуки
 
 **Пример:**
 ```python
-audio.load_sound("bounce", "sounds/bounce.mp3")
-bounce_sound = audio.get_sound("bounce")
+bounce_sound = audio.load_sound("bounce", "sounds/bounce.mp3")
 bounce_sound.play()  # Воспроизвести с настройками AudioManager
 ```
 
@@ -187,7 +203,7 @@ bounce_sound.play()  # Воспроизвести с настройками Audi
 
 **Пример:**
 ```python
-bounce_sound = audio.get_sound("bounce")
+bounce_sound = audio.load_sound("bounce", "sounds/bounce.mp3")
 bounce_sound.play()  # С настройками AudioManager
 bounce_sound.play(volume=0.5)  # С переопределенной громкостью
 ```
@@ -236,10 +252,10 @@ audio = s.audio_manager
 audio.set_music_volume(0.4)
 audio.set_sfx_volume(1.0)
 
-# Загружаем звуки
-audio.load_sound("jump", "sounds/jump.mp3")
-audio.load_sound("coin", "sounds/coin.wav")
-audio.load_sound("bounce", "sounds/bounce.mp3")
+# Загружаем звуки и сразу получаем объекты Sound
+jump_sound = audio.load_sound("jump", "sounds/jump.mp3")
+coin_sound = audio.load_sound("coin", "sounds/coin.wav")
+bounce_sound = audio.load_sound("bounce", "sounds/bounce.mp3")
 
 # Воспроизводим музыку
 audio.play_music("music/background.mp3")
@@ -290,10 +306,8 @@ def create_music():
     audio.set_music_volume(0.4)
     audio.set_sfx_volume(1.0)
     audio.play_music(str(path / "Audio" / "fon_musik.mp3"))
-    audio.load_sound("bounce", str(path / "Audio" / "baunch.mp3"))
-    
-    # Создаем обертку Sound для удобного использования
-    bounce_sound = audio.get_sound("bounce")
+    # Загружаем звук и сразу получаем объект Sound
+    bounce_sound = audio.load_sound("bounce", str(path / "Audio" / "baunch.mp3"))
 
 # Воспроизведение звука при столкновении
 def ball_bounch():

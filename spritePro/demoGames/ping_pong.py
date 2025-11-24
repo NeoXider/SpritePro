@@ -125,14 +125,12 @@ def check_win():
 
 def create_music():
     """Инициализирует музыку и звуки через AudioManager."""
-    audio.set_music_volume(0.4)
     audio.set_sfx_volume(1.0)
-    audio.play_music(str(path / "Audio" / "fon_musik.mp3"))
-    audio.load_sound("bounce", str(path / "Audio" / "baunch.mp3"))
-    
-    # Создаем обертку Sound для удобного использования
+    # Воспроизводим музыку сразу с нужной громкостью
+    audio.play_music(str(path / "Audio" / "fon_musik.mp3"), volume=0.4)
+    # Загружаем звук и сразу получаем объект Sound
     global bounce_sound
-    bounce_sound = audio.get_sound("bounce")
+    bounce_sound = audio.load_sound("bounce", str(path / "Audio" / "baunch.mp3"))
 
 
 def win(player: Sprite):
