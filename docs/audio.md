@@ -242,7 +242,6 @@ bounce_sound.play(volume=0.5)  # С переопределенной громк�
 import spritePro as s
 
 # Инициализация
-s.init()
 screen = s.get_screen((800, 600), "Audio Demo")
 
 # Получаем AudioManager

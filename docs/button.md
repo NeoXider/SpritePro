@@ -251,26 +251,7 @@ slot_button = s.Button(
 )
 ```
 
-### Переключатель
-```python
-class ToggleButton(s.Button):
-    def __init__(self, *args, **kwargs):
-        self.is_toggled = False
-        super().__init__(*args, **kwargs)
-        self.update_appearance()
-        
-    def on_click(self):
-        self.is_toggled = not self.is_toggled
-        self.update_appearance()
-        
-    def update_appearance(self):
-        if self.is_toggled:
-            self.set_text("ВКЛ")
-            self.set_colors(base=(100, 255, 100))
-        else:
-            self.set_text("ВЫКЛ")
-            self.set_colors(base=(255, 100, 100))
-```
+
 
 ## Базовое использование
 
@@ -315,7 +296,7 @@ class CooldownButton(s.Button):
             self.execute_action()
             
             # Начать перезарядку
-            self.set_enabled(False)
+            self.set_active(False)
             self.cooldown_timer = s.Timer(
                 self.cooldown_time,
                 self.cooldown_finished
@@ -323,7 +304,7 @@ class CooldownButton(s.Button):
             self.cooldown_timer.start()
             
     def cooldown_finished(self):
-        self.set_enabled(True)
+        self.set_active(True)
         self.cooldown_timer = None
 ```
 

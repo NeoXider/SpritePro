@@ -19,14 +19,14 @@ from event_bus import ball_out_screen
 
 class Game:
     def __init__(self):
-        ball_out_screen.connect(self.on_ball_out_screen)
-
         self.score_player_1 = 0
         self.score_player_2 = 0
 
         self.create_game_spretes()
 
         self.create_ui()
+
+        ball_out_screen.connect(self.on_ball_out_screen)
 
     def create_game_spretes(self):
         self.bg = s.Sprite("", s.WH, s.WH_C)
@@ -51,8 +51,6 @@ class Game:
 
         if self.ball.rect.colliderect(self.platform_1.rect) or self.ball.rect.colliderect(self.platform_2.rect):
             self.ball.velocity.x *= -1
-
-
 
     def on_ball_out_screen(self, sender, side):
         print("ball out screen", side)
