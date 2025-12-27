@@ -343,7 +343,8 @@ class TweenManager:
         for name in list(self.tweens.keys()):
             value = self.tweens[name].update(dt)
             if value is None:
-                del self.tweens[name]
+                # del self.tweens[name]
+                pass
 
     def get_tween(self, name: str) -> Optional[Tween]:
         """Получает переход по имени.
@@ -373,6 +374,12 @@ class TweenManager:
         """
         if name in self.tweens:
             self.tweens[name].start()
+
+    def start_all(self) -> None:
+        """Запускает все переходы."""
+        for tween in self.tweens.values():
+            tween.reset()
+            tween.start()
 
     def pause_all(self) -> None:
         """Ставит все переходы на паузу."""

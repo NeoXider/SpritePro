@@ -9,6 +9,7 @@ from .components.text import TextSprite
 from .components.mouse_interactor import MouseInteractor
 from .components.animation import Animation
 from .components.tween import Tween, TweenManager, EasingType
+from .components.pages import Page, PageManager
 from .utils.save_load import PlayerPrefs
 from .particles import ParticleEmitter, ParticleConfig
 from .constants import Anchor
@@ -38,6 +39,9 @@ __all__ = [
     "SpriteProGame",
     "ParticleEmitter",
     "ParticleConfig",
+    "Page",
+    "PageManager",
+
     "Anchor",
     "AudioManager",
     "Sound",
