@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spritepro"
-version = "1.0.3"
+version = "1.0.4"
 authors = [
-  { name="NeoXider", email="author@example.com" },
+  { name="NeoXider", email="neoxider@gmail.com" },
 ]
 description = "A high-level 2D game framework for Python, built on Pygame, designed to simplify and speed up game development."
 readme = "README.md"
