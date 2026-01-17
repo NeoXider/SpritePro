@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spritepro"
-version = "1.2.1"
+version = "1.2.2"
 authors = [
   { name="NeoXider", email="neoxider@gmail.com" },
 ]
@@ -32,3 +32,6 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/NeoXider/SpritePro"
 Issues = "https://github.com/NeoXider/SpritePro/issues"
+
+[project.scripts]
+spritepro = "spritePro.cli:main"

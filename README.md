@@ -159,10 +159,16 @@ while True:
 ### ⚡ Быстрый старт 2.0 (шаблон проекта)
 
 ```bash
-python create_project.py MyGame
+spritepro --create
 ```
 
-Создаст структуру `assets/`, `scenes/` и файл `main.py` с новым API.
+Создаст `main.py` в текущей папке и структуру `assets/audio`, `assets/images`, `scenes`.
+
+```bash
+spritepro --create MyGame
+```
+
+Создаст проект в папке `MyGame`.
 
 ---
 
