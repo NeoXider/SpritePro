@@ -283,7 +283,7 @@ while True:
     s.update(fill_color=(20, 20, 30))
     
     # Воспроизводим звуки при нажатии клавиш
-    for event in s.events:
+    for event in s.pygame_events:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 audio.play_sound("jump")

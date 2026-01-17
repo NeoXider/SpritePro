@@ -266,7 +266,7 @@ fps_counter = Text_fps()
 # Game loop
 running = True
 while running:
-    for event in s.events:
+    for event in s.pygame_events:
         if event.type == pygame.QUIT:
             running = False
     

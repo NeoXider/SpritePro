@@ -109,7 +109,7 @@ class TextSprite(Sprite):
         Returns:
             str: Текущее содержимое текста после обработки ввода.
         """
-        for e in spritePro.events:
+        for e in spritePro.pygame_events:
             if e.type == pygame.KEYDOWN:
                 if k_delete is not None and e.key == k_delete:
                     self.text = ""

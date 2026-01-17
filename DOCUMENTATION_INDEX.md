@@ -109,6 +109,16 @@
 - Планирование событий
 - Игровое время
 
+#### [docs/game_loop.md](docs/game_loop.md)
+**Игровой цикл и сцены**
+- Базовый цикл
+- Сцены и их жизненный цикл
+
+#### [docs/input.md](docs/input.md)
+**Ввод и события**
+- InputState как в Unity
+- EventBus
+
 #### [docs/particles.md](docs/particles.md)
 **Частицы**
 - Время жизни (секунды или миллисекунды)
@@ -195,6 +205,9 @@
 - [Particles Templates Demo](spritePro/demoGames/particles_templates_demo.py) - Готовые шаблоны (Sparks, Smoke, Fire)
 - [Bar Demo](spritePro/demoGames/bar_demo.py) - Прогресс-бары с разными направлениями заполнения
 - [Bar Background Demo](spritePro/demoGames/bar_background_demo.py) - Прогресс-бары с отдельными фоновыми и заполняющими изображениями
+- [Input + EventBus Demo](spritePro/demoGames/input_events_demo.py) - Ввод и события
+- [Scenes Demo](spritePro/demoGames/scenes_demo.py) - Сцены
+- [Resource Cache Demo](spritePro/demoGames/resource_cache_demo.py) - Кэш ресурсов
 
 ## 🔍 Навигация по типам документации
 
@@ -228,6 +241,8 @@
 - [docs/save_load.md](docs/save_load.md)
 - [docs/tween.md](docs/tween.md)
 - [docs/text_fps.md](docs/text_fps.md)
+- [docs/game_loop.md](docs/game_loop.md)
+- [docs/input.md](docs/input.md)
 
 #### 📋 Планирование и разработка
 - [ROADMAP.md](ROADMAP.md)

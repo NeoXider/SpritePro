@@ -22,6 +22,7 @@ if str(_PARENT_DIR) not in sys.path:
     sys.path.insert(0, str(_PARENT_DIR))
 
 import spritePro
+from .resources import resource_cache
 
 VectorRange = Tuple[float, float]
 Color = Tuple[int, int, int]
@@ -198,7 +199,8 @@ class ParticleEmitter:
         self.config = config or ParticleConfig()
         if isinstance(self.config.image, str):
             try:
-                self.config.image = pygame.image.load(self.config.image).convert_alpha()
+                cached = resource_cache.load_texture(self.config.image)
+                self.config.image = cached if cached is not None else pygame.image.load(self.config.image).convert_alpha()
             except pygame.error as e:
                 print(f"Error loading particle image at path: {self.config.image}\n{e}")
                 self.config.image = None

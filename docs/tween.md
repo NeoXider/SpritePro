@@ -34,22 +34,23 @@ tween_manager = s.TweenManager()
 
 #### Параметры конструктора
 
-- `start_value` (float): Начальное значение
-- `end_value` (float): Конечное значение
+- `start_value` (Any): Начальное значение (float, Vector2, tuple/list)
+- `end_value` (Any): Конечное значение
 - `duration` (float): Длительность анимации в секундах
 - `easing` (EasingType): Тип функции плавности. По умолчанию: EasingType.LINEAR
 - `loop` (bool): Зациклить ли анимацию. По умолчанию: False
 - `yoyo` (bool): Обратить ли направление при зацикливании. По умолчанию: False
-- `on_update` (Optional[Callable[[float], None]]): Обратный вызов для обновлений значения. По умолчанию: None
+- `on_update` (Optional[Callable[[Any], None]]): Обратный вызов для обновлений значения. По умолчанию: None
 - `on_complete` (Optional[Callable]): Обратный вызов при завершении анимации. По умолчанию: None
 - `delay` (float): Задержка перед началом в секундах. По умолчанию: 0
 - `auto_start` (bool): Автоматически запускать твин при создании. По умолчанию: True
 - `auto_register` (bool): Автоматически регистрировать твин для обновления в spritePro.update(). По умолчанию: True
+- `value_type` (Optional[str]): "vector2", "vector3", "color" или None (авто). По умолчанию: None
 
 #### Методы Tween
 
 - `start()`: Запустить твин (если был создан с auto_start=False)
-- `update(dt: Optional[float] = None) -> Optional[float]`: Обновить твин и получить текущее значение (dt автоматически берется из spritePro.dt, если не указан)
+- `update(dt: Optional[float] = None) -> Optional[Any]`: Обновить твин и получить текущее значение (dt автоматически берется из spritePro.dt, если не указан)
 - `pause()`: Поставить твин на паузу
 - `resume()`: Возобновить твин
 - `stop()`: Остановить твин
@@ -119,20 +120,47 @@ while True:
 ### Переход цвета
 
 ```python
-# Создать твин для изменения цвета
-def lerp_color(color1, color2, t):
-    return tuple(int(c1 + (c2 - c1) * t) for c1, c2 in zip(color1, color2))
-
-red = (255, 0, 0)
-blue = (0, 0, 255)
+import spritePro as s
 
 tween_manager.add_tween(
     "color",
-    start_value=0,
-    end_value=1,
+    start_value=(255, 0, 0),
+    end_value=(0, 255, 0),
     duration=1.5,
     easing=s.EasingType.SINE,
-    on_update=lambda t: sprite.set_color(lerp_color(red, blue, t))
+    on_update=lambda c: sprite.set_color(c),
+    value_type="color"
+)
+```
+
+### Вектор2 (позиция)
+
+```python
+from pygame.math import Vector2
+import spritePro as s
+
+tween_manager.add_tween(
+    "move",
+    start_value=Vector2(100, 100),
+    end_value=Vector2(500, 300),
+    duration=1.2,
+    on_update=lambda v: setattr(sprite, "pos", v),
+    value_type="vector2"
+)
+```
+
+### Вектор3 (кастомные данные)
+
+```python
+import spritePro as s
+
+tween_manager.add_tween(
+    "data",
+    start_value=(0.0, 1.0, 0.0),
+    end_value=(1.0, 0.0, 2.0),
+    duration=2.0,
+    on_update=lambda v: print(v),
+    value_type="vector3"
 )
 ```
 

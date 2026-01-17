@@ -84,9 +84,9 @@ class MouseInteractor:
             inter.update(pygame.event.get())
 
         Args:
-            events (Optional[List[pygame.event.Event]], optional): Список событий pygame для обработки. Если None, используется spritePro.events.
+            events (Optional[List[pygame.event.Event]], optional): Список событий pygame для обработки. Если None, используется spritePro.pygame_events.
         """
-        events = events or spritePro.events
+        events = events or spritePro.pygame_events
         pos = pygame.mouse.get_pos()
         collided = self.sprite.rect.collidepoint(pos)
 

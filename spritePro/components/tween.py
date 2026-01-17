@@ -4,6 +4,7 @@ import math
 from enum import IntFlag, auto
 import sys
 from pathlib import Path
+from pygame.math import Vector2
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
@@ -98,32 +99,34 @@ class Tween:
 
     def __init__(
         self,
-        start_value: float,
-        end_value: float,
+        start_value: Any,
+        end_value: Any,
         duration: float,
         easing: EasingType = EasingType.LINEAR,
         on_complete: Optional[Callable] = None,
         loop: bool = False,
         yoyo: bool = False,
         delay: float = 0,
-        on_update: Optional[Callable[[float], None]] = None,
+        on_update: Optional[Callable[[Any], None]] = None,
         auto_start: bool = True,
         auto_register: bool = True,
+        value_type: Optional[str] = None,
     ):
         """Инициализирует переход.
 
         Args:
-            start_value (float): Начальное значение.
-            end_value (float): Конечное значение.
+            start_value (Any): Начальное значение (float, Vector2, tuple/list, color).
+            end_value (Any): Конечное значение.
             duration (float): Длительность в секундах.
             easing (EasingType, optional): Тип плавности (из EasingType). По умолчанию EasingType.LINEAR.
             on_complete (Optional[Callable], optional): Функция, вызываемая при завершении. По умолчанию None.
             loop (bool, optional): Зациклить переход. По умолчанию False.
             yoyo (bool, optional): Двигаться туда-обратно. По умолчанию False.
             delay (float, optional): Задержка перед началом в секундах. По умолчанию 0.
-            on_update (Optional[Callable[[float], None]], optional): Функция, вызываемая при обновлении значения. По умолчанию None.
+            on_update (Optional[Callable[[Any], None]], optional): Функция, вызываемая при обновлении значения. По умолчанию None.
             auto_start (bool, optional): Автоматически запускать переход при создании. По умолчанию True.
             auto_register (bool, optional): Автоматически регистрировать твин для обновления в spritePro.update(). По умолчанию True.
+            value_type (Optional[str], optional): Тип значения ("vector2", "vector3", "color") или None (авто). По умолчанию None.
         """
         self.start_value = start_value
         self.end_value = end_value
@@ -136,6 +139,7 @@ class Tween:
         self.yoyo = yoyo
         self.delay = delay
         self.on_update = on_update
+        self.value_type = value_type
 
         self.start_time = time.time()
         self.current_value = start_value
@@ -151,7 +155,7 @@ class Tween:
             except (ImportError, AttributeError):
                 pass
 
-    def update(self, dt: Optional[float] = None) -> Optional[float]:
+    def update(self, dt: Optional[float] = None) -> Optional[Any]:
         """Обновляет переход.
 
         Args:
@@ -159,7 +163,7 @@ class Tween:
                 Если не указано, берется из spritePro.dt. По умолчанию None.
 
         Returns:
-            Optional[float]: Текущее значение или None, если завершен.
+            Optional[Any]: Текущее значение или None, если завершен.
         """
         if not self.is_playing or self.is_paused:
             return self.current_value
@@ -187,7 +191,9 @@ class Tween:
                 return self.end_value
             else:
                 self.is_playing = False
-                self.current_value = self.end_value
+                self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
+                if self.on_update:
+                    self.on_update(self.current_value)
                 if self.on_complete:
                     self.on_complete()
                 return None
@@ -195,14 +201,61 @@ class Tween:
         progress = elapsed / self.duration
         eased = self.easing(progress)
 
-        self.current_value = (
-            self.start_value + (self.end_value - self.start_value) * eased
-        )
+        self.current_value = self._lerp_value(self.start_value, self.end_value, eased)
 
         if self.on_update:
             self.on_update(self.current_value)
 
         return self.current_value
+
+    def _lerp_value(self, start: Any, end: Any, t: float) -> Any:
+        if self.value_type == "color":
+            return self._lerp_color(start, end, t)
+        if self.value_type == "vector2":
+            return Vector2(start).lerp(Vector2(end), t)
+        if self.value_type == "vector3":
+            return self._lerp_sequence(start, end, t)
+
+        if isinstance(start, Vector2) or isinstance(end, Vector2):
+            return Vector2(start).lerp(Vector2(end), t)
+        if self._is_sequence(start) and self._is_sequence(end):
+            if self._looks_like_color(start, end):
+                return self._lerp_color(start, end, t)
+            return self._lerp_sequence(start, end, t)
+
+        try:
+            return start + (end - start) * t
+        except Exception:
+            return end if t >= 1.0 else start
+
+    @staticmethod
+    def _is_sequence(value: Any) -> bool:
+        return isinstance(value, (list, tuple)) and len(value) >= 2
+
+    @staticmethod
+    def _looks_like_color(start: Any, end: Any) -> bool:
+        if not (isinstance(start, (list, tuple)) and isinstance(end, (list, tuple))):
+            return False
+        if len(start) != 3 or len(end) != 3:
+            return False
+        for v in start + end:
+            if not isinstance(v, int):
+                return False
+            if v < 0 or v > 255:
+                return False
+        return True
+
+    @staticmethod
+    def _lerp_sequence(start: Any, end: Any, t: float) -> tuple:
+        return tuple(s + (e - s) * t for s, e in zip(start, end))
+
+    @staticmethod
+    def _lerp_color(start: Any, end: Any, t: float) -> tuple[int, int, int]:
+        result = []
+        for s, e in zip(start, end):
+            value = s + (e - s) * t
+            result.append(int(max(0, min(255, round(value)))))
+        return tuple(result)  # type: ignore[return-value]
 
     def pause(self) -> None:
         """Ставит переход на паузу."""
@@ -284,31 +337,33 @@ class TweenManager:
     def add_tween(
         self,
         name: str,
-        start_value: float,
-        end_value: float,
+        start_value: Any,
+        end_value: Any,
         duration: float,
         easing: EasingType = EasingType.LINEAR,
         on_complete: Optional[Callable] = None,
         loop: bool = False,
         yoyo: bool = False,
         delay: float = 0,
-        on_update: Optional[Callable[[float], None]] = None,
+        on_update: Optional[Callable[[Any], None]] = None,
         auto_start: bool = True,
+        value_type: Optional[str] = None,
     ) -> None:
         """Добавляет новый переход.
 
         Args:
             name (str): Имя перехода.
-            start_value (float): Начальное значение.
-            end_value (float): Конечное значение.
+            start_value (Any): Начальное значение.
+            end_value (Any): Конечное значение.
             duration (float): Длительность в секундах.
             easing (EasingType, optional): Тип плавности (из EasingType). По умолчанию EasingType.LINEAR.
             on_complete (Optional[Callable], optional): Функция, вызываемая при завершении. По умолчанию None.
             loop (bool, optional): Зациклить переход. По умолчанию False.
             yoyo (bool, optional): Двигаться туда-обратно. По умолчанию False.
             delay (float, optional): Задержка перед началом. По умолчанию 0.
-            on_update (Optional[Callable[[float], None]], optional): Функция, вызываемая при обновлении. По умолчанию None.
+            on_update (Optional[Callable[[Any], None]], optional): Функция, вызываемая при обновлении. По умолчанию None.
             auto_start (bool, optional): Автоматически запускать переход при создании. По умолчанию True.
+            value_type (Optional[str], optional): Тип значения ("vector2", "vector3", "color") или None. По умолчанию None.
         """
         # Твины в менеджере не регистрируются отдельно - они обновляются через менеджер
         tween = Tween(
@@ -322,6 +377,7 @@ class TweenManager:
             delay,
             on_update,
             auto_start,
+            value_type=value_type,
             auto_register=False,  # Твины в менеджере не регистрируются отдельно
         )
         self.tweens[name] = tween
@@ -511,7 +567,7 @@ if __name__ == "__main__":
         screen.blit(instructions, instructions_pos)
 
         # Обработка событий
-        for event in spritePro.events:
+        for event in spritePro.pygame_events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     paused = not paused

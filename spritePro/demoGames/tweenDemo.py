@@ -5,7 +5,7 @@ import math
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
+sys.path.insert(0, str(parent_dir))
 import spritePro
 from spritePro.components.tween import TweenManager, EasingType
 
@@ -220,7 +220,7 @@ if __name__ == "__main__":
         # Обновляем и отрисовываем все спрайты, затем обновляем экран
         spritePro.update(fill_color=None)
         
-        for event in spritePro.events:
+        for event in spritePro.pygame_events:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()

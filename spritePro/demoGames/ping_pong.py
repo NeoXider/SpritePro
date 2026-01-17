@@ -4,7 +4,7 @@ from pathlib import Path
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
+sys.path.insert(0, str(parent_dir))
 
 from spritePro import Sprite
 from spritePro import Anchor
@@ -381,7 +381,7 @@ while True:
     # Затем обновляем и рисуем все спрайты (включая кнопки) поверх фона
     spritePro.update()
 
-    for e in spritePro.events:
+    for e in spritePro.pygame_events:
         pass
 
     if current_state == STATE_MENU:

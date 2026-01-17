@@ -1,6 +1,7 @@
 """Централизованное управление звуком и музыкой в SpritePro."""
 
 import pygame
+from spritePro.resources import resource_cache
 from typing import Optional
 
 
@@ -85,7 +86,10 @@ class AudioManager:
             >>> jump_sound.play()  # Можно сразу использовать!
         """
         try:
-            self.sounds[name] = pygame.mixer.Sound(path)
+            cached = resource_cache.load_sound(path)
+            if cached is None:
+                cached = pygame.mixer.Sound(path)
+            self.sounds[name] = cached
             return Sound(self, name)
         except pygame.error as e:
             print(f"Error loading sound '{name}' from '{path}': {e}")

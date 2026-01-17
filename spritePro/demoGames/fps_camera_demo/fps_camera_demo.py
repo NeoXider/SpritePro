@@ -14,7 +14,7 @@ import random
 current_dir = Path(__file__).parent
 # Go up three levels from fps_camera_demo -> demoGames -> spritePro -> project root
 parent_dir = current_dir.parent.parent.parent
-sys.path.append(str(parent_dir))
+sys.path.insert(0, str(parent_dir))
 
 # Now that the path is correct, we can import the library
 import pygame
@@ -76,7 +76,7 @@ class FPSCameraDemo:
         running = True
         while running:
             # Handle quit events and camera reset
-            for event in s.events:
+            for event in s.pygame_events:
                 if event.type == pygame.QUIT or (
                     event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
                 ):

@@ -6,13 +6,14 @@ Save/Load System Demo - SpritePro
 """
 
 import sys
+import os
 import time
 from pathlib import Path
 
 # Add parent directory to path for imports
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
+sys.path.insert(0, str(parent_dir))
 
 import spritePro as s
 from spritePro.utils.save_load import SaveLoadManager, DataSerializer
@@ -88,7 +89,7 @@ def demo_basic_operations():
     
     print("1. Сохранение простых данных...")
     success = s.utils.save(simple_data, 'demo_basic.json')
-    print(f"   Результат: {'✓ Успешно' if success else '✗ Ошибка'}")
+    print(f"   Результат: {'[OK] Успешно' if success else '[FAIL] Ошибка'}")
     
     print("2. Загрузка данных...")
     loaded_data = s.utils.load('demo_basic.json')
@@ -96,11 +97,11 @@ def demo_basic_operations():
     
     print("3. Проверка существования файла...")
     exists = s.utils.exists('demo_basic.json')
-    print(f"   Файл существует: {'✓ Да' if exists else '✗ Нет'}")
+    print(f"   Файл существует: {'[OK] Да' if exists else '[FAIL] Нет'}")
     
     print("4. Проверка целостности данных...")
     match = simple_data == loaded_data
-    print(f"   Данные совпадают: {'✓ Да' if match else '✗ Нет'}")
+    print(f"   Данные совпадают: {'[OK] Да' if match else '[FAIL] Нет'}")
     
     print()
 
@@ -166,7 +167,7 @@ def demo_custom_classes():
     
     print("2. Сохранение объекта класса...")
     s.utils.save(player, 'demo_player.json')
-    print("   ✓ Игрок сохранен")
+    print("   [OK] Игрок сохранен")
     
     print("3. Загрузка объекта класса...")
     loaded_player = s.utils.load('demo_player.json')
@@ -174,7 +175,7 @@ def demo_custom_classes():
     
     print("4. Проверка целостности объекта...")
     match = player == loaded_player
-    print(f"   Объекты совпадают: {'✓ Да' if match else '✗ Нет'}")
+    print(f"   Объекты совпадают: {'[OK] Да' if match else '[FAIL] Нет'}")
     
     # Дополнительная проверка атрибутов
     attrs_match = (
@@ -182,7 +183,7 @@ def demo_custom_classes():
         player.position == loaded_player.position and
         player.stats == loaded_player.stats
     )
-    print(f"   Атрибуты совпадают: {'✓ Да' if attrs_match else '✗ Нет'}")
+    print(f"   Атрибуты совпадают: {'[OK] Да' if attrs_match else '[FAIL] Нет'}")
     
     print()
 
@@ -208,7 +209,7 @@ def demo_advanced_features():
     
     print("2. Сохранение больших данных со сжатием...")
     manager.save(large_data)
-    print("   ✓ Данные сохранены со сжатием")
+    print("   [OK] Данные сохранены со сжатием")
     
     print("3. Загрузка сжатых данных...")
     loaded_large = manager.load()
@@ -255,7 +256,7 @@ def demo_spritepro_objects():
         
         print("2. Сохранение спрайта...")
         s.utils.save(sprite, 'demo_sprite.json')
-        print("   ✓ Спрайт сохранен")
+        print("   [OK] Спрайт сохранен")
         
         print("3. Загрузка спрайта...")
         loaded_sprite = s.utils.load('demo_sprite.json')
@@ -268,10 +269,10 @@ def demo_spritepro_objects():
             sprite.angle == loaded_sprite.angle and
             abs(sprite.scale - loaded_sprite.scale) < 0.01
         )
-        print(f"   Атрибуты совпадают: {'✓ Да' if attrs_ok else '✗ Нет'}")
+        print(f"   Атрибуты совпадают: {'[OK] Да' if attrs_ok else '[FAIL] Нет'}")
         
     except Exception as e:
-        print(f"   ⚠ Ошибка при работе со спрайтами: {e}")
+        print(f"   [WARN] Ошибка при работе со спрайтами: {e}")
     
     print()
 
@@ -283,21 +284,21 @@ def demo_error_handling():
     print("1. Попытка загрузки несуществующего файла...")
     try:
         data = s.utils.load('nonexistent_file.json')
-        print("   ✗ Неожиданно успешно")
+        print("   [FAIL] Неожиданно успешно")
     except s.utils.SaveLoadError as e:
-        print(f"   ✓ Корректно обработана ошибка: {e}")
+        print(f"   [OK] Корректно обработана ошибка: {e}")
     
     print("2. Загрузка с значением по умолчанию...")
     default_data = {'status': 'default', 'message': 'файл не найден'}
     data = s.utils.load('nonexistent_file.json', default_value=default_data)
-    print(f"   ✓ Возвращено значение по умолчанию: {data}")
+    print(f"   [OK] Возвращено значение по умолчанию: {data}")
     
     print("3. Попытка сохранения в недоступную директорию...")
     try:
         s.utils.save({'test': 'data'}, '/root/forbidden/test.json')
-        print("   ✗ Неожиданно успешно")
+        print("   [FAIL] Неожиданно успешно")
     except s.utils.SaveLoadError as e:
-        print(f"   ✓ Корректно обработана ошибка доступа")
+        print(f"   [OK] Корректно обработана ошибка доступа")
     
     print()
 
@@ -329,7 +330,7 @@ def cleanup_demo_files():
 
 def main():
     """Главная функция демонстрации."""
-    print("🎮 SpritePro Save/Load System Demo")
+    print("SpritePro Save/Load System Demo")
     print("=" * 50)
     print()
     
@@ -342,21 +343,23 @@ def main():
         demo_spritepro_objects()
         demo_error_handling()
         
-        print("🎉 Все демонстрации завершены успешно!")
+        print("All demos finished successfully.")
         print()
         
-        # Спросить пользователя о очистке
-        response = input("Удалить демонстрационные файлы? (y/n): ").lower().strip()
-        if response in ['y', 'yes', 'да', 'д']:
-            cleanup_demo_files()
-            print("✓ Файлы очищены")
-        else:
-            print("ℹ Демонстрационные файлы оставлены для изучения")
+        # Спросить пользователя о очистке (только если явно включено)
+        interactive = os.environ.get("SPRITEPRO_DEMO_INTERACTIVE") == "1"
+        if interactive and hasattr(sys.stdin, "isatty") and sys.stdin.isatty():
+            response = input("Удалить демонстрационные файлы? (y/n): ").lower().strip()
+            if response in ['y', 'yes', 'да', 'д']:
+                cleanup_demo_files()
+                print("Files cleaned")
+            else:
+                print("Demo files left for review")
     
     except KeyboardInterrupt:
-        print("\n\n⚠ Демонстрация прервана пользователем")
+        print("\n\nDemo interrupted by user")
     except Exception as e:
-        print(f"\n\n❌ Ошибка во время демонстрации: {e}")
+        print(f"\n\nError during demo: {e}")
         import traceback
         traceback.print_exc()
 

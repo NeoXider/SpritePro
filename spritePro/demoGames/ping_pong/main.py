@@ -5,11 +5,10 @@ from pathlib import Path
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent.parent
 if str(parent_dir) not in sys.path:
-    sys.path.append(str(parent_dir))
+    sys.path.insert(0, str(parent_dir))
 
 #================================ start ===========================
 
-import pygame
 import spritePro as s
 from game import Game
 

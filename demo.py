@@ -7,8 +7,6 @@ s.init()
 # Create a window
 s.get_screen((800, 600), "My Game")
 
-group = pygame.sprite.Group()
-
 circle = pygame.Surface((100, 100), pygame.SRCALPHA)
 pygame.draw.circle(
     circle,
@@ -25,7 +23,6 @@ had = s.Sprite(
 had.set_scale(5)
 had.rect.centery -= 50
 had.update()
-group.add(had)
 
 circle = pygame.Surface((100, 100), pygame.SRCALPHA)
 pygame.draw.circle(circle, (255, 255, 255), (50, 50), radius=45)
@@ -34,7 +31,7 @@ eye = s.Sprite(
     size=(70, 70),
     pos=(300, 150),
 )
-group.add(eye)
+eye.set_parent(had)
 
 circle = pygame.Surface((100, 100), pygame.SRCALPHA)
 pygame.draw.circle(circle, (255, 255, 255), (50, 50), radius=45)
@@ -43,7 +40,7 @@ eye = s.Sprite(
     size=(70, 70),
     pos=(500, 150),
 )
-group.add(eye)
+eye.set_parent(had)
 
 circle = pygame.Surface((100, 100), pygame.SRCALPHA)
 pygame.draw.circle(circle, (255, 255, 255), (50, 50), radius=45, width=10)
@@ -52,7 +49,7 @@ smile = s.Sprite(
     size=(100, 100),
     pos=s.WH_C,
 )
-group.add(smile)
+smile.set_parent(had)
 
 # tweenColor
 tm_player = s.TweenManager()
@@ -84,8 +81,4 @@ tm_player.add_tween(
 while True:
     s.update(fill_color=(0, 0, 100))
     tm_player.update()
-
-    for i in group.sprites():
-        i.update()
-
     had.handle_keyboard_input()

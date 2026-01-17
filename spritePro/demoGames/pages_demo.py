@@ -1,6 +1,14 @@
-import spritePro as s
+import sys
+from pathlib import Path
+
 import pygame
 import enum
+
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent.parent
+sys.path.insert(0, str(parent_dir))
+
+import spritePro as s
 
 class PageType(enum.StrEnum):
     MENU = "Menu"

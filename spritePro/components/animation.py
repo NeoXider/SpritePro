@@ -358,7 +358,7 @@ if __name__ == "__main__":
         sprite.update(screen)
 
         # Обработка событий клавиатуры
-        for event in spritePro.events:
+        for event in spritePro.pygame_events:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 if animation.current_state == "idle":
                     animation.set_state("walk")

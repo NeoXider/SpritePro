@@ -9,7 +9,7 @@ from pathlib import Path
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
+sys.path.insert(0, str(parent_dir))
 
 import spritePro as s
 from spritePro.particles import Particle, ParticleConfig, ParticleEmitter
@@ -410,7 +410,7 @@ while True:
                 s.screen.blit(effect_surface, (particle.rect.centerx - effect_radius, particle.rect.centery - effect_radius))
     
     # Проверяем события
-    for event in s.events:
+    for event in s.pygame_events:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()

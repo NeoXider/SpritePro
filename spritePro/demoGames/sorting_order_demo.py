@@ -11,7 +11,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
+sys.path.insert(0, str(parent_dir))
 
 import pygame
 import spritePro as s
@@ -54,7 +54,7 @@ def main():
     running = True
     while running:
         # Handle events
-        for event in s.events:
+        for event in s.pygame_events:
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:

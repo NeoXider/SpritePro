@@ -1,4 +1,6 @@
 from typing import List
+import inspect
+from dataclasses import dataclass
 import pygame
 from pygame.math import Vector2
 
@@ -216,8 +218,10 @@ class SpriteProGame:
         Args:
             obj: Объект для обновления (TweenManager, Animation, Timer и т.д.).
         """
-        if obj not in self.update_objects:
-            self.update_objects.append(obj)
+        if any(getattr(entry, "obj", entry) is obj for entry in self.update_objects):
+            return
+        supports_dt = self._detect_update_signature(obj)
+        self.update_objects.append(_UpdateEntry(obj=obj, supports_dt=supports_dt))
 
     def unregister_update_object(self, obj) -> None:
         """Отменяет регистрацию объекта для автоматического обновления.
@@ -225,8 +229,10 @@ class SpriteProGame:
         Args:
             obj: Объект для отмены регистрации.
         """
-        if obj in self.update_objects:
-            self.update_objects.remove(obj)
+        for entry in list(self.update_objects):
+            entry_obj = getattr(entry, "obj", entry)
+            if entry_obj is obj:
+                self.update_objects.remove(entry)
 
     def get_sprites_by_class(self, sprite_class: type, active_only: bool = True) -> List:
         """Получает список всех спрайтов указанного класса.
@@ -271,32 +277,40 @@ class SpriteProGame:
             except (AttributeError, NameError):
                 dt = None
         
-        for obj in self.update_objects:
-            if hasattr(obj, 'update'):
-                # Пытаемся вызвать update с dt, если доступен
+        for entry in self.update_objects:
+            obj = getattr(entry, "obj", entry)
+            supports_dt = getattr(entry, "supports_dt", False)
+            if not hasattr(obj, "update"):
+                continue
+            try:
+                if supports_dt and dt is not None:
+                    obj.update(dt)
+                else:
+                    obj.update()
+            except TypeError:
                 try:
-                    import inspect
-                    sig = inspect.signature(obj.update)
-                    params = list(sig.parameters.keys())
-                    # Убираем 'self' из параметров
-                    if 'self' in params:
-                        params.remove('self')
-                    
-                    if params and dt is not None:
-                        # Метод принимает параметры, передаем dt
-                        obj.update(dt)
-                    else:
-                        # Метод не принимает параметров или dt недоступен
-                        obj.update()
-                except (TypeError, ValueError):
-                    # Если не удалось определить сигнатуру, пробуем вызвать без параметров
-                    try:
-                        obj.update()
-                    except TypeError:
-                        try: 
-                            obj.update(dt)
-                        except TypeError:
-                            print(f"Error update object {obj}")
+                    obj.update(dt)
+                except TypeError:
+                    print(f"Error update object {obj}")
                          
         
         self.all_sprites.update(*args, **kwargs)
+
+    @staticmethod
+    def _detect_update_signature(obj) -> bool:
+        try:
+            sig = inspect.signature(obj.update)
+        except (TypeError, ValueError, AttributeError):
+            return False
+        params = list(sig.parameters.values())
+        if not params:
+            return False
+        if params[0].name == "self":
+            params = params[1:]
+        return len(params) >= 1
+
+
+@dataclass
+class _UpdateEntry:
+    obj: object
+    supports_dt: bool = False

@@ -1,4 +1,14 @@
+from typing import List
+
+import pygame
+from pygame.math import Vector2
+
 from .spriteProGame import SpriteProGame
+from .game_context import GameContext
+from .input import InputState
+from .event_bus import EventBus
+from .resources import ResourceCache, resource_cache
+from .scenes import Scene, SceneManager
 
 from .sprite import Sprite
 from .button import Button
@@ -11,18 +21,21 @@ from .components.animation import Animation
 from .components.tween import Tween, TweenManager, EasingType
 from .components.pages import Page, PageManager
 from .utils.save_load import PlayerPrefs
-from .particles import ParticleEmitter, ParticleConfig
+from .particles import (
+    ParticleEmitter,
+    ParticleConfig,
+    template_sparks,
+    template_smoke,
+    template_fire,
+    template_snowfall,
+    template_circular_burst,
+)
 from .constants import Anchor
 from .audio import AudioManager, Sound
 
 from . import utils
 from . import readySprites
 from .utils import save_load
-
-from typing import List
-import pygame
-from pygame.math import Vector2
-import sys
 
 __all__ = [
     "Sprite",
@@ -39,6 +52,11 @@ __all__ = [
     "SpriteProGame",
     "ParticleEmitter",
     "ParticleConfig",
+    "template_sparks",
+    "template_smoke",
+    "template_fire",
+    "template_snowfall",
+    "template_circular_burst",
     "Page",
     "PageManager",
 
@@ -46,7 +64,14 @@ __all__ = [
     "AudioManager",
     "Sound",
     "save_load",
+    "Scene",
+    "SceneManager",
+    "InputState",
+    "EventBus",
+    "ResourceCache",
+    "resource_cache",
 
+    "get_context",
     "get_game",
     "register_sprite",
     "unregister_sprite",
@@ -61,7 +86,17 @@ __all__ = [
     "register_update_object",
     "unregister_update_object",
     "get_sprites_by_class",
+    "set_scene",
+    "set_scene_by_name",
+    "restart_scene",
+    "register_scene_factory",
     "audio_manager",
+    "input",
+    "events",
+    "pygame_events",
+    "clock",
+    "load_texture",
+    "load_sound",
     "utils",
     "readySprites",
     # methods
@@ -73,20 +108,32 @@ __all__ = [
 FPS: int = 60
 WH: Vector2 = Vector2()
 WH_C: Vector2 = Vector2()
+screen: pygame.Surface | None = None
+screen_rect: pygame.Rect | None = None
+dt: float = 0.0
+pygame_events: List[pygame.event.Event] = []
+clock: pygame.time.Clock | None = None
 
-DEFAULT_CAMERA_KEYS = {
-    "left": (pygame.K_LEFT,),
-    "right": (pygame.K_RIGHT,),
-    "up": (pygame.K_UP,),
-    "down": (pygame.K_DOWN,),
-}
+_context = GameContext.get()
+clock = _context.clock
+input: InputState = _context.input
+events: EventBus = _context.event_bus
 
-DEFAULT_CAMERA_KEYS_NONE = {
-    "left": (None,),
-    "right": (None,),
-    "up": (None,),
-    "down": (None,),
-}
+
+def _sync_globals() -> None:
+    global WH, WH_C, screen, screen_rect, dt, pygame_events, clock
+    WH = _context.WH
+    WH_C = _context.WH_C
+    screen = _context.screen
+    screen_rect = _context.screen_rect
+    dt = _context.dt
+    pygame_events = _context.events
+    clock = _context.clock
+
+
+def get_context() -> GameContext:
+    """Возвращает глобальный контекст игры."""
+    return _context
 
 
 
@@ -98,7 +145,7 @@ def get_game() -> SpriteProGame:
     Returns:
         SpriteProGame: Единственный экземпляр SpriteProGame.
     """
-    return SpriteProGame.get()
+    return _context.game
 
 
 def register_sprite(sprite: pygame.sprite.Sprite) -> None:
@@ -107,7 +154,7 @@ def register_sprite(sprite: pygame.sprite.Sprite) -> None:
     Args:
         sprite (pygame.sprite.Sprite): Спрайт для регистрации.
     """
-    get_game().register_sprite(sprite)
+    _context.register_sprite(sprite)
 
 
 def unregister_sprite(sprite: pygame.sprite.Sprite) -> None:
@@ -116,7 +163,7 @@ def unregister_sprite(sprite: pygame.sprite.Sprite) -> None:
     Args:
         sprite (pygame.sprite.Sprite): Спрайт для отмены регистрации.
     """
-    get_game().unregister_sprite(sprite)
+    _context.unregister_sprite(sprite)
 
 
 def enable_sprite(sprite: pygame.sprite.Sprite) -> None:
@@ -127,7 +174,7 @@ def enable_sprite(sprite: pygame.sprite.Sprite) -> None:
     """
     if hasattr(sprite, "active"):
         sprite.active = True
-    get_game().enable_sprite(sprite)
+    _context.enable_sprite(sprite)
 
 
 def disable_sprite(sprite: pygame.sprite.Sprite) -> None:
@@ -138,7 +185,7 @@ def disable_sprite(sprite: pygame.sprite.Sprite) -> None:
     """
     if hasattr(sprite, "active"):
         sprite.active = False
-    get_game().disable_sprite(sprite)
+    _context.disable_sprite(sprite)
 
 
 def set_camera_position(x: float, y: float) -> None:
@@ -148,7 +195,7 @@ def set_camera_position(x: float, y: float) -> None:
         x (float): Позиция по оси X.
         y (float): Позиция по оси Y.
     """
-    get_game().set_camera((x, y))
+    _context.camera.set_position(x, y)
 
 
 def move_camera(dx: float, dy: float) -> None:
@@ -158,7 +205,7 @@ def move_camera(dx: float, dy: float) -> None:
         dx (float): Смещение по оси X.
         dy (float): Смещение по оси Y.
     """
-    get_game().move_camera(dx, dy)
+    _context.camera.move(dx, dy)
 
 
 def get_camera_position() -> Vector2:
@@ -167,7 +214,7 @@ def get_camera_position() -> Vector2:
     Returns:
         Vector2: Копия позиции камеры.
     """
-    return get_game().get_camera().copy()
+    return _context.camera.get_position()
 
 
 def set_camera_follow(
@@ -180,12 +227,12 @@ def set_camera_follow(
         target (pygame.sprite.Sprite | None): Целевой спрайт для следования или None для отмены.
         offset (Vector2 | tuple[float, float], optional): Смещение камеры относительно цели. По умолчанию (0.0, 0.0).
     """
-    get_game().set_camera_follow(target, offset)
+    _context.camera.follow(target, offset)
 
 
 def clear_camera_follow() -> None:
     """Отменяет следование камеры за целью."""
-    get_game().clear_camera_follow()
+    _context.camera.clear_follow()
 
 
 def register_update_object(obj) -> None:
@@ -196,7 +243,7 @@ def register_update_object(obj) -> None:
     Args:
         obj: Объект для обновления (TweenManager, Animation, Timer и т.д.).
     """
-    get_game().register_update_object(obj)
+    _context.register_update_object(obj)
 
 
 def unregister_update_object(obj) -> None:
@@ -205,7 +252,7 @@ def unregister_update_object(obj) -> None:
     Args:
         obj: Объект для отмены регистрации.
     """
-    get_game().unregister_update_object(obj)
+    _context.unregister_update_object(obj)
 
 
 def get_sprites_by_class(sprite_class: type, active_only: bool = True) -> List:
@@ -223,31 +270,7 @@ def get_sprites_by_class(sprite_class: type, active_only: bool = True) -> List:
         >>> fountain_particles = s.get_sprites_by_class(FountainParticle)
         >>> all_sprites = s.get_sprites_by_class(s.Sprite, active_only=False)
     """
-    return get_game().get_sprites_by_class(sprite_class, active_only)
-
-
-def _normalize_camera_keys(custom: dict | None) -> dict[str, tuple[int, ...]]:
-    mapping: dict[str, tuple[int, ...]] = {
-        direction: tuple(keys) for direction, keys in DEFAULT_CAMERA_KEYS.items()
-    }
-    if not custom:
-        return mapping
-    for direction, value in custom.items():
-        if direction not in mapping:
-            continue
-        if value is None:
-            mapping[direction] = ()
-            continue
-        if isinstance(value, int):
-            mapping[direction] = (value,)
-            continue
-        try:
-            filtered = tuple(key for key in value if isinstance(key, int))
-        except TypeError:
-            continue
-        else:
-            mapping[direction] = filtered
-    return mapping
+    return _context.get_sprites_by_class(sprite_class, active_only)
 
 
 def process_camera_input(
@@ -272,37 +295,14 @@ def process_camera_input(
     Returns:
         Vector2: Новая позиция камеры после обработки ввода.
     """
-    pressed = pygame.key.get_pressed()
-    mapping = _normalize_camera_keys(keys)
-    move = Vector2()
-
-    def handle(direction: str, offset: Vector2):
-        for key in mapping.get(direction, ()):
-            if pressed[key]:
-                move.x += offset.x
-                move.y += offset.y
-                break
-
-    handle("left", Vector2(-1, 0))
-    handle("right", Vector2(1, 0))
-    handle("up", Vector2(0, -1))
-    handle("down", Vector2(0, 1))
-
-    if move.length_squared() > 0:
-        move = move.normalize() * speed * dt
-        move_camera(move.x, move.y)
-
-    if mouse_drag:
-        buttons = pygame.mouse.get_pressed()
-        idx = max(0, min(mouse_button - 1, len(buttons) - 1))
-        if buttons[idx]:
-            rel = pygame.mouse.get_rel()
-            if rel != (0, 0):
-                move_camera(-rel[0], -rel[1])
-        else:
-            pygame.mouse.get_rel()
-
-    return get_camera_position()
+    return _context.camera.process_input(
+        _context.input,
+        _context.dt,
+        speed=speed,
+        keys=keys,
+        mouse_drag=mouse_drag,
+        mouse_button=mouse_button,
+    )
 
 
 def init():
@@ -311,12 +311,7 @@ def init():
     Инициализирует основной модуль pygame, модуль шрифтов и модуль звука.
     Вызывается автоматически при импорте модуля.
     """
-    try:
-        pygame.init()
-        pygame.font.init()
-        pygame.mixer.init()
-    except:
-        print("Error init")
+    _context.init_pygame()
 
 
 def get_screen(
@@ -334,18 +329,9 @@ def get_screen(
     Returns:
         pygame.Surface: Поверхность экрана игры.
     """
-    global events, screen, screen_rect, WH, WH_C
-    screen = pygame.display.set_mode(size)
-    screen_rect = screen.get_rect()
-    pygame.display.set_caption(title)
-    if icon:
-        pygame.display.set_icon(pygame.image.load(icon))
-
-    events = pygame.event.get()
-    WH = Vector2(size)
-    WH_C = Vector2(screen_rect.center)
-    SpriteProGame.get()
-    return screen
+    result = _context.get_screen(size=size, title=title, icon=icon)
+    _sync_globals()
+    return result
 
 
 def update(
@@ -365,36 +351,46 @@ def update(
         update_display (bool, optional): Обновлять ли экран. По умолчанию True. Оставлено для обратной совместимости.
         *update_objects: Объекты для автоматического обновления (TweenManager, Animation, Timer и т.д.).
     """
-    global events, dt
-    fps = fps if fps >= 0 else FPS
-    dt = clock.tick(fps) / 1000.0
-
-    if fill_color is not None:
-        screen.fill(fill_color)
-
-    events = pygame.event.get()
-    for event in events:
-        if event.type == pygame.QUIT:
-            sys.exit()
-
-    # Регистрируем объекты для обновления, если они переданы
-    game = get_game()
-    for obj in update_objects:
-        game.register_update_object(obj)
-    
-    # Передаем dt и WH_C в update для автоматического обновления объектов
-    game.update(screen, dt=dt, wh_c=WH_C)
-    
-    # Обновляем экран ПОСЛЕ того, как все спрайты отрисованы
-    if update_display:
-        pygame.display.update()
+    _context.update(fps, fill_color, update_display, *update_objects)
+    _sync_globals()
 
 
-events: List[pygame.event.Event] = None
-screen: pygame.Surface = None
-screen_rect: pygame.Rect = None
-clock = pygame.time.Clock()
-dt: float = 0
+def set_scene(scene: Scene | None) -> None:
+    """Устанавливает текущую сцену."""
+    _context.scene_manager.set_scene(scene, _context)
+
+
+def set_scene_by_name(name: str, recreate: bool = False) -> None:
+    """Устанавливает сцену по имени (можно пересоздать)."""
+    _context.scene_manager.set_scene_by_name(name, _context, recreate=recreate)
+
+
+def restart_scene(name: str | None = None) -> None:
+    """Перезапускает сцену по имени или текущую сцену."""
+    if name is None:
+        _context.scene_manager.restart_current(_context)
+    else:
+        _context.scene_manager.restart_by_name(name, _context)
+
+
+def register_scene_factory(name: str, factory) -> None:
+    """Регистрирует фабрику для пересоздания сцены."""
+    _context.scene_manager.register_scene_factory(name, factory)
+
+
+def load_texture(path: str):
+    """Загрузить текстуру через кэш ресурсов."""
+    return resource_cache.load_texture(path)
+
+
+def load_sound(name: str, path: str):
+    """Загрузить звук через кэш ресурсов и зарегистрировать в AudioManager."""
+    sound = resource_cache.load_sound(path)
+    if sound is None:
+        return audio_manager.load_sound(name, path)
+    audio_manager.sounds[name] = sound
+    return Sound(audio_manager, name)
+
 
 # Глобальный экземпляр AudioManager
 audio_manager = AudioManager()

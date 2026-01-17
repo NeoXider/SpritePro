@@ -16,7 +16,7 @@ from pygame.math import Vector2
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
 if str(parent_dir) not in sys.path:
-    sys.path.append(str(parent_dir))
+    sys.path.insert(0, str(parent_dir))
 
 import spritePro as s
 from spritePro.particles import (
@@ -92,7 +92,7 @@ def main():
     
     running = True
     while running:
-        for event in s.events:
+        for event in s.pygame_events:
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:

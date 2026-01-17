@@ -1,0 +1,19 @@
+{
+  "player_scores": [
+    1000,
+    2500,
+    3200,
+    4100
+  ],
+  "achievements": {
+    "__set__": [
+      "speed_demon",
+      "collector",
+      "first_win"
+    ]
+  },
+  "metadata": {
+    "created": 1768671907.9159162,
+    "platform": "desktop"
+  }
+}

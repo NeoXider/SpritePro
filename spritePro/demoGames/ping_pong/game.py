@@ -5,7 +5,7 @@ from pathlib import Path
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent.parent
 if str(parent_dir) not in sys.path:
-    sys.path.append(str(parent_dir))
+    sys.path.insert(0, str(parent_dir))
 
 #================================ start ===========================
 
@@ -14,8 +14,6 @@ import spritePro as s
 from game_objects.ball import Ball
 from game_objects.platform import Platform
 from event_bus import ball_out_screen
-
-
 
 class Game:
     def __init__(self):
@@ -34,7 +32,7 @@ class Game:
         self.ball.set_image(s.utils.round_corners(self.ball.image, 100))
         self.ball.random_push()
 
-        self.platform_1 = Platform("", (30, 100) , (50, s.WH_C.y), 5, up = pygame.K_w, down = pygame.K_s)
+        self.platform_1 = Platform("", (30, 100) , (50, s.WH_C.y), 5, up = pygame.K_w, down = pygame.K_s)        
         self.platform_1.color = (255, 150, 150)
         self.platform_1.set_image(s.utils.round_corners(self.platform_1.image, 50))
         

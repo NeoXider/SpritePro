@@ -156,6 +156,14 @@ while True:
 
 **Вот и всё!** У вас уже есть игра с управлением, отрисовкой и игровым циклом! 🎮
 
+### ⚡ Быстрый старт 2.0 (шаблон проекта)
+
+```bash
+python create_project.py MyGame
+```
+
+Создаст структуру `assets/`, `scenes/` и файл `main.py` с новым API.
+
 ---
 
 ## 💡 Примеры "Вау!" возможностей
@@ -253,6 +261,48 @@ score_text = s.TextSprite(
 ```
 
 **Всё работает автоматически** - наведение, клики, анимации!
+
+### ⌨️ Ввод и события (как в Unity)
+
+```python
+import pygame
+import spritePro as s
+
+s.get_screen((800, 600), "Input")
+
+def on_quit(event):
+    print("Quit")
+
+s.events.on("quit", on_quit)
+
+while True:
+    s.update()
+
+    if s.input.was_pressed(pygame.K_SPACE):
+        print("Space pressed")
+```
+
+Если нужен доступ к сырым событиям pygame — используйте `s.pygame_events`.
+
+### 🧩 Сцены без пересоздания и перезапуск
+
+```python
+import spritePro as s
+
+class MainScene(s.Scene):
+    def on_enter(self, context):
+        pass
+
+s.get_screen((800, 600), "Scenes")
+manager = s.get_context().scene_manager
+manager.add_scene("main", MainScene())
+s.register_scene_factory("main", MainScene)
+s.set_scene_by_name("main")
+
+# Перезапуск сцены
+s.restart_scene()         # текущая сцена
+s.restart_scene("main")   # по имени
+```
 
 ### 🎆 Частицы - это просто
 

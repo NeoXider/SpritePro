@@ -1,5 +1,5 @@
 import random
-from typing import Tuple, Optional, Union, Sequence, List
+from typing import Tuple, Optional, Union, Sequence, List, TYPE_CHECKING
 import pygame
 from pygame.math import Vector2
 import math
@@ -12,7 +12,13 @@ parent_dir = current_dir.parent
 sys.path.append(str(parent_dir))
 
 import spritePro
+from .resources import resource_cache
 from .constants import Anchor
+
+if TYPE_CHECKING:
+    from .scenes import Scene
+
+SpriteSceneInput = Union["Scene", str, None]
 
 
 VectorInput = Union[Vector2, Sequence[Union[int, float]]]
@@ -77,6 +83,7 @@ class Sprite(pygame.sprite.Sprite):
         speed: float = 0,
         sorting_order: int | None = None,
         anchor: str | Anchor = Anchor.CENTER,
+        scene: "SpriteSceneInput" = None,
     ):
         """Инициализирует новый экземпляр спрайта.
 
@@ -114,6 +121,7 @@ class Sprite(pygame.sprite.Sprite):
         self.state = "idle"
         self.states = {"idle", "moving", "hit", "attacking", "dead"}
         self.anchor_key = Anchor.CENTER
+        self.scene = scene
         # Drawing order (layer) similar to Unity's sortingOrder
         self.sorting_order: Optional[int] = int(sorting_order) if sorting_order is not None else None
         self.collision_targets = None
@@ -525,9 +533,10 @@ class Sprite(pygame.sprite.Sprite):
         if isinstance(image_source, pygame.Surface):
             img = image_source.copy()
         else:
-            try:
-                img = pygame.image.load(str(image_source)).convert_alpha()
-            except Exception:
+            img = None
+            if image_source:
+                img = resource_cache.load_texture(str(image_source))
+            if img is None:
                 if image_source:
                     print(
                         f"[Sprite] не удалось загрузить изображение для объекта {type(self).__name__} из '{image_source}'"
@@ -597,6 +606,20 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             screen (pygame.Surface, optional): Поверхность для отрисовки. Если None, используется глобальный экран.
         """
+        # Если спрайт привязан к сцене и она не активна, пропускаем update без выключения
+        if self.scene is not None:
+            try:
+                manager = spritePro.get_context().scene_manager
+                current_scene = manager.current_scene
+            except Exception:
+                current_scene = None
+                manager = None
+            if isinstance(self.scene, str):
+                target = manager.get_scene(self.scene) if manager is not None else None
+            else:
+                target = self.scene
+            if current_scene is not target:
+                return
         # Apply velocity
         if self.velocity.length() > 0:
             cx, cy = self.rect.center
@@ -721,6 +744,10 @@ class Sprite(pygame.sprite.Sprite):
             value (bool): Новое состояние активности.
         """
         self.active = value
+
+    def set_scene(self, scene: "SpriteSceneInput") -> None:
+        """Назначает сцену спрайту (Scene или имя сцены)."""
+        self.scene = scene
 
     def reset_sprite(self):
         """Сбрасывает спрайт в начальную позицию и состояние.

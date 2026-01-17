@@ -5,7 +5,7 @@ from pathlib import Path
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
+sys.path.insert(0, str(parent_dir))
 
 import spritePro
 from spritePro.components.animation import Animation
@@ -58,7 +58,7 @@ def run_animation_demo():
     while running:
         spritePro.update()
         
-        for event in spritePro.events:
+        for event in spritePro.pygame_events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False

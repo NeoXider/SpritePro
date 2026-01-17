@@ -1,0 +1,11 @@
+# Конфигурация игры
+resolution=1920x1080
+fullscreen=false
+vsync=true
+quality=high
+
+# Управление
+move_up=W
+move_down=S
+move_left=A
+move_right=D
