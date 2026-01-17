@@ -40,7 +40,13 @@ MAIN_SCENE_TEMPLATE = dedent(
 
     class MainScene(s.Scene):
         def on_enter(self, context):
-            self.player = s.Sprite(f"{IMAGES_DIR}/player.png", (64, 64), (400, 300), speed=5)
+            self.player = s.Sprite(
+                f"{IMAGES_DIR}/player.png",
+                (64, 64),
+                (400, 300),
+                speed=5,
+                scene=self,
+            )
 
         def on_exit(self):
             pass
