@@ -6,6 +6,30 @@ from textwrap import dedent
 
 MAIN_TEMPLATE = dedent(
     """\
+    import spritePro as s
+
+    import config
+    from scenes.main_scene import MainScene
+
+
+    def main():
+        s.get_screen(config.WINDOW_SIZE, "My SpritePro Game")
+        s.enable_debug(True)
+        s.set_debug_camera_input(3)
+        s.debug_log_info("Game started")
+        s.set_scene(MainScene())
+
+        while True:
+            s.update(config.FPS, fill_color=(20, 20, 30))
+
+
+    if __name__ == "__main__":
+        main()
+    """
+)
+
+MAIN_SCENE_TEMPLATE = dedent(
+    """\
     import pygame
     import spritePro as s
 
@@ -18,25 +42,20 @@ MAIN_TEMPLATE = dedent(
         def on_enter(self, context):
             self.player = s.Sprite(f"{IMAGES_DIR}/player.png", (64, 64), (400, 300), speed=5)
 
+        def on_exit(self):
+            pass
+
         def update(self, dt):
             self.player.handle_keyboard_input()
             if s.input.was_pressed(pygame.K_SPACE):
                 s.debug_log_info("Space pressed")
+    """
+)
 
-
-    def main():
-        s.get_screen((800, 600), "My SpritePro Game")
-        s.enable_debug(True)
-        s.set_debug_camera_input(3)
-        s.debug_log_info("Game started")
-        s.set_scene(MainScene())
-
-        while True:
-            s.update(fill_color=(20, 20, 30))
-
-
-    if __name__ == "__main__":
-        main()
+CONFIG_TEMPLATE = dedent(
+    """\
+    WINDOW_SIZE = (800, 600)
+    FPS = 60
     """
 )
 
@@ -49,16 +68,26 @@ def _project_root_from_target(target: Path) -> tuple[Path, Path]:
 
 def create_project(target: Path) -> Path:
     project_root, main_file = _project_root_from_target(target)
+    config_file = project_root / "config.py"
+    scenes_root = project_root / "scenes"
+    scenes_init = scenes_root / "__init__.py"
+    main_scene_file = scenes_root / "main_scene.py"
 
     project_root.mkdir(parents=True, exist_ok=True)
     assets_root = project_root / "assets"
     assets_root.mkdir(exist_ok=True)
     (assets_root / "audio").mkdir(exist_ok=True)
     (assets_root / "images").mkdir(exist_ok=True)
-    (project_root / "scenes").mkdir(exist_ok=True)
+    scenes_root.mkdir(exist_ok=True)
 
     if not main_file.exists():
         main_file.write_text(MAIN_TEMPLATE, encoding="utf-8")
+    if not config_file.exists():
+        config_file.write_text(CONFIG_TEMPLATE, encoding="utf-8")
+    if not scenes_init.exists():
+        scenes_init.write_text("", encoding="utf-8")
+    if not main_scene_file.exists():
+        main_scene_file.write_text(MAIN_SCENE_TEMPLATE, encoding="utf-8")
 
     return project_root
 
