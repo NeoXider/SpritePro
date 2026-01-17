@@ -20,7 +20,7 @@ def on_click():
 def on_canistra():
     global cacanistra_count
     cacanistra_count += 1
-    print(cacanistra_count)
+    s.debug_log_info(cacanistra_count)
     canistra_bar.set_image("", (200, cacanistra_count / canistra_max * 250))
     if cacanistra_count >= canistra_max + 1:
         canistra_bg.set_active(False)
@@ -53,7 +53,7 @@ t1.color = (0, 0, 255)
 
 t2 = s.Sprite("", (50, 50), (332, 295))
 t2.alpha = 50
-t2.color=(255, 0, 0)
+t2.color = (255, 0, 0)
 
 canistra = s.Sprite("", (50, 50), (-35, 580))
 canistra.set_alpha(50)
@@ -123,7 +123,7 @@ while True:
     #     if e.type == pygame.KEYDOWN:
     #         if e.key == pygame.K_SPACE:
     #             k_space = True
-    #             print("Пробел нажат")
+    #             s.debug_log_info("Пробел нажат")
 
     # --- 1. Обработка ввода ---
     player.handle_keyboard_input()

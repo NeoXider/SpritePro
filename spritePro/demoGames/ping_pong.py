@@ -7,7 +7,6 @@ parent_dir = current_dir.parent.parent
 sys.path.insert(0, str(parent_dir))
 
 from spritePro import Sprite
-from spritePro import Anchor
 from spritePro.utils.surface import round_corners
 import spritePro
 
@@ -106,7 +105,7 @@ def ball_fail():
 def add_score(right_player: bool):
     global rightScore, leftScore
     ball.reset()
-    print("reset")
+    spritePro.debug_log_info("reset")
 
     if right_player:
         rightScore += 1
@@ -250,11 +249,13 @@ size_text = 32
 pading_x_player = 100
 
 
-print(f"Создаем мяч с позицией: ({WIDTH // 2}, {HEIGHT // 2})")
+spritePro.debug_log_info(f"Создаем мяч с позицией: ({WIDTH // 2}, {HEIGHT // 2})")
 ball = Ball(path / "Sprites" / "ball.png", (50, 50), (WIDTH // 2, HEIGHT // 2), 2)
 ball.set_color((255, 255, 255))
 
-print(f"Создаем левую платформу с позицией: ({pading_x_player}, {HEIGHT // 2})")
+spritePro.debug_log_info(
+    f"Создаем левую платформу с позицией: ({pading_x_player}, {HEIGHT // 2})"
+)
 player_left = Sprite(
     path / "Sprites" / "platforma.png",
     (120, 50),
@@ -262,7 +263,7 @@ player_left = Sprite(
     6,
 )
 
-print(
+spritePro.debug_log_info(
     f"Создаем правую платформу с позицией: ({WIDTH - pading_x_player}, {HEIGHT // 2})"
 )
 player_right = Sprite(
@@ -275,9 +276,17 @@ player_right = Sprite(
 textWin = spritePro.TextSprite("", 72, (255, 255, 100), (WIDTH // 2, HEIGHT // 2))
 textShop = spritePro.TextSprite("Shop", 72, (255, 255, 100))
 # Текст счета левого игрока (слева вверху)
-score_text_l = spritePro.TextSprite(f"{leftScore}", 72, (255, 255, 255), (50, 50), anchor=spritePro.Anchor.TOP_LEFT)
+score_text_l = spritePro.TextSprite(
+    f"{leftScore}", 72, (255, 255, 255), (50, 50), anchor=spritePro.Anchor.TOP_LEFT
+)
 # Текст счета правого игрока (справа вверху)
-score_text_r = spritePro.TextSprite(f"{rightScore}", 72, (255, 255, 255), (WIDTH - 50, 50), anchor=spritePro.Anchor.TOP_RIGHT)
+score_text_r = spritePro.TextSprite(
+    f"{rightScore}",
+    72,
+    (255, 255, 255),
+    (WIDTH - 50, 50),
+    anchor=spritePro.Anchor.TOP_RIGHT,
+)
 
 btn_size = 210, 50
 
@@ -357,12 +366,12 @@ fps_text = spritePro.readySprites.create_fps_counter((spritePro.WH_C[0], 15))
 
 # Фиксируем камеру на (0, 0) для пинг-понга
 spritePro.set_camera_position(0, 0)
-print(f"Размер экрана: {WIDTH}x{HEIGHT}")
-print(f"Центр экрана: {spritePro.WH_C}")
-print(f"Позиция мяча: {ball.rect.center}")
-print(f"Позиция левой платформы: {player_left.rect.center}")
-print(f"Позиция правой платформы: {player_right.rect.center}")
-print(f"Камера: {spritePro.get_camera_position()}")
+spritePro.debug_log_info(f"Размер экрана: {WIDTH}x{HEIGHT}")
+spritePro.debug_log_info(f"Центр экрана: {spritePro.WH_C}")
+spritePro.debug_log_info(f"Позиция мяча: {ball.rect.center}")
+spritePro.debug_log_info(f"Позиция левой платформы: {player_left.rect.center}")
+spritePro.debug_log_info(f"Позиция правой платформы: {player_right.rect.center}")
+spritePro.debug_log_info(f"Камера: {spritePro.get_camera_position()}")
 
 # Устанавливаем начальную видимость спрайтов
 update_sprite_visibility()

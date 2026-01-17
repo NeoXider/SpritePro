@@ -90,7 +90,7 @@ class ToggleButton(Button):
         # Определяем якорь (если не передан, используем CENTER для обратной совместимости)
         if anchor is None:
             anchor = spritePro.Anchor.CENTER
-        
+
         # Initialize parent Button with current state
         super().__init__(
             sprite=sprite,
@@ -185,11 +185,11 @@ if __name__ == "__main__":
 
     def on_sound_toggle(is_on: bool):
         """Пример обработчика переключения звука."""
-        print(f"Sound is now {'ON' if is_on else 'OFF'}")
+        spritePro.debug_log_info(f"Sound is now {'ON' if is_on else 'OFF'}")
 
     def on_music_toggle(is_on: bool):
         """Пример обработчика переключения музыки."""
-        print(f"Music is now {'ON' if is_on else 'OFF'}")
+        spritePro.debug_log_info(f"Music is now {'ON' if is_on else 'OFF'}")
 
     pygame.init()
     screen = spritePro.get_screen((800, 600), "Toggle Button Demo")

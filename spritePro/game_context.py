@@ -39,7 +39,9 @@ class CameraController:
         """Возвращает текущую позицию камеры."""
         return self._game.get_camera().copy()
 
-    def follow(self, target, offset: Vector2 | Tuple[float, float] = (0.0, 0.0)) -> None:
+    def follow(
+        self, target, offset: Vector2 | Tuple[float, float] = (0.0, 0.0)
+    ) -> None:
         """Включает слежение камеры за целью."""
         self._game.set_camera_follow(target, offset)
 
@@ -134,6 +136,7 @@ class GameContext:
         self.WH_C: Vector2 = Vector2()
         self.clock = pygame.time.Clock()
         self.dt: float = 0.0
+        self._startup_log_done = False
         GameContext._instance = self
 
     @classmethod
@@ -150,7 +153,9 @@ class GameContext:
             pygame.font.init()
             pygame.mixer.init()
         except Exception:
-            print("Error init")
+            import spritePro
+
+            spritePro.debug_log_warning("Error init pygame")
 
     def get_screen(
         self,
@@ -167,6 +172,13 @@ class GameContext:
 
         self.WH = Vector2(size)
         self.WH_C = Vector2(self.screen_rect.center)
+        if not self._startup_log_done:
+            self._startup_log_done = True
+            self.game.debug_log_custom(
+                prefix="[info]",
+                text="Привет! SpritePro создан neoxider — https://github.com/NeoXider/SpritePro",
+                color=(80, 220, 120),
+            )
         return self.screen
 
     def update(
@@ -187,7 +199,11 @@ class GameContext:
         if fill_color is not None:
             self.screen.fill(fill_color)
 
-        self.game.draw_debug_grid(self.screen)
+        if self.game.debug_enabled:
+            if not self.game.debug_grid_on_top:
+                self.game.draw_debug_grid(self.screen)
+            if not self.game.debug_hud_on_top:
+                self.game.draw_debug_hud(self.screen)
 
         self.events = pygame.event.get()
         self.input.update(self.events)
@@ -199,16 +215,20 @@ class GameContext:
 
         for event in self.events:
             if event.type == pygame.QUIT:
-                self.event_bus.emit("quit", event=event)
+                self.event_bus.send("quit", event=event)
                 raise SystemExit
             elif event.type == pygame.KEYDOWN:
-                self.event_bus.emit("key_down", key=event.key, event=event)
+                self.event_bus.send("key_down", key=event.key, event=event)
             elif event.type == pygame.KEYUP:
-                self.event_bus.emit("key_up", key=event.key, event=event)
+                self.event_bus.send("key_up", key=event.key, event=event)
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                self.event_bus.emit("mouse_down", button=event.button, pos=event.pos, event=event)
+                self.event_bus.send(
+                    "mouse_down", button=event.button, pos=event.pos, event=event
+                )
             elif event.type == pygame.MOUSEBUTTONUP:
-                self.event_bus.emit("mouse_up", button=event.button, pos=event.pos, event=event)
+                self.event_bus.send(
+                    "mouse_up", button=event.button, pos=event.pos, event=event
+                )
 
         for obj in update_objects:
             self.game.register_update_object(obj)
@@ -216,7 +236,12 @@ class GameContext:
         self.scene_manager.update(self.dt)
         self.game.update(self.screen, dt=self.dt, wh_c=self.WH_C)
         self.scene_manager.draw(self.screen)
-        self.game.draw_debug_overlay(self.screen, self.WH_C, dt=self.dt)
+        if self.game.debug_enabled:
+            if self.game.debug_grid_on_top:
+                self.game.draw_debug_grid(self.screen)
+            if self.game.debug_hud_on_top:
+                self.game.draw_debug_hud(self.screen)
+            self.game.draw_debug_overlay(self.screen, self.WH_C, dt=self.dt)
 
         if update_display:
             pygame.display.update()

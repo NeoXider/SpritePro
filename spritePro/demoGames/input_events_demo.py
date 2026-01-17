@@ -13,17 +13,17 @@ import spritePro as s  # noqa: E402
 
 def on_key_down(key, event):
     if key == pygame.K_ESCAPE:
-        print("ESC pressed (event)")
+        s.debug_log_info("ESC pressed (event)")
 
 
 def on_quit(event):
-    print("Quit requested")
+    s.debug_log_info("Quit requested")
 
 
 def main():
     s.get_screen((800, 600), "Input + EventBus Demo")
-    s.events.on("key_down", on_key_down)
-    s.events.on("quit", on_quit)
+    s.events.connect("key_down", on_key_down)
+    s.events.connect("quit", on_quit)
 
     player = s.Sprite("", (60, 60), (400, 300), speed=260)
     player.set_color((120, 200, 255))
@@ -51,7 +51,13 @@ def main():
         if s.input.was_released(pygame.K_SPACE):
             player.set_scale(1.0)
         if s.input.was_pressed(pygame.K_r):
-            player.set_color((random.randint(80, 255), random.randint(80, 255), random.randint(80, 255)))
+            player.set_color(
+                (
+                    random.randint(80, 255),
+                    random.randint(80, 255),
+                    random.randint(80, 255),
+                )
+            )
         if s.input.was_pressed(pygame.K_q):
             start_angle = player.angle
             target_angle = start_angle + 90

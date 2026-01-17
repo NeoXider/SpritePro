@@ -113,7 +113,9 @@ class DraggableSprite(Sprite):
             return
         mouse_world = self._get_mouse_world_pos()
         if not self.dragging:
-            if spritePro.input.was_mouse_pressed(self.drag_button) and self._is_mouse_over(mouse_world):
+            if spritePro.input.was_mouse_pressed(
+                self.drag_button
+            ) and self._is_mouse_over(mouse_world):
                 self._start_drag(mouse_world)
             return
 
@@ -136,7 +138,12 @@ class DraggableSprite(Sprite):
         self.dragging = True
         self.drag_origin = self.get_world_position().copy()
         self._drag_offset = self.get_world_position() - mouse_world
-        self._call_drag_callback(self._on_drag_start, self.on_drag_start, self.get_world_position(), mouse_world)
+        self._call_drag_callback(
+            self._on_drag_start,
+            self.on_drag_start,
+            self.get_world_position(),
+            mouse_world,
+        )
 
     def _end_drag(self, mouse_world: Vector2) -> None:
         """Завершает перетаскивание и обрабатывает результат."""
@@ -167,7 +174,11 @@ class DraggableSprite(Sprite):
 
     def _get_mouse_world_pos(self) -> Vector2:
         """Возвращает позицию мыши в мировых координатах."""
-        mouse_pos = spritePro.input.mouse_pos if hasattr(spritePro, "input") else pygame.mouse.get_pos()
+        mouse_pos = (
+            spritePro.input.mouse_pos
+            if hasattr(spritePro, "input")
+            else pygame.mouse.get_pos()
+        )
         pos = Vector2(mouse_pos)
         if not getattr(self, "screen_space", False):
             camera = getattr(spritePro.get_game(), "camera", Vector2())

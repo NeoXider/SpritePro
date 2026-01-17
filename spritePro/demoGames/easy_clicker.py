@@ -42,7 +42,7 @@ class Btn_skin(s.Button):
         self.text_sprite.text = "use" if self.price == 0 else f"buy: {self.price}"
 
     def buy(self):
-        print("Покупка")
+        s.debug_log_info("Покупка")
         if money.spend(self.price):
             global score, skin_id
 
@@ -68,7 +68,6 @@ def onclick():
 def use_skin(sprite):
     player.set_image(sprite)
     player.set_image(s.utils.round_corners(player.image, 5000))
-
 
 
 def go_game():
@@ -101,7 +100,7 @@ game_state = GAME
 
 sprite_skins = [
     "spritePro\\demoGames\\Sprites\\bg1.jpg",
-    #"spritePro\\demoGames\\Sprites\\c.png",
+    # "spritePro\\demoGames\\Sprites\\c.png",
     "spritePro\\demoGames\\Sprites\\door.png",
     "spritePro\\demoGames\\Sprites\\platforma.png",
     "spritePro\\demoGames\\Sprites\\fog.png",
@@ -128,7 +127,7 @@ emitter = s.ParticleEmitter(
         gravity=pygame.math.Vector2(0, 0),
         fade_speed=500,
         angular_velocity_range=(-1000, 1000),
-        spawn_circle_radius=100
+        spawn_circle_radius=100,
     )
 )
 
@@ -147,10 +146,17 @@ btn_go_back.set_image(s.utils.round_corners(btn_go_back.image, 50))
 
 btn_go_upgrade = s.Button("", text="Upgrade", text_size=56, on_click=go_upgrade)
 btn_go_upgrade.set_position((s.WH_C.x, s.WH.y - SPACE), s.Anchor.MID_BOTTOM)
-#btn_upgrade.set_position((s.WH.x - SPACE, 0 +SPACE), s.Anchor.TOP_RIGHT)
+# btn_upgrade.set_position((s.WH.x - SPACE, 0 +SPACE), s.Anchor.TOP_RIGHT)
 btn_go_upgrade.set_image(s.utils.round_corners(btn_go_upgrade.image, 50))
 
-btn_upgrade = s.Button("", (550, 150), s.WH_C, text="buy: 20, upgrade 1 > 2", text_size=56, on_click=go_upgrade)
+btn_upgrade = s.Button(
+    "",
+    (550, 150),
+    s.WH_C,
+    text="buy: 20, upgrade 1 > 2",
+    text_size=56,
+    on_click=go_upgrade,
+)
 btn_upgrade.set_image(s.utils.round_corners(btn_upgrade.image, 50))
 
 x_start, y_start = 500, 300
@@ -179,7 +185,7 @@ while True:
     emitter.config.amount = click
 
     btn_go_back.set_active(game_state != GAME)
-    text.set_color(s.utils.ColorEffects.strobe(15, (255, 0, 0), (150, 0, 0),0.9))
+    text.set_color(s.utils.ColorEffects.strobe(15, (255, 0, 0), (150, 0, 0), 0.9))
 
     for sprite in sprites_game:
         sprite.set_active(game_state == GAME)
@@ -191,7 +197,7 @@ while True:
         spite.set_active(game_state == UPGRADE)
 
     if game_state == GAME:
-        bg.set_color((100,100,100))
+        bg.set_color((100, 100, 100))
     elif game_state == SHOP:
         bg.set_color((255, 255, 255))
     elif game_state == UPGRADE:

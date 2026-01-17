@@ -1,15 +1,6 @@
-import random
 from typing import Tuple, Optional, Union, Sequence, List, TYPE_CHECKING
 import pygame
 from pygame.math import Vector2
-import math
-
-import sys
-from pathlib import Path
-
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent
-sys.path.append(str(parent_dir))
 
 import spritePro
 from .resources import resource_cache
@@ -24,7 +15,9 @@ SpriteSceneInput = Union["Scene", str, None]
 VectorInput = Union[Vector2, Sequence[Union[int, float]]]
 
 
-def _coerce_vector2(value: Optional[VectorInput], default: Tuple[float, float]) -> Vector2:
+def _coerce_vector2(
+    value: Optional[VectorInput], default: Tuple[float, float]
+) -> Vector2:
     """Приводит входное значение к Vector2 с запасным значением."""
     if value is None:
         value = default
@@ -125,7 +118,9 @@ class Sprite(pygame.sprite.Sprite):
         self.anchor_key = Anchor.CENTER
         self.scene = scene
         # Drawing order (layer) similar to Unity's sortingOrder
-        self.sorting_order: Optional[int] = int(sorting_order) if sorting_order is not None else None
+        self.sorting_order: Optional[int] = (
+            int(sorting_order) if sorting_order is not None else None
+        )
         self.collision_targets = None
         self._transformed_image = None
         self.mask = None
@@ -145,7 +140,7 @@ class Sprite(pygame.sprite.Sprite):
     @property
     def scale(self) -> float:
         """Масштаб спрайта.
-        
+
         Returns:
             float: Текущий масштаб спрайта (1.0 = оригинальный размер).
         """
@@ -154,7 +149,7 @@ class Sprite(pygame.sprite.Sprite):
     @scale.setter
     def scale(self, value: float):
         """Устанавливает масштаб спрайта.
-        
+
         Args:
             value (float): Новый масштаб (1.0 = оригинальный размер).
         """
@@ -164,7 +159,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def get_scale(self) -> float:
         """Получает текущий масштаб спрайта.
-        
+
         Returns:
             float: Текущий масштаб спрайта.
         """
@@ -172,7 +167,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_scale(self, value: float):
         """Устанавливает масштаб спрайта.
-        
+
         Args:
             value (float): Новый масштаб спрайта.
         """
@@ -181,7 +176,7 @@ class Sprite(pygame.sprite.Sprite):
     @property
     def angle(self) -> float:
         """Угол поворота спрайта в градусах.
-        
+
         Returns:
             float: Текущий угол поворота в градусах.
         """
@@ -190,7 +185,7 @@ class Sprite(pygame.sprite.Sprite):
     @angle.setter
     def angle(self, value: float):
         """Устанавливает угол поворота спрайта.
-        
+
         Args:
             value (float): Новый угол поворота в градусах.
         """
@@ -200,7 +195,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def get_angle(self) -> float:
         """Получает текущий угол поворота спрайта.
-        
+
         Returns:
             float: Текущий угол поворота в градусах.
         """
@@ -208,7 +203,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_angle(self, value: float):
         """Устанавливает угол поворота спрайта.
-        
+
         Args:
             value (float): Новый угол поворота в градусах.
         """
@@ -216,7 +211,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def rotate_to(self, value: float):
         """Поворачивает спрайт к указанному углу.
-        
+
         Args:
             value (float): Целевой угол поворота в градусах.
         """
@@ -225,7 +220,7 @@ class Sprite(pygame.sprite.Sprite):
     @property
     def alpha(self) -> int:
         """Прозрачность спрайта.
-        
+
         Returns:
             int: Текущая прозрачность (0-255, где 255 = непрозрачный).
         """
@@ -234,7 +229,7 @@ class Sprite(pygame.sprite.Sprite):
     @alpha.setter
     def alpha(self, value: int):
         """Устанавливает прозрачность спрайта.
-        
+
         Args:
             value (int): Новая прозрачность (0-255, где 255 = непрозрачный).
         """
@@ -245,7 +240,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def get_alpha(self) -> int:
         """Получает текущую прозрачность спрайта.
-        
+
         Returns:
             int: Текущая прозрачность (0-255).
         """
@@ -253,7 +248,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_alpha(self, value: int):
         """Устанавливает прозрачность спрайта.
-        
+
         Args:
             value (int): Новая прозрачность (0-255).
         """
@@ -262,7 +257,7 @@ class Sprite(pygame.sprite.Sprite):
     @property
     def color(self) -> Optional[Tuple[int, int, int]]:
         """Цветовой оттенок спрайта.
-        
+
         Returns:
             Optional[Tuple[int, int, int]]: Текущий цветовой оттенок в RGB или None.
         """
@@ -271,7 +266,7 @@ class Sprite(pygame.sprite.Sprite):
     @color.setter
     def color(self, value: Optional[Tuple[int, int, int]]):
         """Устанавливает цветовой оттенок спрайта.
-        
+
         Args:
             value (Optional[Tuple[int, int, int]]): Новый цветовой оттенок в RGB или None.
         """
@@ -281,7 +276,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_color(self, value: Tuple[int, int, int]):
         """Устанавливает цвет спрайта (для обратной совместимости).
-        
+
         Args:
             value (Tuple[int, int, int]): Новый цвет в формате RGB.
         """
@@ -289,9 +284,9 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_sorting_order(self, order: int) -> None:
         """Устанавливает порядок отрисовки (слой), аналогично Unity's sortingOrder.
-        
+
         Меньшие значения отрисовываются сзади, большие - спереди.
-        
+
         Args:
             order (int): Новый порядок отрисовки.
         """
@@ -303,19 +298,49 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_screen_space(self, locked: bool = True) -> None:
         """Фиксирует спрайт к экрану (без смещения камерой).
-        
+
         Args:
             locked (bool, optional): Если True, спрайт не будет смещаться камерой. По умолчанию True.
         """
         self.screen_space = locked
 
-    def set_parent(self, parent: Optional["Sprite"], keep_world_position: bool = True) -> None:
+    @property
+    def anchor(self) -> Anchor:
+        """Текущий якорь позиционирования."""
+        if isinstance(self.anchor_key, Anchor):
+            return self.anchor_key
+        try:
+            return Anchor(str(self.anchor_key))
+        except ValueError:
+            return Anchor.CENTER
+
+    @anchor.setter
+    def anchor(self, value: str | Anchor) -> None:
+        """Изменяет якорь без изменения координат."""
+        current_center = self.rect.center if hasattr(self, "rect") else self.start_pos
+        if isinstance(value, Anchor):
+            self.anchor_key = value
+        elif isinstance(value, str):
+            try:
+                self.anchor_key = Anchor(value.lower())
+            except ValueError:
+                self.anchor_key = Anchor.CENTER
+        else:
+            self.anchor_key = Anchor.CENTER
+        if hasattr(self, "rect"):
+            self.rect.center = current_center
+            self._set_world_center(Vector2(self.rect.center))
+            self._sync_local_offset()
+
+    def set_parent(
+        self, parent: Optional["Sprite"], keep_world_position: bool = True
+    ) -> None:
         """Устанавливает родительский спрайт для создания иерархии.
-        
+
         Args:
             parent (Optional[Sprite]): Родительский спрайт или None для удаления родителя.
             keep_world_position (bool, optional): Сохранять ли мировую позицию при установке родителя. По умолчанию True.
-        
+
         Raises:
             ValueError: Если спрайт пытается стать родителем самому себе.
         """
@@ -347,18 +372,28 @@ class Sprite(pygame.sprite.Sprite):
                 self._set_world_center(self.get_world_position())
             self.local_offset = Vector2()
 
-    def set_position(self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER) -> None:
+    def set_position(
+        self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER
+    ) -> None:
         """Устанавливает позицию спрайта с заданным якорем и обновляет стартовые координаты.
-        
+
         Args:
             position (VectorInput): Новая позиция спрайта (x, y).
             anchor (str | Anchor, optional): Якорь для установки позиции. По умолчанию Anchor.CENTER.
-        
+
         Raises:
             ValueError: Если указан неподдерживаемый якорь.
         """
-        self.anchor_key = anchor.lower() if isinstance(anchor, str) else anchor
-        anchor_key = self.anchor_key
+        if isinstance(anchor, Anchor):
+            self.anchor_key = anchor
+        elif isinstance(anchor, str):
+            try:
+                self.anchor_key = Anchor(anchor.lower())
+            except ValueError:
+                self.anchor_key = Anchor.CENTER
+        else:
+            self.anchor_key = Anchor.CENTER
+        anchor_key = str(self.anchor_key)
         anchors = Anchor.MAP
         if anchor_key not in anchors:
             raise ValueError(f"Unsupported anchor {anchor!r}")
@@ -368,11 +403,13 @@ class Sprite(pygame.sprite.Sprite):
         self.rect = rect
         self._set_world_center(Vector2(self.rect.center))
         if self.parent:
-            self.local_offset = self.get_world_position() - self.parent.get_world_position()
+            self.local_offset = (
+                self.get_world_position() - self.parent.get_world_position()
+            )
 
     def get_position(self) -> Tuple[int, int]:
         """Получает текущую позицию спрайта (координаты центра).
-        
+
         Returns:
             Tuple[int, int]: Координаты центра спрайта (x, y).
         """
@@ -381,7 +418,7 @@ class Sprite(pygame.sprite.Sprite):
     @property
     def position(self) -> Tuple[int, int]:
         """Центральная позиция спрайта.
-        
+
         Returns:
             Tuple[int, int]: Координаты центра спрайта (x, y).
         """
@@ -390,7 +427,7 @@ class Sprite(pygame.sprite.Sprite):
     @position.setter
     def position(self, value: VectorInput):
         """Устанавливает центральную позицию спрайта.
-        
+
         Args:
             value (VectorInput): Новые координаты центра (x, y).
         """
@@ -400,7 +437,7 @@ class Sprite(pygame.sprite.Sprite):
     @property
     def x(self) -> int:
         """X координата центра спрайта.
-        
+
         Returns:
             int: X координата центра спрайта.
         """
@@ -409,19 +446,21 @@ class Sprite(pygame.sprite.Sprite):
     @x.setter
     def x(self, value: float):
         """Устанавливает X координату центра спрайта.
-        
+
         Args:
             value (float): Новая X координата центра.
         """
         self.rect.centerx = int(value)
         self._set_world_center(Vector2(self.rect.center))
         if self.parent:
-            self.local_offset = self.get_world_position() - self.parent.get_world_position()
+            self.local_offset = (
+                self.get_world_position() - self.parent.get_world_position()
+            )
 
     @property
     def y(self) -> int:
         """Y координата центра спрайта.
-        
+
         Returns:
             int: Y координата центра спрайта.
         """
@@ -430,19 +469,21 @@ class Sprite(pygame.sprite.Sprite):
     @y.setter
     def y(self, value: float):
         """Устанавливает Y координату центра спрайта.
-        
+
         Args:
             value (float): Новая Y координата центра.
         """
         self.rect.centery = int(value)
         self._set_world_center(Vector2(self.rect.center))
         if self.parent:
-            self.local_offset = self.get_world_position() - self.parent.get_world_position()
+            self.local_offset = (
+                self.get_world_position() - self.parent.get_world_position()
+            )
 
     @property
     def width(self) -> int:
         """Ширина спрайта.
-        
+
         Returns:
             int: Текущая ширина спрайта в пикселях.
         """
@@ -451,7 +492,7 @@ class Sprite(pygame.sprite.Sprite):
     @width.setter
     def width(self, value: float):
         """Устанавливает ширину спрайта.
-        
+
         Args:
             value (float): Новая ширина спрайта в пикселях.
         """
@@ -461,7 +502,7 @@ class Sprite(pygame.sprite.Sprite):
     @property
     def height(self) -> int:
         """Высота спрайта.
-        
+
         Returns:
             int: Текущая высота спрайта в пикселях.
         """
@@ -470,7 +511,7 @@ class Sprite(pygame.sprite.Sprite):
     @height.setter
     def height(self, value: float):
         """Устанавливает высоту спрайта.
-        
+
         Args:
             value (float): Новая высота спрайта в пикселях.
         """
@@ -479,7 +520,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def get_size(self) -> Tuple[int, int]:
         """Получает текущий размер спрайта.
-        
+
         Returns:
             Tuple[int, int]: Размер спрайта (ширина, высота).
         """
@@ -487,7 +528,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def get_world_position(self) -> Vector2:
         """Получает мировую позицию спрайта (с учетом камеры).
-        
+
         Returns:
             Vector2: Мировая позиция центра спрайта.
         """
@@ -501,6 +542,8 @@ class Sprite(pygame.sprite.Sprite):
 
     def _apply_parent_transform(self) -> None:
         """Применяет трансформацию родителя к дочернему спрайту."""
+        if getattr(self, "follow_parent", True) is False:
+            return
         if not self.parent:
             return
         desired = self.parent.get_world_position() + self.local_offset
@@ -509,15 +552,15 @@ class Sprite(pygame.sprite.Sprite):
     def _sync_local_offset(self) -> None:
         """Синхронизирует локальное смещение относительно родителя."""
         if self.parent:
-            self.local_offset = self.get_world_position() - self.parent.get_world_position()
+            self.local_offset = (
+                self.get_world_position() - self.parent.get_world_position()
+            )
 
     def _update_children_world_positions(self) -> None:
         """Обновляет мировые позиции всех дочерних спрайтов."""
         for child in self.children:
             child._apply_parent_transform()
             child._update_children_world_positions()
-
-
 
     def set_image(
         self,
@@ -529,7 +572,7 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             image_source (str | Path | pygame.Surface): Путь к файлу изображения или объект Surface.
             size (Optional[VectorInput]): Новые размеры (ширина, высота) или None для сохранения оригинального размера.
-        
+
         Note:
             Если файл не найден, создается прозрачная поверхность.
             Заглушка окрашивается только если у спрайта уже установлен цвет.
@@ -544,10 +587,12 @@ class Sprite(pygame.sprite.Sprite):
                 img = resource_cache.load_texture(str(image_source))
             if img is None:
                 if image_source:
-                    print(
+                    spritePro.debug_log_warning(
                         f"[Sprite] не удалось загрузить изображение для объекта {type(self).__name__} из '{image_source}'"
                     )
-                fallback_size = _vector2_to_int_tuple(_coerce_vector2(size, tuple(self.size)))
+                fallback_size = _vector2_to_int_tuple(
+                    _coerce_vector2(size, tuple(self.size))
+                )
                 img = pygame.Surface(fallback_size, pygame.SRCALPHA)
                 if self.color is not None:
                     img.fill(self.color)
@@ -564,19 +609,19 @@ class Sprite(pygame.sprite.Sprite):
         self.original_image = img
         self._transformed_image = self.original_image.copy()
         self.image = self.original_image.copy()
-        
+
         existing_rect = getattr(self, "rect", None)
         if existing_rect is not None:
             # Получаем имя атрибута для текущего якоря (например, 'topleft')
-            anchor_attr = Anchor.MAP.get(self.anchor_key, 'center')
+            anchor_attr = Anchor.MAP.get(str(self.anchor_key), "center")
             # Сохраняем текущую позицию якоря
             anchor_pos = getattr(existing_rect, anchor_attr)
         else:
-            anchor_attr = 'center'
+            anchor_attr = "center"
             anchor_pos = getattr(self, "start_pos", (0, 0))
 
         self.rect = self.image.get_rect()
-        
+
         # Устанавливаем позицию нового rect по сохраненному якорю
         setattr(self.rect, anchor_attr, anchor_pos)
 
@@ -585,9 +630,97 @@ class Sprite(pygame.sprite.Sprite):
         self._color_dirty = True
         self._mask_dirty = True
 
+    def set_rect_shape(
+        self,
+        size: Optional[VectorInput] = None,
+        color: Tuple[int, int, int] = (255, 255, 255),
+        width: int = 0,
+        border_radius: int = 0,
+    ) -> None:
+        """Создает прямоугольник через pygame.draw и назначает его как изображение."""
+        target_size = _coerce_vector2(size, tuple(self.size))
+        surface = pygame.Surface(_vector2_to_int_tuple(target_size), pygame.SRCALPHA)
+        pygame.draw.rect(
+            surface, color, surface.get_rect(), width=width, border_radius=border_radius
+        )
+        self.set_image(surface)
+
+    def set_circle_shape(
+        self,
+        radius: Optional[int] = None,
+        color: Tuple[int, int, int] = (255, 255, 255),
+        width: int = 0,
+    ) -> None:
+        """Создает круг через pygame.draw и назначает его как изображение."""
+        if radius is None:
+            radius = int(min(self.size) * 0.5)
+        radius = max(1, int(radius))
+        diameter = radius * 2
+        surface = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
+        pygame.draw.circle(surface, color, (radius, radius), radius, width=width)
+        self.set_image(surface)
+
+    def set_ellipse_shape(
+        self,
+        size: Optional[VectorInput] = None,
+        color: Tuple[int, int, int] = (255, 255, 255),
+        width: int = 0,
+    ) -> None:
+        """Создает эллипс через pygame.draw и назначает его как изображение."""
+        target_size = _coerce_vector2(size, tuple(self.size))
+        surface = pygame.Surface(_vector2_to_int_tuple(target_size), pygame.SRCALPHA)
+        pygame.draw.ellipse(surface, color, surface.get_rect(), width=width)
+        self.set_image(surface)
+
+    def set_polygon_shape(
+        self,
+        points: Sequence[Tuple[float, float]],
+        color: Tuple[int, int, int] = (255, 255, 255),
+        width: int = 0,
+        padding: int = 2,
+    ) -> None:
+        """Создает многоугольник по списку точек и назначает его как изображение."""
+        if not points:
+            return
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        width_px = int(max_x - min_x) + padding * 2
+        height_px = int(max_y - min_y) + padding * 2
+        surface = pygame.Surface((max(1, width_px), max(1, height_px)), pygame.SRCALPHA)
+        shifted = [(p[0] - min_x + padding, p[1] - min_y + padding) for p in points]
+        pygame.draw.polygon(surface, color, shifted, width=width)
+        self.set_image(surface)
+
+    def set_polyline(
+        self,
+        points: Sequence[Tuple[float, float]],
+        color: Tuple[int, int, int] = (255, 255, 255),
+        width: int = 2,
+        closed: bool = False,
+        padding: int = 2,
+        world_points: bool = False,
+    ) -> None:
+        """Создает линию/полилинию по списку точек и назначает её как изображение."""
+        if len(points) < 2:
+            return
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        width_px = int(max_x - min_x) + padding * 2
+        height_px = int(max_y - min_y) + padding * 2
+        surface = pygame.Surface((max(1, width_px), max(1, height_px)), pygame.SRCALPHA)
+        shifted = [(p[0] - min_x + padding, p[1] - min_y + padding) for p in points]
+        pygame.draw.lines(surface, color, closed, shifted, width=width)
+        self.set_image(surface)
+        if world_points:
+            self.position = ((min_x + max_x) * 0.5, (min_y + max_y) * 0.5)
+
     def kill(self) -> None:
         """Удаляет спрайт из игры и освобождает все связанные ресурсы.
-        
+
         Отменяет регистрацию спрайта, удаляет все дочерние спрайты и вызывает
         родительский метод kill().
         """
@@ -600,7 +733,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_native_size(self):
         """Сбрасывает спрайт к оригинальным размерам изображения.
-        
+
         Перезагружает изображение с оригинальной шириной и высотой.
         """
         # перезагружаем изображение без параметра size → ставит оригинальный размер
@@ -672,9 +805,9 @@ class Sprite(pygame.sprite.Sprite):
                 img = pygame.transform.scale(img, new_size)
             if self._angle != 0:
                 img = pygame.transform.rotate(img, self._angle)
-            
-            self._transformed_image = img # cache the transformed image
-            
+
+            self._transformed_image = img  # cache the transformed image
+
             center = self.rect.center
             self.rect = self._transformed_image.get_rect()
             self.rect.center = center
@@ -690,12 +823,12 @@ class Sprite(pygame.sprite.Sprite):
                 self.image.set_alpha(self._alpha)
             if self._color != (255, 255, 255):
                 self.image.fill(self._color, special_flags=pygame.BLEND_RGBA_MULT)
-            
+
             self._color_dirty = False
 
     def set_flip(self, flip_h: bool, flip_v: bool):
         """Устанавливает состояние горизонтального и вертикального отражения спрайта.
-        
+
         Args:
             flip_h (bool): Отразить спрайт по горизонтали.
             flip_v (bool): Отразить спрайт по вертикали.
@@ -708,7 +841,7 @@ class Sprite(pygame.sprite.Sprite):
     @property
     def active(self) -> bool:
         """Активность спрайта.
-        
+
         Returns:
             bool: True, если спрайт активен и должен отрисовываться.
         """
@@ -717,7 +850,7 @@ class Sprite(pygame.sprite.Sprite):
     @active.setter
     def active(self, value: bool):
         """Включает или выключает спрайт и синхронизирует его с глобальной группой.
-        
+
         Args:
             value (bool): Новое состояние активности.
         """
@@ -737,7 +870,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def get_active(self) -> bool:
         """Получает текущее состояние активности спрайта.
-        
+
         Returns:
             bool: True, если спрайт активен.
         """
@@ -745,7 +878,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_active(self, value: bool):
         """Устанавливает состояние активности спрайта.
-        
+
         Args:
             value (bool): Новое состояние активности.
         """
@@ -757,7 +890,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def reset_sprite(self):
         """Сбрасывает спрайт в начальную позицию и состояние.
-        
+
         Восстанавливает начальную позицию, обнуляет скорость и устанавливает
         состояние в "idle".
         """
@@ -776,7 +909,10 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.center = (int(cx + dx * self.speed), int(cy + dy * self.speed))
 
     def move_towards(
-        self, target_pos: Tuple[float, float], speed: Optional[float] = None, use_dt: bool = False
+        self,
+        target_pos: Tuple[float, float],
+        speed: Optional[float] = None,
+        use_dt: bool = False,
     ):
         """Перемещает спрайт к указанной целевой позиции.
 
@@ -811,9 +947,11 @@ class Sprite(pygame.sprite.Sprite):
         direction.normalize_ip()
         self.velocity = direction * step_distance
         self.state = "moving"
-        
+
         # Auto-flip based on movement direction
-        if self.auto_flip and abs(direction.x) > 0.1:  # Only flip if significant horizontal movement
+        if (
+            self.auto_flip and abs(direction.x) > 0.1
+        ):  # Only flip if significant horizontal movement
             if direction.x < 0:
                 self.set_flip(True, self.flipped_v)
             else:
@@ -831,7 +969,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def get_velocity(self) -> Tuple[float, float]:
         """Получает текущую скорость спрайта.
-        
+
         Returns:
             Tuple[float, float]: Скорость спрайта (vx, vy).
         """
@@ -947,10 +1085,6 @@ class Sprite(pygame.sprite.Sprite):
             self.angle += angle_change
             self._transform_dirty = True
 
-
-
-
-
     def fade_by(self, amount: int, min_alpha: int = 0, max_alpha: int = 255):
         """Изменяет прозрачность спрайта на относительное значение.
 
@@ -987,7 +1121,7 @@ class Sprite(pygame.sprite.Sprite):
 
         Returns:
             float: Расстояние между центром спрайта и целью.
-            
+
         Raises:
             TypeError: Если цель имеет неподдерживаемый тип.
         """
@@ -999,7 +1133,9 @@ class Sprite(pygame.sprite.Sprite):
         elif isinstance(target, (list, tuple)):
             target_pos = Vector2(target)
         else:
-            raise TypeError(f"Unsupported target type for distance calculation: {type(target)}")
+            raise TypeError(
+                f"Unsupported target type for distance calculation: {type(target)}"
+            )
 
         return self.get_world_position().distance_to(target_pos)
 
@@ -1083,16 +1219,20 @@ class Sprite(pygame.sprite.Sprite):
         # Filter out killed sprites to prevent errors
         self.collision_targets = [s for s in self.collision_targets if s.alive()]
 
-        collider_rect = getattr(self, 'collide', self).rect
+        collider_rect = getattr(self, "collide", self).rect
 
         for obstacle in self.collision_targets:
-            if not hasattr(obstacle, 'rect'):
+            if not hasattr(obstacle, "rect"):
                 continue
 
             if collider_rect.colliderect(obstacle.rect):
                 # Calculate overlap vector
-                overlap_x = min(collider_rect.right, obstacle.rect.right) - max(collider_rect.left, obstacle.rect.left)
-                overlap_y = min(collider_rect.bottom, obstacle.rect.bottom) - max(collider_rect.top, obstacle.rect.top)
+                overlap_x = min(collider_rect.right, obstacle.rect.right) - max(
+                    collider_rect.left, obstacle.rect.left
+                )
+                overlap_y = min(collider_rect.bottom, obstacle.rect.bottom) - max(
+                    collider_rect.top, obstacle.rect.top
+                )
 
                 # Resolve collision by pushing out on the axis of smaller overlap
                 if overlap_x < overlap_y:
@@ -1107,9 +1247,9 @@ class Sprite(pygame.sprite.Sprite):
                         self.rect.y -= overlap_y
                     else:
                         self.rect.y += overlap_y
-                
+
                 # Sync collider after resolution
-                if hasattr(self, 'collide'):
+                if hasattr(self, "collide"):
                     collider_rect.center = self.rect.center
 
     def set_collision_targets(self, obstacles: list):
@@ -1122,7 +1262,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def add_collision_target(self, obstacle):
         """Добавляет один спрайт в список коллизий.
-        
+
         Args:
             obstacle: Спрайт для добавления в список коллизий.
         """
@@ -1133,7 +1273,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def add_collision_targets(self, obstacles: list):
         """Добавляет список или группу спрайтов в список коллизий.
-        
+
         Args:
             obstacles (list): Список или группа спрайтов для добавления.
         """
@@ -1145,7 +1285,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def remove_collision_target(self, obstacle):
         """Удаляет один спрайт из списка коллизий.
-        
+
         Args:
             obstacle: Спрайт для удаления из списка коллизий.
         """
@@ -1157,7 +1297,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def remove_collision_targets(self, obstacles: list):
         """Удаляет список или группу спрайтов из списка коллизий.
-        
+
         Args:
             obstacles (list): Список или группа спрайтов для удаления.
         """
@@ -1171,5 +1311,3 @@ class Sprite(pygame.sprite.Sprite):
     def clear_collision_targets(self):
         """Отключает все коллизии для этого спрайта."""
         self.collision_targets = None
-
-

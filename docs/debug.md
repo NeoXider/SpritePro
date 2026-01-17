@@ -1,6 +1,6 @@
 # Debug Overlay
 
-Debug Overlay — встроенная визуализация для разработки: сетка мира, координаты камеры и отладочные логи.
+Debug Overlay — встроенная визуализация для разработки: сетка мира, координаты камеры/точки/мыши, HUD и отладочные логи.
 
 ## Быстрый старт
 
@@ -8,16 +8,17 @@ Debug Overlay — встроенная визуализация для разр�
 import spritePro as s
 
 s.enable_debug(True)
-s.set_debug_grid(size=80, label_every=2)
+s.set_debug_grid(size=100, label_every=1)
 s.set_debug_log_anchor("bottom_left")
 s.debug_log_info("Debug enabled")
 ```
 
 ## Возможности
 
-- Сетка мира (не привязана к камере)
-- Координаты камеры и точка в центре экрана
-- Логи в углу экрана с авто‑исчезновением
+- Сетка мира (можно поверх/под сценой)
+- HUD с координатами камеры и FPS
+- Координаты точки центра и позиции мыши в мире
+- Логи в углу экрана с авто‑исчезновением и записью в файл
 
 ## API (через spritePro)
 
@@ -35,7 +36,7 @@ s.debug_log_info("Debug enabled")
 - `s.set_debug_log_anchor("top_left" | "top_right" | "bottom_left" | "bottom_right")`
 
 ### Сетка
-- `s.set_debug_grid(size=None, color=None, alpha=None, label_every=None, label_color=None, labels_enabled=None)`
+- `s.set_debug_grid(size=None, color=None, alpha=None, label_every=None, label_color=None, labels_enabled=None, label_limit=None, label_font_size=None, on_top=None)`
 - `s.set_debug_grid_enabled(True/False)`
 
 ### Стиль и файл логов
@@ -45,7 +46,8 @@ s.debug_log_info("Debug enabled")
 - `s.set_debug_log_palette(info=None, warning=None, error=None)`
 - `s.set_debug_log_prefixes(info=None, warning=None, error=None)`
 - `s.set_debug_log_stack_enabled(True/False)`
-- `s.set_debug_hud_style(font_size=None, color=None, padding=None, anchor=None)`
+- `s.set_console_log_enabled(True/False)`
+- `s.set_debug_hud_style(font_size=None, color=None, padding=None, anchor=None, on_top=None)`
 - `s.set_debug_hud_enabled(show_fps=None, show_camera=None)`
 - `s.set_debug_camera_input(mouse_button)`
 
@@ -53,12 +55,13 @@ s.debug_log_info("Debug enabled")
 
 ```python
 s.set_debug_grid(
-    size=64,            # шаг сетки
+    size=100,           # шаг сетки
     color=(80, 80, 80), # цвет линий
     alpha=120,          # прозрачность (0..255)
-    label_every=2,      # подписи через N линий
+    label_every=1,      # подписи через N линий
     label_color=(140, 140, 140),
     labels_enabled=True,
+    on_top=False,       # рисовать поверх сцены
 )
 ```
 

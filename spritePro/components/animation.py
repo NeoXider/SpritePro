@@ -86,7 +86,7 @@ class Animation:
         # Устанавливаем первый кадр если есть
         if self.frames:
             self.owner.set_image(self.frames[0])
-        
+
         # Автоматическая регистрация для обновления
         if auto_register:
             try:
@@ -319,8 +319,8 @@ if __name__ == "__main__":
         frames=idle_frames,  # Начинаем с idle состояния
         frame_duration=0.2,  # 0.2 секунды = 200 мс
         loop=True,
-        on_frame=lambda frame: print(f"Frame: {frame}"),
-        on_complete=lambda: print("Animation complete!"),
+        on_frame=lambda frame: spritePro.debug_log_info(f"Frame: {frame}"),
+        on_complete=lambda: spritePro.debug_log_info("Animation complete!"),
     )
 
     # Добавление состояний

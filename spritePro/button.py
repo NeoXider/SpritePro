@@ -88,9 +88,11 @@ class Button(Sprite):
         # Определяем якорь (если не передан, используем CENTER для обратной совместимости)
         if anchor is None:
             anchor = spritePro.Anchor.CENTER
-        
+
         # Инициализируем Sprite с пустым фоном
-        super().__init__(sprite, size=size, pos=pos, sorting_order=sorting_order, anchor=anchor)
+        super().__init__(
+            sprite, size=size, pos=pos, sorting_order=sorting_order, anchor=anchor
+        )
 
         # Параметры анимации и цвета
         self.set_color(base_color)
@@ -122,7 +124,7 @@ class Button(Sprite):
         # Логика мыши
         self.interactor = MouseInteractor(sprite=self, on_click=on_click)
 
-    def set_base_color(self, base_color: tuple = (255,255,255)):
+    def set_base_color(self, base_color: tuple = (255, 255, 255)):
         """Устанавливает базовый цвет кнопки.
 
         Args:
@@ -213,7 +215,7 @@ class Button(Sprite):
 
         # Обновляем и рисуем текст
         label = self.text_sprite
-        if label is not None and getattr(label, 'alive', lambda: True)():
+        if label is not None and getattr(label, "alive", lambda: True)():
             label.rect.center = self.rect.center
             label.update(screen)
 
@@ -262,7 +264,7 @@ class Button(Sprite):
 
     def kill(self) -> None:
         """Удаляет кнопку из игры и освобождает все связанные ресурсы.
-        
+
         Удаляет текстовый спрайт и интерактор, затем вызывает родительский метод kill().
         """
         text_sprite = getattr(self, "text_sprite", None)
@@ -273,7 +275,6 @@ class Button(Sprite):
             self.text_sprite = None
         self.interactor = None
         super().kill()
-
 
 
 if __name__ == "__main__":
@@ -322,5 +323,5 @@ if __name__ == "__main__":
 
         screen.fill(color)
         btn.update(screen)
-        btn.rect.x +=random.randint(-1,1)
-        btn.rect.y += random.randint(-1,1)
+        btn.rect.x += random.randint(-1, 1)
+        btn.rect.y += random.randint(-1, 1)

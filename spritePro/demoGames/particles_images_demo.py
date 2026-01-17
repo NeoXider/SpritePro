@@ -50,7 +50,7 @@ def main():
         screen_space=False,
         angle_range=(0.0, 360.0),
         spawn_circle_radius=50,
-        scale_velocity_range=(-0.2, -1)
+        scale_velocity_range=(-0.2, -1),
     )
 
     # Platforma chunks: make smaller random subsurfaces
@@ -107,9 +107,13 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mx, my = pygame.mouse.get_pos()
                 if event.button == 1:
-                    star_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
+                    star_emitter.emit(
+                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+                    )
                 elif event.button == 3:
-                    platforma_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
+                    platforma_emitter.emit(
+                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+                    )
 
         s.update(fps=60, update_display=True, fill_color=(20, 24, 32))
 
@@ -118,5 +122,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

@@ -57,12 +57,12 @@ def main():
     bar2.fill.color = (0, 255, 0)  # Зеленый fill
     bar2.set_fill_type(FillDirection.RIGHT_TO_LEFT, s.Anchor.CENTER)
     bar2.set_fill_size((290, 40))
-    
+
     # Debug: Check if fill surfaces are created
-    print(f"Bar 1 fill surface: {hasattr(bar, '_clipped_fill_surface')}")
-    print(f"Bar 2 fill surface: {hasattr(bar2, '_clipped_fill_surface')}")
-    print(f"Bar 1 fill amount: {bar.get_fill_amount()}")
-    print(f"Bar 2 fill amount: {bar2.get_fill_amount()}")
+    s.debug_log_info(f"Bar 1 fill surface: {hasattr(bar, '_clipped_fill_surface')}")
+    s.debug_log_info(f"Bar 2 fill surface: {hasattr(bar2, '_clipped_fill_surface')}")
+    s.debug_log_info(f"Bar 1 fill amount: {bar.get_fill_amount()}")
+    s.debug_log_info(f"Bar 2 fill amount: {bar2.get_fill_amount()}")
     # Create labels
     title = s.TextSprite(
         text="Simple Bar Demo", pos=(400, 50), font_size=24, color=(255, 255, 255)
@@ -127,7 +127,7 @@ def main():
                         bar.set_background_image(path_sprites + "bar_bg.png")
                         bar2.set_background_image(path_sprites + "fon.jpeg")
                         background_switched = True
-                        print("Backgrounds switched to images!")
+                        s.debug_log_info("Backgrounds switched to images!")
                     else:
                         # Switch back to colors (empty strings)
                         bar.set_background_image("")
@@ -135,7 +135,7 @@ def main():
                         bar.bg.color = (139, 0, 0)  # Восстанавливаем цвета
                         bar2.bg.color = (0, 100, 0)
                         background_switched = False
-                        print("Backgrounds reset to colors!")
+                        s.debug_log_info("Backgrounds reset to colors!")
                 elif event.key == pygame.K_f:
                     # Toggle between images and colors
                     if not fill_switched:
@@ -143,7 +143,7 @@ def main():
                         bar.set_fill_image(path_sprites + "bar_fill.png")
                         bar2.set_fill_image(path_sprites + "background_game.png")
                         fill_switched = True
-                        print("Fill images switched!")
+                        s.debug_log_info("Fill images switched!")
                     else:
                         # Switch back to colors (empty strings)
                         bar.set_fill_image("")
@@ -151,20 +151,22 @@ def main():
                         bar.fill.color = (255, 0, 0)  # Восстанавливаем цвета
                         bar2.fill.color = (0, 255, 0)
                         fill_switched = False
-                        print("Fill images reset to colors!")
+                        s.debug_log_info("Fill images reset to colors!")
                 elif event.key == pygame.K_c:
                     # Change colors using bg.color and fill.color
                     color_index = (color_index + 1) % len(bg_colors)
                     new_bg_color = bg_colors[color_index]
                     new_fill_color = fill_colors[color_index]
-                    
+
                     # Используем удобный способ через bg.color и fill.color
                     bar.bg.color = new_bg_color
                     bar.fill.color = new_fill_color
                     bar2.bg.color = new_bg_color
                     bar2.fill.color = new_fill_color
-                    
-                    print(f"Colors changed! BG: {new_bg_color}, Fill: {new_fill_color}")
+
+                    s.debug_log_info(
+                        f"Colors changed! BG: {new_bg_color}, Fill: {new_fill_color}"
+                    )
                 elif event.key == pygame.K_s:
                     # Toggle sizes
                     if not size_switched:
@@ -176,13 +178,13 @@ def main():
                             (200, 30), (250, 50)
                         )  # Smaller background, bigger fill
                         size_switched = True
-                        print("Sizes changed!")
+                        s.debug_log_info("Sizes changed!")
                     else:
                         # Reset to original sizes
                         bar.set_both_sizes((300, 50), (300, 50))  # Same size
                         bar2.set_both_sizes((300, 50), (300, 50))  # Same size
                         size_switched = False
-                        print("Sizes reset!")
+                        s.debug_log_info("Sizes reset!")
                 elif event.key == pygame.K_q:
                     running = False
 

@@ -62,7 +62,7 @@ class MouseInteractor:
     @property
     def is_hovered(self) -> bool:
         """Проверяет, находится ли мышь над спрайтом.
-        
+
         Returns:
             bool: True, если мышь находится над спрайтом.
         """
@@ -71,7 +71,7 @@ class MouseInteractor:
     @property
     def is_pressed(self) -> bool:
         """Проверяет, нажата ли кнопка мыши над спрайтом.
-        
+
         Returns:
             bool: True, если кнопка мыши нажата над спрайтом.
         """
@@ -129,11 +129,11 @@ if __name__ == "__main__":
 
     inter = MouseInteractor(
         sprite=sprite,
-        on_hover_enter=lambda: print("entered"),
-        on_hover_exit=lambda: print("left"),
-        on_mouse_down=lambda: print("down"),
-        on_mouse_up=lambda: print("up"),
-        on_click=lambda: print("Clicked!"),
+        on_hover_enter=lambda: spritePro.debug_log_info("entered"),
+        on_hover_exit=lambda: spritePro.debug_log_info("left"),
+        on_mouse_down=lambda: spritePro.debug_log_info("down"),
+        on_mouse_up=lambda: spritePro.debug_log_info("up"),
+        on_click=lambda: spritePro.debug_log_info("Clicked!"),
     )
 
     while True:

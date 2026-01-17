@@ -67,8 +67,44 @@ SpritePro включает легковесную систему частиц, �
 
 - `emit(position: Optional[Tuple[float, float] | Vector2] = None, overrides: Optional[ParticleConfig] = None) -> Sequence[Particle]`: Выпустить частицы. Если `position` не указан, используется позиция, установленная через `set_position()`
 - `set_position(position: Tuple[float, float] | Vector2, anchor: str | Anchor = Anchor.CENTER)`: Установить позицию эмиттера для последующих вызовов `emit()` без аргументов
+- `set_parent(parent, keep_world_position=True, follow_parent=True)`: Назначить родителя для создаваемых частиц
 - `get_position() -> Optional[Tuple[float, float] | Vector2]`: Получить текущую позицию эмиттера
 - `update_config(**kwargs)`: Обновить конфигурацию эмиттера с заданными значениями
+- `set_config(config: ParticleConfig)`: Полностью заменить конфигурацию эмиттера
+- `start_auto_emit()` / `stop_auto_emit()`: Включить/выключить авто-эмиссию
+- `update(dt: Optional[float] = None)`: Обновление авто-эмиссии (нужно для auto_emit)
+
+### Авто-эмиссия (loop/interval/step)
+
+`ParticleEmitter` умеет автоматически вызывать `emit()` по времени и/или по дистанции.
+
+Параметры конструктора:
+- `auto_emit` (bool): включить авто-эмиссию
+- `emit_interval` (float | tuple): интервал или диапазон (от, до)
+- `emit_step` (float): шаг по расстоянию (0 = отключено)
+- `use_dt` (bool): использовать `dt` из update (True) или глобальное время (False)
+- `auto_register` (bool): авто-регистрация в `spritePro.update()`
+
+Пример: случайный интервал
+```python
+emitter = s.ParticleEmitter(
+    s.template_trail(),
+    auto_emit=True,
+    emit_interval=(0.05, 0.15),
+    auto_register=True,
+)
+```
+
+Пример: эмиссия по шагам расстояния
+```python
+emitter = s.ParticleEmitter(
+    s.template_sparks(),
+    auto_emit=True,
+    emit_step=20,
+    auto_register=True,
+)
+emitter.set_position(player.rect.center)  # обновлять позицию каждый кадр
+```
 
 ## Particle
 

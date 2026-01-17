@@ -6,6 +6,7 @@ This demo showcases:
 - The ready-to-use FPS counter.
 - How world-space sprites and screen-space UI are handled automatically.
 """
+
 import sys
 from pathlib import Path
 import random
@@ -19,6 +20,7 @@ sys.path.insert(0, str(parent_dir))
 # Now that the path is correct, we can import the library
 import pygame
 import spritePro as s
+
 
 class FPSCameraDemo:
     def __init__(self):
@@ -59,17 +61,26 @@ class FPSCameraDemo:
         # Create a grid of colored squares as sprites
         for x in range(-500, 1500, 100):
             for y in range(-300, 1000, 100):
-                color = (random.randint(50, 200), random.randint(50, 200), random.randint(50, 200))
+                color = (
+                    random.randint(50, 200),
+                    random.randint(50, 200),
+                    random.randint(50, 200),
+                )
                 square = s.Sprite("", size=(80, 80), pos=(x, y))
                 square.image.fill(color)
-        
+
         # Create some text labels in the world
-        origin_text = s.TextSprite("World Origin (0,0)", pos=(0,0), font_size=32, color=(255,255,255))
+        origin_text = s.TextSprite(
+            "World Origin (0,0)", pos=(0, 0), font_size=32, color=(255, 255, 255)
+        )
 
-        down_text = s.TextSprite("Scroll Down!", pos=(0, 500), font_size=48, color=(100, 200, 255))
+        down_text = s.TextSprite(
+            "Scroll Down!", pos=(0, 500), font_size=48, color=(100, 200, 255)
+        )
 
-        right_text = s.TextSprite("Scroll Right!", pos=(1000, 0), font_size=48, color=(255, 200, 100))
-
+        right_text = s.TextSprite(
+            "Scroll Right!", pos=(1000, 0), font_size=48, color=(255, 200, 100)
+        )
 
     def run(self):
         """Main game loop."""
@@ -90,7 +101,7 @@ class FPSCameraDemo:
             # Update UI text with current camera position
             cam_pos = s.get_camera_position()
             self.camera_text.set_text(f"Camera: ({cam_pos.x:.0f}, {cam_pos.y:.0f})")
-            
+
             # The FPS counter from readySprites updates its text automatically
             # when we call its update_fps method.
             self.fps_counter.update_fps()

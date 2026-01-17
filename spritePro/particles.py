@@ -3,23 +3,15 @@
 from __future__ import annotations
 
 import random
+import time
+from pathlib import Path
 from dataclasses import dataclass, field, replace
-from typing import Callable, Optional, Sequence, Tuple, Type, List, Union, TYPE_CHECKING
-from .constants import Anchor
-
-if TYPE_CHECKING:
-    from .constants import Anchor as AnchorType
+from typing import Callable, Optional, Sequence, Tuple, Type, List, Union
 
 import pygame
 from pygame.math import Vector2
 
-from pathlib import Path
-import sys
-
-_CURRENT_DIR = Path(__file__).resolve().parent
-_PARENT_DIR = _CURRENT_DIR.parent
-if str(_PARENT_DIR) not in sys.path:
-    sys.path.insert(0, str(_PARENT_DIR))
+from .constants import Anchor
 
 import spritePro
 from .resources import resource_cache
@@ -80,7 +72,9 @@ class ParticleConfig:
     # Provide a ready Particle instance as template (properties are copied, but pos/velocity/lifetime are set from config)
     particle_template: Optional["Particle"] = None
     # Full factory override: create and return a Particle yourself
-    factory: Optional[Callable[[Vector2, Vector2, int, "ParticleConfig", int], "Particle"]] = None
+    factory: Optional[
+        Callable[[Vector2, Vector2, int, "ParticleConfig", int], "Particle"]
+    ] = None
     # Sorting order for created particles (higher draws in front); None keeps default
     sorting_order: Optional[int] = None
     # Optional uniform scaling range for provided image/image_factory results
@@ -91,8 +85,10 @@ class ParticleConfig:
     # Image rotation options (degrees)
     align_rotation_to_velocity: bool = False
     image_rotation_range: Optional[Tuple[float, float]] = None
-    angular_velocity_range: Optional[Tuple[float, float]] = None,  # deg/sec
-    scale_velocity_range: Optional[Tuple[float, float]] = None,  # scale factor per second
+    angular_velocity_range: Optional[Tuple[float, float]] = (None,)  # deg/sec
+    scale_velocity_range: Optional[Tuple[float, float]] = (
+        None,
+    )  # scale factor per second
 
 
 class Particle(spritePro.Sprite):
@@ -132,7 +128,9 @@ class Particle(spritePro.Sprite):
             screen_space (bool): Игнорировать ли смещение камеры.
             sorting_order (Optional[int], optional): Порядок отрисовки (слой). По умолчанию None.
         """
-        super().__init__(image, size=image.get_size(), pos=Vector2(pos), sorting_order=sorting_order)
+        super().__init__(
+            image, size=image.get_size(), pos=Vector2(pos), sorting_order=sorting_order
+        )
         self.velocity = velocity
         self.spawn_time = pygame.time.get_ticks()
         self.lifetime = lifetime_ms
@@ -190,49 +188,99 @@ class ParticleEmitter:
         _anchor (str): Якорь позиционирования.
     """
 
-    def __init__(self, config: Optional[ParticleConfig] = None) -> None:
+    def __init__(
+        self,
+        config: Optional[ParticleConfig] = None,
+        auto_emit: bool = False,
+        emit_interval: float | Tuple[float, float] = 0.1,
+        emit_step: float = 0.0,
+        use_dt: bool = True,
+        auto_register: bool = False,
+    ) -> None:
         """Инициализирует новый эмиттер частиц.
 
         Args:
             config (Optional[ParticleConfig], optional): Конфигурация эмиттера. Если None, используется конфигурация по умолчанию.
+            auto_emit (bool, optional): Авто-эмиссия в update(). По умолчанию False.
+            emit_interval (float | Tuple[float, float], optional): Интервал авто-эмиссии (сек) или диапазон. По умолчанию 0.1.
+            emit_step (float, optional): Дистанция для эмиссии (каждый шаг). По умолчанию 0.0.
+            use_dt (bool, optional): Использовать dt из update(). По умолчанию True.
+            auto_register (bool, optional): Автоматически регистрировать в spritePro.update(). По умолчанию False.
         """
         self.config = config or ParticleConfig()
-        if isinstance(self.config.image, str):
-            try:
-                cached = resource_cache.load_texture(self.config.image)
-                self.config.image = cached if cached is not None else pygame.image.load(self.config.image).convert_alpha()
-            except pygame.error as e:
-                print(f"Error loading particle image at path: {self.config.image}\n{e}")
-                self.config.image = None
+        self._resolve_config_image()
         self._position: Optional[Tuple[float, float] | Vector2] = None
         self._anchor: str = "center"
+        self._parent = None
+        self._parent_follow = True
+        self._particle_follow_parent = False
+        self.auto_emit = auto_emit
+        self.emit_interval = emit_interval
+        self.emit_step = float(emit_step)
+        self.use_dt = use_dt
+        self._emit_elapsed = 0.0
+        self._next_emit_interval = self._resolve_interval(self.emit_interval)
+        self._last_emit_position: Optional[Vector2] = None
+        self._last_update_time = time.monotonic()
+        if auto_register:
+            try:
+                spritePro.register_update_object(self)
+            except Exception:
+                pass
 
-    def set_position(self, position: Union[Tuple[float, float], Vector2], anchor: Union[str, "Anchor", None] = None) -> None:
+    def set_config(self, config: ParticleConfig) -> None:
+        """Полностью заменяет конфигурацию эмиттера на лету."""
+        self.config = config
+        self._resolve_config_image()
+        if self.auto_emit:
+            self._reset_auto_emit_state()
+
+    def set_parent(
+        self,
+        parent,
+        keep_world_position: bool = True,
+        follow_parent: bool = True,
+        particle_follow_parent: bool = False,
+    ) -> None:
+        """Назначает родителя для создаваемых частиц."""
+        self._parent = parent
+        self._parent_follow = follow_parent
+        self._particle_follow_parent = particle_follow_parent
+        if parent is not None and keep_world_position is False:
+            self._position = Vector2(0, 0)
+
+    def set_position(
+        self,
+        position: Union[Tuple[float, float], Vector2],
+        anchor: Union[str, "Anchor", None] = None,
+    ) -> None:
         """Устанавливает позицию эмиттера для последующих вызовов emit() без аргументов.
-        
+
         Args:
             position (Tuple[float, float] | Vector2): Координаты позиции (x, y).
             anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию Anchor.CENTER.
         """
         # Import Anchor here to avoid circular imports
         from .constants import Anchor as AnchorConst
-        
+
         # Handle anchor positioning same as Sprite
         if anchor is None:
             anchor = AnchorConst.CENTER
-        
-        if isinstance(anchor, str):
+
+        if isinstance(anchor, AnchorConst):
+            anchor_key = str(anchor)
+        elif isinstance(anchor, str):
             anchor_key = anchor.lower()
         else:
-            anchor_key = anchor.lower() if hasattr(anchor, 'lower') else "center"
-            
+            anchor_key = str(AnchorConst.CENTER)
+
         # Store position with anchor info for future use
         self._position = position
         self._anchor = anchor_key
 
     def get_position(self) -> Optional[Tuple[float, float] | Vector2]:
         """Получает текущую позицию эмиттера.
-        
+
         Returns:
             Optional[Tuple[float, float] | Vector2]: Текущая позиция эмиттера или None.
         """
@@ -240,11 +288,92 @@ class ParticleEmitter:
 
     def update_config(self, **kwargs):
         """Обновляет конфигурацию эмиттера указанными значениями.
-        
+
         Args:
             **kwargs: Параметры для обновления конфигурации.
         """
         self.config = replace(self.config, **kwargs)
+        self._resolve_config_image()
+        if self.auto_emit:
+            self._reset_auto_emit_state()
+
+    def start_auto_emit(self) -> None:
+        """Запускает авто-эмиссию."""
+        self.auto_emit = True
+        self._reset_auto_emit_state()
+
+    def stop_auto_emit(self) -> None:
+        """Останавливает авто-эмиссию."""
+        self.auto_emit = False
+
+    def update(self, dt: Optional[float] = None) -> None:
+        """Обновляет авто-эмиссию (по времени и/или по шагам расстояния)."""
+        if not self.auto_emit:
+            return
+        if self.use_dt:
+            if dt is None:
+                try:
+                    dt = spritePro.dt
+                except Exception:
+                    dt = 0.0
+            dt_value = float(dt)
+        else:
+            now = time.monotonic()
+            dt_value = max(0.0, now - self._last_update_time)
+            self._last_update_time = now
+
+        if self.emit_interval and self.emit_interval != 0:
+            self._emit_elapsed += dt_value
+            while self._emit_elapsed >= self._next_emit_interval:
+                self.emit()
+                self._emit_elapsed -= self._next_emit_interval
+                self._next_emit_interval = self._resolve_interval(self.emit_interval)
+
+        if self.emit_step > 0 and self._position is not None:
+            current = Vector2(self._position)
+            if self._last_emit_position is None:
+                self._last_emit_position = current
+                return
+            distance = current.distance_to(self._last_emit_position)
+            if distance >= self.emit_step:
+                count = int(distance // self.emit_step)
+                for _ in range(max(1, count)):
+                    self.emit()
+                self._last_emit_position = current
+
+    def _resolve_config_image(self) -> None:
+        """Загружает image из пути, если указана строка."""
+        if isinstance(self.config.image, str):
+            try:
+                cached = resource_cache.load_texture(self.config.image)
+                self.config.image = (
+                    cached
+                    if cached is not None
+                    else pygame.image.load(self.config.image).convert_alpha()
+                )
+            except pygame.error as e:
+                spritePro.debug_log_warning(
+                    f"Error loading particle image at path: {self.config.image} ({e})"
+                )
+                self.config.image = None
+
+    def _resolve_interval(self, value: float | Tuple[float, float]) -> float:
+        if isinstance(value, tuple):
+            lo, hi = value
+            lo_val = float(lo)
+            hi_val = float(hi)
+            if hi_val < lo_val:
+                lo_val, hi_val = hi_val, lo_val
+            return random.uniform(lo_val, hi_val)
+        return float(value)
+
+    def _reset_auto_emit_state(self) -> None:
+        self._emit_elapsed = 0.0
+        self._next_emit_interval = self._resolve_interval(self.emit_interval)
+        self._last_emit_position = (
+            Vector2(self._position) if self._position is not None else None
+        )
+        self._last_update_time = time.monotonic()
 
     def emit(
         self,
@@ -263,7 +392,9 @@ class ParticleEmitter:
         cfg = overrides or self.config
         # If no position provided, use emitter's stored position or spawn area from config
         if position is None:
-            if self._position is not None:
+            if self._parent is not None:
+                position_vec = Vector2(self._parent.get_world_position())
+            elif self._position is not None:
                 position_vec = Vector2(self._position)
             elif cfg.spawn_rect is not None:
                 # Use spawn_rect as the base position (particles will spawn within it)
@@ -296,7 +427,9 @@ class ParticleEmitter:
                     else:
                         # Offset from provided position using spawn_rect dimensions
                         ox = random.uniform(-float(r.width) * 0.5, float(r.width) * 0.5)
-                        oy = random.uniform(-float(r.height) * 0.5, float(r.height) * 0.5)
+                        oy = random.uniform(
+                            -float(r.height) * 0.5, float(r.height) * 0.5
+                        )
                         spawn_pos = position_vec + Vector2(ox, oy)
                 except Exception:
                     pass
@@ -319,8 +452,6 @@ class ParticleEmitter:
                 color = random.choice(cfg.colors)
                 image = pygame.Surface((size, size), pygame.SRCALPHA)
                 pygame.draw.circle(image, color, (size // 2, size // 2), size // 2)
-
-
 
             # Resolve lifetime
             if cfg.lifetime is not None:
@@ -351,7 +482,9 @@ class ParticleEmitter:
                     fade_speed=cfg.fade_speed,
                     gravity=cfg.gravity,
                     screen_space=cfg.screen_space,
-                    sorting_order=cfg.sorting_order if cfg.sorting_order is not None else template.sorting_order,
+                    sorting_order=cfg.sorting_order
+                    if cfg.sorting_order is not None
+                    else template.sorting_order,
                 )
                 # Копируем дополнительные свойства из шаблона
                 particle.angular_velocity = template.angular_velocity
@@ -362,15 +495,38 @@ class ParticleEmitter:
                 particle.color = template.color
                 # Копируем любые дополнительные атрибуты, которые могут быть в пользовательских подклассах
                 for attr_name in dir(template):
-                    if not attr_name.startswith('_') and attr_name not in [
-                        'image', 'rect', 'velocity', 'spawn_time', 'lifetime', 
-                        'fade_speed', 'gravity', 'screen_space', 'sorting_order',
-                        'angular_velocity', 'scale_velocity', 'scale', 'angle', 'alpha', 'color',
-                        'update', 'kill', 'active', 'position', 'x', 'y', 'width', 'height'
+                    if not attr_name.startswith("_") and attr_name not in [
+                        "image",
+                        "rect",
+                        "velocity",
+                        "spawn_time",
+                        "lifetime",
+                        "fade_speed",
+                        "gravity",
+                        "screen_space",
+                        "sorting_order",
+                        "angular_velocity",
+                        "scale_velocity",
+                        "scale",
+                        "angle",
+                        "alpha",
+                        "color",
+                        "update",
+                        "kill",
+                        "active",
+                        "position",
+                        "x",
+                        "y",
+                        "width",
+                        "height",
                     ]:
                         try:
-                            if hasattr(template, attr_name) and not callable(getattr(template, attr_name, None)):
-                                setattr(particle, attr_name, getattr(template, attr_name))
+                            if hasattr(template, attr_name) and not callable(
+                                getattr(template, attr_name, None)
+                            ):
+                                setattr(
+                                    particle, attr_name, getattr(template, attr_name)
+                                )
                         except (AttributeError, TypeError):
                             pass
             else:
@@ -396,7 +552,9 @@ class ParticleEmitter:
             # Set angular velocity if requested
             if cfg.angular_velocity_range is not None:
                 try:
-                    particle.angular_velocity = random.uniform(*cfg.angular_velocity_range)
+                    particle.angular_velocity = random.uniform(
+                        *cfg.angular_velocity_range
+                    )
                 except Exception:
                     particle.angular_velocity = 0.0
             if cfg.scale_velocity_range is not None:
@@ -415,6 +573,11 @@ class ParticleEmitter:
             if cfg.custom_factory:
                 cfg.custom_factory(particle, index)
             particles.append(particle)
+            if self._parent is not None:
+                particle.set_parent(
+                    self._parent, keep_world_position=not self._parent_follow
+                )
+                particle.follow_parent = self._particle_follow_parent
 
         return particles
 
@@ -422,6 +585,7 @@ class ParticleEmitter:
 # ------------------------------
 # Ready-made configuration templates and helpers
 # ------------------------------
+
 
 def particle_config_copy(cfg: ParticleConfig) -> ParticleConfig:
     """Возвращает поверхностную копию ParticleConfig для удобной настройки.
@@ -441,7 +605,7 @@ def particle_config_copy(cfg: ParticleConfig) -> ParticleConfig:
 
 def template_sparks() -> ParticleConfig:
     """Шаблон конфигурации: маленькие яркие искры во всех направлениях, короткое время жизни.
-    
+
     Returns:
         ParticleConfig: Конфигурация для эффекта искр.
     """
@@ -463,7 +627,7 @@ def template_sparks() -> ParticleConfig:
 
 def template_smoke() -> ParticleConfig:
     """Шаблон конфигурации: мягкие серые клубы дыма, дрейфующие вверх, долгое время жизни.
-    
+
     Returns:
         ParticleConfig: Конфигурация для эффекта дыма.
     """
@@ -485,7 +649,7 @@ def template_smoke() -> ParticleConfig:
 
 def template_fire() -> ParticleConfig:
     """Шаблон конфигурации: огненный взрыв вверх с оранжево-красными тонами, среднее время жизни.
-    
+
     Returns:
         ParticleConfig: Конфигурация для эффекта огня.
     """
@@ -508,7 +672,7 @@ def template_fire() -> ParticleConfig:
 
 def template_snowfall() -> ParticleConfig:
     """Шаблон конфигурации: мягкий снегопад, частицы создаются в широком прямоугольнике над экраном и падают вниз.
-    
+
     Returns:
         ParticleConfig: Конфигурация для эффекта снегопада.
     """
@@ -532,7 +696,7 @@ def template_snowfall() -> ParticleConfig:
 
 def template_circular_burst() -> ParticleConfig:
     """Шаблон конфигурации: круговой взрыв, частицы создаются в круге радиусом 100px и взрываются наружу.
-    
+
     Returns:
         ParticleConfig: Конфигурация для эффекта кругового взрыва.
     """
@@ -551,4 +715,24 @@ def template_circular_burst() -> ParticleConfig:
         sorting_order=None,
         spawn_circle_radius=100.0,  # 100px radius spawn area
         screen_space=False,
+    )
+
+
+def template_trail() -> ParticleConfig:
+    """Шаблон конфигурации: короткий шлейф из мелких частиц для быстрого объекта.
+
+    Returns:
+        ParticleConfig: Конфигурация для эффекта trail.
+    """
+    return ParticleConfig(
+        amount=6,
+        lifetime_range=(0.12, 0.28),
+        speed_range=(20.0, 80.0),
+        angle_range=(0.0, 360.0),
+        fade_speed=320.0,
+        gravity=Vector2(0, 0),
+        colors=[(220, 220, 255), (180, 220, 255)],
+        image=None,
+        image_scale_range=None,
+        sorting_order=900,
     )

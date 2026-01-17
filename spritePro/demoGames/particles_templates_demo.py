@@ -65,17 +65,51 @@ def main():
         sorting_order=1200,
     )
 
-    column_x = [screen_rect.width * 0.25, screen_rect.width * 0.50, screen_rect.width * 0.75]
+    column_x = [
+        screen_rect.width * 0.25,
+        screen_rect.width * 0.50,
+        screen_rect.width * 0.75,
+    ]
     label_y = 580
     zones = []  # (name, rect, emitter)
 
-    label_sparks = s.TextSprite("Sparks", font_size=26, color=(255, 230, 140), pos=(column_x[0], label_y), sorting_order=1200)
-    label_smoke = s.TextSprite("Smoke", font_size=26, color=(180, 180, 180), pos=(column_x[1], label_y), sorting_order=1200)
-    label_fire = s.TextSprite("Fire", font_size=26, color=(255, 160, 90), pos=(column_x[2], label_y), sorting_order=1200)
+    label_sparks = s.TextSprite(
+        "Sparks",
+        font_size=26,
+        color=(255, 230, 140),
+        pos=(column_x[0], label_y),
+        sorting_order=1200,
+    )
+    label_smoke = s.TextSprite(
+        "Smoke",
+        font_size=26,
+        color=(180, 180, 180),
+        pos=(column_x[1], label_y),
+        sorting_order=1200,
+    )
+    label_fire = s.TextSprite(
+        "Fire",
+        font_size=26,
+        color=(255, 160, 90),
+        pos=(column_x[2], label_y),
+        sorting_order=1200,
+    )
     # Draw a snow label at top-left to indicate snowfall emit
-    label_snow = s.TextSprite("Snowfall (auto)", font_size=22, color=(220, 220, 255), pos=(120, 28), sorting_order=1200)
+    label_snow = s.TextSprite(
+        "Snowfall (auto)",
+        font_size=22,
+        color=(220, 220, 255),
+        pos=(120, 28),
+        sorting_order=1200,
+    )
     # Draw a burst label at top-right for drag-to-emit
-    label_burst = s.TextSprite("Burst (drag)", font_size=22, color=(255, 180, 100), pos=(screen_rect.width - 120, 28), sorting_order=1200)
+    label_burst = s.TextSprite(
+        "Burst (drag)",
+        font_size=22,
+        color=(255, 180, 100),
+        pos=(screen_rect.width - 120, 28),
+        sorting_order=1200,
+    )
 
     # Build click zones around labels
     for name, label, emitter in (
@@ -89,7 +123,7 @@ def main():
     # Drag state for burst emitter
     dragging = False
     last_mouse_pos = None
-    
+
     running = True
     while running:
         for event in s.pygame_events:
@@ -100,22 +134,35 @@ def main():
                     running = False
                 elif event.key in (pygame.K_1, pygame.K_KP1):
                     mx, my = pygame.mouse.get_pos()
-                    sparks_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
+                    sparks_emitter.emit(
+                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+                    )
                 elif event.key in (pygame.K_2, pygame.K_KP2):
                     mx, my = pygame.mouse.get_pos()
-                    smoke_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
+                    smoke_emitter.emit(
+                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+                    )
                 elif event.key in (pygame.K_3, pygame.K_KP3):
                     mx, my = pygame.mouse.get_pos()
-                    fire_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
+                    fire_emitter.emit(
+                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+                    )
                 elif event.key in (pygame.K_4, pygame.K_KP4):
                     mx, my = pygame.mouse.get_pos()
-                    burst_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
+                    burst_emitter.emit(
+                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+                    )
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mx, my = pygame.mouse.get_pos()
                 point = pygame.Rect(mx, my, 1, 1)
                 for _name, zone, emitter in zones:
                     if zone.colliderect(point):
-                        emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
+                        emitter.emit(
+                            (
+                                mx + s.get_camera_position().x,
+                                my + s.get_camera_position().y,
+                            )
+                        )
                         break
                 # Start drag for burst
                 dragging = True
@@ -143,5 +190,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

@@ -12,7 +12,9 @@ import spritePro as s  # noqa: E402
 
 
 def _enter_pressed() -> bool:
-    return s.input.was_pressed(pygame.K_RETURN) or s.input.was_pressed(pygame.K_KP_ENTER)
+    return s.input.was_pressed(pygame.K_RETURN) or s.input.was_pressed(
+        pygame.K_KP_ENTER
+    )
 
 
 class SceneA(s.Scene):

@@ -16,7 +16,7 @@ MAIN_TEMPLATE = dedent(
         def update(self, dt):
             self.player.handle_keyboard_input()
             if s.input.was_pressed(pygame.K_SPACE):
-                print("Space pressed")
+                s.debug_log_info("Space pressed")
 
 
     def main():
@@ -52,7 +52,9 @@ def main() -> None:
     args = parser.parse_args()
 
     create_project(Path(args.name))
-    print(f"Project created at: {Path(args.name).resolve()}")
+    import logging
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logging.info("Project created at: %s", Path(args.name).resolve())
 
 
 if __name__ == "__main__":

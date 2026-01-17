@@ -1,4 +1,3 @@
-
 """Demo showcasing parent/child sprites with movement and visibility toggles."""
 
 import sys
@@ -19,7 +18,10 @@ from spritePro import Timer, TweenManager, EasingType
 def _log_sprites(tag: str) -> None:
     game = s.get_game()
     sprites = list(getattr(game, "all_sprites", []))
-    print(f"[{tag}] total sprites: {len(sprites)} -> {[type(sp).__name__ for sp in sprites]}")
+    s.debug_log_info(
+        f"[{tag}] total sprites: {len(sprites)} -> {[type(sp).__name__ for sp in sprites]}"
+    )
+
 
 class SmileyFace(s.Sprite):
     """Parent sprite with two eye children."""
@@ -27,7 +29,9 @@ class SmileyFace(s.Sprite):
     def __init__(self, pos: tuple[int, int]) -> None:
         base_surface = pygame.Surface((160, 160), pygame.SRCALPHA)
         pygame.draw.circle(base_surface, (255, 255, 0), (80, 80), 80)
-        pygame.draw.arc(base_surface, (0, 0, 0), pygame.Rect(40, 40, 80, 80), 3.5, 6.0, 6)
+        pygame.draw.arc(
+            base_surface, (0, 0, 0), pygame.Rect(40, 40, 80, 80), 3.5, 6.0, 6
+        )
 
         super().__init__(base_surface, size=base_surface.get_size(), pos=pos)
 
@@ -46,7 +50,7 @@ class SmileyFace(s.Sprite):
         self.right_eye._apply_parent_transform()
 
         self.target: pygame.Vector2 = pygame.Vector2(self.rect.center)
-        self.speed = 180.0 # deltaTime (180px in seconds)
+        self.speed = 180.0  # deltaTime (180px in seconds)
 
     def set_random_target(self) -> None:
         width, height = s.WH
@@ -77,7 +81,9 @@ class BlinkController:
         self.smiley = smiley
         self.tweens = TweenManager()
         _log_sprites("init_smiley")
-        self.visible_timer = Timer(self.VISIBLE_DURATION, self._start_fade_out, autostart=True)
+        self.visible_timer = Timer(
+            self.VISIBLE_DURATION, self._start_fade_out, autostart=True
+        )
         self.hidden_timer = Timer(self.HIDDEN_DURATION, self._start_fade_in)
         self.smiley.set_alpha_recursive(255)
 

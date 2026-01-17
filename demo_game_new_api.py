@@ -9,7 +9,7 @@ class MainScene(s.Scene):
     def update(self, dt):
         self.player.handle_keyboard_input()
         if s.input.was_pressed(pygame.K_SPACE):
-            print("Space pressed")
+            s.debug_log_info("Space pressed")
 
 
 def main():

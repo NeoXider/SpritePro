@@ -1,7 +1,8 @@
 # utils/advanced_timer.py
 
+import random
 import time
-from typing import Callable, Optional, Tuple, Dict
+from typing import Callable, Optional, Tuple, Dict, Union
 
 
 class Timer:
@@ -25,75 +26,89 @@ class Timer:
 
     def __init__(
         self,
-        duration: float,
+        duration: Union[float, Tuple[float, float]],
         callback: Optional[Callable] = None,
         args: Tuple = (),
         kwargs: Dict = None,
         repeat: bool = False,
         autostart: bool = True,
         auto_register: bool = True,
+        use_dt: bool = True,
     ):
         """Инициализирует таймер.
 
         Args:
-            duration (float): Длительность таймера в секундах.
+            duration (float | Tuple[float, float]): Длительность таймера (сек) или диапазон (от, до).
             callback (Optional[Callable], optional): Функция, вызываемая при срабатывании таймера. Может использовать args/kwargs. По умолчанию None.
             args (Tuple, optional): Позиционные аргументы для обратного вызова. По умолчанию ().
             kwargs (Dict, optional): Именованные аргументы для обратного вызова. По умолчанию {}.
             repeat (bool, optional): Если True, таймер автоматически перезапускается после срабатывания. По умолчанию False.
             autostart (bool, optional): Если True, запускает таймер сразу при создании. По умолчанию True.
             auto_register (bool, optional): Если True, автоматически регистрирует таймер для обновления в spritePro.update(). По умолчанию True.
+            use_dt (bool, optional): Если True, таймер использует dt из update(). Если False, использует глобальное время. По умолчанию True.
         """
-        self.duration = duration
+        self._duration_range: Optional[Tuple[float, float]] = None
+        self.duration = 0.0
+        self._set_duration(duration)
         self.callback = callback
         self.args = args or ()
         self.kwargs = kwargs or {}
         self.repeat = repeat
+        self.use_dt = use_dt
 
         self.active = False
         self.done = False
 
         self._start_time: Optional[float] = None
         self._next_fire: Optional[float] = None
+        self._elapsed = 0.0
 
         if autostart:
             self.start()
-        
+
         # Автоматическая регистрация для обновления
         if auto_register:
             try:
                 import spritePro
+
                 spritePro.register_update_object(self)
             except (ImportError, AttributeError):
                 pass
 
-    def start(self, duration: Optional[float] = None) -> None:
+    def start(
+        self, duration: Optional[Union[float, Tuple[float, float]]] = None
+    ) -> None:
         """(Пере)запускает таймер.
 
         Args:
-            duration (Optional[float], optional): Новая длительность для установки перед запуском. По умолчанию None.
+            duration (Optional[float | Tuple[float, float]], optional): Новая длительность или диапазон. По умолчанию None.
         """
         if duration is not None:
-            self.duration = duration
-        now = time.monotonic()
-        self._start_time = now
-        self._next_fire = now + self.duration
+            self._set_duration(duration)
+        if self.use_dt:
+            self._elapsed = 0.0
+        else:
+            now = time.monotonic()
+            self._start_time = now
+            self._next_fire = now + self.duration
         self.active = True
         self.done = False
 
     def pause(self) -> None:
         """Ставит таймер на паузу, сохраняя оставшееся время."""
         if self.active and not self.done:
-            # сохраним остаток
-            self._remaining = max(self._next_fire - time.monotonic(), 0.0)
+            if not self.use_dt:
+                # сохраним остаток
+                self._remaining = max(self._next_fire - time.monotonic(), 0.0)
             self.active = False
 
     def resume(self) -> None:
         """Возобновляет таймер с паузы, продолжая с оставшимся временем."""
         if not self.active and not self.done:
-            now = time.monotonic()
-            # восстановим возможность срабатывания через остаток
-            self._next_fire = now + getattr(self, "_remaining", self.duration)
+            if not self.use_dt:
+                now = time.monotonic()
+                # восстановим возможность срабатывания через остаток
+                self._next_fire = now + getattr(self, "_remaining", self.duration)
             self.active = True
 
     def stop(self) -> None:
@@ -116,7 +131,7 @@ class Timer:
             # неактивный — просто сбросить done
             self.done = False
 
-    def update(self) -> None:
+    def update(self, dt: Optional[float] = None) -> None:
         """Обновляет состояние таймера, должен вызываться каждый кадр.
 
         Если активен и текущее время >= next_fire, выполняет обратный вызов и либо:
@@ -124,6 +139,27 @@ class Timer:
         - Перезапускает таймер (если повторяется)
         """
         if not self.active or self.done:
+            return
+
+        if self.use_dt:
+            if dt is None:
+                try:
+                    import spritePro as s
+
+                    dt = s.dt
+                except Exception:
+                    dt = 0.0
+            self._elapsed += float(dt)
+            if self._elapsed >= self.duration:
+                if self.callback:
+                    self.callback(*self.args, **self.kwargs)
+                if self.repeat:
+                    if self._duration_range is not None:
+                        self._set_duration(self._duration_range)
+                    self._elapsed = 0.0
+                else:
+                    self.done = True
+                    self.active = False
             return
 
         now = time.monotonic()
@@ -137,11 +173,16 @@ class Timer:
                 return
 
             if self.repeat:
-                # запланировать следующее срабатывание, учитывая «проскоченные» интервалы
-                # (вдруг update вызывали с долгим лагом)
-                cycles = int((now - self._start_time) // self.duration) + 1
-                self._start_time += self.duration * cycles
-                self._next_fire = self._start_time + self.duration
+                if self._duration_range is not None:
+                    self._set_duration(self._duration_range)
+                    self._start_time = now
+                    self._next_fire = now + self.duration
+                else:
+                    # запланировать следующее срабатывание, учитывая «проскоченные» интервалы
+                    # (вдруг update вызывали с долгим лагом)
+                    cycles = int((now - self._start_time) // self.duration) + 1
+                    self._start_time += self.duration * cycles
+                    self._next_fire = self._start_time + self.duration
             else:
                 self.done = True
                 self.active = False
@@ -152,7 +193,11 @@ class Timer:
         Returns:
             float: Оставшееся время в секундах или 0, если таймер завершен.
         """
-        if self.done or not self.active or self._next_fire is None:
+        if self.done or not self.active:
+            return 0.0
+        if self.use_dt:
+            return max(self.duration - self._elapsed, 0.0)
+        if self._next_fire is None:
             return 0.0
         return max(self._next_fire - time.monotonic(), 0.0)
 
@@ -162,6 +207,8 @@ class Timer:
         Returns:
             float: Прошедшее время в секундах.
         """
+        if self.use_dt:
+            return min(self._elapsed, self.duration)
         if self._start_time is None:
             return 0.0
         if not self.active and not self.done:
@@ -177,16 +224,33 @@ class Timer:
         """
         return min((self.duration - self.time_left()) / self.duration, 1.0)
 
+    def _set_duration(self, value: Union[float, Tuple[float, float]]) -> None:
+        """Устанавливает длительность или диапазон длительности."""
+        if isinstance(value, tuple):
+            lo, hi = value
+            lo_val = float(lo)
+            hi_val = float(hi)
+            if hi_val < lo_val:
+                lo_val, hi_val = hi_val, lo_val
+            self._duration_range = (lo_val, hi_val)
+            self.duration = random.uniform(lo_val, hi_val)
+        else:
+            self._duration_range = None
+            self.duration = float(value)
+
 
 if __name__ == "__main__":
+    import spritePro as s
 
     def say_hello():
         """Пример колбэка для демонстрации работы таймера."""
-        print("Hello at", time.strftime("%H:%M:%S"))
+        s.debug_log_info(f"Hello at {time.strftime('%H:%M:%S')}")
 
     t1 = Timer(3.0, callback=say_hello, autostart=True)
 
-    t2 = Timer(1.0, callback=lambda: print("Tick"), repeat=True, autostart=True)
+    t2 = Timer(
+        1.0, callback=lambda: s.debug_log_info("Tick"), repeat=True, autostart=True
+    )
 
     while True:
         t1.update()

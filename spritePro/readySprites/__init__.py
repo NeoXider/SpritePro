@@ -14,10 +14,10 @@ from .text_fps import Text_fps, create_fps_counter
 from .bar import Bar, create_bar, BarWithBackground, create_bar_with_background
 
 __all__ = [
-    'Text_fps',
-    'create_fps_counter',
-    'Bar',
-    'create_bar',
-    'BarWithBackground',
-    'create_bar_with_background'
+    "Text_fps",
+    "create_fps_counter",
+    "Bar",
+    "create_bar",
+    "BarWithBackground",
+    "create_bar_with_background",
 ]

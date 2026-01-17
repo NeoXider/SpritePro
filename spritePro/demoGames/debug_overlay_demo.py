@@ -64,7 +64,9 @@ class DebugOverlayScene(s.Scene):
         if s.input.was_pressed(pygame.K_3):
             s.debug_log_error(f"Error {random.randint(1, 99)}")
         if s.input.was_pressed(pygame.K_4):
-            s.debug_log_custom("[custom]", f"Custom {random.randint(1, 99)}", (170, 255, 170))
+            s.debug_log_custom(
+                "[custom]", f"Custom {random.randint(1, 99)}", (170, 255, 170)
+            )
 
 
 def main():

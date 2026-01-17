@@ -7,6 +7,8 @@ connect
 Собтие (информация) нажатие на кнопку
 
 """
+from spritePro.utils.logger import log_info
+from blinker import signal
 
 
 class Event:
@@ -21,7 +23,7 @@ class Event:
 
 
 # def play_audio(fsdf):
-#     print("Воспроизводим звук")
+#     log_info("Воспроизводим звук")
 
 # damage = Event()
 # damage.subscribe(play_audio)
@@ -29,10 +31,8 @@ class Event:
 
 # damage.invoke()
 
-from blinker import signal
-
 def on_damage(sender, damage):
-    print("получили урон:", damage)
+    log_info("получили урон:", damage)
 
 damage = signal("damage player")
 

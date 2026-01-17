@@ -28,6 +28,9 @@ SpritePro состоит из нескольких основных модуле
 #### [DraggableSprite](draggable_sprite.md)
 Drag-and-drop компонент на базе Sprite с колбэками и возвратом на место.
 
+#### [Pages](pages.md)
+Система страниц (Page/PageManager) для UI и экранов внутри сцены.
+
 ### Игровые системы
 
 #### [Animation](animation.md)
@@ -92,6 +95,7 @@ InputState в стиле Unity и EventBus для подписки на собы
 - [Timer](timer.md) - Управление временем
 - [Health](health.md) - Система здоровья
 - [Debug Overlay](debug.md) - Отладочная сетка и логи
+- [Pages](pages.md) - Страницы и менеджер страниц
 
 **Вспомогательные инструменты:**
 - [Surface](surface.md) - Операции с поверхностями

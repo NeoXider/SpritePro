@@ -465,17 +465,20 @@ python spritePro/demoGames/ping_pong.py
 ### 🚀 Быстрый старт
 - [Установка и настройка](#-быстрый-старт-30-секунд)
 - [Базовый пример](#ваша-первая-игра-5-строк)
+- [Быстрый старт 2.0](#-быстрый-старт-20-шаблон-проекта)
 
-### 📚 Полная документация
-- [📖 Индекс документации](DOCUMENTATION_INDEX.md) - Все модули и компоненты
-- [🎮 Sprite](docs/sprite.md) - Базовый класс спрайта
-- [🎨 UI компоненты](docs/button.md) - Кнопки, переключатели, текст
-- [🎬 Анимации](docs/animation.md) - Система анимаций
-- [✨ Tweening](docs/tween.md) - Плавные переходы
-- [💥 Частицы](docs/particles.md) - Система частиц
-- [🎵 Аудио](docs/audio.md) - AudioManager
-- [💾 Сохранения](docs/save_load.md) - PlayerPrefs
-- [📊 Полосы прогресса](docs/bar.md) - Bar компоненты
+### 📚 Индексы
+- [📖 Индекс документации](DOCUMENTATION_INDEX.md) - Полный список модулей
+- [📘 Документация папки docs](docs/README.md) - Навигация по разделам
+
+### 🧩 Полный список документации
+- Основы: [Game Loop](docs/game_loop.md) • [Input](docs/input.md) • [Debug](docs/debug.md) • [Camera & Particles](docs/camera_and_particles.md)
+- Спрайты и графика: [Sprite](docs/sprite.md) • [Surface](docs/surface.md) • [Text](docs/text.md) • [Text FPS](docs/text_fps.md) • [Color Effects](docs/color_effects.md) • [ReadySprites](docs/readySprites.md)
+- UI: [Button](docs/button.md) • [Toggle Button](docs/toggle_button.md) • [Bar](docs/bar.md) • [Bar Background](docs/bar_background.md) • [Pages](docs/pages.md)
+- Компоненты: [Animation](docs/animation.md) • [Tween](docs/tween.md) • [Timer](docs/timer.md) • [Health](docs/health.md) • [Mouse Interactor](docs/mouse_interactor.md) • [Draggable Sprite](docs/draggable_sprite.md)
+- Эффекты и частицы: [Particles](docs/particles.md)
+- Аудио: [Audio](docs/audio.md)
+- Сохранения и утилиты: [Save/Load](docs/save_load.md)
 
 ---
 

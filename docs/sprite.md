@@ -91,6 +91,28 @@ current_scale = sprite.scale
 
 Такой подход предпочтительнее, чем использование методов `set_*()` и `get_*()`.
 
+### Примитивы (pygame.draw)
+
+Sprite может создавать простые формы без изображений:
+
+- `set_rect_shape(size=None, color=(255,255,255), width=0, border_radius=0)`
+- `set_circle_shape(radius=None, color=(255,255,255), width=0)`
+- `set_ellipse_shape(size=None, color=(255,255,255), width=0)`
+- `set_polygon_shape(points, color=(255,255,255), width=0, padding=2)`
+- `set_polyline(points, color=(255,255,255), width=2, closed=False, padding=2, world_points=False)`
+
+**Пример:**
+```python
+box = s.Sprite("", (120, 80), (150, 150))
+box.set_rect_shape(color=(120, 200, 255), border_radius=12)
+
+ball = s.Sprite("", (80, 80), (320, 150))
+ball.set_circle_shape(radius=40, color=(255, 180, 100))
+
+line = s.Sprite("", (1, 1), (520, 360))
+line.set_polyline([(0, 0), (40, 30), (80, -10), (140, 40)], color=(200, 200, 255), width=3)
+```
+
 
 ### Управление состоянием
 - `set_sorting_order(order: int)`: Изменить порядок отрисовки (меньше = сзади, больше = спереди)
@@ -140,6 +162,7 @@ h = sprite.height  # высота
 - `y` (int): Y координата центра спрайта. Можно устанавливать: `sprite.y = 200`
 - `width` (int): Ширина спрайта. Можно устанавливать: `sprite.width = 50`
 - `height` (int): Высота спрайта. Можно устанавливать: `sprite.height = 50`
+- `anchor` (Anchor): Текущий якорь позиционирования. Изменение якоря не сдвигает спрайт.
 
 ### Свойства визуальных эффектов
 - `scale` (float): Коэффициент масштабирования. Можно устанавливать: `sprite.scale = 1.5`
@@ -165,7 +188,7 @@ h = sprite.height  # высота
 - `auto_flip` (bool): Автоматически отражать спрайт при движении влево/вправо. По умолчанию: True
 - `stop_threshold` (float): Порог расстояния для остановки движения. По умолчанию: 1.0
 - `sorting_order` (int | None): Текущий слой, используемый для порядка отрисовки
-- `anchor_key` (Anchor): Текущий якорь позиционирования
+- `anchor_key` (Anchor): Текущий якорь позиционирования (внутреннее поле, используйте `anchor`)
 - `screen_space` (bool): Фиксирован ли спрайт к экрану (игнорирует камеру)
 - `flipped_h` (bool): Отражен ли спрайт по горизонтали
 - `flipped_v` (bool): Отражен ли спрайт по вертикали

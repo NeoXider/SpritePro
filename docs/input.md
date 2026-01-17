@@ -44,9 +44,15 @@ def on_quit(event):
 def on_key_down(key, event):
     print("Key down:", key)
 
-s.events.on("quit", on_quit)
-s.events.on("key_down", on_key_down)
+s.events.connect("quit", on_quit)
+s.events.connect("key_down", on_key_down)
 ```
+
+Полезные методы:
+- `connect(event_name, handler)`
+- `disconnect(event_name, handler=None)`
+- `send(event_name, **payload)`
+- `disconnect_all(event_name=None)`
 
 Доступные события:
 - `quit`

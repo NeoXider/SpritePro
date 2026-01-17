@@ -95,6 +95,11 @@
 - Колбэки начала/конца
 - Возврат на место
 
+#### [docs/pages.md](docs/pages.md)
+**Pages**
+- Страницы и менеджер страниц
+- Автовключение/выключение спрайтов
+
 ### Игровые системы
 
 #### [docs/animation.md](docs/animation.md)
@@ -258,6 +263,7 @@
 - [docs/game_loop.md](docs/game_loop.md)
 - [docs/input.md](docs/input.md)
 - [docs/debug.md](docs/debug.md)
+- [docs/pages.md](docs/pages.md)
 
 #### 📋 Планирование и разработка
 - [ROADMAP.md](ROADMAP.md)

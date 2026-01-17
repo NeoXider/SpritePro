@@ -1,4 +1,5 @@
 from pathlib import Path
+
 """Quick example of ParticleEmitter usage."""
 
 from pygame.math import Vector2
@@ -28,7 +29,7 @@ def main():
     )
 
     running = True
-    text = s.TextSprite("Click on screen", 56, pos = s.WH_C)
+    text = s.TextSprite("Click on screen", 56, pos=s.WH_C)
     while running:
         s.update(fill_color=(20, 20, 40))
 

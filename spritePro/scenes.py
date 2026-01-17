@@ -56,7 +56,9 @@ class SceneManager:
         """Возвращает сцену по имени."""
         return self._scenes.get(name)
 
-    def set_scene_by_name(self, name: str, context=None, recreate: bool = False) -> None:
+    def set_scene_by_name(
+        self, name: str, context=None, recreate: bool = False
+    ) -> None:
         """Устанавливает сцену по имени, при необходимости пересоздает."""
         if recreate:
             scene = self._recreate_scene(name)

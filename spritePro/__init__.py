@@ -30,6 +30,7 @@ from .particles import (
     template_fire,
     template_snowfall,
     template_circular_burst,
+    template_trail,
 )
 from .constants import Anchor
 from .audio import AudioManager, Sound
@@ -39,6 +40,7 @@ from . import readySprites
 from .utils import save_load
 
 __all__ = [
+    # Core sprites / UI
     "Sprite",
     "Button",
     "ToggleButton",
@@ -47,11 +49,15 @@ __all__ = [
     "DraggableSprite",
     "MouseInteractor",
     "Animation",
+    # Tweening
     "Tween",
     "TweenManager",
     "EasingType",
+    # Save/load
     "PlayerPrefs",
+    # Game core
     "SpriteProGame",
+    # Particles
     "ParticleEmitter",
     "ParticleConfig",
     "template_sparks",
@@ -59,20 +65,25 @@ __all__ = [
     "template_fire",
     "template_snowfall",
     "template_circular_burst",
+    "template_trail",
+    # Pages (UI screens)
     "Page",
     "PageManager",
-
+    # Constants / audio
     "Anchor",
     "AudioManager",
     "Sound",
+    # Utils
     "save_load",
+    # Scenes
     "Scene",
     "SceneManager",
+    # Input / events / resources
     "InputState",
     "EventBus",
     "ResourceCache",
     "resource_cache",
-
+    # Global facade
     "get_context",
     "get_game",
     "register_sprite",
@@ -99,6 +110,7 @@ __all__ = [
     "clock",
     "load_texture",
     "load_sound",
+    # Debug / logging
     "enable_debug",
     "disable_debug",
     "toggle_debug",
@@ -120,6 +132,9 @@ __all__ = [
     "set_debug_hud_style",
     "set_debug_hud_enabled",
     "set_debug_camera_input",
+    "set_console_log_enabled",
+    "set_console_log_color_enabled",
+    # Modules
     "utils",
     "readySprites",
     # methods
@@ -158,9 +173,6 @@ def _sync_globals() -> None:
 def get_context() -> GameContext:
     """Возвращает глобальный контекст игры."""
     return _context
-
-
-
 
 
 def get_game() -> SpriteProGame:
@@ -368,6 +380,7 @@ def set_debug_grid(
     labels_enabled: bool | None = None,
     label_limit: int | None = None,
     label_font_size: int | None = None,
+    on_top: bool | None = None,
 ) -> None:
     """Настраивает параметры debug-сетки."""
     _context.game.set_debug_grid(
@@ -379,7 +392,9 @@ def set_debug_grid(
         labels_enabled=labels_enabled,
         label_limit=label_limit,
         label_font_size=label_font_size,
+        on_top=on_top,
     )
+
 
 def set_debug_log_style(
     font_size: int | None = None,
@@ -419,11 +434,22 @@ def set_debug_log_stack_enabled(enabled: bool = True) -> None:
     _context.game.set_debug_log_stack_enabled(enabled)
 
 
+def set_console_log_enabled(enabled: bool = True) -> None:
+    """Включает или выключает вывод логов в консоль."""
+    _context.game.set_console_log_enabled(enabled)
+
+
+def set_console_log_color_enabled(enabled: bool = True) -> None:
+    """Включает или выключает цветной вывод логов в консоль."""
+    _context.game.set_console_log_color_enabled(enabled)
+
+
 def set_debug_hud_style(
     font_size: int | None = None,
     color: tuple[int, int, int] | None = None,
     padding: int | None = None,
     anchor: str | None = None,
+    on_top: bool | None = None,
 ) -> None:
     """Настраивает стиль HUD с FPS и координатами камеры."""
     _context.game.set_debug_hud_style(
@@ -431,6 +457,7 @@ def set_debug_hud_style(
         color=color,
         padding=padding,
         anchor=anchor,
+        on_top=on_top,
     )
 
 
@@ -463,6 +490,7 @@ def set_debug_log_prefixes(
 ) -> None:
     """Задает префиксы для типов логов."""
     _context.game.set_debug_log_prefixes(info=info, warning=warning, error=error)
+
 
 def debug_log(
     text: str,
@@ -528,10 +556,10 @@ def get_screen(
 
 
 def update(
-    fps: int = 60, 
+    fps: int = 60,
     fill_color: tuple[int, int, int] = None,
     update_display: bool = True,
-    *update_objects
+    *update_objects,
 ) -> None:
     """Обновляет экран и события игры.
 

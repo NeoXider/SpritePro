@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Callable, Optional, List, Union
+from ..utils.logger import log_info, log_warning, log_error
 
 # Используем TYPE_CHECKING, чтобы избежать циклического импорта,
 # если HealthComponent будет ссылаться на Sprite для тайп-хинтинга
@@ -105,7 +106,7 @@ class HealthComponent:
     @property
     def max_health(self) -> float:
         """Максимальное количество здоровья.
-        
+
         Returns:
             float: Максимальное количество здоровья.
         """
@@ -130,12 +131,12 @@ class HealthComponent:
             if self._current_health > self._max_health:
                 self.current_health = self._max_health
 
-            # print(f"Максимальное здоровье изменено на {self._max_health}.")
+            # log_info(f"Максимальное здоровье изменено на {self._max_health}.")
 
     @property
     def current_health(self) -> float:
         """Текущее количество здоровья.
-        
+
         Returns:
             float: Текущее количество здоровья.
         """
@@ -172,7 +173,7 @@ class HealthComponent:
     @property
     def is_alive(self) -> bool:
         """Проверяет, жив ли спрайт.
-        
+
         Returns:
             bool: True, если спрайт жив (текущее здоровье > 0).
         """
@@ -198,7 +199,7 @@ class HealthComponent:
                 "Количество урона (amount) должно быть положительным числом."
             )
         if not self._is_alive:
-            # print("Попытка нанести урон уже мертвому спрайту.") # Можно закомментировать в финальной версии
+            # log_info("Попытка нанести урон уже мертвому спрайту.") # Можно закомментировать в финальной версии
             return
 
         # TODO: Применить логику резистов/уязвимостей на основе damage_type перед изменением HP
@@ -209,7 +210,7 @@ class HealthComponent:
         # Вызываем колбэки получения урона
         self._call_callbacks(self._on_damage_callbacks, amount)
 
-        print(
+        log_info(
             f"Спрайт получил {amount} урона. Осталось {self._current_health}/{self._max_health} HP."
         )
 
@@ -233,7 +234,7 @@ class HealthComponent:
             )
         if not self._is_alive:
             # TODO: Добавить логику воскрешения, если требуется. Пока просто выходим.
-            # print("Попытка вылечить мертвого спрайта.")
+            # log_info("Попытка вылечить мертвого спрайта.")
             return
 
         # Изменяем текущее HP с использованием сеттера, который вызовет колбэки HP change
@@ -242,7 +243,7 @@ class HealthComponent:
         # Вызываем колбэки лечения
         self._call_callbacks(self._on_heal_callbacks, amount)
 
-        print(
+        log_info(
             f"Спрайт вылечен на {amount}. Текущее HP: {self._current_health}/{self._max_health}."
         )
 
@@ -255,7 +256,7 @@ class HealthComponent:
         Args:
             heal_to_max (bool, optional): Если True (по умолчанию), устанавливает текущее здоровье равным максимальному после воскрешения. Если False, текущее здоровье остается как есть.
         """
-        # print(f"Спрайт {self.owner_sprite} воскресает!")
+        # log_info(f"Спрайт {self.owner_sprite} воскресает!")
         self._is_alive = True  # Устанавливаем флаг живости
 
         if heal_to_max:
@@ -268,20 +269,20 @@ class HealthComponent:
 
     def add_on_hp_change_callback(self, callback: HpChangeCallback):
         """Добавляет функцию в список колбэков на изменение HP.
-        
+
         Args:
             callback (HpChangeCallback): Функция обратного вызова для добавления.
         """
         if callable(callback):
             self._on_hp_change_callbacks.append(callback)
         else:
-            print(
+            log_warning(
                 "Предупреждение: Попытка добавить некорректный колбэк на изменение HP."
             )
 
     def remove_on_hp_change_callback(self, callback: HpChangeCallback):
         """Удаляет функцию из списка колбэков на изменение HP.
-        
+
         Args:
             callback (HpChangeCallback): Функция обратного вызова для удаления.
         """
@@ -290,20 +291,20 @@ class HealthComponent:
 
     def add_on_damage_callback(self, callback: DamageCallback):
         """Добавляет функцию в список колбэков на получение урона.
-        
+
         Args:
             callback (DamageCallback): Функция обратного вызова для добавления.
         """
         if callable(callback):
             self._on_damage_callbacks.append(callback)
         else:
-            print(
+            log_warning(
                 "Предупреждение: Попытка добавить некорректный колбэк на получение урона."
             )
 
     def remove_on_damage_callback(self, callback: DamageCallback):
         """Удаляет функцию из списка колбэков на получение урона.
-        
+
         Args:
             callback (DamageCallback): Функция обратного вызова для удаления.
         """
@@ -312,18 +313,20 @@ class HealthComponent:
 
     def add_on_heal_callback(self, callback: HealCallback):
         """Добавляет функцию в список колбэков на лечение.
-        
+
         Args:
             callback (HealCallback): Функция обратного вызова для добавления.
         """
         if callable(callback):
             self._on_heal_callbacks.append(callback)
         else:
-            print("Предупреждение: Попытка добавить некорректный колбэк на лечение.")
+            log_warning(
+                "Предупреждение: Попытка добавить некорректный колбэк на лечение."
+            )
 
     def remove_on_heal_callback(self, callback: HealCallback):
         """Удаляет функцию из списка колбэков на лечение.
-        
+
         Args:
             callback (HealCallback): Функция обратного вызова для удаления.
         """
@@ -332,18 +335,20 @@ class HealthComponent:
 
     def add_on_death_callback(self, callback: DeathCallback):
         """Добавляет функцию в список колбэков на смерть.
-        
+
         Args:
             callback (DeathCallback): Функция обратного вызова для добавления.
         """
         if callable(callback):
             self._on_death_callbacks.append(callback)
         else:
-            print("Предупреждение: Попытка добавить некорректный колбэк на смерть.")
+            log_warning(
+                "Предупреждение: Попытка добавить некорректный колбэк на смерть."
+            )
 
     def remove_on_death_callback(self, callback: DeathCallback):
         """Удаляет функцию из списка колбэков на смерть.
-        
+
         Args:
             callback (DeathCallback): Функция обратного вызова для удаления.
         """
@@ -356,7 +361,7 @@ class HealthComponent:
             try:
                 callback(*args, **kwargs)
             except Exception as e:
-                print(f"Ошибка при вызове колбэка {callback.__name__}: {e}")
+                log_error(f"Ошибка при вызове колбэка {callback.__name__}: {e}")
 
     # --- Внутренние методы ---
 
@@ -369,7 +374,7 @@ class HealthComponent:
         """
         if self._is_alive and self._current_health <= 0:
             self._is_alive = False
-            print(f"Спрайт {self.owner_sprite} умер.")
+            log_info(f"Спрайт {self.owner_sprite} умер.")
             # Вызываем колбэки смерти, передавая спрайт-владелец
             self._call_callbacks(self._on_death_callbacks, self.owner_sprite)
 
@@ -377,7 +382,7 @@ class HealthComponent:
         # можно добавить логику обработки воскрешения
         # elif not self._is_alive and self._current_health > 0:
         #     self._is_alive = True
-        #     print(f"Спрайт {self.owner_sprite} воскрес!")
+        #     log_info(f"Спрайт {self.owner_sprite} воскрес!")
         # TODO: Вызвать колбэк воскрешения, если он есть
 
     # --- Перегрузка операторов для удобства ---
@@ -465,7 +470,7 @@ class HealthComponent:
 
     def __iadd__(self, amount: float) -> "HealthComponent":
         """Перегрузка оператора '+='. Лечит спрайт на указанное количество.
-        
+
         `health_component += amount` эквивалентно `health_component.heal(amount)`.
 
         Args:
@@ -484,7 +489,7 @@ class HealthComponent:
 
     def __isub__(self, amount: float) -> "HealthComponent":
         """Перегрузка оператора '-='. Наносит урон спрайту на указанное количество.
-        
+
         `health_component -= amount` эквивалентно `health_component.take_damage(amount)`.
 
         Args:
@@ -503,7 +508,7 @@ class HealthComponent:
 
     def __str__(self) -> str:
         """Возвращает строковое представление компонента здоровья.
-        
+
         Returns:
             str: Строковое представление в формате "Health(текущее/максимальное, Alive: bool)".
         """
@@ -511,7 +516,7 @@ class HealthComponent:
 
     def __repr__(self) -> str:
         """Возвращает формальное строковое представление компонента здоровья.
-        
+
         Returns:
             str: Формальное строковое представление компонента.
         """
@@ -534,21 +539,21 @@ if __name__ == "__main__":
 
     def handle_hp_change(new_hp, diff):
         """Колбэк изменения HP для демонстрации."""
-        print(f"  Колбэк HP Change: Новое HP = {new_hp}, Изменение = {diff}")
+        log_info(f"  Колбэк HP Change: Новое HP = {new_hp}, Изменение = {diff}")
 
     def handle_damage(amount):
         """Колбэк получения урона для демонстрации."""
-        print(f"  Колбэк Damage: Получено урона = {amount}")
+        log_info(f"  Колбэк Damage: Получено урона = {amount}")
 
     def handle_heal(amount):
         """Колбэк лечения для демонстрации."""
-        print(f"  Колбэк Heal: Получено лечения = {amount}")
+        log_info(f"  Колбэк Heal: Получено лечения = {amount}")
 
     def handle_death(sprite):
         """Колбэк смерти для демонстрации."""
-        print(f"  Колбэк Death: {sprite} ============================ мертв!")
+        log_info(f"  Колбэк Death: {sprite} ============================ мертв!")
 
-    print("Создаем компонент здоровья с HP = 50/100")
+    log_info("Создаем компонент здоровья с HP = 50/100")
     dummy_owner = DummySprite("Тестовый Объект")
     health = HealthComponent(
         max_health=100,
@@ -558,66 +563,66 @@ if __name__ == "__main__":
         on_damage=handle_damage,  # Один колбэк
         on_death=handle_death,
     )
-    print(health)
-    print(f"Жив ли? {health.is_alive}")
-    print("-" * 20)
+    log_info(health)
+    log_info(f"Жив ли? {health.is_alive}")
+    log_info("-" * 20)
 
-    print("Наносим 20 урона (health -= 20)")
+    log_info("Наносим 20 урона (health -= 20)")
     health -= 20  # Используем перегруженный оператор -=
-    print(health)
-    print(f"Жив ли? {health.is_alive}")
-    print("-" * 20)
+    log_info(health)
+    log_info(f"Жив ли? {health.is_alive}")
+    log_info("-" * 20)
 
-    print("Наносим 40 урона (health.take_damage(40))")
+    log_info("Наносим 40 урона (health.take_damage(40))")
     health.take_damage(40)  # Используем метод take_damage
-    print(health)
-    print(f"Жив ли? {health.is_alive}")
-    print("-" * 20)
+    log_info(health)
+    log_info(f"Жив ли? {health.is_alive}")
+    log_info("-" * 20)
 
-    print("Наносим 50 урона (health.take_damage(50))")
+    log_info("Наносим 50 урона (health.take_damage(50))")
     health.take_damage(50)  # Это должно убить спрайт
-    print(health)
-    print(f"Жив ли? {health.is_alive}")
-    print("-" * 20)
+    log_info(health)
+    log_info(f"Жив ли? {health.is_alive}")
+    log_info("-" * 20)
 
-    print("Попытка нанести еще 10 урона (health -= 10)")
+    log_info("Попытка нанести еще 10 урона (health -= 10)")
     health -= 10  # Спрайт мертв, не должно сработать
-    print(health)
-    print(f"Жив ли? {health.is_alive}")
-    print("-" * 20)
+    log_info(health)
+    log_info(f"Жив ли? {health.is_alive}")
+    log_info("-" * 20)
 
-    print("Пытаемся вылечить на 30 (health.heal(30))")
+    log_info("Пытаемся вылечить на 30 (health.heal(30))")
     health.heal(30)  # Спрайт мертв, не должно сработать
-    print(health)
-    print(f"Жив ли? {health.is_alive}")
-    print("-" * 20)
+    log_info(health)
+    log_info(f"Жив ли? {health.is_alive}")
+    log_info("-" * 20)
 
-    print("Устанавливаем максимальное HP = 50 (health.max_health = 50)")
+    log_info("Устанавливаем максимальное HP = 50 (health.max_health = 50)")
     health.max_health = 50  # Спрайт мертв (HP 0), max_health изменится, HP останется 0
-    print(health)
-    print(f"Жив ли? {health.is_alive}")
-    print("-" * 20)
+    log_info(health)
+    log_info(f"Жив ли? {health.is_alive}")
+    log_info("-" * 20)
 
-    print("Устанавливаем текущее HP = 20 (health.current_health = 20)")
+    log_info("Устанавливаем текущее HP = 20 (health.current_health = 20)")
     # Это должно воскресить спрайт (если бы _check_death обрабатывал воскрешение)
     # С текущей логикой, просто меняется HP. is_alive все еще False.
     health.current_health = 20
-    print(health)
-    print(f"Жив ли? {health.is_alive}")  # Пока False
-    print("-" * 20)
+    log_info(health)
+    log_info(f"Жив ли? {health.is_alive}")  # Пока False
+    log_info("-" * 20)
 
-    print("Добавляем колбэк лечения и лечим на 10 (health += 10)")
+    log_info("Добавляем колбэк лечения и лечим на 10 (health += 10)")
     health.add_on_heal_callback(handle_heal)
     health += 10  # Теперь лечение должно сработать и вызвать колбэк heal и hp_change
-    print(health)
-    print(f"Жив ли? {health.is_alive}")  # Пока False
-    print("-" * 20)
+    log_info(health)
+    log_info(f"Жив ли? {health.is_alive}")  # Пока False
+    log_info("-" * 20)
 
     # Пример сравнения с числами
-    print("Примеры сравнения с числами:")
-    print(f"health < 30: {health < 30}")
-    print(f"health >= 30: {health >= 30}")
-    print(f"health == 0: {health == 0}")
-    print(f"health != 50: {health != 50}")
+    log_info("Примеры сравнения с числами:")
+    log_info(f"health < 30: {health < 30}")
+    log_info(f"health >= 30: {health >= 30}")
+    log_info(f"health == 0: {health == 0}")
+    log_info(f"health != 50: {health != 50}")
 
-    print(f"живой: {health is True}")
+    log_info(f"живой: {health is True}")

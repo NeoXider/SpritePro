@@ -29,7 +29,7 @@ class Hero(s.Sprite):
         self.bar.set_parent(self)
         self.bar.local_offset = pos
         self.bar.set_fill_size((self.bar.size[0] // 1.02, self.bar.size[1] // 1.4))
-    
+
     def update(self, screen: pygame.Surface = None):
         self.velocity = pygame.Vector2(self.velocity.x, 0)
         super().update(screen)
@@ -50,7 +50,7 @@ player.set_bar(create_bar())
 
 enemy = Hero(path_sprites + "enemy.png", speed=1)
 enemy.set_native_size()
-enemy.set_position((s.WH_C.x+500, 730))
+enemy.set_position((s.WH_C.x + 500, 730))
 enemy.set_scale(0.5)
 enemy.set_bar(create_bar())
 

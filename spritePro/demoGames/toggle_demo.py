@@ -140,41 +140,41 @@ class ToggleDemo:
     def toggle_sound(self, is_on: bool):
         """Handle sound toggle."""
         self.sound_enabled = is_on
-        print(f"Sound {'enabled' if is_on else 'disabled'}")
+        s.debug_log_info(f"Sound {'enabled' if is_on else 'disabled'}")
         # In a real game, you would adjust pygame.mixer volume here
 
     def toggle_music(self, is_on: bool):
         """Handle music toggle."""
         self.music_enabled = is_on
-        print(f"Music {'started' if is_on else 'stopped'}")
+        s.debug_log_info(f"Music {'started' if is_on else 'stopped'}")
         # In a real game, you would start/stop background music here
 
     def toggle_fullscreen(self, is_on: bool):
         """Handle fullscreen toggle."""
         self.fullscreen = is_on
-        print(f"Display mode: {'Fullscreen' if is_on else 'Windowed'}")
+        s.debug_log_info(f"Display mode: {'Fullscreen' if is_on else 'Windowed'}")
         # In a real game, you would change display mode here
 
     def toggle_debug(self, is_on: bool):
         """Handle debug mode toggle."""
         self.debug_mode = is_on
-        print(f"Debug mode {'enabled' if is_on else 'disabled'}")
+        s.debug_log_info(f"Debug mode {'enabled' if is_on else 'disabled'}")
         # In a real game, you would show/hide debug info here
 
     def toggle_autosave(self, is_on: bool):
         """Handle auto-save toggle."""
         self.auto_save = is_on
-        print(f"Auto-save {'enabled' if is_on else 'disabled'}")
+        s.debug_log_info(f"Auto-save {'enabled' if is_on else 'disabled'}")
         # In a real game, you would enable/disable auto-save here
 
     def toggle_power(self, is_on: bool):
         """Handle power mode toggle."""
-        print(f"Power mode {'ACTIVATED' if is_on else 'deactivated'}")
+        s.debug_log_info(f"Power mode {'ACTIVATED' if is_on else 'deactivated'}")
         # In a real game, this might affect player abilities
 
     def reset_all(self):
         """Reset all toggles to default states."""
-        print("Resetting all settings to defaults...")
+        s.debug_log_info("Resetting all settings to defaults...")
 
         # Reset states
         self.sound_enabled = True

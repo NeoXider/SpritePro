@@ -147,7 +147,7 @@ class Tween:
         self.is_paused = False
         self.pause_time = 0
         self.direction = 1  # 1 для движения вперед, -1 для движения назад
-        
+
         # Автоматическая регистрация для обновления
         if auto_register:
             try:
@@ -159,7 +159,7 @@ class Tween:
         """Обновляет переход.
 
         Args:
-            dt (Optional[float], optional): Время с последнего обновления. 
+            dt (Optional[float], optional): Время с последнего обновления.
                 Если не указано, берется из spritePro.dt. По умолчанию None.
 
         Returns:
@@ -170,7 +170,7 @@ class Tween:
 
         if dt is None:
             try:
-                dt = getattr(spritePro, 'dt', None)
+                dt = getattr(spritePro, "dt", None)
             except AttributeError:
                 dt = None
 
@@ -191,7 +191,9 @@ class Tween:
                 return self.end_value
             else:
                 self.is_playing = False
-                self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
+                self.current_value = self._lerp_value(
+                    self.start_value, self.end_value, 1.0
+                )
                 if self.on_update:
                     self.on_update(self.current_value)
                 if self.on_complete:
@@ -331,7 +333,7 @@ class TweenManager:
             auto_register (bool, optional): Если True, автоматически регистрирует менеджер для обновления в spritePro.update(). По умолчанию True.
         """
         self.tweens: Dict[str, Tween] = {}
-        
+
         # Автоматическая регистрация для обновления
         if auto_register:
             try:
@@ -391,16 +393,16 @@ class TweenManager:
         """Обновляет все переходы.
 
         Args:
-            dt (Optional[float], optional): Время с последнего обновления. 
+            dt (Optional[float], optional): Время с последнего обновления.
                 Если не указано, берется из spritePro.dt. По умолчанию None.
         """
         # Если dt не передан, пытаемся взять из spritePro.dt
         if dt is None:
             try:
-                dt = getattr(spritePro, 'dt', None)
+                dt = getattr(spritePro, "dt", None)
             except AttributeError:
                 dt = None
-        
+
         for name in list(self.tweens.keys()):
             value = self.tweens[name].update(dt)
             if value is None:

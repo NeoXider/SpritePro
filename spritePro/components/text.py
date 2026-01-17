@@ -66,7 +66,14 @@ class TextSprite(Sprite):
 
         # сначала создаём базовый Sprite с временным изображением
         dummy = pygame.Surface((1, 1), pygame.SRCALPHA)
-        super().__init__(sprite=dummy, pos=pos, speed=speed, sorting_order=sorting_order, anchor=anchor, **sprite_kwargs)
+        super().__init__(
+            sprite=dummy,
+            pos=pos,
+            speed=speed,
+            sorting_order=sorting_order,
+            anchor=anchor,
+            **sprite_kwargs,
+        )
 
         # сохраняем параметры текста
         self._text = text
@@ -80,7 +87,7 @@ class TextSprite(Sprite):
     @property
     def text(self) -> str:
         """Текст спрайта.
-        
+
         Returns:
             str: Текущий текст спрайта.
         """
@@ -89,7 +96,7 @@ class TextSprite(Sprite):
     @text.setter
     def text(self, new_text: str) -> None:  # noqa: F811
         """Устанавливает новый текст спрайта.
-        
+
         Args:
             new_text (str): Новый текст для отображения.
         """

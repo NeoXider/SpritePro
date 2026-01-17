@@ -35,21 +35,57 @@ def main():
 
     background_order = -100
     blue = s.Sprite(blue_img, size=(220, 160), pos=center, speed=0, sorting_order=0)
-    red = s.Sprite(red_img, size=(180, 120), pos=(center[0] + 20, center[1] + 20), speed=0, sorting_order=1)
+    red = s.Sprite(
+        red_img,
+        size=(180, 120),
+        pos=(center[0] + 20, center[1] + 20),
+        speed=0,
+        sorting_order=1,
+    )
 
     # Fix to screen space so camera does not affect positions
     blue.set_screen_space(True)
     red.set_screen_space(True)
 
     # Instruction and dynamic label
-    title = s.TextSprite("Sorting Order Demo", font_size=32, color=(255, 255, 255), pos=(center[0], 60), sorting_order=1000)
-    hint = s.TextSprite("Use Up/Down to change RED sorting order", font_size=22, color=(200, 200, 200), pos=(center[0], 95), sorting_order=1000)
+    title = s.TextSprite(
+        "Sorting Order Demo",
+        font_size=32,
+        color=(255, 255, 255),
+        pos=(center[0], 60),
+        sorting_order=1000,
+    )
+    hint = s.TextSprite(
+        "Use Up/Down to change RED sorting order",
+        font_size=22,
+        color=(200, 200, 200),
+        pos=(center[0], 95),
+        sorting_order=1000,
+    )
 
     # Labels for background, blue, and red sorting orders
-    bg_label = s.TextSprite(f"Background sorting_order: {background_order}", font_size=22, color=(180, 200, 255), pos=(center[0], 130), sorting_order=1000)
-    blue_label = s.TextSprite(f"Blue sorting_order: {blue.sorting_order or 0}", font_size=22, color=(180, 220, 255), pos=(center[0], 155), sorting_order=1000)
+    bg_label = s.TextSprite(
+        f"Background sorting_order: {background_order}",
+        font_size=22,
+        color=(180, 200, 255),
+        pos=(center[0], 130),
+        sorting_order=1000,
+    )
+    blue_label = s.TextSprite(
+        f"Blue sorting_order: {blue.sorting_order or 0}",
+        font_size=22,
+        color=(180, 220, 255),
+        pos=(center[0], 155),
+        sorting_order=1000,
+    )
     red_label_value = red.sorting_order if red.sorting_order is not None else 0
-    red_label = s.TextSprite(f"Red sorting_order: {red_label_value}", font_size=24, color=(255, 230, 180), pos=(center[0], 185), sorting_order=1000)
+    red_label = s.TextSprite(
+        f"Red sorting_order: {red_label_value}",
+        font_size=24,
+        color=(255, 230, 180),
+        pos=(center[0], 185),
+        sorting_order=1000,
+    )
 
     running = True
     while running:
@@ -80,5 +116,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

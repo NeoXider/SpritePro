@@ -1,5 +1,6 @@
 from typing import List, Tuple, Optional
 import time
+import sys
 import inspect
 from dataclasses import dataclass
 import pygame
@@ -49,6 +50,8 @@ class SpriteProGame:
         self.debug_log_file_path = "debug.log"
         self._debug_log_file_initialized = False
         self.debug_log_stack_enabled = True
+        self.console_log_enabled = True
+        self.console_log_color_enabled = True
         self.debug_start_time = time.monotonic()
         self.debug_grid_size = 100
         self.debug_grid_color = (80, 80, 80)
@@ -58,6 +61,7 @@ class SpriteProGame:
         self.debug_grid_label_limit = 10000
         self.debug_grid_labels_enabled = True
         self.debug_grid_label_font_size = 12
+        self.debug_grid_on_top = False
         self.debug_camera_color = (255, 80, 80)
         self.debug_camera_font_size = 16
         self.debug_camera_drag_button: int | None = 3
@@ -67,6 +71,7 @@ class SpriteProGame:
         self.debug_hud_font_size = 16
         self.debug_show_fps = True
         self.debug_show_camera_coords = True
+        self.debug_hud_on_top = True
         self.debug_fps_value = 0.0
         self.debug_log_prefixes = {
             "info": "[log]",
@@ -236,7 +241,7 @@ class SpriteProGame:
 
     def _update_camera_follow(self, wh_c: Vector2 | None = None) -> None:
         """Обновляет позицию камеры при следовании за целью.
-        
+
         Args:
             wh_c (Vector2 | None, optional): Центр экрана. Если None, используется значение по умолчанию (400, 300).
         """
@@ -285,7 +290,9 @@ class SpriteProGame:
             if entry_obj is obj:
                 self.update_objects.remove(entry)
 
-    def get_sprites_by_class(self, sprite_class: type, active_only: bool = True) -> List:
+    def get_sprites_by_class(
+        self, sprite_class: type, active_only: bool = True
+    ) -> List:
         """Получает список всех спрайтов указанного класса.
 
         Args:
@@ -300,13 +307,16 @@ class SpriteProGame:
             >>> all_sprites = game.get_sprites_by_class(Sprite, active_only=False)
         """
         result = [
-            sprite for sprite in self.all_sprites
-            if isinstance(sprite, sprite_class)
+            sprite for sprite in self.all_sprites if isinstance(sprite, sprite_class)
         ]
-        
+
         if active_only:
-            result = [sprite for sprite in result if hasattr(sprite, 'active') and sprite.active]
-        
+            result = [
+                sprite
+                for sprite in result
+                if hasattr(sprite, "active") and sprite.active
+            ]
+
         return result
 
     def update(self, *args, wh_c: Vector2 | None = None, **kwargs) -> None:
@@ -318,16 +328,17 @@ class SpriteProGame:
             **kwargs: Именованные аргументы для передачи в update спрайтов.
         """
         self._update_camera_follow(wh_c)
-        
+
         # Автоматически обновляем зарегистрированные объекты
-        dt = kwargs.pop('dt', None)
+        dt = kwargs.pop("dt", None)
         if dt is None:
             try:
                 import spritePro as sp
+
                 dt = sp.dt
             except (AttributeError, NameError):
                 dt = None
-        
+
         for entry in self.update_objects:
             obj = getattr(entry, "obj", entry)
             supports_dt = getattr(entry, "supports_dt", False)
@@ -342,9 +353,10 @@ class SpriteProGame:
                 try:
                     obj.update(dt)
                 except TypeError:
-                    print(f"Error update object {obj}")
-                         
-        
+                    import spritePro
+
+                    spritePro.debug_log_error(f"Error update object {obj}")
+
         self.all_sprites.update(*args, **kwargs)
 
     def enable_debug(self, enabled: bool = True) -> None:
@@ -383,6 +395,7 @@ class SpriteProGame:
         labels_enabled: Optional[bool] = None,
         label_limit: Optional[int] = None,
         label_font_size: Optional[int] = None,
+        on_top: Optional[bool] = None,
     ) -> None:
         """Настраивает параметры debug-сетки."""
         if size is not None:
@@ -402,6 +415,8 @@ class SpriteProGame:
         if label_font_size is not None:
             self.debug_grid_label_font_size = max(8, int(label_font_size))
             self._debug_grid_font = None
+        if on_top is not None:
+            self.debug_grid_on_top = bool(on_top)
 
     def set_debug_log_style(
         self,
@@ -452,12 +467,21 @@ class SpriteProGame:
             self.debug_log_file_path = path
             self._debug_log_file_initialized = False
 
+    def set_console_log_enabled(self, enabled: bool = True) -> None:
+        """Включает или выключает вывод логов в консоль."""
+        self.console_log_enabled = enabled
+
+    def set_console_log_color_enabled(self, enabled: bool = True) -> None:
+        """Включает или выключает цветной вывод логов в консоль."""
+        self.console_log_color_enabled = enabled
+
     def set_debug_hud_style(
         self,
         font_size: int | None = None,
         color: Tuple[int, int, int] | None = None,
         padding: int | None = None,
         anchor: str | None = None,
+        on_top: bool | None = None,
     ) -> None:
         """Настраивает стиль HUD с FPS и координатами камеры."""
         if font_size is not None:
@@ -469,6 +493,8 @@ class SpriteProGame:
             self.debug_hud_padding = max(0, int(padding))
         if anchor is not None:
             self.debug_hud_anchor = anchor
+        if on_top is not None:
+            self.debug_hud_on_top = bool(on_top)
 
     def set_debug_hud_enabled(
         self,
@@ -538,6 +564,8 @@ class SpriteProGame:
         if len(self._debug_logs) > self.debug_log_max:
             self._debug_logs = self._debug_logs[-self.debug_log_max :]
         self._write_debug_log_to_file(line)
+        if self.console_log_enabled:
+            self._write_console_log(line, color_enabled=self.console_log_color_enabled)
 
     def debug_log_info(self, text: str, ttl: Optional[float] = None) -> None:
         """Добавляет информационный лог."""
@@ -572,7 +600,16 @@ class SpriteProGame:
         self._ensure_debug_fonts()
         self._draw_debug_grid(surface)
 
-    def draw_debug_overlay(self, surface: pygame.Surface, wh_c: Vector2, dt: float | None = None) -> None:
+    def draw_debug_hud(self, surface: pygame.Surface) -> None:
+        """Рисует HUD с FPS и координатами камеры."""
+        if not self.debug_enabled or surface is None:
+            return
+        self._ensure_debug_fonts()
+        self._draw_debug_hud(surface)
+
+    def draw_debug_overlay(
+        self, surface: pygame.Surface, wh_c: Vector2, dt: float | None = None
+    ) -> None:
         """Рисует debug-маркеры и логи поверх сцены."""
         if not self.debug_enabled or surface is None:
             return
@@ -580,13 +617,14 @@ class SpriteProGame:
         self._update_debug_logs(dt_value)
         self._ensure_debug_fonts()
 
-        self._draw_debug_hud(surface)
         self._draw_camera_marker(surface, wh_c)
 
         if self.debug_logs_enabled:
             self._draw_debug_logs(surface)
 
-    def draw_debug(self, surface: pygame.Surface, wh_c: Vector2, dt: float | None = None) -> None:
+    def draw_debug(
+        self, surface: pygame.Surface, wh_c: Vector2, dt: float | None = None
+    ) -> None:
         """Рисует полный debug overlay (сетка + маркеры + логи)."""
         self.draw_debug_grid(surface)
         self.draw_debug_overlay(surface, wh_c, dt=dt)
@@ -596,9 +634,13 @@ class SpriteProGame:
         if self._debug_font is None:
             self._debug_font = pygame.font.SysFont(None, self.debug_log_font_size)
         if self._debug_grid_font is None:
-            self._debug_grid_font = pygame.font.SysFont(None, self.debug_grid_label_font_size)
+            self._debug_grid_font = pygame.font.SysFont(
+                None, self.debug_grid_label_font_size
+            )
         if self._debug_camera_font is None:
-            self._debug_camera_font = pygame.font.SysFont(None, self.debug_camera_font_size)
+            self._debug_camera_font = pygame.font.SysFont(
+                None, self.debug_camera_font_size
+            )
         if self._debug_hud_font is None:
             self._debug_hud_font = pygame.font.SysFont(None, self.debug_hud_font_size)
 
@@ -608,7 +650,11 @@ class SpriteProGame:
             return
         for entry in self._debug_logs:
             entry.age += dt
-        self._debug_logs = [entry for entry in self._debug_logs if entry.ttl <= 0 or entry.age <= entry.ttl]
+        self._debug_logs = [
+            entry
+            for entry in self._debug_logs
+            if entry.ttl <= 0 or entry.age <= entry.ttl
+        ]
 
     def _draw_debug_logs(self, surface: pygame.Surface) -> None:
         """Рисует список логов в выбранном углу."""
@@ -655,13 +701,17 @@ class SpriteProGame:
         x = start_x
         while x <= camera.x + width:
             screen_x = int(x - camera.x)
-            pygame.draw.line(grid_surface, grid_color, (screen_x, 0), (screen_x, height), 1)
+            pygame.draw.line(
+                grid_surface, grid_color, (screen_x, 0), (screen_x, height), 1
+            )
             x += grid_size
 
         y = start_y
         while y <= camera.y + height:
             screen_y = int(y - camera.y)
-            pygame.draw.line(grid_surface, grid_color, (0, screen_y), (width, screen_y), 1)
+            pygame.draw.line(
+                grid_surface, grid_color, (0, screen_y), (width, screen_y), 1
+            )
             y += grid_size
 
         surface.blit(grid_surface, (0, 0))
@@ -683,7 +733,9 @@ class SpriteProGame:
                     screen_y = int(y - camera.y) + 2
                     if 0 <= screen_x <= width - 20 and 0 <= screen_y <= height - 12:
                         label = f"{int(x)},{int(y)}"
-                        text_surf = self._debug_grid_font.render(label, True, self.debug_grid_label_color)
+                        text_surf = self._debug_grid_font.render(
+                            label, True, self.debug_grid_label_color
+                        )
                         surface.blit(text_surf, (screen_x, screen_y))
                         labels_drawn += 1
                 y += grid_size
@@ -705,13 +757,19 @@ class SpriteProGame:
             center_text = f"Point: {center_world[0]}, {center_world[1]}"
             mouse_text = f"Mouse: {mouse_world[0]}, {mouse_world[1]}"
 
-            center_surf = self._debug_camera_font.render(center_text, True, self.debug_camera_color)
-            mouse_surf = self._debug_camera_font.render(mouse_text, True, self.debug_camera_color)
+            center_surf = self._debug_camera_font.render(
+                center_text, True, self.debug_camera_color
+            )
+            mouse_surf = self._debug_camera_font.render(
+                mouse_text, True, self.debug_camera_color
+            )
 
             center_x = center[0] - center_surf.get_width() // 2
             mouse_x = center[0] - mouse_surf.get_width() // 2
             surface.blit(center_surf, (center_x, center[1] + 8))
-            surface.blit(mouse_surf, (mouse_x, center[1] + 8 + center_surf.get_height() + 2))
+            surface.blit(
+                mouse_surf, (mouse_x, center[1] + 8 + center_surf.get_height() + 2)
+            )
 
     def _draw_debug_hud(self, surface: pygame.Surface) -> None:
         """Рисует HUD с FPS и координатами камеры."""
@@ -775,6 +833,7 @@ class SpriteProGame:
         finally:
             del stack
         return ""
+
     def _write_debug_log_to_file(self, line: str) -> None:
         """Записывает лог в файл, если это включено."""
         if not self.debug_log_file_enabled or not self.debug_log_file_path:
@@ -786,6 +845,32 @@ class SpriteProGame:
             self._debug_log_file_initialized = True
         except Exception:
             pass
+
+    @staticmethod
+    def _write_console_log(line: str, color_enabled: bool = True) -> None:
+        """Пишет лог в stdout без использования print."""
+        try:
+            if color_enabled:
+                sys.stdout.write(SpriteProGame._colorize_console_line(line) + "\n")
+            else:
+                sys.stdout.write(line + "\n")
+            sys.stdout.flush()
+        except Exception:
+            pass
+
+    @staticmethod
+    def _colorize_console_line(line: str) -> str:
+        """Добавляет ANSI-цвет в зависимости от уровня лога."""
+        reset = "\x1b[0m"
+        if "[error]" in line.lower():
+            return f"\x1b[31m{line}{reset}"
+        if "[warning]" in line.lower():
+            return f"\x1b[33m{line}{reset}"
+        if "[info]" in line.lower():
+            return f"\x1b[32m{line}{reset}"
+        if "[log]" in line.lower():
+            return f"\x1b[36m{line}{reset}"
+        return line
 
     @staticmethod
     def _detect_update_signature(obj) -> bool:

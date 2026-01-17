@@ -37,13 +37,13 @@ while running:
 
     # Clear screen
     screen.fill((255, 255, 255))
-    
+
     # Draw everything
     space.debug_draw(draw_options)
-    
+
     # Update physics
-    space.step(1/60.0)
-    
+    space.step(1 / 60.0)
+
     # Update display
     pygame.display.flip()
     clock.tick(60)

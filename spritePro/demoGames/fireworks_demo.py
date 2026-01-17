@@ -51,7 +51,9 @@ class FireworksDemo:
         marker_surface = pygame.Surface((14, 14), pygame.SRCALPHA)
         pygame.draw.circle(marker_surface, (255, 255, 255), (7, 7), 6, 1)
         pygame.draw.circle(marker_surface, (255, 200, 60), (7, 7), 3)
-        self.focus_marker = s.Sprite(marker_surface, size=marker_surface.get_size(), pos=(0, 0))
+        self.focus_marker = s.Sprite(
+            marker_surface, size=marker_surface.get_size(), pos=(0, 0)
+        )
         self.focus_marker.set_position((s.WH_C.x, s.WH_C.y))
 
     def _set_marker(self, position: tuple[int, int]) -> None:
@@ -96,16 +98,33 @@ def main():
     s.init()
     s.get_screen((800, 600), "SpritePro Fireworks Demo")
 
-    border_surface = pygame.Surface((int(s.WH.x) - 40, int(s.WH.y) // 2), pygame.SRCALPHA)
-    pygame.draw.rect(border_surface, (80, 120, 200, 120), border_surface.get_rect(), width=2)
-    border = s.Sprite(border_surface, size=border_surface.get_size(), pos=(border_surface.get_width() // 2 + 20, border_surface.get_height() // 2 + 20))
-    border.set_position((border_surface.get_width() // 2 + 20, border_surface.get_height() // 2 + 20))
+    border_surface = pygame.Surface(
+        (int(s.WH.x) - 40, int(s.WH.y) // 2), pygame.SRCALPHA
+    )
+    pygame.draw.rect(
+        border_surface, (80, 120, 200, 120), border_surface.get_rect(), width=2
+    )
+    border = s.Sprite(
+        border_surface,
+        size=border_surface.get_size(),
+        pos=(
+            border_surface.get_width() // 2 + 20,
+            border_surface.get_height() // 2 + 20,
+        ),
+    )
+    border.set_position(
+        (border_surface.get_width() // 2 + 20, border_surface.get_height() // 2 + 20)
+    )
 
     demo = FireworksDemo()
     font = pygame.font.SysFont(None, 18)
     overlay = pygame.Surface((520, 34), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 140))
-    text_surface = font.render('WASD/стрелки — камера, ПКМ — перетаскивание, F — следовать, Space — сброс', True, (255, 255, 255))
+    text_surface = font.render(
+        "WASD/стрелки — камера, ПКМ — перетаскивание, F — следовать, Space — сброс",
+        True,
+        (255, 255, 255),
+    )
     overlay.blit(text_surface, (8, 8))
     info_sprite = s.Sprite(overlay, size=overlay.get_size(), pos=(0, 0))
     info_sprite.set_screen_space(True)
