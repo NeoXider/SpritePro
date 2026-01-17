@@ -7,6 +7,7 @@ class EventBus:
     """Простой EventBus для подписки/отписки на события."""
 
     def __init__(self) -> None:
+        """Инициализирует словарь обработчиков событий."""
         self._handlers: Dict[str, List[Callable[..., Any]]] = {}
 
     def on(self, event_name: str, handler: Callable[..., Any]) -> None:

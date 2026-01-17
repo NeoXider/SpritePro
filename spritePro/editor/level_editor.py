@@ -18,6 +18,7 @@ class SpriteData:
 class LevelEditor:
     """Main level editor class"""
     def __init__(self, width: int = 800, height: int = 600):
+        """Инициализирует редактор уровней с размерами сцены."""
         self.width = width
         self.height = height
         self.sprites: List[SpriteData] = []

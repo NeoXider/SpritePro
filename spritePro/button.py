@@ -165,6 +165,8 @@ class Button(Sprite):
         Args:
             screen (pygame.Surface, optional): Поверхность для отрисовки. Если None, используется глобальный экран.
         """
+        if not self.active:
+            return
         screen = screen or spritePro.screen
 
         interactor = self.interactor
@@ -214,6 +216,16 @@ class Button(Sprite):
         if label is not None and getattr(label, 'alive', lambda: True)():
             label.rect.center = self.rect.center
             label.update(screen)
+
+    def set_sorting_order(self, order: int) -> None:
+        """Устанавливает порядок отрисовки и синхронизирует его с текстом."""
+        super().set_sorting_order(order)
+        label = getattr(self, "text_sprite", None)
+        if label is not None:
+            try:
+                label.set_sorting_order(order)
+            except Exception:
+                pass
 
     def set_scale(self, scale: float, update: bool = True):
         """Устанавливает масштаб кнопки.
@@ -268,9 +280,11 @@ if __name__ == "__main__":
     from spritePro.utils.surface import round_corners
 
     def get_rundom_color() -> List[int]:
+        """Возвращает случайный RGB-цвет для демонстрации."""
         return [random.randint(0, 255) for _ in range(3)]
 
     def set_rand_color() -> None:
+        """Назначает случайные цвета кнопке и её тексту."""
         global color
         btn.text_sprite.set_color(get_rundom_color())
         btn.set_base_color(get_rundom_color())

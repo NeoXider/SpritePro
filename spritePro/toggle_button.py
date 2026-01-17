@@ -184,9 +184,11 @@ class ToggleButton(Button):
 if __name__ == "__main__":
 
     def on_sound_toggle(is_on: bool):
+        """Пример обработчика переключения звука."""
         print(f"Sound is now {'ON' if is_on else 'OFF'}")
 
     def on_music_toggle(is_on: bool):
+        """Пример обработчика переключения музыки."""
         print(f"Music is now {'ON' if is_on else 'OFF'}")
 
     pygame.init()

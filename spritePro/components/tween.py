@@ -209,6 +209,7 @@ class Tween:
         return self.current_value
 
     def _lerp_value(self, start: Any, end: Any, t: float) -> Any:
+        """Интерполирует значение с учетом типа tween."""
         if self.value_type == "color":
             return self._lerp_color(start, end, t)
         if self.value_type == "vector2":
@@ -230,10 +231,12 @@ class Tween:
 
     @staticmethod
     def _is_sequence(value: Any) -> bool:
+        """Проверяет, является ли значение последовательностью."""
         return isinstance(value, (list, tuple)) and len(value) >= 2
 
     @staticmethod
     def _looks_like_color(start: Any, end: Any) -> bool:
+        """Проверяет, похожи ли значения на RGB-цвет."""
         if not (isinstance(start, (list, tuple)) and isinstance(end, (list, tuple))):
             return False
         if len(start) != 3 or len(end) != 3:
@@ -247,10 +250,12 @@ class Tween:
 
     @staticmethod
     def _lerp_sequence(start: Any, end: Any, t: float) -> tuple:
+        """Интерполирует последовательность чисел поэлементно."""
         return tuple(s + (e - s) * t for s, e in zip(start, end))
 
     @staticmethod
     def _lerp_color(start: Any, end: Any, t: float) -> tuple[int, int, int]:
+        """Интерполирует RGB-цвет с ограничением диапазона."""
         result = []
         for s, e in zip(start, end):
             value = s + (e - s) * t

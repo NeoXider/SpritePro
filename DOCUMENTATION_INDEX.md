@@ -89,6 +89,12 @@
 - Hover эффекты
 - Drag & Drop
 
+#### [docs/draggable_sprite.md](docs/draggable_sprite.md)
+**Drag-and-drop спрайт**
+- Перетаскивание объектов
+- Колбэки начала/конца
+- Возврат на место
+
 ### Игровые системы
 
 #### [docs/animation.md](docs/animation.md)
@@ -118,6 +124,11 @@
 **Ввод и события**
 - InputState как в Unity
 - EventBus
+
+#### [docs/debug.md](docs/debug.md)
+**Debug Overlay**
+- Сетка мира и координаты камеры
+- Логи с тайм‑аутом
 
 #### [docs/particles.md](docs/particles.md)
 **Частицы**
@@ -208,6 +219,8 @@
 - [Input + EventBus Demo](spritePro/demoGames/input_events_demo.py) - Ввод и события
 - [Scenes Demo](spritePro/demoGames/scenes_demo.py) - Сцены
 - [Resource Cache Demo](spritePro/demoGames/resource_cache_demo.py) - Кэш ресурсов
+- [Drag & Drop Demo](spritePro/demoGames/drag_drop_demo.py) - Перетаскивание
+- [Debug Overlay Demo](spritePro/demoGames/debug_overlay_demo.py) - Отладочная сетка и логи
 
 ## 🔍 Навигация по типам документации
 
@@ -236,6 +249,7 @@
 - [docs/toggle_button.md](docs/toggle_button.md)
 - [docs/text.md](docs/text.md)
 - [docs/mouse_interactor.md](docs/mouse_interactor.md)
+- [docs/draggable_sprite.md](docs/draggable_sprite.md)
 
 #### 🔧 Утилиты и инструменты
 - [docs/save_load.md](docs/save_load.md)
@@ -243,6 +257,7 @@
 - [docs/text_fps.md](docs/text_fps.md)
 - [docs/game_loop.md](docs/game_loop.md)
 - [docs/input.md](docs/input.md)
+- [docs/debug.md](docs/debug.md)
 
 #### 📋 Планирование и разработка
 - [ROADMAP.md](ROADMAP.md)

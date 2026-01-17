@@ -21,6 +21,9 @@ MAIN_TEMPLATE = dedent(
 
     def main():
         s.get_screen((800, 600), "My SpritePro Game")
+        s.enable_debug(True)
+        s.set_debug_camera_input(3)
+        s.debug_log_info("Game started")
         s.set_scene(MainScene())
 
         while True:

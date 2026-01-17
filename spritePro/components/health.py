@@ -525,21 +525,27 @@ if __name__ == "__main__":
 
     class DummySprite:  # Простой класс-заглушка для спрайта-владельца
         def __init__(self, name):
+            """Создает заглушку спрайта с именем."""
             self.name = name
 
         def __str__(self):
+            """Возвращает имя спрайта как строку."""
             return self.name
 
     def handle_hp_change(new_hp, diff):
+        """Колбэк изменения HP для демонстрации."""
         print(f"  Колбэк HP Change: Новое HP = {new_hp}, Изменение = {diff}")
 
     def handle_damage(amount):
+        """Колбэк получения урона для демонстрации."""
         print(f"  Колбэк Damage: Получено урона = {amount}")
 
     def handle_heal(amount):
+        """Колбэк лечения для демонстрации."""
         print(f"  Колбэк Heal: Получено лечения = {amount}")
 
     def handle_death(sprite):
+        """Колбэк смерти для демонстрации."""
         print(f"  Колбэк Death: {sprite} ============================ мертв!")
 
     print("Создаем компонент здоровья с HP = 50/100")

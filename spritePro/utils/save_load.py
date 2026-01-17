@@ -273,6 +273,7 @@ class SaveLoadManager:
         
         # Recursively deserialize objects
         def deserialize_recursive(obj):
+            """Рекурсивно десериализует вложенные структуры."""
             if isinstance(obj, dict):
                 if '__class__' in obj:
                     return DataSerializer.deserialize_object(obj)
@@ -618,6 +619,7 @@ class PlayerPrefs:
     _initialized = False
 
     def __new__(cls, *args, **kwargs):
+        """Создает или возвращает единый экземпляр класса."""
         if not cls._instance:
             cls._instance = super(PlayerPrefs, cls).__new__(cls)
         return cls._instance
@@ -925,6 +927,7 @@ def register_sprite_classes():
         
         # Register Sprite class
         def serialize_sprite(sprite):
+            """Сериализует спрайт в словарь."""
             return {
                 'image_path': getattr(sprite, '_image_path', ''),
                 'size': sprite.size if hasattr(sprite, 'size') else (50, 50),
@@ -937,6 +940,7 @@ def register_sprite_classes():
             }
         
         def deserialize_sprite(data):
+            """Восстанавливает спрайт из словаря данных."""
             sprite = s.Sprite(
                 data.get('image_path', ''),
                 data.get('size', (50, 50)),
@@ -1008,9 +1012,11 @@ if __name__ == "__main__":
     # Pickle format
     class TestClass:
         def __init__(self, value):
+            """Создает тестовый объект для проверки сериализации."""
             self.value = value
         
         def __eq__(self, other):
+            """Сравнивает тестовые объекты по значению."""
             return isinstance(other, TestClass) and self.value == other.value
     
     test_obj = TestClass("test_value")

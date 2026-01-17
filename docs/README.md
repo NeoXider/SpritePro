@@ -25,6 +25,9 @@ SpritePro состоит из нескольких основных модуле
 #### [Mouse Interactor](mouse_interactor.md)
 Компонент для обработки взаимодействия с мышью: обнаружение наведения, клики и другие события мыши.
 
+#### [DraggableSprite](draggable_sprite.md)
+Drag-and-drop компонент на базе Sprite с колбэками и возвратом на место.
+
 ### Игровые системы
 
 #### [Animation](animation.md)
@@ -47,6 +50,9 @@ SpritePro состоит из нескольких основных модуле
 
 #### [Ввод и события](input.md)
 InputState в стиле Unity и EventBus для подписки на события.
+
+#### [Debug Overlay](debug.md)
+Сетка мира, координаты камеры и отладочные логи.
 
 ### Утилиты
 
@@ -76,6 +82,7 @@ InputState в стиле Unity и EventBus для подписки на собы
 - [ToggleButton](toggle_button.md) - Переключатели
 - [Text](text.md) - Текстовые элементы
 - [Mouse Interactor](mouse_interactor.md) - Обработка мыши
+- [DraggableSprite](draggable_sprite.md) - Drag-and-drop на базе Sprite
 
 **Анимация и эффекты:**
 - [Animation](animation.md) - Анимация на основе кадров
@@ -84,6 +91,7 @@ InputState в стиле Unity и EventBus для подписки на собы
 **Игровая логика:**
 - [Timer](timer.md) - Управление временем
 - [Health](health.md) - Система здоровья
+- [Debug Overlay](debug.md) - Отладочная сетка и логи
 
 **Вспомогательные инструменты:**
 - [Surface](surface.md) - Операции с поверхностями

@@ -181,6 +181,7 @@ class Timer:
 if __name__ == "__main__":
 
     def say_hello():
+        """Пример колбэка для демонстрации работы таймера."""
         print("Hello at", time.strftime("%H:%M:%S"))
 
     t1 = Timer(3.0, callback=say_hello, autostart=True)

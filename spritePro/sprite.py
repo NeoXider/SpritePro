@@ -25,6 +25,7 @@ VectorInput = Union[Vector2, Sequence[Union[int, float]]]
 
 
 def _coerce_vector2(value: Optional[VectorInput], default: Tuple[float, float]) -> Vector2:
+    """Приводит входное значение к Vector2 с запасным значением."""
     if value is None:
         value = default
     if isinstance(value, Vector2):
@@ -39,6 +40,7 @@ def _coerce_vector2(value: Optional[VectorInput], default: Tuple[float, float]) 
 
 
 def _vector2_to_int_tuple(vec: Vector2) -> Tuple[int, int]:
+    """Преобразует Vector2 в кортеж целых чисел."""
     return int(vec.x), int(vec.y)
 
 
@@ -492,21 +494,25 @@ class Sprite(pygame.sprite.Sprite):
         return Vector2(self.rect.center)
 
     def _set_world_center(self, position: Vector2) -> None:
+        """Устанавливает центр спрайта в мировых координатах."""
         self.rect.center = (int(position.x), int(position.y))
         self.start_pos_vector = Vector2(self.rect.center)
         self.start_pos = (self.rect.centerx, self.rect.centery)
 
     def _apply_parent_transform(self) -> None:
+        """Применяет трансформацию родителя к дочернему спрайту."""
         if not self.parent:
             return
         desired = self.parent.get_world_position() + self.local_offset
         self._set_world_center(desired)
 
     def _sync_local_offset(self) -> None:
+        """Синхронизирует локальное смещение относительно родителя."""
         if self.parent:
             self.local_offset = self.get_world_position() - self.parent.get_world_position()
 
     def _update_children_world_positions(self) -> None:
+        """Обновляет мировые позиции всех дочерних спрайтов."""
         for child in self.children:
             child._apply_parent_transform()
             child._update_children_world_positions()

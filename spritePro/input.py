@@ -9,6 +9,7 @@ class InputState:
     """Состояние ввода в стиле Unity: pressed/held/released за кадр."""
 
     def __init__(self) -> None:
+        """Инициализирует состояние ввода и буферы событий."""
         self._keys_down: Set[int] = set()
         self._keys_up: Set[int] = set()
         self._keys_pressed: Tuple[bool, ...] = tuple()
