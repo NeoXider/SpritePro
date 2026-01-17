@@ -68,12 +68,15 @@ def main() -> None:
     parser.add_argument(
         "--create",
         metavar="PATH",
+        nargs="?",
+        const="main.py",
         help="Project folder or path to main.py",
     )
     args = parser.parse_args()
 
     if not args.create:
-        args.create = "main.py"
+        parser.print_help()
+        return
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     project_root = create_project(Path(args.create))

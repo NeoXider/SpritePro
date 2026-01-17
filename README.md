@@ -159,16 +159,15 @@ while True:
 ### ⚡ Быстрый старт 2.0 (шаблон проекта)
 
 ```bash
-spritepro --create
+python -m spritePro.cli --create
 ```
 
 Создаст `main.py` в текущей папке и структуру `assets/audio`, `assets/images`, `scenes`.
 
+Если хотите создать проект в отдельной папке, укажите путь:
 ```bash
-spritepro --create MyGame
+python -m spritePro.cli --create MyGame
 ```
-
-Создаст проект в папке `MyGame`.
 
 ---
 
