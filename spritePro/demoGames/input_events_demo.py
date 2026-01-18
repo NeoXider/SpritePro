@@ -25,7 +25,7 @@ def main():
     s.events.connect("key_down", on_key_down)
     s.events.connect("quit", on_quit)
 
-    player = s.Sprite("", (60, 60), (400, 300), speed=260)
+    player = s.Sprite("", (60, 60), (400, 300), speed=5)
     player.set_color((120, 200, 255))
     player.angle = 0
 

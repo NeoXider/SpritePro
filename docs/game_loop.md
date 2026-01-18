@@ -41,11 +41,55 @@ while True:
     s.update(fill_color=(10, 10, 20))
 ```
 
+Важно: если переключаете сцену прямо в `update`, завершайте метод сразу после `set_scene_by_name`, чтобы не запускать логику кадра дальше.
+
+```python
+def update(self, dt):
+    if s.input.was_pressed(pygame.K_RETURN):
+        s.set_scene_by_name("menu")
+        return
+```
+
 Перезапуск сцены:
 
 ```python
 s.restart_scene()          # текущая сцена
 s.restart_scene("main")    # по имени
+```
+
+## Несколько активных сцен
+
+Можно держать активными несколько сцен одновременно (например, игра + UI).
+
+```python
+s.set_scene_by_name("game")
+s.activate_scene("hud")
+print(s.is_scene_active("hud"))
+
+for scene in s.get_active_scenes():
+    print(scene.name, scene.is_active)
+```
+
+Отключение сцены:
+
+```python
+s.deactivate_scene("hud")
+```
+
+### Порядок обновления и отрисовки
+
+У каждой сцены есть поле `order` (по умолчанию 0). Чем выше значение, тем позже сцена обновляется и рисуется.
+
+```python
+game_scene.order = 0
+hud_scene.order = 10
+s.activate_scene(hud_scene)
+```
+
+Или через менеджер:
+
+```python
+s.set_scene_order("hud", 10)
 ```
 
 ## Таймеры в сценах

@@ -586,6 +586,41 @@ def set_scene_by_name(name: str, recreate: bool = False) -> None:
     _context.scene_manager.set_scene_by_name(name, _context, recreate=recreate)
 
 
+def activate_scene(scene_or_name: Scene | str) -> None:
+    """Активирует сцену, не отключая другие."""
+    _context.scene_manager.activate_scene(scene_or_name, _context)
+
+
+def deactivate_scene(scene_or_name: Scene | str) -> None:
+    """Деактивирует сцену."""
+    _context.scene_manager.deactivate_scene(scene_or_name)
+
+
+def set_active_scenes(scenes_or_names: list[Scene | str]) -> None:
+    """Устанавливает список активных сцен."""
+    _context.scene_manager.set_active_scenes(scenes_or_names, _context)
+
+
+def get_active_scenes() -> list[Scene]:
+    """Возвращает список активных сцен."""
+    return _context.scene_manager.get_active_scenes()
+
+
+def is_scene_active(scene_or_name: Scene | str) -> bool:
+    """Проверяет, активна ли сцена."""
+    return _context.scene_manager.is_scene_active(scene_or_name)
+
+
+def set_scene_order(scene_or_name: Scene | str, order: int) -> None:
+    """Устанавливает порядок отрисовки/обновления сцены."""
+    _context.scene_manager.set_scene_order(scene_or_name, order)
+
+
+def get_current_scene() -> Scene | None:
+    """Возвращает текущую сцену."""
+    return _context.scene_manager.current_scene
+
+
 def restart_scene(name: str | None = None) -> None:
     """Перезапускает сцену по имени или текущую сцену."""
     if name is None:

@@ -318,16 +318,15 @@ bts[STATE_GAME].set_position((WIDTH // 2, HEIGHT // 2), spritePro.Anchor.CENTER)
 for bt in bts.values():
     bt.set_image(round_corners(bt.image, 50))
 
+bg_surface = spritePro.load_texture(path / "Sprites" / "bg.jpg")
+if bg_surface is None:
+    bg_surface = pygame.Surface(spritePro.WH)
+    bg_surface.fill((20, 20, 20))
+bg_scaled = pygame.transform.scale(bg_surface, spritePro.WH)
 BGS = {
-    STATE_MENU: pygame.transform.scale(
-        pygame.image.load(path / "Sprites" / "bg.jpg"), (spritePro.WH)
-    ),
-    STATE_SHOP: pygame.transform.scale(
-        pygame.image.load(path / "Sprites" / "bg.jpg"), (spritePro.WH)
-    ),
-    STATE_GAME: pygame.transform.scale(
-        pygame.image.load(path / "Sprites" / "bg.jpg"), (spritePro.WH)
-    ),
+    STATE_MENU: bg_scaled,
+    STATE_SHOP: bg_scaled,
+    STATE_GAME: bg_scaled,
 }
 
 

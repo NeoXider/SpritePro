@@ -749,15 +749,21 @@ class Sprite(pygame.sprite.Sprite):
         if self.scene is not None:
             try:
                 manager = spritePro.get_context().scene_manager
-                current_scene = manager.current_scene
             except Exception:
-                current_scene = None
                 manager = None
             if isinstance(self.scene, str):
-                target = manager.get_scene(self.scene) if manager is not None else None
+                is_active = (
+                    manager.is_scene_active(self.scene)
+                    if manager is not None
+                    else False
+                )
             else:
-                target = self.scene
-            if current_scene is not target:
+                is_active = (
+                    manager.is_scene_active(self.scene)
+                    if manager is not None
+                    else False
+                )
+            if not is_active:
                 return
         # Apply velocity
         if self.velocity.length() > 0:

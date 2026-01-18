@@ -139,6 +139,41 @@ class Particle(spritePro.Sprite):
         self.set_screen_space(screen_space)
         self.angular_velocity: float = 0.0  # degrees per second
         self.scale_velocity: float = 0.0  # scale factor per second
+        self._pool_release = None
+
+    def set_pool_release(self, release_fn) -> None:
+        """Назначает обработчик возврата частицы в пул."""
+        self._pool_release = release_fn
+
+    def reset(
+        self,
+        image: pygame.Surface,
+        pos: Union[Tuple[float, float], Vector2],
+        velocity: Vector2,
+        lifetime_ms: int,
+        fade_speed: float,
+        gravity: Vector2,
+        screen_space: bool,
+        sorting_order: Optional[int] = None,
+    ) -> None:
+        """Сбрасывает параметры частицы для повторного использования."""
+        self.set_image(image)
+        if sorting_order is not None:
+            self.set_sorting_order(sorting_order)
+        self.rect.center = (int(pos[0]), int(pos[1]))
+        self.velocity = velocity
+        self.spawn_time = pygame.time.get_ticks()
+        self.lifetime = lifetime_ms
+        self.fade_speed = fade_speed
+        self.gravity = gravity
+        self.set_screen_space(screen_space)
+        self.angular_velocity = 0.0
+        self.scale_velocity = 0.0
+        self.scale = 1.0
+        self.angle = 0.0
+        self.alpha = 255
+        self.scene = None
+        self.active = True
 
     def update(self, screen: Optional[pygame.Surface] = None) -> None:
         """Обновляет состояние частицы и отрисовывает её на экране.
@@ -163,6 +198,10 @@ class Particle(spritePro.Sprite):
         self._update_image()
 
         if pygame.time.get_ticks() - self.spawn_time > self.lifetime or self.alpha <= 0:
+            if self._pool_release is not None:
+                handled = self._pool_release(self)
+                if handled:
+                    return
             self.kill()
             return
 
@@ -196,6 +235,8 @@ class ParticleEmitter:
         emit_step: float = 0.0,
         use_dt: bool = True,
         auto_register: bool = False,
+        use_pool: bool = False,
+        max_pool_size: int = 0,
     ) -> None:
         """Инициализирует новый эмиттер частиц.
 
@@ -222,6 +263,9 @@ class ParticleEmitter:
         self._next_emit_interval = self._resolve_interval(self.emit_interval)
         self._last_emit_position: Optional[Vector2] = None
         self._last_update_time = time.monotonic()
+        self.use_pool = use_pool
+        self.max_pool_size = max_pool_size
+        self._pool: List[Particle] = []
         if auto_register:
             try:
                 spritePro.register_update_object(self)
@@ -345,12 +389,7 @@ class ParticleEmitter:
         """Загружает image из пути, если указана строка."""
         if isinstance(self.config.image, str):
             try:
-                cached = resource_cache.load_texture(self.config.image)
-                self.config.image = (
-                    cached
-                    if cached is not None
-                    else pygame.image.load(self.config.image).convert_alpha()
-                )
+                self.config.image = resource_cache.load_texture(self.config.image)
             except pygame.error as e:
                 spritePro.debug_log_warning(
                     f"Error loading particle image at path: {self.config.image} ({e})"
@@ -531,16 +570,31 @@ class ParticleEmitter:
                             pass
             else:
                 particle_cls: Type[Particle] = cfg.particle_class or Particle  # type: ignore[assignment]
-                particle = particle_cls(
-                    image=image,
-                    pos=spawn_pos,
-                    velocity=direction,
-                    lifetime_ms=lifetime,
-                    fade_speed=cfg.fade_speed,
-                    gravity=cfg.gravity,
-                    screen_space=cfg.screen_space,
-                    sorting_order=cfg.sorting_order,
-                )
+                if self.use_pool and particle_cls is Particle and self._pool:
+                    particle = self._pool.pop()
+                    particle.reset(
+                        image=image,
+                        pos=spawn_pos,
+                        velocity=direction,
+                        lifetime_ms=lifetime,
+                        fade_speed=cfg.fade_speed,
+                        gravity=cfg.gravity,
+                        screen_space=cfg.screen_space,
+                        sorting_order=cfg.sorting_order,
+                    )
+                else:
+                    particle = particle_cls(
+                        image=image,
+                        pos=spawn_pos,
+                        velocity=direction,
+                        lifetime_ms=lifetime,
+                        fade_speed=cfg.fade_speed,
+                        gravity=cfg.gravity,
+                        screen_space=cfg.screen_space,
+                        sorting_order=cfg.sorting_order,
+                    )
+                    if self.use_pool and particle_cls is Particle:
+                        particle.set_pool_release(self._release_particle)
             # Initialize rotation
             if cfg.align_rotation_to_velocity:
                 particle.rotate_to(angle)
@@ -580,6 +634,15 @@ class ParticleEmitter:
                 particle.follow_parent = self._particle_follow_parent
 
         return particles
+
+    def _release_particle(self, particle: Particle) -> bool:
+        if not self.use_pool:
+            return False
+        if self.max_pool_size > 0 and len(self._pool) >= self.max_pool_size:
+            return False
+        particle.active = False
+        self._pool.append(particle)
+        return True
 
 
 # ------------------------------

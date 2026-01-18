@@ -12,6 +12,13 @@ class Scene:
         """Инициализирует базовую сцену."""
         self.context = None
         self.name: str | None = None
+        self._active = False
+        self.order: int = 0
+
+    @property
+    def is_active(self) -> bool:
+        """Возвращает активна ли сцена."""
+        return self._active
 
     def on_enter(self, context) -> None:
         """Вызывается при входе в сцену."""
@@ -36,16 +43,98 @@ class SceneManager:
     def __init__(self) -> None:
         """Инициализирует менеджер сцен."""
         self.current_scene: Optional[Scene] = None
+        self._active_scenes: list[Scene] = []
+        self._activation_index: dict[Scene, int] = {}
+        self._activation_counter = 0
         self._scenes: dict[str, Scene] = {}
         self._scene_factories: dict[str, callable] = {}
 
+    def _resolve_scene(self, scene_or_name: Scene | str | None) -> Optional[Scene]:
+        if scene_or_name is None:
+            return None
+        if isinstance(scene_or_name, str):
+            return self._scenes.get(scene_or_name)
+        return scene_or_name
+
+    def _activate_scene(self, scene: Scene, context=None) -> None:
+        if scene in self._active_scenes:
+            return
+        self._activation_counter += 1
+        self._activation_index[scene] = self._activation_counter
+        scene._active = True
+        self._active_scenes.append(scene)
+        scene.on_enter(context)
+
+    def _deactivate_scene(self, scene: Scene) -> None:
+        if scene not in self._active_scenes:
+            return
+        scene.on_exit()
+        scene._active = False
+        self._active_scenes.remove(scene)
+        self._activation_index.pop(scene, None)
+
     def set_scene(self, scene: Optional[Scene], context=None) -> None:
         """Устанавливает текущую сцену и вызывает хуки."""
-        if self.current_scene is not None:
-            self.current_scene.on_exit()
+        for active_scene in self._active_scenes[:]:
+            self._deactivate_scene(active_scene)
         self.current_scene = scene
         if self.current_scene is not None:
-            self.current_scene.on_enter(context)
+            self._activate_scene(self.current_scene, context)
+
+    def set_active_scenes(
+        self, scenes_or_names: list[Scene | str], context=None
+    ) -> None:
+        """Устанавливает список активных сцен."""
+        resolved = []
+        for item in scenes_or_names:
+            scene = self._resolve_scene(item)
+            if scene is not None and scene not in resolved:
+                resolved.append(scene)
+        for active_scene in self._active_scenes[:]:
+            if active_scene not in resolved:
+                self._deactivate_scene(active_scene)
+        for scene in resolved:
+            if scene not in self._active_scenes:
+                self._activate_scene(scene, context)
+        self.current_scene = resolved[-1] if resolved else None
+
+    def activate_scene(self, scene_or_name: Scene | str, context=None) -> None:
+        """Активирует сцену, не отключая другие."""
+        scene = self._resolve_scene(scene_or_name)
+        if scene is None:
+            return
+        if scene not in self._active_scenes:
+            self._activate_scene(scene, context)
+        self.current_scene = scene
+
+    def deactivate_scene(self, scene_or_name: Scene | str) -> None:
+        """Деактивирует сцену."""
+        scene = self._resolve_scene(scene_or_name)
+        if scene is None:
+            return
+        self._deactivate_scene(scene)
+        if self.current_scene is scene:
+            self.current_scene = (
+                self._active_scenes[-1] if self._active_scenes else None
+            )
+
+    def is_scene_active(self, scene_or_name: Scene | str) -> bool:
+        """Проверяет, активна ли сцена."""
+        scene = self._resolve_scene(scene_or_name)
+        if scene is None and isinstance(scene_or_name, str):
+            return False
+        return scene in self._active_scenes
+
+    def get_active_scenes(self) -> list[Scene]:
+        """Возвращает список активных сцен."""
+        return list(self._active_scenes)
+
+    def set_scene_order(self, scene_or_name: Scene | str, order: int) -> None:
+        """Устанавливает порядок отрисовки/обновления для сцены."""
+        scene = self._resolve_scene(scene_or_name)
+        if scene is None:
+            return
+        scene.order = int(order)
 
     def add_scene(self, name: str, scene: Scene) -> None:
         """Добавляет сцену по имени."""
@@ -85,6 +174,9 @@ class SceneManager:
         factory = self._scene_factories.get(name)
         if factory is None:
             return self._scenes.get(name)
+        existing = self._scenes.get(name)
+        if existing is not None and existing in self._active_scenes:
+            self._deactivate_scene(existing)
         scene = factory()
         scene.name = name
         self._scenes[name] = scene
@@ -92,10 +184,16 @@ class SceneManager:
 
     def update(self, dt: float) -> None:
         """Обновляет активную сцену."""
-        if self.current_scene is not None:
-            self.current_scene.update(dt)
+        for scene in sorted(
+            self._active_scenes,
+            key=lambda s: (s.order, self._activation_index.get(s, 0)),
+        ):
+            scene.update(dt)
 
     def draw(self, screen: pygame.Surface) -> None:
         """Рисует активную сцену."""
-        if self.current_scene is not None:
-            self.current_scene.draw(screen)
+        for scene in sorted(
+            self._active_scenes,
+            key=lambda s: (s.order, self._activation_index.get(s, 0)),
+        ):
+            scene.draw(screen)

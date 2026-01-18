@@ -85,17 +85,16 @@ class AudioManager:
             >>> jump_sound = audio.load_sound("jump", "sounds/jump.mp3")
             >>> jump_sound.play()  # Можно сразу использовать!
         """
-        try:
-            cached = resource_cache.load_sound(path)
-            if cached is None:
-                cached = pygame.mixer.Sound(path)
-            self.sounds[name] = cached
-            return Sound(self, name)
-        except pygame.error as e:
+        cached = resource_cache.load_sound(path)
+        if cached is None:
             import spritePro
 
-            spritePro.debug_log_warning(f"Sound not loaded '{name}' from '{path}': {e}")
+            spritePro.debug_log_warning(
+                f"Sound not loaded '{name}' from '{path}': cache load returned None"
+            )
             return Sound(self, name)  # Возвращаем объект даже при ошибке
+        self.sounds[name] = cached
+        return Sound(self, name)
 
     def play_sound(self, name_or_path: str, volume: Optional[float] = None) -> None:
         """Воспроизвести звуковой эффект.
@@ -125,15 +124,18 @@ class AudioManager:
             sound.set_volume(volume if volume is not None else self.sfx_volume)
             sound.play()
         else:
-            # Пытаемся загрузить и воспроизвести напрямую из файла
-            try:
-                sound = pygame.mixer.Sound(name_or_path)
-                sound.set_volume(volume if volume is not None else self.sfx_volume)
-                sound.play()
-            except pygame.error as e:
+            # Пытаемся загрузить и воспроизвести из кэша
+            sound = resource_cache.load_sound(name_or_path)
+            if sound is None:
                 import spritePro
 
-                spritePro.debug_log_warning(f"Sound not played '{name_or_path}': {e}")
+                spritePro.debug_log_warning(
+                    f"Sound not played '{name_or_path}': cache load returned None"
+                )
+                return
+            self.sounds[name_or_path] = sound
+            sound.set_volume(volume if volume is not None else self.sfx_volume)
+            sound.play()
 
     def play_music(
         self, path: str, loop: bool = True, volume: Optional[float] = None
@@ -158,7 +160,7 @@ class AudioManager:
             pygame.mixer.music.set_volume(music_vol)
             pygame.mixer.music.play(-1 if loop else 0)
             self.current_music = path
-        except pygame.error as e:
+        except Exception as e:
             import spritePro
 
             spritePro.debug_log_warning(f"Music not loaded '{path}': {e}")

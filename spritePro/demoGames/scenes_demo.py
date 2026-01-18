@@ -17,6 +17,10 @@ def _enter_pressed() -> bool:
     )
 
 
+def _is_current(scene: s.Scene) -> bool:
+    return s.get_current_scene() is scene
+
+
 class SceneA(s.Scene):
     def __init__(self):
         super().__init__()
@@ -28,7 +32,7 @@ class SceneA(s.Scene):
             scene=self,
         )
         self.hint = s.TextSprite(
-            "Enter: switch  |  Space: toggle  |  R: restart  |  Mover: tween",
+            "Enter: switch  |  Tab: overlay  |  Space: toggle  |  R: restart  |  Mover: tween",
             22,
             (200, 200, 200),
             (400, 540),
@@ -50,6 +54,12 @@ class SceneA(s.Scene):
     def update(self, dt):
         if _enter_pressed():
             s.set_scene_by_name("scene_b")
+            return
+        if s.input.was_pressed(pygame.K_TAB):
+            if s.is_scene_active("scene_b"):
+                s.deactivate_scene("scene_b")
+            else:
+                s.activate_scene("scene_b")
         if s.input.was_pressed(pygame.K_SPACE):
             self.toggle_visible = not self.toggle_visible
             self.toggle_obj.set_active(self.toggle_visible)
@@ -81,6 +91,7 @@ class SceneA(s.Scene):
 class SceneB(s.Scene):
     def __init__(self):
         super().__init__()
+        self.order = 10
         self.label = s.TextSprite(
             "Scene B (Press Enter)",
             32,
@@ -96,7 +107,7 @@ class SceneB(s.Scene):
             scene=self,
         )
         self.hint = s.TextSprite(
-            "Enter: switch  |  R: restart",
+            "Enter: switch (current)  |  R: restart",
             22,
             (200, 200, 200),
             (400, 540),
@@ -106,6 +117,7 @@ class SceneB(s.Scene):
             random.uniform(0.4, 1.2),
             callback=self._spawn_firework,
             repeat=False,
+            autostart=False,
         )
 
     def on_enter(self, context):
@@ -113,8 +125,9 @@ class SceneB(s.Scene):
             self.fire_timer.start(random.uniform(0.4, 1.2))
 
     def update(self, dt):
-        if _enter_pressed():
+        if _enter_pressed() and _is_current(self):
             s.set_scene_by_name("scene_a")
+            return
         if s.input.was_pressed(pygame.K_r):
             s.restart_scene()
         if self.fire_timer.done:
@@ -124,16 +137,27 @@ class SceneB(s.Scene):
         if self.fire_timer:
             self.fire_timer.stop()
         # Удаляем все частицы этой сцены (чтобы не "протекали" в другую)
-        for particle in s.get_sprites_by_class(s.Sprite, active_only=False):
-            if getattr(particle, "scene", None) is self:
-                particle.kill()
+        candidates = s.get_sprites_by_class(s.Sprite, active_only=False)
+        to_kill = [
+            p
+            for p in candidates
+            if getattr(p, "scene", None) is self
+            and getattr(p, "_scene_particle", False)
+        ]
+        for particle in to_kill:
+            particle.kill()
 
     def _spawn_firework(self):
+        if not self.is_active:
+            if self.fire_timer:
+                self.fire_timer.stop()
+            return
         pos = (random.randint(100, 700), random.randint(120, 520))
         emitter = s.ParticleEmitter(s.template_sparks())
         particles = emitter.emit(pos)
         for particle in particles:
             particle.scene = self
+            particle._scene_particle = True
 
 
 def main():

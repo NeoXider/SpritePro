@@ -168,7 +168,9 @@ class GameContext:
         self.screen_rect = self.screen.get_rect()
         pygame.display.set_caption(title)
         if icon:
-            pygame.display.set_icon(pygame.image.load(icon))
+            icon_surface = resource_cache.load_texture(icon)
+            if icon_surface is not None:
+                pygame.display.set_icon(icon_surface)
 
         self.WH = Vector2(size)
         self.WH_C = Vector2(self.screen_rect.center)

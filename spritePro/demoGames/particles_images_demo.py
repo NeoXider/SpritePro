@@ -18,12 +18,16 @@ if str(parent_dir) not in sys.path:
     sys.path.insert(0, str(parent_dir))
 
 import spritePro as s
+from spritePro.resources import resource_cache
 from spritePro.particles import ParticleConfig, ParticleEmitter
 
 
 def load_image(name: str) -> pygame.Surface:
     sprites_dir = current_dir / "Sprites"
-    img = pygame.image.load(str(sprites_dir / name)).convert_alpha()
+    img = resource_cache.load_texture(str(sprites_dir / name))
+    if img is None:
+        img = pygame.Surface((16, 16), pygame.SRCALPHA)
+        img.fill((255, 255, 255, 255))
     return img
 
 
