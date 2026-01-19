@@ -22,7 +22,7 @@ from spritePro.resources import resource_cache  # noqa: E402
 
 
 TEXTURE_PATH = "spritePro/demoGames/Sprites/c.png"
-BURST_COUNT = 1_00
+BURST_COUNT = 60
 BURST_INTERVAL = 0.1
 
 

@@ -57,6 +57,26 @@ s.restart_scene()          # текущая сцена
 s.restart_scene("main")    # по имени
 ```
 
+### Имя сцены и context
+
+Если сцену добавить через `add_scene("main", scene)`, то `scene.name` будет установлен автоматически.  
+Если вы создаёте и включаете сцену напрямую (`set_scene(scene)`), имя может быть `None`.
+
+```python
+class MainScene(s.Scene):
+    def on_enter(self, context):
+        print("Scene name:", self.name)
+        print("Screen size:", context.WH)
+        print("FPS target:", context.fps)
+        print("Frame count:", context.frame_count)
+        print("Time since start:", context.time_since_start)
+
+s.get_screen((800, 600), "Scene Context")
+manager = s.get_context().scene_manager
+manager.add_scene("main", MainScene())
+s.set_scene_by_name("main")
+```
+
 ## Несколько активных сцен
 
 Можно держать активными несколько сцен одновременно (например, игра + UI).

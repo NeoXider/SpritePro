@@ -6,6 +6,8 @@ from dataclasses import dataclass
 import pygame
 from pygame.math import Vector2
 
+from .camera_effects import CameraShake
+
 
 class SpriteProGame:
     """Одиночный игровой контекст с общей группой спрайтов и камерой.
@@ -35,6 +37,8 @@ class SpriteProGame:
         self.camera_target: pygame.sprite.Sprite | None = None
         self.camera_offset = Vector2()
         self.update_objects: list = []  # Объекты для автоматического обновления
+        self.camera_shake = CameraShake(self)
+        self.register_update_object(self.camera_shake)
 
         # Debug overlay settings
         self.debug_enabled = False
@@ -209,6 +213,17 @@ class SpriteProGame:
             Vector2: Позиция камеры.
         """
         return self.camera
+
+    def shake_camera(
+        self, strength: Vector2 | tuple[float, float] = (12, 12), duration: float = 0.35
+    ) -> None:
+        """Запускает дрожание камеры с перезапуском.
+
+        Args:
+            strength (Vector2 | tuple[float, float], optional): Амплитуда по осям.
+            duration (float, optional): Длительность в секундах.
+        """
+        self.camera_shake.start(strength=strength, duration=duration)
 
     def set_camera_follow(
         self,

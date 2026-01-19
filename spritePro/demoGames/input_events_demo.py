@@ -22,8 +22,8 @@ def on_quit(event):
 
 def main():
     s.get_screen((800, 600), "Input + EventBus Demo")
-    s.events.connect("key_down", on_key_down)
-    s.events.connect("quit", on_quit)
+    s.events.connect(s.globalEvents.KEY_DOWN, on_key_down)
+    s.events.connect(s.globalEvents.QUIT, on_quit)
 
     player = s.Sprite("", (60, 60), (400, 300), speed=5)
     player.set_color((120, 200, 255))

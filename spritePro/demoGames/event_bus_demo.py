@@ -18,7 +18,7 @@ def main() -> None:
 
     title = s.TextSprite("EventBus Demo", 28, (255, 255, 255), (s.WH_C.x, 30))
     hints = s.TextSprite(
-        "1: start timer  |  2: stop timer  |  C: custom event  |  R: reset counter  |  Mouse: click",
+        "1: start timer  |  2: stop timer  |  C: custom event  |  L: local event  |  R: reset counter  |  Mouse: click",
         18,
         (200, 200, 200),
         (s.WH_C.x, 565),
@@ -46,6 +46,9 @@ def main() -> None:
         if key == pygame.K_c:
             s.events.send("custom_event", message="Привет из EventBus!")
             return
+        if key == pygame.K_l:
+            local_event.send(value=state["ticks"])
+            return
         if key == pygame.K_r:
             state["ticks"] = 0
             show("Counter reset")
@@ -61,7 +64,7 @@ def main() -> None:
     def on_mouse_up(button, pos, event) -> None:
         show(f"Mouse up: button={button}, pos={pos}")
 
-    def on_tick() -> None:
+    def on_timer_tick() -> None:
         state["ticks"] += 1
         show(f"Tick #{state['ticks']}")
         if state["ticks"] % 2 == 0:
@@ -72,20 +75,28 @@ def main() -> None:
     def on_custom_event(message: str) -> None:
         show(f"Custom event: {message}")
 
+    def on_local_event(value: int) -> None:
+        show(f"Local event: value={value}")
+
     def on_quit(event) -> None:
         s.debug_log_info("Quit requested")
 
     timer = s.Timer(
-        1.0, callback=lambda: s.events.send("tick"), repeat=True, autostart=False
+        1.0,
+        callback=lambda: s.events.send("timer_tick"),
+        repeat=True,
+        autostart=False,
     )
+    local_event = s.LocalEvent()
+    local_event.connect(on_local_event)
 
-    s.events.connect("key_down", on_key_down)
-    s.events.connect("key_up", on_key_up)
-    s.events.connect("mouse_down", on_mouse_down)
-    s.events.connect("mouse_up", on_mouse_up)
-    s.events.connect("tick", on_tick)
+    s.events.connect(s.globalEvents.KEY_DOWN, on_key_down)
+    s.events.connect(s.globalEvents.KEY_UP, on_key_up)
+    s.events.connect(s.globalEvents.MOUSE_DOWN, on_mouse_down)
+    s.events.connect(s.globalEvents.MOUSE_UP, on_mouse_up)
+    s.events.connect("timer_tick", on_timer_tick)
     s.events.connect("custom_event", on_custom_event)
-    s.events.connect("quit", on_quit)
+    s.events.connect(s.globalEvents.QUIT, on_quit)
 
     _ = (title, hints, status)
 

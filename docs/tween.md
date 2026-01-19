@@ -22,11 +22,12 @@ tween_manager = s.TweenManager()
 - `update(dt: Optional[float] = None)`: Обновить все активные твины (dt автоматически берется из spritePro.dt, если не указан)
 - `pause_all()`: Поставить на паузу все твины
 - `resume_all()`: Возобновить все твины
-- `stop_all()`: Остановить и удалить все твины
-- `reset_all()`: Сбросить все твины в начальное состояние
+- `stop_all(apply_end: bool = True)`: Остановить и удалить все твины (можно применить конечные значения)
+- `reset_all(apply_end: bool = False)`: Сбросить все твины (можно применить конечные значения перед сбросом)
+- `start_all(apply_end: bool = False)`: Запустить все твины (можно применить конечные значения перед стартом)
 - `start_tween(name: str)`: Запустить конкретный твин по имени
 - `get_tween(name: str) -> Optional[Tween]`: Получить конкретный твин
-- `remove_tween(name: str)`: Удалить конкретный твин
+- `remove_tween(name: str, apply_end: bool = True)`: Удалить конкретный твин (можно применить конечное значение)
 
 ### Tween
 
@@ -53,8 +54,8 @@ tween_manager = s.TweenManager()
 - `update(dt: Optional[float] = None) -> Optional[Any]`: Обновить твин и получить текущее значение (dt автоматически берется из spritePro.dt, если не указан)
 - `pause()`: Поставить твин на паузу
 - `resume()`: Возобновить твин
-- `stop()`: Остановить твин
-- `reset()`: Сбросить твин в начальное состояние
+- `stop(apply_end: bool = True)`: Остановить твин (можно применить конечное значение)
+- `reset(apply_end: bool = False)`: Сбросить твин (можно применить конечное значение перед сбросом)
 - `get_progress() -> float`: Получить прогресс от 0.0 до 1.0
 
 ## Функции плавности
@@ -86,6 +87,28 @@ from spritePro.components.tween import EasingType
 - `ELASTIC`: Эластичная плавность
 
 ## Примеры использования
+
+### Готовые твины для спрайтов
+
+SpritePro предоставляет набор готовых твинов для типовых свойств спрайта:
+
+- `tween_position`, `tween_move_by`
+- `tween_scale`, `tween_scale_by`
+- `tween_rotate`, `tween_rotate_by`
+- `tween_color`, `tween_alpha`, `tween_size`
+
+Полная документация: [Tween Presets](tween_presets.md)
+
+```python
+import spritePro as s
+
+sprite = s.Sprite("", (60, 60), (200, 200))
+sprite.set_color((120, 200, 255))
+
+s.tween_position(sprite, to=(500, 300), duration=0.8, easing=s.EasingType.EASE_OUT)
+s.tween_scale(sprite, to=1.4, duration=0.5, yoyo=True, loop=True)
+s.tween_color(sprite, to=(255, 120, 120), duration=1.0)
+```
 
 ### Базовое движение
 
@@ -371,5 +394,6 @@ animation.add_tween(
 ```
 
 Для более подробной информации о связанных компонентах см.:
+
 - [Документация по анимации](animation.md) - Использование твинов в анимациях
 - [Документация по спрайтам](sprite.md) - Анимация свойств спрайтов

@@ -26,6 +26,7 @@ while True:
 ```
 
 Также доступны состояния мыши:
+
 - `s.input.is_mouse_pressed(button)`
 - `s.input.was_mouse_pressed(button)`
 - `s.input.was_mouse_released(button)`
@@ -44,20 +45,45 @@ def on_quit(event):
 def on_key_down(key, event):
     print("Key down:", key)
 
-s.events.connect("quit", on_quit)
-s.events.connect("key_down", on_key_down)
+s.events.connect(s.globalEvents.QUIT, on_quit)
+s.events.connect(s.globalEvents.KEY_DOWN, on_key_down)
+```
+
+Можно получить объект события (signal) и работать с ним напрямую:
+
+```python
+quit_event = s.events.get_event(s.globalEvents.QUIT)
+quit_event.connect(on_quit)
+quit_event.disconnect(on_quit)
+quit_event.send(event=None)
+```
+
+Локальное событие (уникальное для одной переменной):
+
+```python
+damage_event = s.LocalEvent()
+
+def on_damage(amount):
+    print("Damage:", amount)
+
+damage_event.connect(on_damage)
+damage_event(amount=10)
 ```
 
 Полезные методы:
+
 - `connect(event_name, handler)`
 - `disconnect(event_name, handler=None)`
 - `send(event_name, **payload)`
-- `disconnect_all(event_name=None)`
+- `disconnect_all(event_name=None)` / `clear(event_name=None)`
+- `get_event(event_name)`
 
 Доступные события:
-- `quit`
-- `key_down`, `key_up`
-- `mouse_down`, `mouse_up`
+
+- `s.globalEvents.QUIT`
+- `s.globalEvents.KEY_DOWN`, `s.globalEvents.KEY_UP`
+- `s.globalEvents.MOUSE_DOWN`, `s.globalEvents.MOUSE_UP`
+- `s.globalEvents.TICK` (каждый кадр, payload: `dt`, `frame_count`, `time_since_start`)
 
 ## Сырые события pygame
 

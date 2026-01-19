@@ -33,6 +33,7 @@ from .save_load import (
     exists,
     delete,
 )
+from ..angle_utils import angle_to_point
 
 __all__ = [
     # Surface utilities
@@ -66,4 +67,5 @@ __all__ = [
     "load",
     "exists",
     "delete",
+    "angle_to_point",
 ]

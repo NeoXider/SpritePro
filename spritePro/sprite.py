@@ -4,6 +4,7 @@ from pygame.math import Vector2
 
 import spritePro
 from .resources import resource_cache
+from .angle_utils import angle_to_point
 from .constants import Anchor
 
 if TYPE_CHECKING:
@@ -216,6 +217,23 @@ class Sprite(pygame.sprite.Sprite):
             value (float): Целевой угол поворота в градусах.
         """
         self.set_angle(value)
+
+    def look_at(self, target: "SpriteSceneInput", offset: float = 0.0) -> None:
+        """Поворачивает спрайт в сторону цели.
+
+        Args:
+            target (SpriteSceneInput): Целевой спрайт или позиция (x, y).
+            offset (float, optional): Дополнительный угол в градусах.
+        """
+        origin = self.get_world_position()
+        if hasattr(target, "get_world_position"):
+            target_pos = target.get_world_position()
+        elif hasattr(target, "rect"):
+            target_pos = Vector2(target.rect.center)
+        else:
+            target_pos = _coerce_vector2(target, origin)
+        angle = angle_to_point(origin, target_pos, offset=offset)
+        self.rotate_to(angle)
 
     @property
     def alpha(self) -> int:
@@ -433,6 +451,32 @@ class Sprite(pygame.sprite.Sprite):
         """
         vec = _coerce_vector2(value, (0, 0))
         self.set_position((int(vec.x), int(vec.y)), anchor=Anchor.CENTER)
+
+    @property
+    def local_position(self) -> Tuple[int, int]:
+        """Локальная позиция спрайта относительно родителя.
+
+        Returns:
+            Tuple[int, int]: Локальная позиция (x, y).
+        """
+        if self.parent:
+            return int(self.local_offset.x), int(self.local_offset.y)
+        return self.rect.center
+
+    @local_position.setter
+    def local_position(self, value: VectorInput) -> None:
+        """Устанавливает локальную позицию спрайта относительно родителя.
+
+        Args:
+            value (VectorInput): Новая локальная позиция (x, y).
+        """
+        vec = _coerce_vector2(value, (0, 0))
+        if self.parent:
+            self.local_offset = Vector2(vec.x, vec.y)
+            self._apply_parent_transform()
+            self._update_children_world_positions()
+        else:
+            self.set_position((int(vec.x), int(vec.y)), anchor=Anchor.CENTER)
 
     @property
     def x(self) -> int:

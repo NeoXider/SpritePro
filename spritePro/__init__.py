@@ -6,7 +6,7 @@ from pygame.math import Vector2
 from .spriteProGame import SpriteProGame
 from .game_context import GameContext
 from .input import InputState
-from .event_bus import EventBus
+from .event_bus import EventBus, LocalEvent, GlobalEvents
 from .resources import ResourceCache, resource_cache
 from .scenes import Scene, SceneManager
 
@@ -20,6 +20,24 @@ from .components.draggable_sprite import DraggableSprite
 from .components.mouse_interactor import MouseInteractor
 from .components.animation import Animation
 from .components.tween import Tween, TweenManager, EasingType
+from .tween_presets import (
+    tween_position,
+    tween_move_by,
+    tween_scale,
+    tween_scale_by,
+    tween_rotate,
+    tween_rotate_by,
+    tween_color,
+    tween_alpha,
+    tween_size,
+    tween_punch_scale,
+    tween_shake_position,
+    tween_shake_rotation,
+    tween_fade_in,
+    tween_fade_out,
+    tween_color_flash,
+    tween_bezier,
+)
 from .components.pages import Page, PageManager
 from .utils.save_load import PlayerPrefs
 from .particles import (
@@ -53,6 +71,22 @@ __all__ = [
     "Tween",
     "TweenManager",
     "EasingType",
+    "tween_position",
+    "tween_move_by",
+    "tween_scale",
+    "tween_scale_by",
+    "tween_rotate",
+    "tween_rotate_by",
+    "tween_color",
+    "tween_alpha",
+    "tween_size",
+    "tween_punch_scale",
+    "tween_shake_position",
+    "tween_shake_rotation",
+    "tween_fade_in",
+    "tween_fade_out",
+    "tween_color_flash",
+    "tween_bezier",
     # Save/load
     "PlayerPrefs",
     # Game core
@@ -81,6 +115,8 @@ __all__ = [
     # Input / events / resources
     "InputState",
     "EventBus",
+    "LocalEvent",
+    "GlobalEvents",
     "ResourceCache",
     "resource_cache",
     # Global facade
@@ -96,6 +132,7 @@ __all__ = [
     "set_camera_follow",
     "clear_camera_follow",
     "process_camera_input",
+    "shake_camera",
     "register_update_object",
     "unregister_update_object",
     "get_sprites_by_class",
@@ -106,8 +143,12 @@ __all__ = [
     "audio_manager",
     "input",
     "events",
+    "globalEvents",
     "pygame_events",
     "clock",
+    "FPS",
+    "frame_count",
+    "time_since_start",
     "load_texture",
     "load_sound",
     # Debug / logging
@@ -149,25 +190,32 @@ WH_C: Vector2 = Vector2()
 screen: pygame.Surface | None = None
 screen_rect: pygame.Rect | None = None
 dt: float = 0.0
+time_since_start: float = 0.0
 pygame_events: List[pygame.event.Event] = []
 clock: pygame.time.Clock | None = None
+frame_count: int = 0
 
 _context = GameContext.get()
 clock = _context.clock
 input: InputState = _context.input
 events: EventBus = _context.event_bus
+globalEvents = GlobalEvents()
 
 
 def _sync_globals() -> None:
     """Синхронизирует глобальные переменные с текущим контекстом игры."""
-    global WH, WH_C, screen, screen_rect, dt, pygame_events, clock
+    global WH, WH_C, screen, screen_rect, dt, pygame_events, clock, frame_count, FPS
+    global time_since_start
     WH = _context.WH
     WH_C = _context.WH_C
     screen = _context.screen
     screen_rect = _context.screen_rect
     dt = _context.dt
+    FPS = _context.fps
+    time_since_start = _context.time_since_start
     pygame_events = _context.events
     clock = _context.clock
+    frame_count = _context.frame_count
 
 
 def get_context() -> GameContext:
@@ -339,6 +387,13 @@ def process_camera_input(
         mouse_drag=mouse_drag,
         mouse_button=mouse_button,
     )
+
+
+def shake_camera(
+    strength: tuple[float, float] = (12, 12), duration: float = 0.35
+) -> None:
+    """Запускает дрожание камеры с перезапуском."""
+    _context.game.shake_camera(strength=strength, duration=duration)
 
 
 def enable_debug(enabled: bool = True) -> None:
@@ -556,7 +611,7 @@ def get_screen(
 
 
 def update(
-    fps: int = 60,
+    fps: int = -1,
     fill_color: tuple[int, int, int] = None,
     update_display: bool = True,
     *update_objects,
@@ -567,7 +622,8 @@ def update(
     Должна вызываться каждый кадр в игровом цикле.
 
     Args:
-        fps (int, optional): Целевое количество кадров в секунду. Если -1, используется значение FPS по умолчанию. По умолчанию -1.
+        fps (int, optional): Целевое количество кадров в секунду. Если -1,
+            используется текущее значение из контекста. По умолчанию 60.
         fill_color (tuple[int, int, int], optional): Цвет заливки экрана (R, G, B). Если None, экран не заливается. По умолчанию None.
         update_display (bool, optional): Обновлять ли экран. По умолчанию True. Оставлено для обратной совместимости.
         *update_objects: Объекты для автоматического обновления (TweenManager, Animation, Timer и т.д.).
@@ -584,41 +640,6 @@ def set_scene(scene: Scene | None) -> None:
 def set_scene_by_name(name: str, recreate: bool = False) -> None:
     """Устанавливает сцену по имени (можно пересоздать)."""
     _context.scene_manager.set_scene_by_name(name, _context, recreate=recreate)
-
-
-def activate_scene(scene_or_name: Scene | str) -> None:
-    """Активирует сцену, не отключая другие."""
-    _context.scene_manager.activate_scene(scene_or_name, _context)
-
-
-def deactivate_scene(scene_or_name: Scene | str) -> None:
-    """Деактивирует сцену."""
-    _context.scene_manager.deactivate_scene(scene_or_name)
-
-
-def set_active_scenes(scenes_or_names: list[Scene | str]) -> None:
-    """Устанавливает список активных сцен."""
-    _context.scene_manager.set_active_scenes(scenes_or_names, _context)
-
-
-def get_active_scenes() -> list[Scene]:
-    """Возвращает список активных сцен."""
-    return _context.scene_manager.get_active_scenes()
-
-
-def is_scene_active(scene_or_name: Scene | str) -> bool:
-    """Проверяет, активна ли сцена."""
-    return _context.scene_manager.is_scene_active(scene_or_name)
-
-
-def set_scene_order(scene_or_name: Scene | str, order: int) -> None:
-    """Устанавливает порядок отрисовки/обновления сцены."""
-    _context.scene_manager.set_scene_order(scene_or_name, order)
-
-
-def get_current_scene() -> Scene | None:
-    """Возвращает текущую сцену."""
-    return _context.scene_manager.current_scene
 
 
 def restart_scene(name: str | None = None) -> None:

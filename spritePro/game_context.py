@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from typing import List, Tuple
+import time
 
 import pygame
 from pygame.math import Vector2
 
 from .spriteProGame import SpriteProGame
 from .input import InputState
-from .event_bus import EventBus
+from .event_bus import EventBus, GlobalEvents
 from .resources import resource_cache
 from .scenes import SceneManager
 
@@ -136,6 +137,9 @@ class GameContext:
         self.WH_C: Vector2 = Vector2()
         self.clock = pygame.time.Clock()
         self.dt: float = 0.0
+        self.frame_count: int = 0
+        self.time_since_start: float = 0.0
+        self._start_time: float = time.perf_counter()
         self._startup_log_done = False
         GameContext._instance = self
 
@@ -190,9 +194,20 @@ class GameContext:
         update_display: bool = True,
         *update_objects,
     ) -> None:
-        """Обновляет ввод, сцены, спрайты и debug overlay."""
-        self.fps = fps if fps >= 0 else self.fps
+        """Обновляет ввод, сцены, спрайты и debug overlay.
+
+        Args:
+            fps (int, optional): Целевой FPS. По умолчанию 60.
+            fill_color (tuple[int, int, int] | None, optional): Цвет заливки экрана.
+                Если None, заливка не выполняется.
+            update_display (bool, optional): Вызывать ли обновление окна.
+            *update_objects: Объекты, которые нужно обновлять каждый кадр.
+        """
+        if fps >= 0 and fps != self.fps:
+            self.fps = fps
         self.dt = self.clock.tick(self.fps) / 1000.0
+        self.frame_count += 1
+        self.time_since_start = time.perf_counter() - self._start_time
         self.game.debug_fps_value = self.clock.get_fps()
 
         if self.screen is None:
@@ -209,6 +224,7 @@ class GameContext:
 
         self.events = pygame.event.get()
         self.input.update(self.events)
+        self.event_bus.send(GlobalEvents.TICK, dt=self.dt, frame_count=self.frame_count)
         if self.game.debug_enabled and self.game.debug_camera_drag_button is not None:
             if self.input.is_mouse_pressed(self.game.debug_camera_drag_button):
                 rel = self.input.mouse_rel
@@ -217,20 +233,33 @@ class GameContext:
 
         for event in self.events:
             if event.type == pygame.QUIT:
-                self.event_bus.send("quit", event=event)
+                self.event_bus.send(GlobalEvents.QUIT, event=event)
                 raise SystemExit
             elif event.type == pygame.KEYDOWN:
-                self.event_bus.send("key_down", key=event.key, event=event)
+                self.event_bus.send(GlobalEvents.KEY_DOWN, key=event.key, event=event)
             elif event.type == pygame.KEYUP:
-                self.event_bus.send("key_up", key=event.key, event=event)
+                self.event_bus.send(GlobalEvents.KEY_UP, key=event.key, event=event)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self.event_bus.send(
-                    "mouse_down", button=event.button, pos=event.pos, event=event
+                    GlobalEvents.MOUSE_DOWN,
+                    button=event.button,
+                    pos=event.pos,
+                    event=event,
                 )
             elif event.type == pygame.MOUSEBUTTONUP:
                 self.event_bus.send(
-                    "mouse_up", button=event.button, pos=event.pos, event=event
+                    GlobalEvents.MOUSE_UP,
+                    button=event.button,
+                    pos=event.pos,
+                    event=event,
                 )
+
+        self.event_bus.send(
+            GlobalEvents.TICK,
+            dt=self.dt,
+            frame_count=self.frame_count,
+            time_since_start=self.time_since_start,
+        )
 
         for obj in update_objects:
             self.game.register_update_object(obj)

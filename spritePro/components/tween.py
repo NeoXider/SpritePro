@@ -4,11 +4,9 @@ import math
 from enum import IntFlag, auto
 import sys
 from pathlib import Path
+
 from pygame.math import Vector2
 
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
 import spritePro
 
 
@@ -276,9 +274,18 @@ class Tween:
             self.is_paused = False
             self.start_time += time.time() - self.pause_time
 
-    def stop(self) -> None:
-        """Останавливает переход."""
+    def stop(self, apply_end: bool = True) -> None:
+        """Останавливает переход.
+
+        Args:
+            apply_end (bool, optional): Применить конечное значение при остановке.
+                По умолчанию True.
+        """
         self.is_playing = False
+        if apply_end:
+            self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
+            if self.on_update:
+                self.on_update(self.current_value)
 
     def start(self) -> None:
         """Запускает переход."""
@@ -286,8 +293,17 @@ class Tween:
         self.is_playing = True
         self.is_paused = False
 
-    def reset(self) -> None:
-        """Сбрасывает переход в начальное состояние."""
+    def reset(self, apply_end: bool = False) -> None:
+        """Сбрасывает переход в начальное состояние.
+
+        Args:
+            apply_end (bool, optional): Применить конечное значение перед сбросом.
+                По умолчанию False.
+        """
+        if apply_end:
+            self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
+            if self.on_update:
+                self.on_update(self.current_value)
         self.start_time = time.time()
         self.current_value = self.start_value
         self.is_playing = True
@@ -420,13 +436,16 @@ class TweenManager:
         """
         return self.tweens.get(name)
 
-    def remove_tween(self, name: str) -> None:
+    def remove_tween(self, name: str, apply_end: bool = True) -> None:
         """Удаляет переход.
 
         Args:
             name (str): Имя перехода.
+            apply_end (bool, optional): Применить конечное значение при удалении.
+                По умолчанию True.
         """
         if name in self.tweens:
+            self.tweens[name].stop(apply_end=apply_end)
             del self.tweens[name]
 
     def start_tween(self, name: str) -> None:
@@ -438,10 +457,15 @@ class TweenManager:
         if name in self.tweens:
             self.tweens[name].start()
 
-    def start_all(self) -> None:
-        """Запускает все переходы."""
+    def start_all(self, apply_end: bool = False) -> None:
+        """Запускает все переходы.
+
+        Args:
+            apply_end (bool, optional): Применить конечное значение перед стартом.
+                По умолчанию False.
+        """
         for tween in self.tweens.values():
-            tween.reset()
+            tween.reset(apply_end=apply_end)
             tween.start()
 
     def pause_all(self) -> None:
@@ -454,16 +478,26 @@ class TweenManager:
         for tween in self.tweens.values():
             tween.resume()
 
-    def stop_all(self) -> None:
-        """Останавливает все переходы и очищает словарь."""
+    def stop_all(self, apply_end: bool = True) -> None:
+        """Останавливает все переходы и очищает словарь.
+
+        Args:
+            apply_end (bool, optional): Применить конечные значения у всех твинов.
+                По умолчанию True.
+        """
         for tween in self.tweens.values():
-            tween.stop()
+            tween.stop(apply_end=apply_end)
         self.tweens.clear()
 
-    def reset_all(self) -> None:
-        """Сбрасывает все переходы в начальное состояние."""
+    def reset_all(self, apply_end: bool = False) -> None:
+        """Сбрасывает все переходы в начальное состояние.
+
+        Args:
+            apply_end (bool, optional): Применить конечное значение перед сбросом.
+                По умолчанию False.
+        """
         for tween in self.tweens.values():
-            tween.reset()
+            tween.reset(apply_end=apply_end)
 
 
 if __name__ == "__main__":

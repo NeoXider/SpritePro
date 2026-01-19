@@ -480,7 +480,7 @@ python spritePro/demoGames/ping_pong.py
 - Основы: [Game Loop](docs/game_loop.md) • [Input](docs/input.md) • [Debug](docs/debug.md) • [Camera & Particles](docs/camera_and_particles.md)
 - Спрайты и графика: [Sprite](docs/sprite.md) • [Surface](docs/surface.md) • [Text](docs/text.md) • [Text FPS](docs/text_fps.md) • [Color Effects](docs/color_effects.md) • [ReadySprites](docs/readySprites.md)
 - UI: [Button](docs/button.md) • [Toggle Button](docs/toggle_button.md) • [Bar](docs/bar.md) • [Bar Background](docs/bar_background.md) • [Pages](docs/pages.md)
-- Компоненты: [Animation](docs/animation.md) • [Tween](docs/tween.md) • [Timer](docs/timer.md) • [Health](docs/health.md) • [Mouse Interactor](docs/mouse_interactor.md) • [Draggable Sprite](docs/draggable_sprite.md)
+- Компоненты: [Animation](docs/animation.md) • [Tween](docs/tween.md) • [Tween Presets](docs/tween_presets.md) • [Timer](docs/timer.md) • [Health](docs/health.md) • [Mouse Interactor](docs/mouse_interactor.md) • [Draggable Sprite](docs/draggable_sprite.md)
 - Эффекты и частицы: [Particles](docs/particles.md)
 - Аудио: [Audio](docs/audio.md)
 - Сохранения и утилиты: [Save/Load](docs/save_load.md)
