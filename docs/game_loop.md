@@ -35,7 +35,7 @@ s.get_screen((800, 600), "Scenes")
 manager = s.get_context().scene_manager
 manager.add_scene("main", MainScene())
 s.register_scene_factory("main", MainScene)
-s.set_scene_by_name("main")
+s.scene.set_scene_by_name("main")
 
 while True:
     s.update(fill_color=(10, 10, 20))
@@ -46,21 +46,29 @@ while True:
 ```python
 def update(self, dt):
     if s.input.was_pressed(pygame.K_RETURN):
-        s.set_scene_by_name("menu")
+        s.scene.set_scene_by_name("menu")
         return
 ```
 
 Перезапуск сцены:
 
 ```python
-s.restart_scene()          # текущая сцена
-s.restart_scene("main")    # по имени
+s.scene.restart_current(context)  # текущая сцена
+s.scene.restart_by_name("main", context)
 ```
 
 ### Имя сцены и context
 
-Если сцену добавить через `add_scene("main", scene)`, то `scene.name` будет установлен автоматически.  
+Если сцену добавить через `add_scene("main", MainScene)` или `add_scene("main", MainScene())`,
+то `scene.name` будет установлен автоматически.  
 Если вы создаёте и включаете сцену напрямую (`set_scene(scene)`), имя может быть `None`.
+
+`s.scene` — это короткий доступ к `SceneManager` (рекомендуемый способ работы со сценами):
+
+```python
+s.scene.add_scene("main", MainScene)
+s.set_scene_by_name("main")
+```
 
 ```python
 class MainScene(s.Scene):
@@ -72,9 +80,9 @@ class MainScene(s.Scene):
         print("Time since start:", context.time_since_start)
 
 s.get_screen((800, 600), "Scene Context")
-manager = s.get_context().scene_manager
-manager.add_scene("main", MainScene())
-s.set_scene_by_name("main")
+    manager = s.scene
+    manager.add_scene("main", MainScene)
+    s.scene.set_scene_by_name("main")
 ```
 
 ## Несколько активных сцен
@@ -82,18 +90,18 @@ s.set_scene_by_name("main")
 Можно держать активными несколько сцен одновременно (например, игра + UI).
 
 ```python
-s.set_scene_by_name("game")
-s.activate_scene("hud")
-print(s.is_scene_active("hud"))
+s.scene.set_scene_by_name("game")
+s.scene.activate_scene("hud")
+print(s.scene.is_scene_active("hud"))
 
-for scene in s.get_active_scenes():
+for scene in s.scene.get_active_scenes():
     print(scene.name, scene.is_active)
 ```
 
 Отключение сцены:
 
 ```python
-s.deactivate_scene("hud")
+s.scene.deactivate_scene("hud")
 ```
 
 ### Порядок обновления и отрисовки
@@ -103,13 +111,13 @@ s.deactivate_scene("hud")
 ```python
 game_scene.order = 0
 hud_scene.order = 10
-s.activate_scene(hud_scene)
+s.scene.activate_scene(hud_scene)
 ```
 
 Или через менеджер:
 
 ```python
-s.set_scene_order("hud", 10)
+s.scene.set_scene_order("hud", 10)
 ```
 
 ## Таймеры в сценах

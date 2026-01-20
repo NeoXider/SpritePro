@@ -96,7 +96,7 @@ def main():
     s.get_screen((800, 600), "Drag & Drop Demo")
     manager = s.get_context().scene_manager
     manager.add_scene("drag_demo", DragDropScene())
-    s.set_scene_by_name("drag_demo")
+    s.scene.set_scene_by_name("drag_demo")
 
     while True:
         s.update(fill_color=(15, 15, 25))

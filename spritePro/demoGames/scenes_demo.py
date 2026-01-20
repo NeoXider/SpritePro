@@ -18,7 +18,7 @@ def _enter_pressed() -> bool:
 
 
 def _is_current(scene: s.Scene) -> bool:
-    return s.get_current_scene() is scene
+    return s.scene.current_scene is scene
 
 
 class SceneA(s.Scene):
@@ -53,18 +53,18 @@ class SceneA(s.Scene):
 
     def update(self, dt):
         if _enter_pressed():
-            s.set_scene_by_name("scene_b")
+            s.scene.set_scene_by_name("scene_b")
             return
         if s.input.was_pressed(pygame.K_TAB):
-            if s.is_scene_active("scene_b"):
-                s.deactivate_scene("scene_b")
+            if s.scene.is_scene_active("scene_b"):
+                s.scene.deactivate_scene("scene_b")
             else:
-                s.activate_scene("scene_b")
+                s.scene.activate_scene("scene_b")
         if s.input.was_pressed(pygame.K_SPACE):
             self.toggle_visible = not self.toggle_visible
             self.toggle_obj.set_active(self.toggle_visible)
         if s.input.was_pressed(pygame.K_r):
-            s.restart_scene()
+            s.scene.restart_current(s.get_context())
 
     def on_exit(self):
         if self.move_tween is not None:
@@ -126,10 +126,10 @@ class SceneB(s.Scene):
 
     def update(self, dt):
         if _enter_pressed() and _is_current(self):
-            s.set_scene_by_name("scene_a")
+            s.scene.set_scene_by_name("scene_a")
             return
         if s.input.was_pressed(pygame.K_r):
-            s.restart_scene()
+            s.scene.restart_current(s.get_context())
         if self.fire_timer.done:
             self.fire_timer.start(random.uniform(0.4, 1.2))
 
@@ -162,12 +162,9 @@ class SceneB(s.Scene):
 
 def main():
     s.get_screen((800, 600), "Scenes Demo")
-    manager = s.get_context().scene_manager
-    manager.add_scene("scene_a", SceneA())
-    manager.add_scene("scene_b", SceneB())
-    s.register_scene_factory("scene_a", SceneA)
-    s.register_scene_factory("scene_b", SceneB)
-    s.set_scene_by_name("scene_a")
+    s.scene.add_scene("scene_a", SceneA)
+    s.scene.add_scene("scene_b", SceneB)
+    s.scene.set_scene_by_name("scene_a")
 
     while True:
         s.update(fill_color=(10, 10, 20))

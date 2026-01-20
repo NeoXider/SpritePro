@@ -215,13 +215,22 @@ class SceneManager:
             return
         scene.order = int(order)
 
-    def add_scene(self, name: str, scene: Scene) -> None:
+    def add_scene(self, name: str, scene) -> None:
         """Добавляет сцену по имени.
+
+        Можно передать экземпляр сцены или фабрику (класс/функцию), которая
+        создаёт сцену. Если передана фабрика, она сохраняется для пересоздания.
 
         Args:
             name (str): Имя сцены.
-            scene (Scene): Экземпляр сцены.
+            scene: Экземпляр Scene или callable, возвращающий Scene.
         """
+        if callable(scene) and not isinstance(scene, Scene):
+            factory = scene
+            scene = factory()
+            self._scene_factories[name] = factory
+        if not isinstance(scene, Scene):
+            return
         scene.name = name
         self._scenes[name] = scene
 
@@ -250,6 +259,8 @@ class SceneManager:
             scene = self._recreate_scene(name)
         else:
             scene = self._scenes.get(name)
+            if scene is None and name in self._scene_factories:
+                scene = self._recreate_scene(name)
         self.set_scene(scene, context)
 
     def register_scene_factory(self, name: str, factory) -> None:

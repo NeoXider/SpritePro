@@ -140,12 +140,14 @@ __all__ = [
     "set_scene_by_name",
     "restart_scene",
     "register_scene_factory",
+    "get_current_scene",
     "audio_manager",
     "input",
     "events",
     "globalEvents",
     "pygame_events",
     "clock",
+    "scene",
     "FPS",
     "frame_count",
     "time_since_start",
@@ -200,6 +202,7 @@ clock = _context.clock
 input: InputState = _context.input
 events: EventBus = _context.event_bus
 globalEvents = GlobalEvents()
+scene = _context.scene_manager
 
 
 def _sync_globals() -> None:
@@ -653,6 +656,11 @@ def restart_scene(name: str | None = None) -> None:
 def register_scene_factory(name: str, factory) -> None:
     """Регистрирует фабрику для пересоздания сцены."""
     _context.scene_manager.register_scene_factory(name, factory)
+
+
+def get_current_scene() -> Scene | None:
+    """Возвращает текущую активную сцену."""
+    return _context.scene_manager.current_scene
 
 
 def load_texture(path: str):

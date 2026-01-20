@@ -77,7 +77,7 @@ def main():
 
     manager = s.get_context().scene_manager
     manager.add_scene("debug_overlay", DebugOverlayScene())
-    s.set_scene_by_name("debug_overlay")
+    s.scene.set_scene_by_name("debug_overlay")
 
     while True:
         s.update(fill_color=(15, 15, 25))
