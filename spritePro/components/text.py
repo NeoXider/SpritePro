@@ -10,7 +10,7 @@ parent_dir = current_dir.parent.parent
 sys.path.append(str(parent_dir))
 
 import spritePro
-from spritePro.sprite import Sprite
+from spritePro.sprite import Sprite, SpriteSceneInput
 
 if TYPE_CHECKING:
     from spritePro.constants import Anchor
@@ -41,6 +41,7 @@ class TextSprite(Sprite):
         speed: float = 0,
         sorting_order: int = 1000,
         anchor: Union[str, "Anchor", None] = None,
+        scene: SpriteSceneInput = None,
         **sprite_kwargs,
     ):
         """Инициализирует текстовый спрайт.
@@ -54,6 +55,7 @@ class TextSprite(Sprite):
             speed (float, optional): Базовая скорость движения спрайта. По умолчанию 0.
             sorting_order (int, optional): Порядок отрисовки (слой). По умолчанию 1000.
             anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию None (используется Anchor.CENTER).
+            scene (Scene | str, optional): Сцена, в которой находится текстовый спрайт. По умолчанию None.
             **sprite_kwargs: Дополнительные аргументы, передаваемые в Sprite (например, auto_flip, stop_threshold).
         """
         # инициализируем Pygame Font-модуль
@@ -72,6 +74,7 @@ class TextSprite(Sprite):
             speed=speed,
             sorting_order=sorting_order,
             anchor=anchor,
+            scene=scene,
             **sprite_kwargs,
         )
 

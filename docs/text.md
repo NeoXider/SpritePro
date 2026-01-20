@@ -24,6 +24,7 @@ TextSprite extends the base Sprite class to handle text rendering, making it eas
 - `pos` (tuple): Text position (x, y). Default: (0, 0)
 - `sorting_order` (int): Render layer order. Default: 1000 (drawn above typical sprites)
 - `anchor` (str | Anchor): Anchor for positioning. Default: Anchor.CENTER
+- `scene` (Scene | str): Scene this text sprite belongs to. Default: None
 
 **Пример использования якоря:**
 ```python

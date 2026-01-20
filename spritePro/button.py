@@ -11,7 +11,7 @@ current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
 sys.path.append(str(parent_dir))
 
-from spritePro.sprite import Sprite
+from spritePro.sprite import Sprite, SpriteSceneInput
 from spritePro.components.text import TextSprite
 from spritePro.components.mouse_interactor import MouseInteractor
 from spritePro.constants import Anchor
@@ -61,6 +61,7 @@ class Button(Sprite):
         use_scale_fx: bool = True,
         use_color_fx: bool = True,
         anchor: Union[str, "Anchor", None] = None,
+        scene: SpriteSceneInput = None,
     ):
         """Инициализирует новую кнопку.
 
@@ -84,6 +85,7 @@ class Button(Sprite):
             use_scale_fx (bool, optional): Включен ли эффект масштабирования. По умолчанию True.
             use_color_fx (bool, optional): Включен ли эффект изменения цвета. По умолчанию True.
             anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию None (используется Anchor.CENTER).
+            scene (Scene | str, optional): Сцена для кнопки и текста. По умолчанию None.
         """
         # Определяем якорь (если не передан, используем CENTER для обратной совместимости)
         if anchor is None:
@@ -91,7 +93,12 @@ class Button(Sprite):
 
         # Инициализируем Sprite с пустым фоном
         super().__init__(
-            sprite, size=size, pos=pos, sorting_order=sorting_order, anchor=anchor
+            sprite,
+            size=size,
+            pos=pos,
+            sorting_order=sorting_order,
+            anchor=anchor,
+            scene=scene,
         )
 
         # Параметры анимации и цвета
@@ -118,6 +125,7 @@ class Button(Sprite):
             font_name=font_name,
             # TextSprite по умолчанию уже 1000, но позволим синхронно с кнопкой
             sorting_order=sorting_order,
+            scene=scene,
         )
         self.text_sprite.set_parent(self, keep_world_position=True)
 

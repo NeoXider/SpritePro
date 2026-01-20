@@ -1,15 +1,26 @@
-from typing import Dict, List, Optional, Tuple, Union, Callable
-import pygame
+from typing import Dict, List, Optional, Callable
 import math
-import time
 import sys
 from pathlib import Path
+
+import pygame
 
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
 sys.path.append(str(parent_dir))
-import spritePro
-from spritePro.components.tween import Tween, TweenManager, EasingType
+
+import spritePro  # noqa: E402
+from spritePro.sprite import SpriteSceneInput  # noqa: E402
+from spritePro.components.tween import TweenManager, EasingType  # noqa: E402
+
+
+def _is_scene_active(scene: SpriteSceneInput) -> bool:
+    if scene is None:
+        return True
+    try:
+        return spritePro.scene.is_scene_active(scene)
+    except Exception:
+        return True
 
 
 class Animation:
@@ -48,6 +59,7 @@ class Animation:
         on_complete: Optional[Callable] = None,
         on_frame: Optional[Callable] = None,
         auto_register: bool = True,
+        scene: SpriteSceneInput = None,
     ):
         """Инициализация анимации.
 
@@ -59,6 +71,7 @@ class Animation:
             on_complete: Функция вызываемая при завершении
             on_frame: Функция вызываемая при смене кадра
             auto_register (bool, optional): Если True, автоматически регистрирует анимацию для обновления в spritePro.update(). По умолчанию True.
+            scene (Scene | str, optional): Сцена, в которой активна анимация. По умолчанию None.
         """
         self.owner = owner_sprite
         self.frames = frames or []
@@ -67,6 +80,7 @@ class Animation:
         self.loop = loop
         self.on_complete = on_complete
         self.on_frame = on_frame
+        self.scene = scene if scene is not None else getattr(owner_sprite, "scene", None)
 
         self.current_frame = 0
         self.last_update = pygame.time.get_ticks()
@@ -219,6 +233,8 @@ class Animation:
             dt (Optional[float], optional): Время с последнего обновления. Если не указано, используется spritePro.dt.
         """
         if not self.is_playing or self.is_paused:
+            return
+        if not _is_scene_active(self.scene):
             return
 
         now = pygame.time.get_ticks()

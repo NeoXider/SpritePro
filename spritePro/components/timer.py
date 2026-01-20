@@ -4,6 +4,19 @@ import random
 import time
 from typing import Callable, Optional, Tuple, Dict, Union
 
+from spritePro.sprite import SpriteSceneInput
+
+
+def _is_scene_active(scene: SpriteSceneInput) -> bool:
+    if scene is None:
+        return True
+    try:
+        import spritePro
+
+        return spritePro.scene.is_scene_active(scene)
+    except Exception:
+        return True
+
 
 class Timer:
     """Универсальный таймер на основе опроса системного времени.
@@ -34,6 +47,7 @@ class Timer:
         autostart: bool = True,
         auto_register: bool = True,
         use_dt: bool = True,
+        scene: SpriteSceneInput = None,
     ):
         """Инициализирует таймер.
 
@@ -46,6 +60,7 @@ class Timer:
             autostart (bool, optional): Если True, запускает таймер сразу при создании. По умолчанию True.
             auto_register (bool, optional): Если True, автоматически регистрирует таймер для обновления в spritePro.update(). По умолчанию True.
             use_dt (bool, optional): Если True, таймер использует dt из update(). Если False, использует глобальное время. По умолчанию True.
+            scene (Scene | str, optional): Сцена, в которой активен таймер. По умолчанию None.
         """
         self._duration_range: Optional[Tuple[float, float]] = None
         self.duration = 0.0
@@ -55,6 +70,7 @@ class Timer:
         self.kwargs = kwargs or {}
         self.repeat = repeat
         self.use_dt = use_dt
+        self.scene = scene
 
         self.active = False
         self.done = False
@@ -139,6 +155,8 @@ class Timer:
         - Перезапускает таймер (если повторяется)
         """
         if not self.active or self.done:
+            return
+        if not _is_scene_active(self.scene):
             return
 
         if self.use_dt:

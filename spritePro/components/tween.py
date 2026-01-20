@@ -8,6 +8,16 @@ from pathlib import Path
 from pygame.math import Vector2
 
 import spritePro
+from spritePro.sprite import SpriteSceneInput
+
+
+def _is_scene_active(scene: SpriteSceneInput) -> bool:
+    if scene is None:
+        return True
+    try:
+        return spritePro.scene.is_scene_active(scene)
+    except Exception:
+        return True
 
 
 class EasingType(IntFlag):
@@ -109,6 +119,7 @@ class Tween:
         auto_start: bool = True,
         auto_register: bool = True,
         value_type: Optional[str] = None,
+        scene: SpriteSceneInput = None,
     ):
         """Инициализирует переход.
 
@@ -125,6 +136,7 @@ class Tween:
             auto_start (bool, optional): Автоматически запускать переход при создании. По умолчанию True.
             auto_register (bool, optional): Автоматически регистрировать твин для обновления в spritePro.update(). По умолчанию True.
             value_type (Optional[str], optional): Тип значения ("vector2", "vector3", "color") или None (авто). По умолчанию None.
+            scene (Scene | str, optional): Сцена, в которой активен твин. По умолчанию None.
         """
         self.start_value = start_value
         self.end_value = end_value
@@ -138,6 +150,7 @@ class Tween:
         self.delay = delay
         self.on_update = on_update
         self.value_type = value_type
+        self.scene = scene
 
         self.start_time = time.time()
         self.current_value = start_value
@@ -164,6 +177,8 @@ class Tween:
             Optional[Any]: Текущее значение или None, если завершен.
         """
         if not self.is_playing or self.is_paused:
+            return self.current_value
+        if not _is_scene_active(self.scene):
             return self.current_value
 
         if dt is None:
@@ -342,13 +357,15 @@ class TweenManager:
         tweens (Dict[str, Tween]): Словарь активных переходов.
     """
 
-    def __init__(self, auto_register: bool = True):
+    def __init__(self, auto_register: bool = True, scene: SpriteSceneInput = None):
         """Инициализирует менеджер переходов.
 
         Args:
             auto_register (bool, optional): Если True, автоматически регистрирует менеджер для обновления в spritePro.update(). По умолчанию True.
+            scene (Scene | str, optional): Сцена, в которой активен менеджер. По умолчанию None.
         """
         self.tweens: Dict[str, Tween] = {}
+        self.scene = scene
 
         # Автоматическая регистрация для обновления
         if auto_register:
@@ -402,6 +419,7 @@ class TweenManager:
             auto_start,
             value_type=value_type,
             auto_register=False,  # Твины в менеджере не регистрируются отдельно
+            scene=self.scene,
         )
         self.tweens[name] = tween
 
@@ -412,6 +430,8 @@ class TweenManager:
             dt (Optional[float], optional): Время с последнего обновления.
                 Если не указано, берется из spritePro.dt. По умолчанию None.
         """
+        if not _is_scene_active(self.scene):
+            return
         # Если dt не передан, пытаемся взять из spritePro.dt
         if dt is None:
             try:

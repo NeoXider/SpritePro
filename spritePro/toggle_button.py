@@ -11,6 +11,7 @@ parent_dir = current_dir.parent
 sys.path.append(str(parent_dir))
 
 from spritePro.button import Button
+from spritePro.sprite import SpriteSceneInput
 import spritePro
 
 
@@ -50,6 +51,7 @@ class ToggleButton(Button):
         anim_speed: float = 0.2,
         animated: bool = True,
         anchor: Union[str, "Anchor", None] = None,
+        scene: SpriteSceneInput = None,
     ):
         """Инициализирует новую кнопку-переключатель.
 
@@ -71,6 +73,7 @@ class ToggleButton(Button):
             anim_speed (float, optional): Множитель скорости анимации. По умолчанию 0.2.
             animated (bool, optional): Включены ли анимации. По умолчанию True.
             anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию None (используется Anchor.CENTER).
+            scene (Scene | str, optional): Сцена для кнопки и текста. По умолчанию None.
         """
         # Store toggle-specific properties
         self.text_on = text_on
@@ -107,6 +110,7 @@ class ToggleButton(Button):
             anim_speed=anim_speed,
             animated=animated,
             anchor=anchor,
+            scene=scene,
         )
 
     def _adjust_brightness(

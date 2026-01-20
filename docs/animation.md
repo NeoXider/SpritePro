@@ -14,6 +14,7 @@
 - Поддержка параллельных анимаций
 - Система обратных вызовов для событий анимации
 - Режимы циклической и однократной анимации
+- Привязка к сцене: обновление идет только в активной сцене
 
 ## Класс: Animation
 
@@ -25,7 +26,8 @@ Animation(
     frame_duration: float = 0.1,
     loop: bool = True,
     on_complete: Optional[Callable] = None,
-    on_frame: Optional[Callable] = None
+    on_frame: Optional[Callable] = None,
+    scene: Optional[Scene | str] = None
 )
 ```
 
@@ -36,6 +38,7 @@ Animation(
 - `loop` (bool): Должна ли анимация зацикливаться. По умолчанию: True
 - `on_complete` (Optional[Callable]): Функция обратного вызова, вызываемая при завершении анимации. По умолчанию: None
 - `on_frame` (Optional[Callable]): Функция обратного вызова, вызываемая при смене кадра. По умолчанию: None
+- `scene` (Scene | str, optional): Сцена для анимации. По умолчанию: берется из `owner_sprite.scene`
 
 ### Свойства
 

@@ -33,6 +33,7 @@ ToggleButton is perfect for settings, options, and any binary state controls in 
 - `anim_speed` (float): Animation speed. Default: 0.2
 - `animated` (bool): Enable animations. Default: True
 - `anchor` (str | Anchor): Anchor for positioning. Default: Anchor.CENTER
+- `scene` (Scene | str): Scene for the toggle button and its text. Default: None
 
 **Пример использования якоря:**
 ```python

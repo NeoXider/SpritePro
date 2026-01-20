@@ -16,6 +16,11 @@ import spritePro as s
 tween_manager = s.TweenManager()
 ```
 
+Можно привязать менеджер к сцене:
+```python
+tween_manager = s.TweenManager(scene="hud")
+```
+
 #### Методы
 
 - `add_tween(name: str, start_value: float, end_value: float, duration: float, easing: EasingType = EasingType.LINEAR, on_complete: Optional[Callable] = None, loop: bool = False, yoyo: bool = False, delay: float = 0, on_update: Optional[Callable[[float], None]] = None, auto_start: bool = True)`: Добавить новый твин (твины в менеджере не регистрируются отдельно, обновляются через менеджер)
@@ -28,6 +33,8 @@ tween_manager = s.TweenManager()
 - `start_tween(name: str)`: Запустить конкретный твин по имени
 - `get_tween(name: str) -> Optional[Tween]`: Получить конкретный твин
 - `remove_tween(name: str, apply_end: bool = True)`: Удалить конкретный твин (можно применить конечное значение)
+
+Если `scene` задан, `TweenManager.update()` автоматически пропускается, когда сцена не активна.
 
 ### Tween
 
@@ -47,6 +54,7 @@ tween_manager = s.TweenManager()
 - `auto_start` (bool): Автоматически запускать твин при создании. По умолчанию: True
 - `auto_register` (bool): Автоматически регистрировать твин для обновления в spritePro.update(). По умолчанию: True
 - `value_type` (Optional[str]): "vector2", "vector3", "color" или None (авто). По умолчанию: None
+- `scene` (Scene | str, optional): Сцена, в которой активен твин. По умолчанию: None
 
 #### Методы Tween
 

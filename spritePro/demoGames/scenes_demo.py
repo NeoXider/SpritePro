@@ -32,7 +32,7 @@ class SceneA(s.Scene):
             scene=self,
         )
         self.hint = s.TextSprite(
-            "Enter: switch  |  Tab: overlay  |  Space: toggle  |  R: restart  |  Mover: tween",
+            "Enter: switch  |  Tab: overlay  |  Space: toggle  |  R: restart  |  Click: button",
             22,
             (200, 200, 200),
             (400, 540),
@@ -40,16 +40,62 @@ class SceneA(s.Scene):
         )
         self.mover = s.Sprite("", (60, 60), (150, 300), speed=1, scene=self)
         self.mover.set_color((120, 200, 255))
+        self.button = s.Button(
+            "",
+            size=(170, 50),
+            pos=(140, 120),
+            text="Click me",
+            text_size=22,
+            base_color=(210, 210, 210),
+            hover_color=(235, 235, 235),
+            press_color=(180, 180, 180),
+            on_click=self._on_button_click,
+            scene=self,
+        )
+        self.toggle = s.ToggleButton(
+            "",
+            size=(170, 50),
+            pos=(140, 180),
+            text_on="Toggle: ON",
+            text_off="Toggle: OFF",
+            text_size=20,
+            color_on=(80, 180, 120),
+            color_off=(180, 80, 80),
+            on_toggle=self._on_toggle,
+            scene=self,
+        )
+        self.timer_count = 0
+        self.timer_label = s.TextSprite(
+            "Timer: 0",
+            20,
+            (220, 220, 220),
+            (140, 240),
+            anchor=s.Anchor.TOP_LEFT,
+            scene=self,
+        )
+        self.tick_timer = s.Timer(
+            1.0, callback=self._tick_timer, repeat=True, autostart=True, scene=self
+        )
         self.toggle_obj = s.Sprite("", (100, 40), (650, 120), scene=self)
         self.toggle_obj.set_color((255, 180, 90))
         self.toggle_visible = True
         self.move_tween = None
+        self.anim_sprite = s.Sprite("", (40, 40), (650, 300), scene=self)
+        self.anim_sprite.set_color((200, 220, 255))
+        self.anim = s.Animation(
+            self.anim_sprite,
+            frames=self._make_anim_frames(),
+            frame_duration=0.12,
+            loop=True,
+            scene=self,
+        )
 
     def on_enter(self, context):
         if self.move_tween is None:
             self._start_random_move()
         else:
             self.move_tween.resume()
+        self.anim.play()
 
     def update(self, dt):
         if _enter_pressed():
@@ -85,7 +131,29 @@ class SceneA(s.Scene):
             on_update=apply_pos,
             on_complete=self._start_random_move,
             value_type="vector2",
+            scene=self,
         )
+
+    def _tick_timer(self):
+        self.timer_count += 1
+        self.timer_label.set_text(f"Timer: {self.timer_count}")
+
+    def _on_button_click(self):
+        current = self.mover.color
+        self.mover.set_color((255, 200, 120) if current != (255, 200, 120) else (120, 200, 255))
+
+    def _on_toggle(self, is_on: bool):
+        self.toggle_obj.set_active(is_on)
+
+    def _make_anim_frames(self):
+        frames = []
+        size = 40
+        for i in range(6):
+            frame = pygame.Surface((size, size), pygame.SRCALPHA)
+            color = (120 + i * 20, 180, 255 - i * 20)
+            pygame.draw.circle(frame, color, (size // 2, size // 2), 8 + i * 4)
+            frames.append(frame)
+        return frames
 
 
 class SceneB(s.Scene):
@@ -118,6 +186,7 @@ class SceneB(s.Scene):
             callback=self._spawn_firework,
             repeat=False,
             autostart=False,
+            scene=self,
         )
 
     def on_enter(self, context):
