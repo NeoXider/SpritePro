@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional
+import inspect
 
 import pygame
 
@@ -102,7 +103,25 @@ class SceneManager:
         self._activation_index[scene] = self._activation_counter
         scene._active = True
         self._active_scenes.append(scene)
-        scene.on_enter(context)
+        self._call_on_enter(scene, context)
+
+    @staticmethod
+    def _call_on_enter(scene: Scene, context) -> None:
+        """Вызывает on_enter с учётом необязательного контекста."""
+        try:
+            sig = inspect.signature(scene.on_enter)
+        except (TypeError, ValueError):
+            scene.on_enter(context)
+            return
+        params = list(sig.parameters.values())
+        accepts_context = any(
+            p.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+            for p in params
+        ) or len(params) >= 1
+        if accepts_context:
+            scene.on_enter(context)
+        else:
+            scene.on_enter()
 
     def _deactivate_scene(self, scene: Scene) -> None:
         """Деактивирует сцену и вызывает on_exit.

@@ -67,7 +67,7 @@ s.scene.restart_by_name("main", context)
 
 ```python
 s.scene.add_scene("main", MainScene)
-s.set_scene_by_name("main")
+s.scene.set_scene_by_name("main")
 ```
 
 ```python
@@ -84,6 +84,9 @@ s.get_screen((800, 600), "Scene Context")
     manager.add_scene("main", MainScene)
     s.scene.set_scene_by_name("main")
 ```
+
+Контекст в `on_enter` необязателен — можно объявлять `on_enter(self)` без параметров,
+если он не нужен.
 
 ## Несколько активных сцен
 
