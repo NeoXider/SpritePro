@@ -231,6 +231,7 @@ class SceneB(s.Scene):
 
 def main():
     s.get_screen((800, 600), "Scenes Demo")
+    s.enable_debug(True)
     s.scene.add_scene("scene_a", SceneA)
     s.scene.add_scene("scene_b", SceneB)
     s.scene.set_scene_by_name("scene_a")

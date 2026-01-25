@@ -321,6 +321,8 @@ class Sprite(pygame.sprite.Sprite):
             locked (bool, optional): Если True, спрайт не будет смещаться камерой. По умолчанию True.
         """
         self.screen_space = locked
+        for child in self.children:
+            child.set_screen_space(locked)
 
     @property
     def anchor(self) -> Anchor:
