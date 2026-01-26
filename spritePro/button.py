@@ -177,26 +177,17 @@ class Button(Sprite):
         """
         if not self.active:
             return
-        if self.scene is not None:
-            try:
-                manager = spritePro.get_context().scene_manager
-            except Exception:
-                manager = None
-            if isinstance(self.scene, str):
-                is_active = (
-                    manager.is_scene_active(self.scene)
-                    if manager is not None
-                    else False
-                )
-            else:
-                is_active = (
-                    manager.is_scene_active(self.scene)
-                    if manager is not None
-                    else False
-                )
-            if not is_active:
-                return
         screen = screen or spritePro.screen
+
+        # Рисуем фон (прямоугольник) и спрайт от родителя
+        self.set_color(self.current_color)
+        super().update(screen)
+
+        # Обновляем и рисуем текст
+        label = self.text_sprite
+        if label is not None and getattr(label, "alive", lambda: True)():
+            label.rect.center = self.rect.center
+            label.update(screen)
 
         interactor = self.interactor
         if interactor is not None:
@@ -235,16 +226,6 @@ class Button(Sprite):
             self.set_scale(self.scale + delta, False)
         else:
             self.set_scale(self._target_scale, False)
-
-        # Рисуем фон (прямоугольник) и спрайт от родителя
-        self.set_color(self.current_color)
-        super().update(screen)
-
-        # Обновляем и рисуем текст
-        label = self.text_sprite
-        if label is not None and getattr(label, "alive", lambda: True)():
-            label.rect.center = self.rect.center
-            label.update(screen)
 
     def set_sorting_order(self, order: int) -> None:
         """Устанавливает порядок отрисовки и синхронизирует его с текстом."""
@@ -306,6 +287,7 @@ class Button(Sprite):
 
 if __name__ == "__main__":
     from spritePro.utils.surface import round_corners
+    from spritePro import debug_log
 
     def get_rundom_color() -> List[int]:
         """Возвращает случайный RGB-цвет для демонстрации."""
@@ -314,6 +296,7 @@ if __name__ == "__main__":
     def set_rand_color() -> None:
         """Назначает случайные цвета кнопке и её тексту."""
         global color
+        debug_log("Button clicked!")
         btn.text_sprite.set_color(get_rundom_color())
         btn.set_base_color(get_rundom_color())
         btn.press_color = get_rundom_color()
