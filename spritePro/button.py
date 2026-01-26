@@ -177,6 +177,25 @@ class Button(Sprite):
         """
         if not self.active:
             return
+        if self.scene is not None:
+            try:
+                manager = spritePro.get_context().scene_manager
+            except Exception:
+                manager = None
+            if isinstance(self.scene, str):
+                is_active = (
+                    manager.is_scene_active(self.scene)
+                    if manager is not None
+                    else False
+                )
+            else:
+                is_active = (
+                    manager.is_scene_active(self.scene)
+                    if manager is not None
+                    else False
+                )
+            if not is_active:
+                return
         screen = screen or spritePro.screen
 
         interactor = self.interactor
