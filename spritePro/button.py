@@ -177,6 +177,8 @@ class Button(Sprite):
         """
         if not self.active:
             return
+        if self.scene is not None and not spritePro.scene.is_scene_active(self.scene):
+            return
         screen = screen or spritePro.screen
 
         # Рисуем фон (прямоугольник) и спрайт от родителя
