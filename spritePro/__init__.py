@@ -52,6 +52,8 @@ from .particles import (
 )
 from .constants import Anchor
 from .audio import AudioManager, Sound
+from .networking import NetServer, NetClient
+from . import networking
 
 from . import utils
 from . import readySprites
@@ -107,6 +109,10 @@ __all__ = [
     "Anchor",
     "AudioManager",
     "Sound",
+    # Networking
+    "NetServer",
+    "NetClient",
+    "networking",
     # Utils
     "save_load",
     # Scenes

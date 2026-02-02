@@ -1,4 +1,5 @@
 {
     "python.analysis.typeCheckingMode": "off",
-    "commentTranslate.targetLanguage": "ru"
+    "commentTranslate.targetLanguage": "ru",
+    "cursorpyright.analysis.typeCheckingMode": "off"
 }
