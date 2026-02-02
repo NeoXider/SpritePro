@@ -34,7 +34,7 @@ import pygame
 import spritePro as s  # noqa: E402
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def main(net: s.NetClient, role: str, color: str) -> None:
     s.get_screen((800, 600), "SpritePro Multiplayer Demo")
 
     me = s.Sprite("", (50, 50), (200, 300))
