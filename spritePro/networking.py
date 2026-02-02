@@ -234,6 +234,22 @@ def run(
         else:
             func()
 
+    def _find_entry(entry_name: str):
+        try:
+            return _resolve_entry(entry_name)
+        except ValueError:
+            pass
+        if entry_name == "multiplayer_main":
+            try:
+                return _resolve_entry("main")
+            except ValueError:
+                pass
+        raise ValueError(
+            "Не найдена функция multiplayer_main или main. "
+            "Создайте def multiplayer_main(net, role, color): ... "
+            "или вызовите run(entry='module:function')."
+        )
+
     def _run_worker(role: str, bind_host: str, connect_host: str, color: str) -> None:
         if role == "host":
             server = NetServer(host=bind_host, port=port)
@@ -242,7 +258,7 @@ def run(
             connect_host = "127.0.0.1"
         net = NetClient(connect_host, port)
         net.connect()
-        func = _resolve_entry(entry)
+        func = _find_entry(entry)
         _call_entry(func, net, role, color)
 
     def _get_script_path() -> Path:
