@@ -35,3 +35,6 @@ Issues = "https://github.com/NeoXider/SpritePro/issues"
 
 [project.scripts]
 spritepro = "spritePro.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["spritePro*"]
