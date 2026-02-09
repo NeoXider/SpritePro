@@ -85,6 +85,35 @@ damage_event(amount=10)
 - `s.globalEvents.MOUSE_DOWN`, `s.globalEvents.MOUSE_UP`
 - `s.globalEvents.TICK` (каждый кадр, payload: `dt`, `frame_count`, `time_since_start`)
 
+### EventBus + мультиплеер
+
+Можно отправлять события в сеть, не отказываясь от локального EventBus:
+
+```python
+_ = s.multiplayer.init_context(net, role, color)
+ctx = s.multiplayer_ctx
+
+# Локально + в сеть:
+s.events.send("shoot", route="all", net=ctx, x=10, y=20)
+
+# Только на сервер (relay):
+s.events.send("hit", route="server", net=ctx, damage=5)
+```
+
+Получение сетевых событий в EventBus:
+
+```python
+for msg in ctx.poll():
+    s.events.send(msg.get("event"), **msg.get("data", {}))
+```
+
+Роутинг:
+
+- `local` — только локально (по умолчанию)
+- `server` — отправка на сервер
+- `clients` — отправка клиентам через relay
+- `all` — локально + сеть
+
 ## Сырые события pygame
 
 Если нужен прямой доступ к событиям pygame, используйте `s.pygame_events`.

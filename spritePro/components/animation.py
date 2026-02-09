@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Sequence, Union
 import math
 import sys
 from pathlib import Path
@@ -53,7 +53,7 @@ class Animation:
     def __init__(
         self,
         owner_sprite,
-        frames: Optional[List[pygame.Surface]] = None,
+        frames: Optional[Sequence[Union[pygame.Surface, str]]] = None,
         frame_duration: float = 0.1,
         loop: bool = True,
         on_complete: Optional[Callable] = None,
@@ -74,13 +74,15 @@ class Animation:
             scene (Scene | str, optional): Сцена, в которой активна анимация. По умолчанию None.
         """
         self.owner = owner_sprite
-        self.frames = frames or []
+        self.frames = self._normalize_frames(frames, context="init")
         # Конвертируем секунды в миллисекунды для внутреннего использования
         self.frame_duration = int(frame_duration * 1000)
         self.loop = loop
         self.on_complete = on_complete
         self.on_frame = on_frame
-        self.scene = scene if scene is not None else getattr(owner_sprite, "scene", None)
+        self.scene = (
+            scene if scene is not None else getattr(owner_sprite, "scene", None)
+        )
 
         self.current_frame = 0
         self.last_update = pygame.time.get_ticks()
@@ -108,14 +110,16 @@ class Animation:
             except (ImportError, AttributeError):
                 pass
 
-    def add_state(self, name: str, frames: List[pygame.Surface]) -> None:
+    def add_state(
+        self, name: str, frames: Sequence[Union[pygame.Surface, str]]
+    ) -> None:
         """Добавление состояния анимации.
 
         Args:
             name: Имя состояния
             frames: Кадры для состояния
         """
-        self.states[name] = frames
+        self.states[name] = self._normalize_frames(frames, context=f"state:{name}")
 
     def set_state(self, name: str) -> None:
         """Установка текущего состояния.
@@ -234,6 +238,8 @@ class Animation:
         """
         if not self.is_playing or self.is_paused:
             return
+        if not self.frames:
+            return
         if not _is_scene_active(self.scene):
             return
 
@@ -287,6 +293,46 @@ class Animation:
             loop (bool): Зациклить ли анимацию.
         """
         self.loop = loop
+
+    def _normalize_frames(
+        self,
+        frames: Optional[Sequence[Union[pygame.Surface, str]]],
+        context: str,
+    ) -> List[pygame.Surface]:
+        """Проверяет и нормализует список кадров анимации."""
+        if not frames:
+            return []
+        normalized: List[pygame.Surface] = []
+        for idx, frame in enumerate(frames):
+            if frame is None:
+                self._warn(f"Animation frame is None ({context}, idx={idx})")
+                continue
+            if isinstance(frame, pygame.Surface):
+                normalized.append(frame)
+                continue
+            if isinstance(frame, str):
+                if not frame.strip():
+                    self._warn(f"Animation frame path is empty ({context}, idx={idx})")
+                    continue
+                surface = spritePro.load_texture(frame)
+                if surface is None:
+                    self._warn(
+                        f"Animation frame path not loaded ({context}, idx={idx}): {frame}"
+                    )
+                    continue
+                normalized.append(surface)
+                continue
+            self._warn(
+                f"Animation frame type unsupported ({context}, idx={idx}): {type(frame)}"
+            )
+        return normalized
+
+    def _warn(self, message: str) -> None:
+        """Пишет предупреждение, если доступен логгер SpritePro."""
+        try:
+            spritePro.debug_log_warning(message)
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

@@ -100,8 +100,33 @@ def main() -> None:
 
     _ = (title, hints, status)
 
-    while True:
+    running = True
+    while running:
         s.update(fill_color=(20, 20, 30))
+
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            running = False
+
+        for key in (
+            pygame.K_1,
+            pygame.K_2,
+            pygame.K_c,
+            pygame.K_l,
+            pygame.K_r,
+        ):
+            if s.input.was_pressed(key):
+                s.events.send(s.globalEvents.KEY_DOWN, key=key, event=None)
+            if s.input.was_released(key):
+                s.events.send(s.globalEvents.KEY_UP, key=key, event=None)
+
+        if s.input.was_mouse_pressed(1):
+            s.events.send(
+                s.globalEvents.MOUSE_DOWN, button=1, pos=s.input.mouse_pos, event=None
+            )
+        if s.input.was_mouse_released(1):
+            s.events.send(
+                s.globalEvents.MOUSE_UP, button=1, pos=s.input.mouse_pos, event=None
+            )
 
 
 if __name__ == "__main__":

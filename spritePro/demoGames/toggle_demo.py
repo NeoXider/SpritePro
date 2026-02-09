@@ -244,16 +244,6 @@ class ToggleDemo:
         running = True
 
         while running:
-            # Handle events
-            for event in s.pygame_events:
-                if event.type == pygame.QUIT:
-                    running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        running = False
-                    elif event.key == pygame.K_r:
-                        self.reset_all()
-
             # Clear screen
             self.screen.fill((30, 30, 40))
 
@@ -269,6 +259,11 @@ class ToggleDemo:
 
             # Update using SpritePro
             s.update(fps=60)
+
+            if s.input.was_pressed(pygame.K_ESCAPE):
+                running = False
+            elif s.input.was_pressed(pygame.K_r):
+                self.reset_all()
 
         pygame.quit()
 

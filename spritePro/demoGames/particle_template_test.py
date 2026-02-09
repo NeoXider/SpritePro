@@ -276,7 +276,8 @@ collision_counter_text = s.TextSprite(
     "Collisions: 0", 20, (255, 200, 100), (10, 60), anchor=s.Anchor.TOP_LEFT
 )
 
-while True:
+running = True
+while running:
     s.update(fill_color=(20, 20, 30))
 
     # Обновляем таймеры
@@ -505,12 +506,11 @@ while True:
                     ),
                 )
 
-    # Проверяем события
-    for event in s.pygame_events:
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                pygame.quit()
-                sys.exit()
-            elif event.key == pygame.K_SPACE:
-                # Ручной запуск фонтана
-                fountain_emitter.emit((400, 550))
+    # Проверяем ввод через s.input
+    if s.input.was_pressed(pygame.K_ESCAPE):
+        pygame.quit()
+        sys.exit()
+
+    if s.input.was_pressed(pygame.K_SPACE):
+        # Ручной запуск фонтана
+        fountain_emitter.emit((400, 550))

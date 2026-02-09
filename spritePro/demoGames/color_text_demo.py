@@ -409,15 +409,10 @@ class ColorTextDemo:
         paused = False
 
         while running:
-            # Handle events
-            for event in s.pygame_events:
-                if event.type == pygame.QUIT:
-                    running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        running = False
-                    elif event.key == pygame.K_SPACE:
-                        paused = not paused
+            if s.input.was_pressed(pygame.K_ESCAPE):
+                running = False
+            elif s.input.was_pressed(pygame.K_SPACE):
+                paused = not paused
 
             if not paused:
                 # Update dynamic values

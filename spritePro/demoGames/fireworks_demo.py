@@ -59,7 +59,7 @@ class FireworksDemo:
     def _set_marker(self, position: tuple[int, int]) -> None:
         self.focus_marker.set_position(position)
 
-    def update(self, events: list[pygame.event.Event]) -> None:
+    def update(self) -> None:
         now = pygame.time.get_ticks()
         if now >= self.next_firework_ms:
             position = (
@@ -79,19 +79,16 @@ class FireworksDemo:
             mouse_button=3,
         )
 
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE]:
+        if s.input.is_pressed(pygame.K_SPACE):
             self.follow_enabled = False
             s.clear_camera_follow()
             s.set_camera_position(0.0, 0.0)
-
-        for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_f:
-                self.follow_enabled = not self.follow_enabled
-                if self.follow_enabled:
-                    s.set_camera_follow(self.focus_marker)
-                else:
-                    s.clear_camera_follow()
+        if s.input.was_pressed(pygame.K_f):
+            self.follow_enabled = not self.follow_enabled
+            if self.follow_enabled:
+                s.set_camera_follow(self.focus_marker)
+            else:
+                s.clear_camera_follow()
 
 
 def main():
@@ -135,11 +132,10 @@ def main():
     while running:
         s.update(fill_color=(10, 10, 30), update_display=False)
 
-        for event in s.pygame_events:
-            if event.type == pygame.QUIT:
-                running = False
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            running = False
 
-        demo.update(s.pygame_events)
+        demo.update()
 
         pygame.display.flip()
 

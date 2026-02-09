@@ -137,49 +137,42 @@ def main():
     running = True
 
     while running:
-        # Handle events
-        for event in s.pygame_events:
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-                elif event.key == pygame.K_r:
-                    # Reset all FPS statistics
-                    for fps_counter in fps_counters:
-                        fps_counter.reset_stats()
-                elif event.key == pygame.K_SPACE:
-                    # Toggle stress test
-                    stress_test_active = not stress_test_active
-                    if stress_test_active:
-                        # Create moving sprites for performance testing
-                        moving_sprites.clear()
-                        for _ in range(50):
-                            x = random.randint(50, int(s.WH.x) - 50)
-                            y = random.randint(250, int(s.WH.y) - 100)
-                            color = (
-                                random.randint(100, 255),
-                                random.randint(100, 255),
-                                random.randint(100, 255),
-                            )
-                            speed = random.randint(50, 200)
-                            moving_sprites.append(MovingSprite(x, y, color, speed))
-                    else:
-                        moving_sprites.clear()
-                elif event.key == pygame.K_1:
-                    current_fps_index = 0
-                    instruction_sprites[-1].set_text("Current: Basic FPS Counter")
-                elif event.key == pygame.K_2:
-                    current_fps_index = 1
-                    instruction_sprites[-1].set_text("Current: Detailed FPS Counter")
-                elif event.key == pygame.K_3:
-                    current_fps_index = 2
-                    instruction_sprites[-1].set_text(
-                        "Current: High Precision FPS Counter"
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            running = False
+        elif s.input.was_pressed(pygame.K_r):
+            # Reset all FPS statistics
+            for fps_counter in fps_counters:
+                fps_counter.reset_stats()
+        elif s.input.was_pressed(pygame.K_SPACE):
+            # Toggle stress test
+            stress_test_active = not stress_test_active
+            if stress_test_active:
+                # Create moving sprites for performance testing
+                moving_sprites.clear()
+                for _ in range(50):
+                    x = random.randint(50, int(s.WH.x) - 50)
+                    y = random.randint(250, int(s.WH.y) - 100)
+                    color = (
+                        random.randint(100, 255),
+                        random.randint(100, 255),
+                        random.randint(100, 255),
                     )
-                elif event.key == pygame.K_4:
-                    current_fps_index = 3
-                    instruction_sprites[-1].set_text("Current: Minimal FPS Counter")
+                    speed = random.randint(50, 200)
+                    moving_sprites.append(MovingSprite(x, y, color, speed))
+            else:
+                moving_sprites.clear()
+        elif s.input.was_pressed(pygame.K_1):
+            current_fps_index = 0
+            instruction_sprites[-1].set_text("Current: Basic FPS Counter")
+        elif s.input.was_pressed(pygame.K_2):
+            current_fps_index = 1
+            instruction_sprites[-1].set_text("Current: Detailed FPS Counter")
+        elif s.input.was_pressed(pygame.K_3):
+            current_fps_index = 2
+            instruction_sprites[-1].set_text("Current: High Precision FPS Counter")
+        elif s.input.was_pressed(pygame.K_4):
+            current_fps_index = 3
+            instruction_sprites[-1].set_text("Current: Minimal FPS Counter")
 
         # Clear screen
         screen.fill((20, 20, 30))

@@ -126,57 +126,55 @@ def main():
 
     running = True
     while running:
-        for event in s.pygame_events:
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-                elif event.key in (pygame.K_1, pygame.K_KP1):
-                    mx, my = pygame.mouse.get_pos()
-                    sparks_emitter.emit(
-                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
-                    )
-                elif event.key in (pygame.K_2, pygame.K_KP2):
-                    mx, my = pygame.mouse.get_pos()
-                    smoke_emitter.emit(
-                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
-                    )
-                elif event.key in (pygame.K_3, pygame.K_KP3):
-                    mx, my = pygame.mouse.get_pos()
-                    fire_emitter.emit(
-                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
-                    )
-                elif event.key in (pygame.K_4, pygame.K_KP4):
-                    mx, my = pygame.mouse.get_pos()
-                    burst_emitter.emit(
-                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
-                    )
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                mx, my = pygame.mouse.get_pos()
-                point = pygame.Rect(mx, my, 1, 1)
-                for _name, zone, emitter in zones:
-                    if zone.colliderect(point):
-                        emitter.emit(
-                            (
-                                mx + s.get_camera_position().x,
-                                my + s.get_camera_position().y,
-                            )
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            running = False
+        elif s.input.was_pressed(pygame.K_1) or s.input.was_pressed(pygame.K_KP1):
+            mx, my = s.input.mouse_pos
+            sparks_emitter.emit(
+                (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+            )
+        elif s.input.was_pressed(pygame.K_2) or s.input.was_pressed(pygame.K_KP2):
+            mx, my = s.input.mouse_pos
+            smoke_emitter.emit(
+                (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+            )
+        elif s.input.was_pressed(pygame.K_3) or s.input.was_pressed(pygame.K_KP3):
+            mx, my = s.input.mouse_pos
+            fire_emitter.emit(
+                (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+            )
+        elif s.input.was_pressed(pygame.K_4) or s.input.was_pressed(pygame.K_KP4):
+            mx, my = s.input.mouse_pos
+            burst_emitter.emit(
+                (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+            )
+
+        if s.input.was_mouse_pressed(1):
+            mx, my = s.input.mouse_pos
+            point = pygame.Rect(mx, my, 1, 1)
+            for _name, zone, emitter in zones:
+                if zone.colliderect(point):
+                    emitter.emit(
+                        (
+                            mx + s.get_camera_position().x,
+                            my + s.get_camera_position().y,
                         )
-                        break
-                # Start drag for burst
-                dragging = True
+                    )
+                    break
+            # Start drag for burst
+            dragging = True
+            last_mouse_pos = (mx, my)
+        elif s.input.was_mouse_released(1):
+            dragging = False
+            last_mouse_pos = None
+
+        if dragging:
+            mx, my = s.input.mouse_pos
+            if last_mouse_pos and (mx, my) != last_mouse_pos:
+                # Set emitter position and emit without arguments
+                burst_emitter.set_position((mx, my))
+                burst_emitter.emit()
                 last_mouse_pos = (mx, my)
-            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                dragging = False
-                last_mouse_pos = None
-            elif event.type == pygame.MOUSEMOTION and dragging:
-                mx, my = pygame.mouse.get_pos()
-                if last_mouse_pos and (mx, my) != last_mouse_pos:
-                    # Set emitter position and emit without arguments
-                    burst_emitter.set_position((mx, my))
-                    burst_emitter.emit()
-                    last_mouse_pos = (mx, my)
 
         # Auto snowfall: emit a small burst each frame near the top
         cam = s.get_camera_position()

@@ -53,6 +53,7 @@ def main() -> None:
 
     create_project(Path(args.name))
     import logging
+
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     logging.info("Project created at: %s", Path(args.name).resolve())
 

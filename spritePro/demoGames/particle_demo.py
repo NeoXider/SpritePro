@@ -3,6 +3,7 @@ from pathlib import Path
 """Quick example of ParticleEmitter usage."""
 
 from pygame.math import Vector2
+import pygame
 import sys
 
 current_dir = Path(__file__).parent
@@ -33,12 +34,12 @@ def main():
     while running:
         s.update(fill_color=(20, 20, 40))
 
-        for event in s.pygame_events:
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                emitter.emit(event.pos)
-                text.set_active(False)
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            running = False
+
+        if s.input.was_mouse_pressed(1):
+            emitter.emit(s.input.mouse_pos)
+            text.set_active(False)
 
 
 if __name__ == "__main__":

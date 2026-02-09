@@ -375,7 +375,8 @@ spritePro.debug_log_info(f"Камера: {spritePro.get_camera_position()}")
 # Устанавливаем начальную видимость спрайтов
 update_sprite_visibility()
 
-while True:
+running = True
+while running:
     fps_text.update()
     fps_text.update_fps()
 
@@ -389,8 +390,8 @@ while True:
     # Затем обновляем и рисуем все спрайты (включая кнопки) поверх фона
     spritePro.update()
 
-    for e in spritePro.pygame_events:
-        pass
+    if spritePro.input.was_pressed(pygame.K_ESCAPE):
+        running = False
 
     if current_state == STATE_MENU:
         logic_menu()

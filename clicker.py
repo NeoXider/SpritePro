@@ -1,9 +1,10 @@
 import spritePro as s
-import pygame 
+import pygame
+
 
 def on_click():
     global score
-    score +=1
+    score += 1
     text.set_text(f"score: {score}")
     text.set_active(True)
     emitter.emit(button.rect.center)
@@ -18,7 +19,7 @@ s.get_screen((1280, 960), "My Game")
 score = 0
 
 bg = s.Sprite("", s.WH, s.WH_C)
-bg.set_color((0,0,180))
+bg.set_color((0, 0, 180))
 bg.set_screen_space(True)
 # text
 text = s.TextSprite("", 74, (255, 255, 255), s.WH_C)

@@ -140,7 +140,9 @@ class SceneA(s.Scene):
 
     def _on_button_click(self):
         current = self.mover.color
-        self.mover.set_color((255, 200, 120) if current != (255, 200, 120) else (120, 200, 255))
+        self.mover.set_color(
+            (255, 200, 120) if current != (255, 200, 120) else (120, 200, 255)
+        )
 
     def _on_toggle(self, is_on: bool):
         self.toggle_obj.set_active(is_on)

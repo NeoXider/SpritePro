@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import List, Tuple
+import os
 import time
 
 import pygame
@@ -168,6 +169,15 @@ class GameContext:
         icon: str | None = None,
     ) -> pygame.Surface:
         """Создает окно и сохраняет параметры экрана."""
+        pos = os.environ.get("SPRITEPRO_WINDOW_POS")
+        if pos and pos.lower() != "center":
+            try:
+                x_str, y_str = pos.split(",", 1)
+                x = int(x_str.strip())
+                y = int(y_str.strip())
+                os.environ["SDL_VIDEO_WINDOW_POS"] = f"{x},{y}"
+            except ValueError:
+                pass
         self.screen = pygame.display.set_mode(size)
         self.screen_rect = self.screen.get_rect()
         pygame.display.set_caption(title)

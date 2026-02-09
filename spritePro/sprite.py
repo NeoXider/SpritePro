@@ -580,6 +580,25 @@ class Sprite(pygame.sprite.Sprite):
         """
         return Vector2(self.rect.center)
 
+    def set_world_position(
+        self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER
+    ) -> None:
+        """Устанавливает мировую позицию спрайта с учетом якоря.
+
+        Args:
+            position (VectorInput): Мировая позиция (x, y).
+            anchor (str | Anchor, optional): Якорь позиционирования. По умолчанию Anchor.CENTER.
+        """
+        world_pos = _coerce_vector2(position, self.rect.center)
+        current_anchor = self.anchor
+        if anchor != current_anchor:
+            self.anchor = anchor
+        self._set_world_center(world_pos)
+        if anchor != current_anchor:
+            self.anchor = current_anchor
+        self._sync_local_offset()
+        self._update_children_world_positions()
+
     def _set_world_center(self, position: Vector2) -> None:
         """Устанавливает центр спрайта в мировых координатах."""
         self.rect.center = (int(position.x), int(position.y))

@@ -54,6 +54,7 @@ from .constants import Anchor
 from .audio import AudioManager, Sound
 from .networking import NetServer, NetClient
 from . import networking
+from . import multiplayer
 
 from . import utils
 from . import readySprites
@@ -113,6 +114,8 @@ __all__ = [
     "NetServer",
     "NetClient",
     "networking",
+    "multiplayer",
+    "multiplayer_ctx",
     # Utils
     "save_load",
     # Scenes
@@ -209,6 +212,8 @@ input: InputState = _context.input
 events: EventBus = _context.event_bus
 globalEvents = GlobalEvents()
 scene = _context.scene_manager
+audio_manager = AudioManager()
+multiplayer_ctx = None
 
 
 def _sync_globals() -> None:
@@ -565,19 +570,49 @@ def debug_log(
     _context.game.add_debug_log(text, color=color, ttl=ttl, level="info")
 
 
-def debug_log_info(text: str, ttl: float | None = None) -> None:
-    """Добавляет информационный лог."""
-    _context.game.debug_log_info(text, ttl=ttl)
+def debug_log_info(
+    text: str,
+    ttl: float | None = None,
+    color: tuple[int, int, int] | None = None,
+) -> None:
+    """Добавляет информационный лог.
+
+    Если color не задан, используется цвет из палитры.
+    """
+    if color is None:
+        _context.game.debug_log_info(text, ttl=ttl)
+        return
+    _context.game.add_debug_log(text, color=color, ttl=ttl, level="info")
 
 
-def debug_log_warning(text: str, ttl: float | None = None) -> None:
-    """Добавляет предупреждение."""
-    _context.game.debug_log_warning(text, ttl=ttl)
+def debug_log_warning(
+    text: str,
+    ttl: float | None = None,
+    color: tuple[int, int, int] | None = None,
+) -> None:
+    """Добавляет предупреждение.
+
+    Если color не задан, используется цвет из палитры.
+    """
+    if color is None:
+        _context.game.debug_log_warning(text, ttl=ttl)
+        return
+    _context.game.add_debug_log(text, color=color, ttl=ttl, level="warning")
 
 
-def debug_log_error(text: str, ttl: float | None = None) -> None:
-    """Добавляет лог об ошибке."""
-    _context.game.debug_log_error(text, ttl=ttl)
+def debug_log_error(
+    text: str,
+    ttl: float | None = None,
+    color: tuple[int, int, int] | None = None,
+) -> None:
+    """Добавляет лог об ошибке.
+
+    Если color не задан, используется цвет из палитры.
+    """
+    if color is None:
+        _context.game.debug_log_error(text, ttl=ttl)
+        return
+    _context.game.add_debug_log(text, color=color, ttl=ttl, level="error")
 
 
 def debug_log_custom(
@@ -682,8 +717,5 @@ def load_sound(name: str, path: str):
     audio_manager.sounds[name] = sound
     return Sound(audio_manager, name)
 
-
-# Глобальный экземпляр AudioManager
-audio_manager = AudioManager()
 
 init()

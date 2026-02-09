@@ -86,15 +86,6 @@ class FPSCameraDemo:
         """Main game loop."""
         running = True
         while running:
-            # Handle quit events and camera reset
-            for event in s.pygame_events:
-                if event.type == pygame.QUIT or (
-                    event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
-                ):
-                    running = False
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                    s.set_camera_position(0, 0)
-
             # Update camera using the built-in processor
             s.process_camera_input(speed=500)
 
@@ -109,6 +100,11 @@ class FPSCameraDemo:
             # The main update call handles drawing all registered sprites
             # (respecting camera offsets and screen space) and updates the display.
             s.update(fill_color=(20, 20, 30))
+
+            if s.input.was_pressed(pygame.K_ESCAPE):
+                running = False
+            elif s.input.was_pressed(pygame.K_r):
+                s.set_camera_position(0, 0)
 
         pygame.quit()
 

@@ -25,22 +25,36 @@ def run_animation_demo():
     # Создание кадров анимации
     frames = []
 
+    # Вспомогательный спрайт для генерации линии через set_polyline
+    line_sprite = spritePro.Sprite("", (1, 1), (0, 0))
+    line_sprite.set_active(False)
+
     count = 60
     for i in range(count):  # кадров для плавного вращения
-        frame = pygame.Surface((100, 100), pygame.SRCALPHA)
         angle = i * 360 / count  # градусов между кадрами
-        # Рисуем стрелку
-        pygame.draw.line(
-            frame,
-            (255, 255, 255),
-            (50, 50),
-            (
-                50 + 40 * math.cos(math.radians(angle)),
-                50 + 40 * math.sin(math.radians(angle)),
-            ),
-            3,
+        end_x = 50 + 40 * math.cos(math.radians(angle))
+        end_y = 50 + 40 * math.sin(math.radians(angle))
+        points = [(50, 50), (end_x, end_y)]
+
+        padding = 2
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        min_x = min(xs)
+        min_y = min(ys)
+        origin_x = 50 - min_x + padding
+        origin_y = 50 - min_y + padding
+
+        line_sprite.set_polyline(
+            points, color=(255, 255, 255), width=3, padding=padding
+        )
+        frame = pygame.Surface((100, 100), pygame.SRCALPHA)
+        frame.blit(
+            line_sprite.image,
+            (int(50 - origin_x), int(50 - origin_y)),
         )
         frames.append(frame)
+
+    line_sprite.kill()
 
     # Создание анимации
     animation = Animation(
@@ -55,17 +69,28 @@ def run_animation_demo():
 
     # Шрифт для инструкций
     font = pygame.font.Font(None, 36)
-    instructions = ["Простая анимация:", "Вращающаяся стрелка", "ESC - выход"]
+    instructions = [
+        "Простая анимация:",
+        "Вращающаяся стрелка",
+        "SPACE - пауза/продолжить",
+        "ESC - выход",
+    ]
 
     # Основной цикл
     running = True
+    paused = False
     while running:
         spritePro.update()
 
-        for event in spritePro.pygame_events:
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
+        if spritePro.input.was_pressed(pygame.K_ESCAPE):
+            running = False
+
+        if spritePro.input.was_pressed(pygame.K_SPACE):
+            paused = not paused
+            if paused:
+                animation.pause()
+            else:
+                animation.resume()
 
         # Обновление анимации
         animation.update()

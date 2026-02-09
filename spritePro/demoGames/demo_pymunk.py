@@ -1,6 +1,7 @@
 import pygame
 import pymunk
 import pymunk.pygame_util
+import spritePro as s
 
 # Initialize Pygame and Pymunk
 pygame.init()
@@ -31,9 +32,14 @@ draw_options = pymunk.pygame_util.DrawOptions(screen)
 
 running = True
 while running:
-    for event in pygame.event.get():
+    events = pygame.event.get()
+    s.input.update(events)
+    for event in events:
         if event.type == pygame.QUIT:
             running = False
+
+    if s.input.was_pressed(pygame.K_ESCAPE):
+        running = False
 
     # Clear screen
     screen.fill((255, 255, 255))

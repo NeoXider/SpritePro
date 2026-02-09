@@ -94,102 +94,99 @@ def main():
     # Demo loop
     running = True
     while running:
-        for event in s.pygame_events:
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_a:
-                    # Decrease both bars
-                    current_fill1 = bar.get_fill_amount()
-                    new_fill1 = max(0.0, current_fill1 - 0.1)
-                    bar.set_fill_amount(new_fill1, animate=True)
-
-                    current_fill2 = bar2.get_fill_amount()
-                    new_fill2 = max(0.0, current_fill2 - 0.1)
-                    bar2.set_fill_amount(new_fill2, animate=True)
-
-                    debug_text.text = f"Bar 1 (L→R): {int(new_fill1 * 100)}% | Bar 2 (R→L): {int(new_fill2 * 100)}%"
-                elif event.key == pygame.K_d:
-                    # Increase both bars
-                    current_fill1 = bar.get_fill_amount()
-                    new_fill1 = min(1.0, current_fill1 + 0.1)
-                    bar.set_fill_amount(new_fill1, animate=True)
-
-                    current_fill2 = bar2.get_fill_amount()
-                    new_fill2 = min(1.0, current_fill2 + 0.1)
-                    bar2.set_fill_amount(new_fill2, animate=True)
-
-                    debug_text.text = f"Bar 1 (L→R): {int(new_fill1 * 100)}% | Bar 2 (R→L): {int(new_fill2 * 100)}%"
-                elif event.key == pygame.K_b:
-                    # Toggle between images and colors
-                    if not background_switched:
-                        # Switch to image files
-                        bar.set_background_image(path_sprites + "bar_bg.png")
-                        bar2.set_background_image(path_sprites + "fon.jpeg")
-                        background_switched = True
-                        s.debug_log_info("Backgrounds switched to images!")
-                    else:
-                        # Switch back to colors (empty strings)
-                        bar.set_background_image("")
-                        bar2.set_background_image("")
-                        bar.bg.color = (139, 0, 0)  # Восстанавливаем цвета
-                        bar2.bg.color = (0, 100, 0)
-                        background_switched = False
-                        s.debug_log_info("Backgrounds reset to colors!")
-                elif event.key == pygame.K_f:
-                    # Toggle between images and colors
-                    if not fill_switched:
-                        # Switch to image files
-                        bar.set_fill_image(path_sprites + "bar_fill.png")
-                        bar2.set_fill_image(path_sprites + "background_game.png")
-                        fill_switched = True
-                        s.debug_log_info("Fill images switched!")
-                    else:
-                        # Switch back to colors (empty strings)
-                        bar.set_fill_image("")
-                        bar2.set_fill_image("")
-                        bar.fill.color = (255, 0, 0)  # Восстанавливаем цвета
-                        bar2.fill.color = (0, 255, 0)
-                        fill_switched = False
-                        s.debug_log_info("Fill images reset to colors!")
-                elif event.key == pygame.K_c:
-                    # Change colors using bg.color and fill.color
-                    color_index = (color_index + 1) % len(bg_colors)
-                    new_bg_color = bg_colors[color_index]
-                    new_fill_color = fill_colors[color_index]
-
-                    # Используем удобный способ через bg.color и fill.color
-                    bar.bg.color = new_bg_color
-                    bar.fill.color = new_fill_color
-                    bar2.bg.color = new_bg_color
-                    bar2.fill.color = new_fill_color
-
-                    s.debug_log_info(
-                        f"Colors changed! BG: {new_bg_color}, Fill: {new_fill_color}"
-                    )
-                elif event.key == pygame.K_s:
-                    # Toggle sizes
-                    if not size_switched:
-                        # Change to different sizes
-                        bar.set_both_sizes(
-                            (400, 60), (350, 40)
-                        )  # Bigger background, smaller fill
-                        bar2.set_both_sizes(
-                            (200, 30), (250, 50)
-                        )  # Smaller background, bigger fill
-                        size_switched = True
-                        s.debug_log_info("Sizes changed!")
-                    else:
-                        # Reset to original sizes
-                        bar.set_both_sizes((300, 50), (300, 50))  # Same size
-                        bar2.set_both_sizes((300, 50), (300, 50))  # Same size
-                        size_switched = False
-                        s.debug_log_info("Sizes reset!")
-                elif event.key == pygame.K_q:
-                    running = False
-
         # Update and draw
         s.update(fps=60, update_display=True, fill_color=(25, 28, 35))
+
+        if s.input.was_pressed(pygame.K_q) or s.input.was_pressed(pygame.K_ESCAPE):
+            running = False
+
+        if s.input.was_pressed(pygame.K_a):
+            # Decrease both bars
+            current_fill1 = bar.get_fill_amount()
+            new_fill1 = max(0.0, current_fill1 - 0.1)
+            bar.set_fill_amount(new_fill1, animate=True)
+
+            current_fill2 = bar2.get_fill_amount()
+            new_fill2 = max(0.0, current_fill2 - 0.1)
+            bar2.set_fill_amount(new_fill2, animate=True)
+
+            debug_text.text = f"Bar 1 (L→R): {int(new_fill1 * 100)}% | Bar 2 (R→L): {int(new_fill2 * 100)}%"
+        elif s.input.was_pressed(pygame.K_d):
+            # Increase both bars
+            current_fill1 = bar.get_fill_amount()
+            new_fill1 = min(1.0, current_fill1 + 0.1)
+            bar.set_fill_amount(new_fill1, animate=True)
+
+            current_fill2 = bar2.get_fill_amount()
+            new_fill2 = min(1.0, current_fill2 + 0.1)
+            bar2.set_fill_amount(new_fill2, animate=True)
+
+            debug_text.text = f"Bar 1 (L→R): {int(new_fill1 * 100)}% | Bar 2 (R→L): {int(new_fill2 * 100)}%"
+        elif s.input.was_pressed(pygame.K_b):
+            # Toggle between images and colors
+            if not background_switched:
+                # Switch to image files
+                bar.set_background_image(path_sprites + "bar_bg.png")
+                bar2.set_background_image(path_sprites + "fon.jpeg")
+                background_switched = True
+                s.debug_log_info("Backgrounds switched to images!")
+            else:
+                # Switch back to colors (empty strings)
+                bar.set_background_image("")
+                bar2.set_background_image("")
+                bar.bg.color = (139, 0, 0)  # Восстанавливаем цвета
+                bar2.bg.color = (0, 100, 0)
+                background_switched = False
+                s.debug_log_info("Backgrounds reset to colors!")
+        elif s.input.was_pressed(pygame.K_f):
+            # Toggle between images and colors
+            if not fill_switched:
+                # Switch to image files
+                bar.set_fill_image(path_sprites + "bar_fill.png")
+                bar2.set_fill_image(path_sprites + "background_game.png")
+                fill_switched = True
+                s.debug_log_info("Fill images switched!")
+            else:
+                # Switch back to colors (empty strings)
+                bar.set_fill_image("")
+                bar2.set_fill_image("")
+                bar.fill.color = (255, 0, 0)  # Восстанавливаем цвета
+                bar2.fill.color = (0, 255, 0)
+                fill_switched = False
+                s.debug_log_info("Fill images reset to colors!")
+        elif s.input.was_pressed(pygame.K_c):
+            # Change colors using bg.color and fill.color
+            color_index = (color_index + 1) % len(bg_colors)
+            new_bg_color = bg_colors[color_index]
+            new_fill_color = fill_colors[color_index]
+
+            # Используем удобный способ через bg.color и fill.color
+            bar.bg.color = new_bg_color
+            bar.fill.color = new_fill_color
+            bar2.bg.color = new_bg_color
+            bar2.fill.color = new_fill_color
+
+            s.debug_log_info(
+                f"Colors changed! BG: {new_bg_color}, Fill: {new_fill_color}"
+            )
+        elif s.input.was_pressed(pygame.K_s):
+            # Toggle sizes
+            if not size_switched:
+                # Change to different sizes
+                bar.set_both_sizes(
+                    (400, 60), (350, 40)
+                )  # Bigger background, smaller fill
+                bar2.set_both_sizes(
+                    (200, 30), (250, 50)
+                )  # Smaller background, bigger fill
+                size_switched = True
+                s.debug_log_info("Sizes changed!")
+            else:
+                # Reset to original sizes
+                bar.set_both_sizes((300, 50), (300, 50))  # Same size
+                bar2.set_both_sizes((300, 50), (300, 50))  # Same size
+                size_switched = False
+                s.debug_log_info("Sizes reset!")
 
 
 if __name__ == "__main__":

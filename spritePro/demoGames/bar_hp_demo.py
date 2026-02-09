@@ -157,67 +157,56 @@ def main():
     # Основной цикл
     running = True
     while running:
-        for event in s.pygame_events:
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_a:
-                    # Уменьшить HP всех баров (используем удобное свойство amount)
-                    for bar in [hp_bar, hp_bar2, hp_bar3]:
-                        bar.amount = max(0.0, bar.amount - 0.1)
-
-                    # Обновить метки (используем свойство amount)
-                    hp_label1.text = f"HP: {int(hp_bar.amount * 100)}%"
-                    hp_label2.text = f"HP: {int(hp_bar2.amount * 100)}%"
-                    hp_label3.text = f"HP: {int(hp_bar3.amount * 100)}%"
-
-                elif event.key == pygame.K_d:
-                    # Увеличить HP всех баров (используем удобное свойство amount)
-                    for bar in [hp_bar, hp_bar2, hp_bar3]:
-                        bar.amount = min(1.0, bar.amount + 0.1)
-
-                    # Обновить метки (используем свойство amount)
-                    hp_label1.text = f"HP: {int(hp_bar.amount * 100)}%"
-                    hp_label2.text = f"HP: {int(hp_bar2.amount * 100)}%"
-                    hp_label3.text = f"HP: {int(hp_bar3.amount * 100)}%"
-
-                elif event.key == pygame.K_c:
-                    # Изменить цвет fill всех баров
-                    color_index = (color_index + 1) % len(colors)
-                    new_color = colors[color_index]
-
-                    # Изменяем цвет fill через fill.color (удобный способ)
-                    for bar in [hp_bar, hp_bar2, hp_bar3]:
-                        bar.fill.color = new_color
-
-                    s.debug_log_info(
-                        f"Цвет fill изменен на: {color_names[color_index]}"
-                    )
-
-                elif event.key == pygame.K_r:
-                    # Сбросить HP на 100% (используем удобное свойство amount)
-                    for bar in [hp_bar, hp_bar2, hp_bar3]:
-                        bar.amount = 1.0
-
-                    # Обновить метки
-                    hp_label1.text = "HP: 100%"
-                    hp_label2.text = "HP: 100%"
-                    hp_label3.text = "HP: 100%"
-
-                elif event.key == pygame.K_t:
-                    # Изменить прозрачность (альфа-канал)
-                    current_alpha = hp_bar_transparent.fill.alpha
-                    new_alpha = (
-                        255 if current_alpha < 128 else 128
-                    )  # Переключаем между 255 и 128
-                    hp_bar_transparent.fill.alpha = new_alpha
-                    hp_bar_transparent.bg.alpha = (
-                        new_alpha + 20
-                    )  # Фон чуть более непрозрачный
-                    s.debug_log_info(f"Альфа-канал изменен на: {new_alpha}")
-
         # Обновление и отрисовка
         s.update(fps=60, update_display=True, fill_color=(20, 20, 30))
+
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            running = False
+
+        if s.input.was_pressed(pygame.K_a):
+            # Уменьшить HP всех баров (используем удобное свойство amount)
+            for bar in [hp_bar, hp_bar2, hp_bar3]:
+                bar.amount = max(0.0, bar.amount - 0.1)
+
+            # Обновить метки (используем свойство amount)
+            hp_label1.text = f"HP: {int(hp_bar.amount * 100)}%"
+            hp_label2.text = f"HP: {int(hp_bar2.amount * 100)}%"
+            hp_label3.text = f"HP: {int(hp_bar3.amount * 100)}%"
+        elif s.input.was_pressed(pygame.K_d):
+            # Увеличить HP всех баров (используем удобное свойство amount)
+            for bar in [hp_bar, hp_bar2, hp_bar3]:
+                bar.amount = min(1.0, bar.amount + 0.1)
+
+            # Обновить метки (используем свойство amount)
+            hp_label1.text = f"HP: {int(hp_bar.amount * 100)}%"
+            hp_label2.text = f"HP: {int(hp_bar2.amount * 100)}%"
+            hp_label3.text = f"HP: {int(hp_bar3.amount * 100)}%"
+        elif s.input.was_pressed(pygame.K_c):
+            # Изменить цвет fill всех баров
+            color_index = (color_index + 1) % len(colors)
+            new_color = colors[color_index]
+
+            # Изменяем цвет fill через fill.color (удобный способ)
+            for bar in [hp_bar, hp_bar2, hp_bar3]:
+                bar.fill.color = new_color
+
+            s.debug_log_info(f"Цвет fill изменен на: {color_names[color_index]}")
+        elif s.input.was_pressed(pygame.K_r):
+            # Сбросить HP на 100% (используем удобное свойство amount)
+            for bar in [hp_bar, hp_bar2, hp_bar3]:
+                bar.amount = 1.0
+
+            # Обновить метки
+            hp_label1.text = "HP: 100%"
+            hp_label2.text = "HP: 100%"
+            hp_label3.text = "HP: 100%"
+        elif s.input.was_pressed(pygame.K_t):
+            # Изменить прозрачность (альфа-канал)
+            current_alpha = hp_bar_transparent.fill.alpha
+            new_alpha = 255 if current_alpha < 128 else 128
+            hp_bar_transparent.fill.alpha = new_alpha
+            hp_bar_transparent.bg.alpha = new_alpha + 20
+            s.debug_log_info(f"Альфа-канал изменен на: {new_alpha}")
 
 
 if __name__ == "__main__":

@@ -31,10 +31,10 @@ s.init()
 
 s.get_screen((1280, 960))
 
-bg = s.Sprite("spritePro\demoGames\Sprites\map.jpg")
+bg = s.Sprite("spritePro/demoGames/Sprites/map.jpg")
 bg.set_native_size()
 bg.set_sorting_order(-1000)
-player = s.Sprite("spritePro\demoGames\Sprites\\amogus.png")
+player = s.Sprite("spritePro/demoGames/Sprites/amogus.png")
 player.set_native_size()
 player.set_position((400, 300))
 player.set_scale(0.07)
@@ -74,7 +74,7 @@ btn_interactive.set_screen_space(True)
 
 interacts = [t1, t2, canistra]
 
-img_canister = "spritePro\demoGames\Sprites\\canister.png"
+img_canister = "spritePro/demoGames/Sprites/canister.png"
 canistra_bg = s.Button(img_canister, (400, 400), s.WH_C, "", on_click=on_canistra)
 canistra_bar = s.Sprite("", (200, 0), s.WH_C)
 cacanistra_count = 0
@@ -119,12 +119,6 @@ text_debug.set_screen_space(True)
 while True:
     k_space = False
 
-    # for e in s.pygame_events:
-    #     if e.type == pygame.KEYDOWN:
-    #         if e.key == pygame.K_SPACE:
-    #             k_space = True
-    #             s.debug_log_info("Пробел нажат")
-
     # --- 1. Обработка ввода ---
     player.handle_keyboard_input()
 
@@ -132,6 +126,7 @@ while True:
     # s.update() теперь сам обрабатывает движение И столкновения для player,
     # так как мы настроили для него collision_targets.
     s.update(fill_color=(0, 0, 0))
+    k_space = s.input.was_pressed(pygame.K_SPACE)
 
     # --- 3. Остальная логика кадра ---
     s.set_camera_follow(player)

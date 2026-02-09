@@ -281,93 +281,89 @@ def main():
     # Demo loop
     running = True
     while running:
-        # Handle events
-        for event in s.pygame_events:
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_0:
-                    # Set all bars to 0%
-                    for bar in bars:
-                        bar.set_fill_amount(0.0, animate=animation_enabled)
-                elif event.key == pygame.K_1:
-                    # Set all bars to 5%
-                    for bar in bars:
-                        bar.set_fill_amount(0.05, animate=animation_enabled)
-                elif event.key == pygame.K_2:
-                    # Set all bars to 25%
-                    for bar in bars:
-                        bar.set_fill_amount(0.25, animate=animation_enabled)
-                elif event.key == pygame.K_3:
-                    # Set all bars to 50%
-                    for bar in bars:
-                        bar.set_fill_amount(0.5, animate=animation_enabled)
-                elif event.key == pygame.K_4:
-                    # Set all bars to 75%
-                    for bar in bars:
-                        bar.set_fill_amount(0.75, animate=animation_enabled)
-                elif event.key == pygame.K_5:
-                    # Set all bars to 100%
-                    for bar in bars:
-                        bar.set_fill_amount(1.0, animate=animation_enabled)
-                elif event.key == pygame.K_q:
-                    # Random fill amounts
-                    import random
-
-                    for bar in bars:
-                        random_fill = random.uniform(0.1, 1.0)
-                        bar.set_fill_amount(random_fill, animate=animation_enabled)
-                elif event.key == pygame.K_e:
-                    # Toggle animation
-                    animation_enabled = not animation_enabled
-                    s.debug_log_info(
-                        f"Animation {'enabled' if animation_enabled else 'disabled'}"
-                    )
-                elif event.key == pygame.K_r:
-                    # Reset all bars
-                    for bar in bars:
-                        bar.set_fill_amount(1.0, animate=animation_enabled)
-                elif event.key == pygame.K_i:
-                    # Toggle bar images between fon.jpeg and colored surfaces
-                    path_sprites = "spritePro\\demoGames\\Sprites\\"
-
-                    if not background_loaded:
-                        try:
-                            # Switch to fon.jpeg images using proper set_image method
-                            for bar in bars:
-                                bar.set_image(path_sprites + "fon.jpeg")
-                            background_loaded = True
-                            s.debug_log_info("Bars switched to fon.jpeg images")
-                        except Exception as e:
-                            s.debug_log_info(f"Error loading fon.jpeg: {e}")
-                    else:
-                        # Switch back to colored surfaces
-                        colors = [
-                            (255, 100, 100),
-                            (100, 255, 100),
-                            (255, 255, 100),
-                            (100, 100, 255),
-                            (255, 255, 100),
-                        ]
-                        sizes = [(250, 40), (250, 40), (250, 40), (50, 250), (50, 250)]
-
-                        for i, bar in enumerate(bars):
-                            surface = pygame.Surface(sizes[i])
-                            surface.fill(colors[i])
-                            pygame.draw.rect(
-                                surface,
-                                (255, 255, 255),
-                                (0, 0, sizes[i][0], sizes[i][1]),
-                                2,
-                            )
-                            bar.set_image(
-                                surface, sizes[i]
-                            )  # Pass size to maintain dimensions
-                        background_loaded = False
-                        s.debug_log_info("Bars switched to colored surfaces")
-
         # Update and draw
         s.update(fps=60, update_display=True, fill_color=(25, 28, 35))
+
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            running = False
+
+        if s.input.was_pressed(pygame.K_0):
+            # Set all bars to 0%
+            for bar in bars:
+                bar.set_fill_amount(0.0, animate=animation_enabled)
+        elif s.input.was_pressed(pygame.K_1):
+            # Set all bars to 5%
+            for bar in bars:
+                bar.set_fill_amount(0.05, animate=animation_enabled)
+        elif s.input.was_pressed(pygame.K_2):
+            # Set all bars to 25%
+            for bar in bars:
+                bar.set_fill_amount(0.25, animate=animation_enabled)
+        elif s.input.was_pressed(pygame.K_3):
+            # Set all bars to 50%
+            for bar in bars:
+                bar.set_fill_amount(0.5, animate=animation_enabled)
+        elif s.input.was_pressed(pygame.K_4):
+            # Set all bars to 75%
+            for bar in bars:
+                bar.set_fill_amount(0.75, animate=animation_enabled)
+        elif s.input.was_pressed(pygame.K_5):
+            # Set all bars to 100%
+            for bar in bars:
+                bar.set_fill_amount(1.0, animate=animation_enabled)
+        elif s.input.was_pressed(pygame.K_q):
+            # Random fill amounts
+            import random
+
+            for bar in bars:
+                random_fill = random.uniform(0.1, 1.0)
+                bar.set_fill_amount(random_fill, animate=animation_enabled)
+        elif s.input.was_pressed(pygame.K_e):
+            # Toggle animation
+            animation_enabled = not animation_enabled
+            s.debug_log_info(
+                f"Animation {'enabled' if animation_enabled else 'disabled'}"
+            )
+        elif s.input.was_pressed(pygame.K_r):
+            # Reset all bars
+            for bar in bars:
+                bar.set_fill_amount(1.0, animate=animation_enabled)
+        elif s.input.was_pressed(pygame.K_i):
+            # Toggle bar images between fon.jpeg and colored surfaces
+            path_sprites = "spritePro\\demoGames\\Sprites\\"
+
+            if not background_loaded:
+                try:
+                    # Switch to fon.jpeg images using proper set_image method
+                    for bar in bars:
+                        bar.set_image(path_sprites + "fon.jpeg")
+                    background_loaded = True
+                    s.debug_log_info("Bars switched to fon.jpeg images")
+                except Exception as e:
+                    s.debug_log_info(f"Error loading fon.jpeg: {e}")
+            else:
+                # Switch back to colored surfaces
+                colors = [
+                    (255, 100, 100),
+                    (100, 255, 100),
+                    (255, 255, 100),
+                    (100, 100, 255),
+                    (255, 255, 100),
+                ]
+                sizes = [(250, 40), (250, 40), (250, 40), (50, 250), (50, 250)]
+
+                for i, bar in enumerate(bars):
+                    surface = pygame.Surface(sizes[i])
+                    surface.fill(colors[i])
+                    pygame.draw.rect(
+                        surface,
+                        (255, 255, 255),
+                        (0, 0, sizes[i][0], sizes[i][1]),
+                        2,
+                    )
+                    bar.set_image(surface, sizes[i])  # Pass size to maintain dimensions
+                background_loaded = False
+                s.debug_log_info("Bars switched to colored surfaces")
 
 
 if __name__ == "__main__":

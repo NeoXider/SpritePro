@@ -89,27 +89,23 @@ def main():
 
     running = True
     while running:
-        # Handle events
-        for event in s.pygame_events:
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-                elif event.key == pygame.K_UP:
-                    # Increase sorting order for red → should draw above blue
-                    new_order = (red.sorting_order or 0) + 1
-                    red.set_sorting_order(new_order)
-                    red_label.set_text(f"Red sorting_order: {new_order}")
-                elif event.key == pygame.K_DOWN:
-                    # Decrease sorting order → can go behind the blue
-                    new_order = (red.sorting_order or 0) - 1
-                    red.set_sorting_order(new_order)
-                    red_label.set_text(f"Red sorting_order: {new_order}")
-
         # Tick/update framework (events, dt, etc.)
         # Registered sprites' update will be called in layered order and will blit
         s.update(fps=60, update_display=True, fill_color=(25, 28, 35))
+
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            running = False
+
+        if s.input.was_pressed(pygame.K_UP):
+            # Increase sorting order for red → should draw above blue
+            new_order = (red.sorting_order or 0) + 1
+            red.set_sorting_order(new_order)
+            red_label.set_text(f"Red sorting_order: {new_order}")
+        elif s.input.was_pressed(pygame.K_DOWN):
+            # Decrease sorting order → can go behind the blue
+            new_order = (red.sorting_order or 0) - 1
+            red.set_sorting_order(new_order)
+            red_label.set_text(f"Red sorting_order: {new_order}")
 
     pygame.quit()
 

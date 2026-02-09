@@ -114,10 +114,14 @@ class SceneManager:
             scene.on_enter(context)
             return
         params = list(sig.parameters.values())
-        accepts_context = any(
-            p.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
-            for p in params
-        ) or len(params) >= 1
+        accepts_context = (
+            any(
+                p.kind
+                in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+                for p in params
+            )
+            or len(params) >= 1
+        )
         if accepts_context:
             scene.on_enter(context)
         else:

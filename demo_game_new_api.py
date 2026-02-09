@@ -21,5 +21,6 @@ def main():
     while True:
         s.update(fill_color=(20, 20, 30))
 
+
 if __name__ == "__main__":
     main()

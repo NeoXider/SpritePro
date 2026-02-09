@@ -1,8 +1,10 @@
 import spritePro as s
 
+
 def on_click():
     text.set_text("Welcome! :)")
     button.set_active(False)
+
 
 # Initialize the library
 s.init()
@@ -20,7 +22,7 @@ button = s.Button(
     on_click=on_click,
 )
 
-button.rect.y+=200
+button.rect.y += 200
 
 # Main game loop
 while True:

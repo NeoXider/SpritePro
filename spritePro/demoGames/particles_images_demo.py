@@ -103,23 +103,21 @@ def main():
 
     running = True
     while running:
-        for event in s.pygame_events:
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                mx, my = pygame.mouse.get_pos()
-                if event.button == 1:
-                    star_emitter.emit(
-                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
-                    )
-                elif event.button == 3:
-                    platforma_emitter.emit(
-                        (mx + s.get_camera_position().x, my + s.get_camera_position().y)
-                    )
-
         s.update(fps=60, update_display=True, fill_color=(20, 24, 32))
+
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            running = False
+
+        if s.input.was_mouse_pressed(1):
+            mx, my = s.input.mouse_pos
+            star_emitter.emit(
+                (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+            )
+        elif s.input.was_mouse_pressed(3):
+            mx, my = s.input.mouse_pos
+            platforma_emitter.emit(
+                (mx + s.get_camera_position().x, my + s.get_camera_position().y)
+            )
 
     pygame.quit()
 

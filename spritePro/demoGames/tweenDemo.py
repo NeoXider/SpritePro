@@ -246,26 +246,21 @@ if __name__ == "__main__":
         # Обновляем и отрисовываем все спрайты, затем обновляем экран
         spritePro.update(fill_color=None)
 
-        for event in spritePro.pygame_events:
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
-                    current_demo = 1
-                    tween_manager = (
-                        TweenManager()
-                    )  # Сбрасываем твин-менеджер при смене демо
-                    single_demo_initialized = False  # Сбрасываем флаг инициализации
-                elif event.key == pygame.K_2:
-                    current_demo = 2
-                    tween_manager = (
-                        TweenManager()
-                    )  # Сбрасываем твин-менеджер при смене демо
-                    dual_demo_initialized = False  # Сбрасываем флаг инициализации
-                elif event.key == pygame.K_SPACE:
-                    paused = not paused
-                    if paused:
-                        tween_manager.pause_all()
-                    else:
-                        tween_manager.resume_all()
+        if spritePro.input.was_pressed(pygame.K_ESCAPE):
+            pygame.quit()
+            sys.exit()
+
+        if spritePro.input.was_pressed(pygame.K_1):
+            current_demo = 1
+            tween_manager = TweenManager()  # Сбрасываем твин-менеджер при смене демо
+            single_demo_initialized = False  # Сбрасываем флаг инициализации
+        elif spritePro.input.was_pressed(pygame.K_2):
+            current_demo = 2
+            tween_manager = TweenManager()  # Сбрасываем твин-менеджер при смене демо
+            dual_demo_initialized = False  # Сбрасываем флаг инициализации
+        elif spritePro.input.was_pressed(pygame.K_SPACE):
+            paused = not paused
+            if paused:
+                tween_manager.pause_all()
+            else:
+                tween_manager.resume_all()

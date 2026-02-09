@@ -29,7 +29,7 @@ current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
 sys.path.insert(0, str(parent_dir))
 
-import pygame
+import pygame  # noqa: E402
 
 import spritePro as s  # noqa: E402
 
@@ -37,23 +37,30 @@ import spritePro as s  # noqa: E402
 def main(net: s.NetClient, role: str, color: str) -> None:
     s.get_screen((800, 600), "SpritePro Multiplayer Demo")
 
+    # Контекст мультиплеера: хранит id/role и упрощает send/poll.
+    _ = s.multiplayer.init_context(net, role, color)
+    ctx = s.multiplayer_ctx
+
     me = s.Sprite("", (50, 50), (200, 300))
     other = s.Sprite("", (50, 50), (600, 300))
 
-    if color == "blue":
-        me.set_color((70, 120, 220))
-        other.set_color((220, 70, 70))
-    else:
-        me.set_color((220, 70, 70))
-        other.set_color((70, 120, 220))
+    my_color = (220, 70, 70) if ctx.is_host else (70, 120, 220)
+    other_color = (70, 120, 220) if ctx.is_host else (220, 70, 70)
+    me.set_color(my_color)
+    other.set_color(other_color)
 
     other_pos = other.get_world_position()
     remote_pos = [other_pos.x, other_pos.y]
     speed = 240.0
+    tick_rate = 60
+    other_id: int | None = None
+
+    me_id_text = s.TextSprite("ID: ?", 18, (255, 255, 255), (0, 0))
+    other_id_text = s.TextSprite("ID: ?", 18, (255, 255, 255), (0, 0))
 
     while True:
-        s.update(fill_color=(20, 20, 25))
-        dt = getattr(s, "dt", 0.016)
+        s.update(fps=tick_rate, fill_color=(20, 20, 25))
+        dt = s.dt
 
         dx = s.input.get_axis(pygame.K_a, pygame.K_d)
         dy = s.input.get_axis(pygame.K_w, pygame.K_s)
@@ -62,13 +69,31 @@ def main(net: s.NetClient, role: str, color: str) -> None:
         pos.y += dy * speed * dt
         me.set_position(pos)
 
-        net.send("pos", {"x": pos.x, "y": pos.y})
-        for msg in net.poll():
+        # Отправляем позицию 60 раз/сек.
+        ctx.send_every("pos", {"x": pos.x, "y": pos.y}, 1.0 / tick_rate)
+        for msg in ctx.poll():
             if msg.get("event") == "pos":
                 data = msg.get("data", {})
-                remote_pos[0] = float(data.get("x", remote_pos[0]))
-                remote_pos[1] = float(data.get("y", remote_pos[1]))
-        other.set_position((remote_pos[0], remote_pos[1]))
+                remote_pos[:] = [
+                    float(data.get("x", remote_pos[0])),
+                    float(data.get("y", remote_pos[1])),
+                ]
+                sender_id = data.get("sender_id")
+                if sender_id is not None:
+                    try:
+                        other_id = int(sender_id)
+                    except (TypeError, ValueError):
+                        pass
+        other.set_position(remote_pos)
+
+        me_id_text.set_text(f"ID: {ctx.client_id}")
+        me_pos = me.get_world_position()
+        me_id_text.set_position((me_pos.x, me_pos.y - 40))
+
+        other_id_label = "?" if other_id is None else str(other_id)
+        other_id_text.set_text(f"ID: {other_id_label}")
+        other_pos = other.get_world_position()
+        other_id_text.set_position((other_pos.x, other_pos.y - 40))
 
 
 if __name__ == "__main__":
