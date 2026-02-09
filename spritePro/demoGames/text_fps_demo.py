@@ -124,9 +124,7 @@ def main():
 
     instruction_sprites = []
     for i, text in enumerate(instructions):
-        sprite = TextSprite(
-            text=text, font_size=14, color=(180, 180, 180), pos=(100, 100 + i * 20)
-        )
+        sprite = TextSprite(text=text, font_size=14, color=(180, 180, 180), pos=(100, 100 + i * 20))
         instruction_sprites.append(sprite)
 
     # Performance test sprites
@@ -211,9 +209,7 @@ def main():
         # Update stats display
         stats_text.update(screen)
         for i, line in enumerate(stats_lines):
-            if (
-                i < len(instruction_sprites) - 2
-            ):  # Reuse some instruction sprites for stats
+            if i < len(instruction_sprites) - 2:  # Reuse some instruction sprites for stats
                 temp_sprite = TextSprite(
                     text=line,
                     font_size=14,

@@ -52,9 +52,7 @@ def main() -> None:
     )
     emitter = ParticleEmitter(cfg, use_pool=True, max_pool_size=BURST_COUNT * 2)
 
-    fps_counter = Text_fps(
-        pos=(10, 8), color=(255, 255, 0), prefix="FPS: ", precision=1
-    )
+    fps_counter = Text_fps(pos=(10, 8), color=(255, 255, 0), prefix="FPS: ", precision=1)
     stats = s.TextSprite("", 20, (200, 220, 255), (450, 40))
     _hint = s.TextSprite(
         f"Spawn: {BURST_COUNT} particles every {BURST_INTERVAL:.1f}s",

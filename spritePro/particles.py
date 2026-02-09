@@ -72,9 +72,7 @@ class ParticleConfig:
     # Provide a ready Particle instance as template (properties are copied, but pos/velocity/lifetime are set from config)
     particle_template: Optional["Particle"] = None
     # Full factory override: create and return a Particle yourself
-    factory: Optional[
-        Callable[[Vector2, Vector2, int, "ParticleConfig", int], "Particle"]
-    ] = None
+    factory: Optional[Callable[[Vector2, Vector2, int, "ParticleConfig", int], "Particle"]] = None
     # Sorting order for created particles (higher draws in front); None keeps default
     sorting_order: Optional[int] = None
     # Optional uniform scaling range for provided image/image_factory results
@@ -86,9 +84,7 @@ class ParticleConfig:
     align_rotation_to_velocity: bool = False
     image_rotation_range: Optional[Tuple[float, float]] = None
     angular_velocity_range: Optional[Tuple[float, float]] = (None,)  # deg/sec
-    scale_velocity_range: Optional[Tuple[float, float]] = (
-        None,
-    )  # scale factor per second
+    scale_velocity_range: Optional[Tuple[float, float]] = (None,)  # scale factor per second
 
 
 class Particle(spritePro.Sprite):
@@ -409,9 +405,7 @@ class ParticleEmitter:
     def _reset_auto_emit_state(self) -> None:
         self._emit_elapsed = 0.0
         self._next_emit_interval = self._resolve_interval(self.emit_interval)
-        self._last_emit_position = (
-            Vector2(self._position) if self._position is not None else None
-        )
+        self._last_emit_position = Vector2(self._position) if self._position is not None else None
         self._last_update_time = time.monotonic()
 
     def emit(
@@ -466,9 +460,7 @@ class ParticleEmitter:
                     else:
                         # Offset from provided position using spawn_rect dimensions
                         ox = random.uniform(-float(r.width) * 0.5, float(r.width) * 0.5)
-                        oy = random.uniform(
-                            -float(r.height) * 0.5, float(r.height) * 0.5
-                        )
+                        oy = random.uniform(-float(r.height) * 0.5, float(r.height) * 0.5)
                         spawn_pos = position_vec + Vector2(ox, oy)
                 except Exception:
                     pass
@@ -563,9 +555,7 @@ class ParticleEmitter:
                             if hasattr(template, attr_name) and not callable(
                                 getattr(template, attr_name, None)
                             ):
-                                setattr(
-                                    particle, attr_name, getattr(template, attr_name)
-                                )
+                                setattr(particle, attr_name, getattr(template, attr_name))
                         except (AttributeError, TypeError):
                             pass
             else:
@@ -606,9 +596,7 @@ class ParticleEmitter:
             # Set angular velocity if requested
             if cfg.angular_velocity_range is not None:
                 try:
-                    particle.angular_velocity = random.uniform(
-                        *cfg.angular_velocity_range
-                    )
+                    particle.angular_velocity = random.uniform(*cfg.angular_velocity_range)
                 except Exception:
                     particle.angular_velocity = 0.0
             if cfg.scale_velocity_range is not None:
@@ -628,9 +616,7 @@ class ParticleEmitter:
                 cfg.custom_factory(particle, index)
             particles.append(particle)
             if self._parent is not None:
-                particle.set_parent(
-                    self._parent, keep_world_position=not self._parent_follow
-                )
+                particle.set_parent(self._parent, keep_world_position=not self._parent_follow)
                 particle.follow_parent = self._particle_follow_parent
 
         return particles

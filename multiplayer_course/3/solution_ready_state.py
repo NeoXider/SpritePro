@@ -10,9 +10,9 @@ import spritePro as s
 START_DELAY = 1.0
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def multiplayer_main(net: s.NetClient, role: str) -> None:
     s.get_screen((800, 600), "Lesson 3 - Solution")
-    ctx = s.multiplayer.init_context(net, role, color)
+    ctx = s.multiplayer.init_context(net, role)
 
     is_ready = False
     game_started = False
@@ -20,15 +20,9 @@ def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
     player_key = "host" if ctx.is_host else "client"
     both_ready_timer = 0.0
 
-    info = s.TextSprite(
-        "Space: ready", 28, (240, 240, 240), (20, 20), anchor=s.Anchor.TOP_LEFT
-    )
-    state = s.TextSprite(
-        "State: lobby", 28, (240, 240, 240), (20, 60), anchor=s.Anchor.TOP_LEFT
-    )
-    start_label = s.TextSprite(
-        "Start", 48, (120, 255, 120), s.WH_C, anchor=s.Anchor.CENTER
-    )
+    info = s.TextSprite("Space: ready", 28, (240, 240, 240), (20, 20), anchor=s.Anchor.TOP_LEFT)
+    state = s.TextSprite("State: lobby", 28, (240, 240, 240), (20, 60), anchor=s.Anchor.TOP_LEFT)
+    start_label = s.TextSprite("Start", 48, (120, 255, 120), s.WH_C, anchor=s.Anchor.CENTER)
     start_label.set_active(False)
 
     while True:
@@ -60,20 +54,13 @@ def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
             both_ready_timer = 0.0
             start_label.set_active(False)
 
-        if (
-            ctx.is_host
-            and not game_started
-            and both_ready
-            and both_ready_timer >= START_DELAY
-        ):
+        if ctx.is_host and not game_started and both_ready and both_ready_timer >= START_DELAY:
             ctx.send("start", {})
             game_started = True
             state.set_text("State: game")
             start_label.set_active(False)
 
-        info.set_text(
-            f"Ready: {is_ready} | host={ready_map['host']} client={ready_map['client']}"
-        )
+        info.set_text(f"Ready: {is_ready} | host={ready_map['host']} client={ready_map['client']}")
 
 
 if __name__ == "__main__":

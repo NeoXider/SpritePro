@@ -9,9 +9,7 @@ from pygame.math import Vector2
 VectorInput = Sequence[float] | Vector2
 
 
-def angle_to_point(
-    origin: VectorInput, target: VectorInput, offset: float = 0.0
-) -> float:
+def angle_to_point(origin: VectorInput, target: VectorInput, offset: float = 0.0) -> float:
     """Возвращает угол до точки в градусах.
 
     Args:

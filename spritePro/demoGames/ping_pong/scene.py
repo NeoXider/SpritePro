@@ -18,9 +18,7 @@ class PingPongScene(s.Scene):
         self.bg = s.Sprite("", s.WH, s.WH_C, scene=self)
         self.bg.set_color((20, 20, 30))
 
-        self.center_line = s.Sprite(
-            "", (6, int(s.WH.y)), (s.WH_C.x, s.WH_C.y), scene=self
-        )
+        self.center_line = s.Sprite("", (6, int(s.WH.y)), (s.WH_C.x, s.WH_C.y), scene=self)
         self.center_line.set_color((40, 40, 55))
         self.center_line.alpha = 140
 
@@ -89,9 +87,7 @@ class PingPongScene(s.Scene):
         self.goal_config.sorting_order = 900
 
     def _setup_game_over_panel(self):
-        self.panel = s.Sprite(
-            "", (420, 220), (s.WH_C.x, s.WH_C.y), scene=self, sorting_order=2000
-        )
+        self.panel = s.Sprite("", (420, 220), (s.WH_C.x, s.WH_C.y), scene=self, sorting_order=2000)
         self.panel.set_color((30, 30, 40))
         self.panel.set_image(s.utils.round_corners(self.panel.image, 20))
         self.panel.set_screen_space(True)
@@ -221,16 +217,12 @@ class PingPongScene(s.Scene):
         if left:
             self.score_left += 1
             self.score_left_text.text = str(self.score_left)
-            s.debug_log_info(
-                f"Point for Player 1 ({self.score_left}:{self.score_right})"
-            )
+            s.debug_log_info(f"Point for Player 1 ({self.score_left}:{self.score_right})")
             self._play_score_feedback(self.score_left_text)
         else:
             self.score_right += 1
             self.score_right_text.text = str(self.score_right)
-            s.debug_log_info(
-                f"Point for Player 2 ({self.score_left}:{self.score_right})"
-            )
+            s.debug_log_info(f"Point for Player 2 ({self.score_left}:{self.score_right})")
             self._play_score_feedback(self.score_right_text)
 
         if self.score_left >= WIN_SCORE or self.score_right >= WIN_SCORE:

@@ -6,7 +6,7 @@
 
 import math
 import time
-from typing import Tuple, Optional, Union
+from typing import Tuple
 import colorsys
 
 
@@ -102,9 +102,7 @@ class ColorEffects:
         return (max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
 
     @staticmethod
-    def wave(
-        speed: float = 1.0, colors: list = None, offset: float = 0.0
-    ) -> Tuple[int, int, int]:
+    def wave(speed: float = 1.0, colors: list = None, offset: float = 0.0) -> Tuple[int, int, int]:
         """Создает волновой эффект, циклически проходящий через несколько цветов.
 
         Args:
@@ -452,9 +450,7 @@ def lerp_color(
     return (r, g, b)
 
 
-def adjust_brightness(
-    color: Tuple[int, int, int], factor: float
-) -> Tuple[int, int, int]:
+def adjust_brightness(color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
     """Изменяет яркость цвета на заданный множитель.
 
     Args:
@@ -470,9 +466,7 @@ def adjust_brightness(
     return (r, g, b)
 
 
-def adjust_saturation(
-    color: Tuple[int, int, int], factor: float
-) -> Tuple[int, int, int]:
+def adjust_saturation(color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
     """Изменяет насыщенность цвета на заданный множитель.
 
     Args:

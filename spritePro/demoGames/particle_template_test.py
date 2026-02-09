@@ -45,9 +45,7 @@ class FountainParticle(Particle):
                         target.rect.y += int(push_dir.y * self.push_force * s.dt)
 
                     self.has_pushed.add(target)
-                    s.debug_log_info(
-                        f"Fountain particle pushed target! Force: {self.push_force}"
-                    )
+                    s.debug_log_info(f"Fountain particle pushed target! Force: {self.push_force}")
 
     def check_collision_with_falling(
         self, falling_particle, collision_messages_list, collision_count_ref
@@ -76,9 +74,7 @@ class FountainParticle(Particle):
                 (self.rect.centerx + falling_particle.rect.centerx) // 2,
                 (self.rect.centery + falling_particle.rect.centery) // 2,
             )
-            collision_messages_list.append(
-                [collision_pos, 0.5, "SPLASH!"]
-            )  # [pos, timer, text]
+            collision_messages_list.append([collision_pos, 0.5, "SPLASH!"])  # [pos, timer, text]
 
             s.debug_log_info(
                 f"Fountain particle collided with falling particle! Destroying both. Total collisions: {collision_count_ref[0]}"
@@ -104,9 +100,7 @@ class FallingParticle(Particle):
         self.damage = 5  # Урон при падении
         self.has_hit_ground = False
         self.impact_effect_timer = 0.0  # Таймер для визуального эффекта
-        self.collision_effect_timer = (
-            0.0  # Таймер для эффекта столкновения с другой частицей
-        )
+        self.collision_effect_timer = 0.0  # Таймер для эффекта столкновения с другой частицей
         self.has_collided = False  # Флаг столкновения с другой частицей
 
     def check_ground_collision(self, ground_y):
@@ -146,9 +140,7 @@ class FallingParticle(Particle):
                 (self.rect.centerx + other_particle.rect.centerx) // 2,
                 (self.rect.centery + other_particle.rect.centery) // 2,
             )
-            collision_messages_list.append(
-                [collision_pos, 0.5, "BOOM!"]
-            )  # [pos, timer, text]
+            collision_messages_list.append([collision_pos, 0.5, "BOOM!"])  # [pos, timer, text]
 
             s.debug_log_info(
                 f"Falling particles collided! Destroying both. Total collisions: {collision_count_ref[0]}"

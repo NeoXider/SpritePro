@@ -168,14 +168,10 @@ if __name__ == "__main__":
     )
 
     demo1_title = title_font.render("Single Sprite Demo", True, (255, 255, 255))
-    demo1_desc = font.render(
-        "Circular motion, color cycling, and scaling", True, (200, 200, 200)
-    )
+    demo1_desc = font.render("Circular motion, color cycling, and scaling", True, (200, 200, 200))
 
     demo2_title = title_font.render("Dual Sprite Demo", True, (255, 255, 255))
-    demo2_desc = font.render(
-        "Independent movement and color transitions", True, (200, 200, 200)
-    )
+    demo2_desc = font.render("Independent movement and color transitions", True, (200, 200, 200))
 
     current_demo = 1  # 1 для одиночного демо, 2 для двойного
     paused = False

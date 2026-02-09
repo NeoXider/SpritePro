@@ -46,10 +46,6 @@ class NetDebug:
 
 
 DEFAULT_MULTIPLAYER_SEED = 1337
-DEFAULT_MULTIPLAYER_COLOR = "red"
-
-
-_color: str = DEFAULT_MULTIPLAYER_COLOR
 
 
 class MultiplayerContext:
@@ -59,7 +55,6 @@ class MultiplayerContext:
         self,
         net: NetClient,
         role: str,
-        color: str,
         client_id: Optional[int] = None,
         seed: Optional[int] = None,
         debug: Optional[NetDebug] = None,
@@ -68,20 +63,13 @@ class MultiplayerContext:
         self.role = role
         self.is_host = role == "host"
         self.id_assigned = self.is_host
-        set_color(color)
-        self.client_id = (
-            0 if role == "host" else (client_id if client_id is not None else 1)
-        )
+        self.client_id = 0 if role == "host" else (client_id if client_id is not None else 1)
         self.players: Dict[str, Dict[str, Any]] = {}
         self.state: Dict[str, Any] = {}
         self.debug = debug or NetDebug(enabled=False)
         self._last_send: Dict[str, float] = {}
         self.seed = DEFAULT_MULTIPLAYER_SEED if seed is None else int(seed)
         self.random = random.Random(self.seed)
-
-    @property
-    def color(self) -> str:
-        return get_color()
 
     def send(
         self, event: str, data: Optional[Dict[str, Any]] = None, group: str = "traffic"
@@ -148,7 +136,6 @@ _context: Optional[MultiplayerContext] = None
 def init_context(
     net: NetClient,
     role: str,
-    color: str,
     client_id: Optional[int] = None,
     seed: Optional[int] = None,
     debug: bool = False,
@@ -158,11 +145,9 @@ def init_context(
 
     global _context
     debug_cfg = NetDebug(enabled=debug, color_logs=color_logs)
-    set_color(color)
     _context = MultiplayerContext(
         net=net,
         role=role,
-        color=color,
         client_id=client_id,
         seed=seed,
         debug=debug_cfg,
@@ -181,9 +166,7 @@ def get_context() -> MultiplayerContext:
     """Возвращает текущий контекст (должен быть инициализирован)."""
 
     if _context is None:
-        raise RuntimeError(
-            "MultiplayerContext не инициализирован. Вызовите init_context()."
-        )
+        raise RuntimeError("MultiplayerContext не инициализирован. Вызовите init_context().")
     return _context
 
 
@@ -196,14 +179,3 @@ def set_seed(seed: int) -> None:
 def get_random() -> random.Random:
     """Возвращает генератор случайных чисел из контекста."""
     return get_context().random
-
-
-def set_color(color: str) -> None:
-    """Задает цвет игрока вне контекста."""
-    global _color
-    _color = str(color)
-
-
-def get_color() -> str:
-    """Возвращает текущий цвет игрока."""
-    return _color

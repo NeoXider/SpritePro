@@ -4,12 +4,12 @@ import pygame
 import spritePro as s
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def multiplayer_main(net: s.NetClient, role: str) -> None:
     # Создаем окно.
     s.get_screen((800, 600), "Lesson 2 - Solution")
 
     # Глобальный контекст мультиплеера.
-    ctx = s.multiplayer.init_context(net, role, color)
+    ctx = s.multiplayer.init_context(net, role)
 
     # Локальный и удаленный игроки.
     me = s.Sprite("", (40, 40), (200, 300))

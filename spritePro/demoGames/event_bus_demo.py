@@ -23,9 +23,7 @@ def main() -> None:
         (200, 200, 200),
         (s.WH_C.x, 565),
     )
-    status = s.TextSprite(
-        "События будут появляться здесь...", 20, (220, 220, 220), (s.WH_C.x, 520)
-    )
+    status = s.TextSprite("События будут появляться здесь...", 20, (220, 220, 220), (s.WH_C.x, 520))
 
     state = {"ticks": 0}
 
@@ -120,13 +118,9 @@ def main() -> None:
                 s.events.send(s.globalEvents.KEY_UP, key=key, event=None)
 
         if s.input.was_mouse_pressed(1):
-            s.events.send(
-                s.globalEvents.MOUSE_DOWN, button=1, pos=s.input.mouse_pos, event=None
-            )
+            s.events.send(s.globalEvents.MOUSE_DOWN, button=1, pos=s.input.mouse_pos, event=None)
         if s.input.was_mouse_released(1):
-            s.events.send(
-                s.globalEvents.MOUSE_UP, button=1, pos=s.input.mouse_pos, event=None
-            )
+            s.events.send(s.globalEvents.MOUSE_UP, button=1, pos=s.input.mouse_pos, event=None)
 
 
 if __name__ == "__main__":

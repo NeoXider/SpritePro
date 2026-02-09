@@ -29,9 +29,7 @@ class SmileyFace(s.Sprite):
     def __init__(self, pos: tuple[int, int]) -> None:
         base_surface = pygame.Surface((160, 160), pygame.SRCALPHA)
         pygame.draw.circle(base_surface, (255, 255, 0), (80, 80), 80)
-        pygame.draw.arc(
-            base_surface, (0, 0, 0), pygame.Rect(40, 40, 80, 80), 3.5, 6.0, 6
-        )
+        pygame.draw.arc(base_surface, (0, 0, 0), pygame.Rect(40, 40, 80, 80), 3.5, 6.0, 6)
 
         super().__init__(base_surface, size=base_surface.get_size(), pos=pos)
 
@@ -81,9 +79,7 @@ class BlinkController:
         self.smiley = smiley
         self.tweens = TweenManager()
         _log_sprites("init_smiley")
-        self.visible_timer = Timer(
-            self.VISIBLE_DURATION, self._start_fade_out, autostart=True
-        )
+        self.visible_timer = Timer(self.VISIBLE_DURATION, self._start_fade_out, autostart=True)
         self.hidden_timer = Timer(self.HIDDEN_DURATION, self._start_fade_in)
         self.smiley.set_alpha_recursive(255)
 

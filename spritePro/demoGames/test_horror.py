@@ -55,9 +55,7 @@ class Test:
 
     def save(self, file_name) -> None:
         with open(file_name, "w", encoding="utf-8") as file:
-            json.dump(
-                [q.__dict__ for q in self.questions], file, ensure_ascii=False, indent=4
-            )
+            json.dump([q.__dict__ for q in self.questions], file, ensure_ascii=False, indent=4)
 
     def load(self, file_name) -> None:
         with open(file_name, "r", encoding="utf-8") as file:
@@ -74,9 +72,7 @@ class Test:
 class Door(s.Sprite):
     def __init__(self, image, size, position, speed=3, text=""):
         super().__init__(image, size, position, speed)
-        self.text = s.TextSprite(
-            text, 48, (255, 255, 255), (self.rect.centerx, self.rect.top)
-        )
+        self.text = s.TextSprite(text, 48, (255, 255, 255), (self.rect.centerx, self.rect.top))
         self.text.set_parent(self)
 
     def kill(self):
@@ -106,9 +102,7 @@ class Visual_test:
         space = 450
         x = s.WH_C.x - space
         y = -100
-        for i, e in enumerate(
-            self.testirovanie.get_current_question().get_shuffled_answers()
-        ):
+        for i, e in enumerate(self.testirovanie.get_current_question().get_shuffled_answers()):
             door = Door(
                 "spritePro/demoGames/Sprites/door.png",
                 (300, 300),
@@ -119,9 +113,7 @@ class Visual_test:
             self.doors.append(door)
 
     def update(self):
-        self.text_question.set_color(
-            s.utils.ColorEffects.pulse(5, (255, 255, 255), (255, 0, 0))
-        )
+        self.text_question.set_color(s.utils.ColorEffects.pulse(5, (255, 255, 255), (255, 0, 0)))
         for i in self.doors:
             i.move_down()
         current = self.testirovanie.current_question

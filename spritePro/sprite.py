@@ -16,9 +16,7 @@ SpriteSceneInput = Union["Scene", str, None]
 VectorInput = Union[Vector2, Sequence[Union[int, float]]]
 
 
-def _coerce_vector2(
-    value: Optional[VectorInput], default: Tuple[float, float]
-) -> Vector2:
+def _coerce_vector2(value: Optional[VectorInput], default: Tuple[float, float]) -> Vector2:
     """Приводит входное значение к Vector2 с запасным значением."""
     if value is None:
         value = default
@@ -352,9 +350,7 @@ class Sprite(pygame.sprite.Sprite):
             self._set_world_center(Vector2(self.rect.center))
             self._sync_local_offset()
 
-    def set_parent(
-        self, parent: Optional["Sprite"], keep_world_position: bool = True
-    ) -> None:
+    def set_parent(self, parent: Optional["Sprite"], keep_world_position: bool = True) -> None:
         """Устанавливает родительский спрайт для создания иерархии.
 
         Args:
@@ -392,9 +388,7 @@ class Sprite(pygame.sprite.Sprite):
                 self._set_world_center(self.get_world_position())
             self.local_offset = Vector2()
 
-    def set_position(
-        self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER
-    ) -> None:
+    def set_position(self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER) -> None:
         """Устанавливает позицию спрайта с заданным якорем и обновляет стартовые координаты.
 
         Args:
@@ -423,9 +417,7 @@ class Sprite(pygame.sprite.Sprite):
         self.rect = rect
         self._set_world_center(Vector2(self.rect.center))
         if self.parent:
-            self.local_offset = (
-                self.get_world_position() - self.parent.get_world_position()
-            )
+            self.local_offset = self.get_world_position() - self.parent.get_world_position()
 
     def get_position(self) -> Tuple[int, int]:
         """Получает текущую позицию спрайта (координаты центра).
@@ -499,9 +491,7 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.centerx = int(value)
         self._set_world_center(Vector2(self.rect.center))
         if self.parent:
-            self.local_offset = (
-                self.get_world_position() - self.parent.get_world_position()
-            )
+            self.local_offset = self.get_world_position() - self.parent.get_world_position()
 
     @property
     def y(self) -> int:
@@ -522,9 +512,7 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.centery = int(value)
         self._set_world_center(Vector2(self.rect.center))
         if self.parent:
-            self.local_offset = (
-                self.get_world_position() - self.parent.get_world_position()
-            )
+            self.local_offset = self.get_world_position() - self.parent.get_world_position()
 
     @property
     def width(self) -> int:
@@ -617,9 +605,7 @@ class Sprite(pygame.sprite.Sprite):
     def _sync_local_offset(self) -> None:
         """Синхронизирует локальное смещение относительно родителя."""
         if self.parent:
-            self.local_offset = (
-                self.get_world_position() - self.parent.get_world_position()
-            )
+            self.local_offset = self.get_world_position() - self.parent.get_world_position()
 
     def _update_children_world_positions(self) -> None:
         """Обновляет мировые позиции всех дочерних спрайтов."""
@@ -655,9 +641,7 @@ class Sprite(pygame.sprite.Sprite):
                     spritePro.debug_log_warning(
                         f"[Sprite] не удалось загрузить изображение для объекта {type(self).__name__} из '{image_source}'"
                     )
-                fallback_size = _vector2_to_int_tuple(
-                    _coerce_vector2(size, tuple(self.size))
-                )
+                fallback_size = _vector2_to_int_tuple(_coerce_vector2(size, tuple(self.size)))
                 img = pygame.Surface(fallback_size, pygame.SRCALPHA)
                 if self.color is not None:
                     img.fill(self.color)
@@ -817,17 +801,9 @@ class Sprite(pygame.sprite.Sprite):
             except Exception:
                 manager = None
             if isinstance(self.scene, str):
-                is_active = (
-                    manager.is_scene_active(self.scene)
-                    if manager is not None
-                    else False
-                )
+                is_active = manager.is_scene_active(self.scene) if manager is not None else False
             else:
-                is_active = (
-                    manager.is_scene_active(self.scene)
-                    if manager is not None
-                    else False
-                )
+                is_active = manager.is_scene_active(self.scene) if manager is not None else False
             if not is_active:
                 return
         # Apply velocity
@@ -1204,9 +1180,7 @@ class Sprite(pygame.sprite.Sprite):
         elif isinstance(target, (list, tuple)):
             target_pos = Vector2(target)
         else:
-            raise TypeError(
-                f"Unsupported target type for distance calculation: {type(target)}"
-            )
+            raise TypeError(f"Unsupported target type for distance calculation: {type(target)}")
 
         return self.get_world_position().distance_to(target_pos)
 

@@ -74,9 +74,7 @@ class FPSCameraDemo:
             "World Origin (0,0)", pos=(0, 0), font_size=32, color=(255, 255, 255)
         )
 
-        down_text = s.TextSprite(
-            "Scroll Down!", pos=(0, 500), font_size=48, color=(100, 200, 255)
-        )
+        down_text = s.TextSprite("Scroll Down!", pos=(0, 500), font_size=48, color=(100, 200, 255))
 
         right_text = s.TextSprite(
             "Scroll Right!", pos=(1000, 0), font_size=48, color=(255, 200, 100)

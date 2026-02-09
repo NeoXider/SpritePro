@@ -44,9 +44,7 @@ def run_animation_demo():
         origin_x = 50 - min_x + padding
         origin_y = 50 - min_y + padding
 
-        line_sprite.set_polyline(
-            points, color=(255, 255, 255), width=3, padding=padding
-        )
+        line_sprite.set_polyline(points, color=(255, 255, 255), width=3, padding=padding)
         frame = pygame.Surface((100, 100), pygame.SRCALPHA)
         frame.blit(
             line_sprite.image,

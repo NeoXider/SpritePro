@@ -88,13 +88,10 @@ class Tween:
         EasingType.EASE_IN: lambda x: x * x,
         EasingType.EASE_OUT: lambda x: 1 - (1 - x) * (1 - x),
         EasingType.EASE_IN_OUT: lambda x: 3 * x * x - 2 * x * x * x,
-        EasingType.BOUNCE: lambda x: 1
-        - (math.cos(x * 4.5 * math.pi) * math.exp(-x * 3))
+        EasingType.BOUNCE: lambda x: 1 - (math.cos(x * 4.5 * math.pi) * math.exp(-x * 3))
         if x < 1
         else 1,
-        EasingType.ELASTIC: lambda x: math.sin(x * 13 * math.pi) * math.exp(-x * 3)
-        if x < 1
-        else 0,
+        EasingType.ELASTIC: lambda x: math.sin(x * 13 * math.pi) * math.exp(-x * 3) if x < 1 else 0,
         EasingType.BACK: lambda x: x * x * (2.70158 * x - 1.70158),
         EasingType.CIRC: lambda x: 1 - math.sqrt(1 - x * x),
         EasingType.QUAD: lambda x: x * x,
@@ -141,9 +138,7 @@ class Tween:
         self.start_value = start_value
         self.end_value = end_value
         self.duration = duration
-        self.easing = self.EASING_FUNCTIONS.get(
-            easing, self.EASING_FUNCTIONS[EasingType.LINEAR]
-        )
+        self.easing = self.EASING_FUNCTIONS.get(easing, self.EASING_FUNCTIONS[EasingType.LINEAR])
         self.on_complete = on_complete
         self.loop = loop
         self.yoyo = yoyo
@@ -204,9 +199,7 @@ class Tween:
                 return self.end_value
             else:
                 self.is_playing = False
-                self.current_value = self._lerp_value(
-                    self.start_value, self.end_value, 1.0
-                )
+                self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
                 if self.on_update:
                     self.on_update(self.current_value)
                 if self.on_complete:
@@ -588,9 +581,7 @@ if __name__ == "__main__":
         y_pos += 60
 
     # Добавляем инструкции
-    instructions = font.render(
-        "Press SPACE to pause/resume, ESC to exit", True, (255, 255, 255)
-    )
+    instructions = font.render("Press SPACE to pause/resume, ESC to exit", True, (255, 255, 255))
     instructions_pos = (screen.get_width() // 2 - instructions.get_width() // 2, 10)
 
     paused = False

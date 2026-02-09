@@ -6,9 +6,9 @@ import spritePro as s
 PING_INTERVAL = 2.0
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def multiplayer_main(net: s.NetClient, role: str) -> None:
     s.get_screen((800, 600), "Lesson 10 - Solution Routing")
-    ctx = s.multiplayer.init_context(net, role, color)
+    ctx = s.multiplayer.init_context(net, role)
 
     ping_timer = 0.0
 

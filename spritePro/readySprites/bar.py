@@ -47,9 +47,7 @@ class Bar(Sprite):
         image: Union[str, Path, pygame.Surface] = "",
         pos: Tuple[int, int] = (0, 0),
         size: Optional[Tuple[int, int]] = None,
-        fill_direction: Union[
-            str, FillDirection
-        ] = FillDirection.HORIZONTAL_LEFT_TO_RIGHT,
+        fill_direction: Union[str, FillDirection] = FillDirection.HORIZONTAL_LEFT_TO_RIGHT,
         fill_amount: float = 1.0,
         animate_duration: float = 0.3,
         sorting_order: Optional[int] = None,
@@ -231,9 +229,7 @@ class Bar(Sprite):
             ]:
                 # Right to left
                 clip_width = int(original_width * self._current_fill)
-                clip_rect = pygame.Rect(
-                    original_width - clip_width, 0, clip_width, original_height
-                )
+                clip_rect = pygame.Rect(original_width - clip_width, 0, clip_width, original_height)
 
             elif self._fill_direction in [
                 FillDirection.VERTICAL_BOTTOM_TO_TOP,
@@ -357,9 +353,7 @@ class _ColorWrapper:
             return getattr(self._bar, "_fill_color", None)
 
     @color.setter
-    def color(
-        self, value: Optional[Union[Tuple[int, int, int], Tuple[int, int, int, int]]]
-    ):
+    def color(self, value: Optional[Union[Tuple[int, int, int], Tuple[int, int, int, int]]]):
         """Устанавливает цвет и обновляет соответствующее изображение.
 
         Поддерживает как RGB (r, g, b), так и RGBA (r, g, b, a) кортежи.
@@ -444,9 +438,7 @@ class _ColorWrapper:
                 fill_surface = pygame.Surface(self._bar._fill_size, pygame.SRCALPHA)
                 fill_surface.fill(rgba_color)
                 # Обновляем fill поверхность
-                self._bar._fill_surface = pygame.transform.scale(
-                    fill_surface, self._bar._fill_size
-                )
+                self._bar._fill_surface = pygame.transform.scale(fill_surface, self._bar._fill_size)
 
             self._bar._update_clipped_image()
 
@@ -594,9 +586,7 @@ class BarWithBackground(Bar):
                 fill_surface.fill((*self._fill_color, alpha))
         else:
             try:
-                fill_surface = pygame.image.load(
-                    str(self._fill_image_source)
-                ).convert_alpha()
+                fill_surface = pygame.image.load(str(self._fill_image_source)).convert_alpha()
             except Exception:
                 s.debug_log_warning(
                     f"[BarWithBackground] не удалось загрузить изображение заполнения из '{self._fill_image_source}'"
@@ -696,9 +686,7 @@ class BarWithBackground(Bar):
         self._fill_surface = pygame.transform.scale(fill_surface, self._fill_size)
         self._update_clipped_image()
 
-    def set_background_image(
-        self, background_image: Union[str, Path, pygame.Surface] = ""
-    ):
+    def set_background_image(self, background_image: Union[str, Path, pygame.Surface] = ""):
         """Устанавливает новое фоновое изображение.
 
         Args:
@@ -725,9 +713,7 @@ class BarWithBackground(Bar):
         self._create_fill_sprite()
         self._update_clipped_image()
 
-    def set_both_sizes(
-        self, background_size: Tuple[int, int], fill_size: Tuple[int, int]
-    ):
+    def set_both_sizes(self, background_size: Tuple[int, int], fill_size: Tuple[int, int]):
         """Устанавливает размеры фона и заполнения.
 
         Args:
@@ -784,8 +770,7 @@ class BarWithBackground(Bar):
                 # Interpolate between current and target
                 progress = self._animation_timer / self._animate_duration
                 self._current_fill = (
-                    self._current_fill
-                    + (self._target_fill - self._current_fill) * progress
+                    self._current_fill + (self._target_fill - self._current_fill) * progress
                 )
 
             # Update clipped image during animation
@@ -795,11 +780,7 @@ class BarWithBackground(Bar):
         super().update(screen)
 
         # Draw fill overlay on top of background
-        if (
-            screen is not None
-            and hasattr(self, "_clipped_fill_surface")
-            and self.active
-        ):
+        if screen is not None and hasattr(self, "_clipped_fill_surface") and self.active:
             # Get camera position
             import spritePro
             from pygame.math import Vector2
@@ -835,9 +816,7 @@ class BarWithBackground(Bar):
 
             # Apply flip
             if self.flipped_h or self.flipped_v:
-                fill_img = pygame.transform.flip(
-                    fill_img, self.flipped_h, self.flipped_v
-                )
+                fill_img = pygame.transform.flip(fill_img, self.flipped_h, self.flipped_v)
 
             # Apply scale
             if self._scale != 1.0:

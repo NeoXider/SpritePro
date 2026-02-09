@@ -30,9 +30,7 @@ def main() -> None:
     ]
     hint_sprites = []
     for i, line in enumerate(hints):
-        hint_sprites.append(
-            s.TextSprite(line, 16, (200, 200, 200), (s.WH_C.x, 500 + i * 18))
-        )
+        hint_sprites.append(s.TextSprite(line, 16, (200, 200, 200), (s.WH_C.x, 500 + i * 18)))
 
     _ = (title, *hint_sprites)
 

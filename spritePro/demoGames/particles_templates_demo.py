@@ -9,7 +9,6 @@ Keys: 1 = Sparks, 2 = Smoke, 3 = Fire (emit at mouse).
 import sys
 from pathlib import Path
 import pygame
-from pygame.math import Vector2
 
 
 # Add parent directory to path for imports
@@ -130,24 +129,16 @@ def main():
             running = False
         elif s.input.was_pressed(pygame.K_1) or s.input.was_pressed(pygame.K_KP1):
             mx, my = s.input.mouse_pos
-            sparks_emitter.emit(
-                (mx + s.get_camera_position().x, my + s.get_camera_position().y)
-            )
+            sparks_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
         elif s.input.was_pressed(pygame.K_2) or s.input.was_pressed(pygame.K_KP2):
             mx, my = s.input.mouse_pos
-            smoke_emitter.emit(
-                (mx + s.get_camera_position().x, my + s.get_camera_position().y)
-            )
+            smoke_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
         elif s.input.was_pressed(pygame.K_3) or s.input.was_pressed(pygame.K_KP3):
             mx, my = s.input.mouse_pos
-            fire_emitter.emit(
-                (mx + s.get_camera_position().x, my + s.get_camera_position().y)
-            )
+            fire_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
         elif s.input.was_pressed(pygame.K_4) or s.input.was_pressed(pygame.K_KP4):
             mx, my = s.input.mouse_pos
-            burst_emitter.emit(
-                (mx + s.get_camera_position().x, my + s.get_camera_position().y)
-            )
+            burst_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))
 
         if s.input.was_mouse_pressed(1):
             mx, my = s.input.mouse_pos

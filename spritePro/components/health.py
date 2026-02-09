@@ -36,9 +36,7 @@ class HealthComponent:
         self,
         max_health: float,
         current_health: Optional[float] = None,
-        owner_sprite: Optional[
-            "Sprite"
-        ] = None,  # Ссылка на спрайт-владелец для колбэков
+        owner_sprite: Optional["Sprite"] = None,  # Ссылка на спрайт-владелец для колбэков
         on_hp_change: Optional[Union[HpChangeCallback, List[HpChangeCallback]]] = None,
         on_damage: Optional[Union[DamageCallback, List[DamageCallback]]] = None,
         on_heal: Optional[Union[HealCallback, List[HealCallback]]] = None,
@@ -59,9 +57,7 @@ class HealthComponent:
             ValueError: Если max_health <= 0.
         """
         if max_health <= 0:
-            raise ValueError(
-                "Максимальное здоровье (max_health) должно быть положительным числом."
-            )
+            raise ValueError("Максимальное здоровье (max_health) должно быть положительным числом.")
 
         # Приватные атрибуты для хранения значений
         self._max_health: float = float(max_health)
@@ -71,9 +67,7 @@ class HealthComponent:
         self.owner_sprite: Optional["Sprite"] = owner_sprite
 
         # Сохранение колбэков в списках
-        self._on_hp_change_callbacks: List[HpChangeCallback] = self._to_list(
-            on_hp_change
-        )
+        self._on_hp_change_callbacks: List[HpChangeCallback] = self._to_list(on_hp_change)
         self._on_damage_callbacks: List[DamageCallback] = self._to_list(on_damage)
         self._on_heal_callbacks: List[HealCallback] = self._to_list(on_heal)
         self._on_death_callbacks: List[DeathCallback] = self._to_list(on_death)
@@ -90,9 +84,7 @@ class HealthComponent:
         # Проверка смерти при инициализации, если начальное HP <= 0
         self._check_death()
 
-    def _to_list(
-        self, callbacks: Optional[Union[Callable, List[Callable]]]
-    ) -> List[Callable]:
+    def _to_list(self, callbacks: Optional[Union[Callable, List[Callable]]]) -> List[Callable]:
         """Вспомогательный метод для преобразования одиночного колбэка в список."""
         if callbacks is None:
             return []
@@ -123,9 +115,7 @@ class HealthComponent:
             ValueError: Если value <= 0.
         """
         if value <= 0:
-            raise ValueError(
-                "Новое максимальное здоровье должно быть положительным числом."
-            )
+            raise ValueError("Новое максимальное здоровье должно быть положительным числом.")
         if value != self._max_health:
             self._max_health = float(value)
             if self._current_health > self._max_health:
@@ -163,9 +153,7 @@ class HealthComponent:
             hp_difference = new_health - old_health
 
             # Вызываем колбэки изменения HP
-            self._call_callbacks(
-                self._on_hp_change_callbacks, new_health, hp_difference
-            )
+            self._call_callbacks(self._on_hp_change_callbacks, new_health, hp_difference)
 
             # Проверяем состояние смерти после изменения HP
             self._check_death()
@@ -195,9 +183,7 @@ class HealthComponent:
             ValueError: Если amount <= 0.
         """
         if amount <= 0:
-            raise ValueError(
-                "Количество урона (amount) должно быть положительным числом."
-            )
+            raise ValueError("Количество урона (amount) должно быть положительным числом.")
         if not self._is_alive:
             # log_info("Попытка нанести урон уже мертвому спрайту.") # Можно закомментировать в финальной версии
             return
@@ -205,7 +191,9 @@ class HealthComponent:
         # TODO: Применить логику резистов/уязвимостей на основе damage_type перед изменением HP
 
         # Изменяем текущее HP с использованием сеттера, который вызовет колбэки HP change и death
-        self.current_health -= amount  # Используем оператор вычитания, который вызовет сеттер current_health
+        self.current_health -= (
+            amount  # Используем оператор вычитания, который вызовет сеттер current_health
+        )
 
         # Вызываем колбэки получения урона
         self._call_callbacks(self._on_damage_callbacks, amount)
@@ -229,16 +217,16 @@ class HealthComponent:
             ValueError: Если amount <= 0.
         """
         if amount <= 0:
-            raise ValueError(
-                "Количество лечения (amount) должно быть положительным числом."
-            )
+            raise ValueError("Количество лечения (amount) должно быть положительным числом.")
         if not self._is_alive:
             # TODO: Добавить логику воскрешения, если требуется. Пока просто выходим.
             # log_info("Попытка вылечить мертвого спрайта.")
             return
 
         # Изменяем текущее HP с использованием сеттера, который вызовет колбэки HP change
-        self.current_health += amount  # Используем оператор сложения, который вызовет сеттер current_health
+        self.current_health += (
+            amount  # Используем оператор сложения, который вызовет сеттер current_health
+        )
 
         # Вызываем колбэки лечения
         self._call_callbacks(self._on_heal_callbacks, amount)
@@ -276,9 +264,7 @@ class HealthComponent:
         if callable(callback):
             self._on_hp_change_callbacks.append(callback)
         else:
-            log_warning(
-                "Предупреждение: Попытка добавить некорректный колбэк на изменение HP."
-            )
+            log_warning("Предупреждение: Попытка добавить некорректный колбэк на изменение HP.")
 
     def remove_on_hp_change_callback(self, callback: HpChangeCallback):
         """Удаляет функцию из списка колбэков на изменение HP.
@@ -298,9 +284,7 @@ class HealthComponent:
         if callable(callback):
             self._on_damage_callbacks.append(callback)
         else:
-            log_warning(
-                "Предупреждение: Попытка добавить некорректный колбэк на получение урона."
-            )
+            log_warning("Предупреждение: Попытка добавить некорректный колбэк на получение урона.")
 
     def remove_on_damage_callback(self, callback: DamageCallback):
         """Удаляет функцию из списка колбэков на получение урона.
@@ -320,9 +304,7 @@ class HealthComponent:
         if callable(callback):
             self._on_heal_callbacks.append(callback)
         else:
-            log_warning(
-                "Предупреждение: Попытка добавить некорректный колбэк на лечение."
-            )
+            log_warning("Предупреждение: Попытка добавить некорректный колбэк на лечение.")
 
     def remove_on_heal_callback(self, callback: HealCallback):
         """Удаляет функцию из списка колбэков на лечение.
@@ -342,9 +324,7 @@ class HealthComponent:
         if callable(callback):
             self._on_death_callbacks.append(callback)
         else:
-            log_warning(
-                "Предупреждение: Попытка добавить некорректный колбэк на смерть."
-            )
+            log_warning("Предупреждение: Попытка добавить некорректный колбэк на смерть.")
 
     def remove_on_death_callback(self, callback: DeathCallback):
         """Удаляет функцию из списка колбэков на смерть.

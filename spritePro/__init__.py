@@ -171,6 +171,7 @@ __all__ = [
     "debug_log_warning",
     "debug_log_error",
     "debug_log_custom",
+    "net_log_to_overlay",
     "set_debug_logs_enabled",
     "set_debug_grid_enabled",
     "set_debug_log_anchor",
@@ -403,9 +404,7 @@ def process_camera_input(
     )
 
 
-def shake_camera(
-    strength: tuple[float, float] = (12, 12), duration: float = 0.35
-) -> None:
+def shake_camera(strength: tuple[float, float] = (12, 12), duration: float = 0.35) -> None:
     """Запускает дрожание камеры с перезапуском."""
     _context.game.shake_camera(strength=strength, duration=duration)
 
@@ -623,6 +622,16 @@ def debug_log_custom(
 ) -> None:
     """Добавляет пользовательский лог с префиксом и цветом."""
     _context.game.debug_log_custom(prefix, text, color=color, ttl=ttl)
+
+
+def net_log_to_overlay(text: str, level: str = "info") -> None:
+    """Добавляет сетевой лог в debug overlay, если игра уже создана.
+
+    Вызывается из networking при _net_log(); до создания окна не делает ничего.
+    """
+    if getattr(_context, "game", None) is None:
+        return
+    _context.game.add_debug_log(text, level=level, ttl=6.0)
 
 
 def init():

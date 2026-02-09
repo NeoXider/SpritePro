@@ -42,9 +42,9 @@ def _resolve_winner(left: str, right: str) -> int:
     return -1
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def multiplayer_main(net: s.NetClient, role: str) -> None:
     s.get_screen((800, 520), "Events RPS Demo")
-    _ = s.multiplayer.init_context(net, role, color)
+    _ = s.multiplayer.init_context(net, role)
     ctx = s.multiplayer_ctx
 
     title = s.TextSprite("Rock / Paper / Scissors", 30, (255, 255, 255), (400, 40))
@@ -70,13 +70,7 @@ def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
     result_delay = 1.0
 
     def on_choice(choice: str, sender_id: int | None = None) -> None:
-        nonlocal \
-            my_choice, \
-            other_choice, \
-            my_score, \
-            other_score, \
-            other_id, \
-            last_result_at
+        nonlocal my_choice, other_choice, my_score, other_score, other_id, last_result_at
         try:
             sender_id = int(sender_id) if sender_id is not None else None
         except (TypeError, ValueError):

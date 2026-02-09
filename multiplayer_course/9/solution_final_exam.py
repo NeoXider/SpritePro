@@ -157,9 +157,9 @@ class ResultScene(s.Scene):
             s.scene.set_scene_by_name("game", recreate=True)
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def multiplayer_main(net: s.NetClient, role: str) -> None:
     # Инициализация контекста.
-    s.multiplayer.init_context(net, role, color)
+    s.multiplayer.init_context(net, role)
 
     # Настройка сцен.
     s.get_screen((800, 600), "Lesson 9 - Final Exam")

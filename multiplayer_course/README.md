@@ -30,7 +30,6 @@ python multiplayer_course/2/example_sync_positions.py --net_debug
 
 Во всех уроках используется `MultiplayerContext` — глобальный контекст,
 который хранит `client_id`, `role`, `is_host` и упрощает `send/poll`.
-Цвет игрока хранится отдельно и доступен через `s.multiplayer.get_color()`.
 
 Также в уроках показано, когда удобнее использовать `EventBus` для игровых событий,
 а когда лучше отправлять частые сообщения напрямую через `net.send()`/`send_every()`.

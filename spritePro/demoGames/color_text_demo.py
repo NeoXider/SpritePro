@@ -78,16 +78,12 @@ class ColorTextDemo:
             },
             {
                 "text": "PASTEL RAINBOW",
-                "func": lambda: ColorEffects.rainbow(
-                    speed=0.8, saturation=0.5, brightness=0.9
-                ),
+                "func": lambda: ColorEffects.rainbow(speed=0.8, saturation=0.5, brightness=0.9),
                 "description": "Soft pastel colors",
             },
             {
                 "text": "BREATHING GREEN",
-                "func": lambda: ColorEffects.breathing(
-                    speed=0.8, base_color=(0, 150, 0)
-                ),
+                "func": lambda: ColorEffects.breathing(speed=0.8, base_color=(0, 150, 0)),
                 "description": "Green breathing effect",
             },
             {
@@ -242,14 +238,10 @@ class ColorTextDemo:
             text_sprite = s.TextSprite(effect["text"], 24, (255, 255, 255), (x, y))
 
             # Create description text
-            desc_sprite = s.TextSprite(
-                effect["description"], 14, (150, 150, 150), (x, y + 30)
-            )
+            desc_sprite = s.TextSprite(effect["description"], 14, (150, 150, 150), (x, y + 30))
 
             # Create RGB info text
-            rgb_sprite = s.TextSprite(
-                "RGB: (255, 255, 255)", 12, (100, 100, 100), (x, y + 50)
-            )
+            rgb_sprite = s.TextSprite("RGB: (255, 255, 255)", 12, (100, 100, 100), (x, y + 50))
 
             self.text_effects.append(
                 {
@@ -258,8 +250,7 @@ class ColorTextDemo:
                     "rgb_sprite": rgb_sprite,
                     "effect_func": effect["func"],
                     "original_text": effect["text"],
-                    "is_dynamic": "TEMPERATURE" in effect["text"]
-                    or "HEALTH" in effect["text"],
+                    "is_dynamic": "TEMPERATURE" in effect["text"] or "HEALTH" in effect["text"],
                 }
             )
 
@@ -287,9 +278,7 @@ class ColorTextDemo:
         for effect in self.text_effects:
             if effect["is_dynamic"]:
                 if "TEMPERATURE" in effect["original_text"]:
-                    effect["text_sprite"].set_text(
-                        f"TEMPERATURE: {self.temperature:.0f}°C"
-                    )
+                    effect["text_sprite"].set_text(f"TEMPERATURE: {self.temperature:.0f}°C")
                 elif "HEALTH" in effect["original_text"]:
                     effect["text_sprite"].set_text(f"HEALTH: {self.health:.0f}%")
 
@@ -347,9 +336,7 @@ class ColorTextDemo:
         """Draw performance information."""
         # FPS counter with breathing effect
         fps_color = ColorEffects.breathing(speed=1.0, base_color=(0, 255, 0))
-        fps_text = s.TextSprite(
-            f"FPS: {s.clock.get_fps():.1f}", 18, fps_color, (1300, 20)
-        )
+        fps_text = s.TextSprite(f"FPS: {s.clock.get_fps():.1f}", 18, fps_color, (1300, 20))
         fps_text.update(self.screen)
 
         # Effect count with pulse

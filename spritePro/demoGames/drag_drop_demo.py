@@ -39,12 +39,8 @@ class DragDropScene(s.Scene):
         self.slot_left.set_color((50, 60, 90))
         self.slot_right = s.Sprite("", (160, 160), (580, 300), scene=self)
         self.slot_right.set_color((50, 60, 90))
-        self.slot_left_label = s.TextSprite(
-            "Slot A", 18, (180, 180, 200), (220, 300), scene=self
-        )
-        self.slot_right_label = s.TextSprite(
-            "Slot B", 18, (180, 180, 200), (580, 300), scene=self
-        )
+        self.slot_left_label = s.TextSprite("Slot A", 18, (180, 180, 200), (220, 300), scene=self)
+        self.slot_right_label = s.TextSprite("Slot B", 18, (180, 180, 200), (580, 300), scene=self)
 
         self.box = s.DraggableSprite(
             "",

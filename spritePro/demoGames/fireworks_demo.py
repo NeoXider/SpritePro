@@ -11,7 +11,6 @@ sys.path.insert(0, str(parent_dir))
 
 import spritePro as s
 from spritePro.particles import ParticleEmitter, ParticleConfig
-from spritePro.particles import ParticleEmitter, ParticleConfig
 
 
 class FireworksDemo:
@@ -51,9 +50,7 @@ class FireworksDemo:
         marker_surface = pygame.Surface((14, 14), pygame.SRCALPHA)
         pygame.draw.circle(marker_surface, (255, 255, 255), (7, 7), 6, 1)
         pygame.draw.circle(marker_surface, (255, 200, 60), (7, 7), 3)
-        self.focus_marker = s.Sprite(
-            marker_surface, size=marker_surface.get_size(), pos=(0, 0)
-        )
+        self.focus_marker = s.Sprite(marker_surface, size=marker_surface.get_size(), pos=(0, 0))
         self.focus_marker.set_position((s.WH_C.x, s.WH_C.y))
 
     def _set_marker(self, position: tuple[int, int]) -> None:
@@ -95,12 +92,8 @@ def main():
     s.init()
     s.get_screen((800, 600), "SpritePro Fireworks Demo")
 
-    border_surface = pygame.Surface(
-        (int(s.WH.x) - 40, int(s.WH.y) // 2), pygame.SRCALPHA
-    )
-    pygame.draw.rect(
-        border_surface, (80, 120, 200, 120), border_surface.get_rect(), width=2
-    )
+    border_surface = pygame.Surface((int(s.WH.x) - 40, int(s.WH.y) // 2), pygame.SRCALPHA)
+    pygame.draw.rect(border_surface, (80, 120, 200, 120), border_surface.get_rect(), width=2)
     border = s.Sprite(
         border_surface,
         size=border_surface.get_size(),

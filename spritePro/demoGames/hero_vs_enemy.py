@@ -22,9 +22,7 @@ def create_bar():
 
 
 class Hero(s.Sprite):
-    def set_bar(
-        self, bar: s.readySprites.BarWithBackground, pos: Tuple[int, int] = (0, -120)
-    ):
+    def set_bar(self, bar: s.readySprites.BarWithBackground, pos: Tuple[int, int] = (0, -120)):
         self.bar = bar
         self.bar.set_parent(self)
         self.bar.local_offset = pos

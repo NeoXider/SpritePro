@@ -160,9 +160,7 @@ class ToggleButton(Button):
         self.hover_color = self._adjust_brightness(base_color, self.hover_brightness)
         self.press_color = self._adjust_brightness(base_color, self.press_brightness)
 
-    def set_colors(
-        self, color_on: Tuple[int, int, int], color_off: Tuple[int, int, int]
-    ):
+    def set_colors(self, color_on: Tuple[int, int, int], color_off: Tuple[int, int, int]):
         """Устанавливает цвета ВКЛ и ВЫКЛ для кнопки-переключателя.
 
         Args:

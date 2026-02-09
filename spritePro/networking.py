@@ -18,10 +18,59 @@ def _is_debug_enabled(value: Optional[bool]) -> bool:
     return value
 
 
+def _net_log_callsite() -> str:
+    """Источник вызова для сетевого лога (файл:строка функция), как в debug_log."""
+    import inspect
+
+    stack = inspect.stack()
+    try:
+        for frame_info in stack[2:]:
+            filename = frame_info.filename
+            if (
+                os.path.sep + "spritePro" + os.path.sep in filename
+                or "networking" in os.path.basename(filename)
+            ):
+                continue
+            basename = os.path.basename(filename)
+            return f" ({basename}:{frame_info.lineno} {frame_info.function})"
+    finally:
+        del stack
+    return ""
+
+
 def _net_log(*message: object) -> None:
     text = " ".join(str(part) for part in message)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     logging.info(text)
+    tag = os.environ.get("SPRITEPRO_NET_LOG_TAG", "net")
+    callsite = _net_log_callsite()
+    line = f"[{tag}] {text}{callsite}"
+    _net_log_to_file(line)
+    _net_log_to_overlay(text)
+
+
+def _net_log_to_file(line: str) -> None:
+    tag = os.environ.get("SPRITEPRO_NET_LOG_TAG", "net")
+    log_dir = os.environ.get("SPRITEPRO_LOG_DIR", "spritepro_logs")
+    for dir_candidate in (log_dir, os.getcwd()):
+        try:
+            os.makedirs(dir_candidate, exist_ok=True)
+            path = os.path.join(dir_candidate, f"debug_net_{tag}.log")
+            with open(path, "a", encoding="utf-8") as f:
+                f.write(line + "\n")
+            return
+        except OSError:
+            continue
+
+
+def _net_log_to_overlay(text: str) -> None:
+    try:
+        import spritePro as _s
+
+        if hasattr(_s, "net_log_to_overlay") and callable(getattr(_s, "net_log_to_overlay")):
+            _s.net_log_to_overlay(text, level="info")
+    except Exception:
+        pass
 
 
 def _format_message(msg: NetMessage) -> str:
@@ -110,9 +159,7 @@ class NetServer:
                     _net_log(
                         f"[NetServer:{self._name}] assign_id to={_safe_peer(conn)} id={client_id}"
                     )
-                thread = threading.Thread(
-                    target=self._handle_client, args=(conn,), daemon=True
-                )
+                thread = threading.Thread(target=self._handle_client, args=(conn,), daemon=True)
                 thread.start()
 
     def _handle_client(self, conn: socket.socket) -> None:
@@ -162,9 +209,7 @@ class NetServer:
         except OSError:
             pass
 
-    def _broadcast_raw(
-        self, raw: bytes, exclude: Optional[socket.socket] = None
-    ) -> None:
+    def _broadcast_raw(self, raw: bytes, exclude: Optional[socket.socket] = None) -> None:
         with self._lock:
             for client in list(self._clients):
                 if client is exclude:
@@ -239,7 +284,14 @@ class NetClient:
         if self._running:
             return
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.connect((self.host, self.port))
+        try:
+            self._sock.connect((self.host, self.port))
+        except OSError as e:
+            _net_log(
+                f"[NetClient:{self._name}] Ошибка подключения к {self.host}:{self.port}: {e}. "
+                "Запустите с --quick (хост+клиенты) или сначала сервер: --server."
+            )
+            raise
         self._running = True
         thread = threading.Thread(target=self._recv_loop, daemon=True)
         thread.start()
@@ -258,9 +310,7 @@ class NetClient:
                     msg = _decode_message(line.strip())
                     if msg is not None:
                         if self._debug:
-                            _net_log(
-                                f"[NetClient:{self._name}] recv {_format_message(msg)}"
-                            )
+                            _net_log(f"[NetClient:{self._name}] recv {_format_message(msg)}")
                         self._queue.put(msg)
         finally:
             self._running = False
@@ -320,7 +370,7 @@ def run(
 ) -> None:
     """Запускает мультиплеер для вашей игры.
 
-    Ожидается функция `multiplayer_main(net, role, color)` в вашем скрипте.
+    Ожидается функция `multiplayer_main(net, role)` в вашем скрипте.
     Если аргументы не переданы, запускается быстрый режим
     (host + второй клиент) на localhost:5050.
     """
@@ -329,6 +379,7 @@ def run(
     import os
     import sys
     import time
+    import traceback
     import subprocess
     from pathlib import Path
 
@@ -343,16 +394,14 @@ def run(
         if not callable(func):
             raise ValueError(
                 f"Не найдена функция '{name}'. "
-                "Создайте def multiplayer_main(net, role, color): ... "
+                "Создайте def multiplayer_main(net, role): ... "
                 "или укажите entry='module:function'."
             )
         return func
 
     def _call_entry(func, net, role: str, color: str) -> None:
         params = list(inspect.signature(func).parameters.values())
-        if len(params) >= 3:
-            func(net, role, color)
-        elif len(params) == 2:
+        if len(params) >= 2:
             func(net, role)
         elif len(params) == 1:
             func(net)
@@ -371,7 +420,7 @@ def run(
                 pass
         raise ValueError(
             "Не найдена функция multiplayer_main или main. "
-            "Создайте def multiplayer_main(net, role, color): ... "
+            "Создайте def multiplayer_main(net, role): ... "
             "или вызовите run(entry='module:function')."
         )
 
@@ -404,17 +453,37 @@ def run(
         role: str, bind_host: str, connect_host: str, color: str, debug_enabled: bool
     ) -> None:
         _set_window_pos(role, color)
+        log_tag = (
+            "host" if role == "host" else f"client_{os.environ.get('SPRITEPRO_NET_INDEX', '0')}"
+        )
+        os.environ["SPRITEPRO_NET_LOG_TAG"] = log_tag
+        _net_log("Worker started", f"role={role}", f"connect={connect_host}:{port}")
         if role == "host":
-            server = NetServer(
-                host=bind_host, port=port, debug=debug_enabled, name=role
-            )
+            server = NetServer(host=bind_host, port=port, debug=debug_enabled, name=role)
             server.start()
         if connect_host in ("0.0.0.0", ""):
             connect_host = "127.0.0.1"
         net = NetClient(connect_host, port, debug=debug_enabled, name=color)
         net.connect()
         func = _find_entry(entry)
-        _call_entry(func, net, role, color)
+        try:
+            _call_entry(func, net, role, color)
+        except Exception as e:
+            tag = os.environ.get("SPRITEPRO_NET_LOG_TAG", "net")
+            fatal_msg = f"FATAL {type(e).__name__}: {e}"
+            _net_log(fatal_msg)
+            for tb_line in traceback.format_exc().splitlines():
+                _net_log_to_file(f"[{tag}] {tb_line}")
+            try:
+                import spritePro as _s
+
+                if hasattr(_s, "debug_log_error"):
+                    _s.debug_log_error(fatal_msg, ttl=30.0)
+                    for tb_line in traceback.format_exc().splitlines():
+                        _s.debug_log_error(tb_line, ttl=30.0)
+            except Exception:
+                pass
+            raise
 
     def _get_script_path() -> Path:
         main_module = sys.modules.get("__main__")
@@ -422,8 +491,7 @@ def run(
         candidate = Path(main_file or sys.argv[0]).resolve()
         if not candidate.exists():
             raise RuntimeError(
-                "run() нужно вызывать из файла. "
-                "Не удалось определить путь к текущему скрипту."
+                "run() нужно вызывать из файла. Не удалось определить путь к текущему скрипту."
             )
         return candidate
 
@@ -447,6 +515,8 @@ def run(
         env["SPRITEPRO_NET_DEBUG"] = "1" if debug_enabled else "0"
         env["SPRITEPRO_NET_INDEX"] = str(index)
         env["SPRITEPRO_NET_DELAY"] = str(spawn_delay)
+        env["SPRITEPRO_NET_LOG_TAG"] = f"client_{index}"
+        env["SPRITEPRO_LOG_DIR"] = str(script.parent / "spritepro_logs")
         if "SPRITEPRO_WINDOW_POS" not in env:
             positions = [
                 "980,40",  # client 0 (top-right)
@@ -502,9 +572,7 @@ def run(
         default=server_tick_rate,
         help="Тикрейт сервера (только для режима --server)",
     )
-    parser.add_argument(
-        "--net_debug", action="store_true", help="Сетевой debug в консоль"
-    )
+    parser.add_argument("--net_debug", action="store_true", help="Сетевой debug в консоль")
     parser.add_argument(
         "--entry",
         default=entry,
@@ -529,6 +597,12 @@ def run(
             time.sleep(1.0 / server_tick_rate)
 
     script = _get_script_path()
+    log_dir = str(script.parent / "spritepro_logs")
+    os.environ["SPRITEPRO_LOG_DIR"] = log_dir
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+    except OSError:
+        pass
     connect_host = host if host not in ("0.0.0.0", "") else "127.0.0.1"
 
     if args.quick:

@@ -7,13 +7,12 @@
 - Задание 3: в комментарии ответьте, кто должен рассылать roster в лобби (урок 4) и почему.
 """
 
-import pygame
 import spritePro as s
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def multiplayer_main(net: s.NetClient, role: str) -> None:
     s.get_screen((800, 600), "Lesson 10 - Practice Routing")
-    ctx = s.multiplayer.init_context(net, role, color)
+    ctx = s.multiplayer.init_context(net, role)
 
     # TODO 1: добавьте таймер ping_interval (2 сек) и по истечении — s.events.send("ping", route="server", net=ctx).
     # TODO 1: по нажатию клавиши (например E) — s.events.send("emoji", route="all", net=ctx, symbol="👋").

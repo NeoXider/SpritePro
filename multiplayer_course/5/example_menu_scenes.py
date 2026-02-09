@@ -18,9 +18,7 @@ class MenuScene(s.Scene):
         self.game_started = False
         self.ready_map = {"host": False, "client": False}
 
-        s.TextSprite(
-            "Menu", 34, (240, 240, 240), (20, 20), anchor=s.Anchor.TOP_LEFT, scene=self
-        )
+        s.TextSprite("Menu", 34, (240, 240, 240), (20, 20), anchor=s.Anchor.TOP_LEFT, scene=self)
         self.status = s.TextSprite(
             "State: lobby",
             24,
@@ -45,9 +43,7 @@ class MenuScene(s.Scene):
         ctx = _ctx()
         player_key = "host" if ctx.is_host else "client"
         ctx.send("ready", {"id": player_key, "value": self.is_ready})
-        self.ready_button.text_sprite.set_text(
-            "Ready: ON" if self.is_ready else "Ready: OFF"
-        )
+        self.ready_button.text_sprite.set_text("Ready: ON" if self.is_ready else "Ready: OFF")
 
     def update(self, dt):
         ctx = _ctx()
@@ -100,8 +96,8 @@ class GameScene(s.Scene):
         self.player.set_position(pos)
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
-    s.multiplayer.init_context(net, role, color)
+def multiplayer_main(net: s.NetClient, role: str) -> None:
+    s.multiplayer.init_context(net, role)
     s.get_screen((800, 600), "Lesson 5 - Menu + Scenes")
     s.scene.add_scene("menu", MenuScene)
     s.scene.add_scene("game", GameScene)

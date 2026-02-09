@@ -32,9 +32,7 @@ def main():
     # Загрузка
     s.debug_log_info("   Загрузка данных игрока...")
     loaded_data = s.utils.load("player_save.json")
-    s.debug_log_info(
-        f"   ✓ Загружен игрок: {loaded_data['name']}, уровень {loaded_data['level']}"
-    )
+    s.debug_log_info(f"   ✓ Загружен игрок: {loaded_data['name']}, уровень {loaded_data['level']}")
 
     # === 2. Работа с настройками ===
     s.debug_log_info("\n2. Работа с настройками игры:")
@@ -98,9 +96,7 @@ def main():
     # Создание менеджера с автоматическими резервными копиями
     from spritePro.utils import SaveLoadManager
 
-    manager = SaveLoadManager(
-        default_file="game_state.json", auto_backup=True, compression=False
-    )
+    manager = SaveLoadManager(default_file="game_state.json", auto_backup=True, compression=False)
 
     # Сохранение состояния игры
     game_state = {

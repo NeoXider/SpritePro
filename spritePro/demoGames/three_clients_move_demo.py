@@ -36,14 +36,12 @@ def _color_for_id(client_id: int) -> tuple[int, int, int]:
     return PALETTE[client_id % len(PALETTE)]
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def multiplayer_main(net: s.NetClient, role: str) -> None:
     s.get_screen((900, 600), "Three Clients Move Demo")
-    _ = s.multiplayer.init_context(net, role, color)
+    _ = s.multiplayer.init_context(net, role)
     ctx = s.multiplayer_ctx
 
-    hint = s.TextSprite(
-        "WASD — move | IDs above players", 20, (200, 200, 200), (450, 30)
-    )
+    hint = s.TextSprite("WASD — move | IDs above players", 20, (200, 200, 200), (450, 30))
     wait_id = s.TextSprite("Waiting for ID...", 18, (200, 200, 200), (450, 60))
     window_id = s.TextSprite(
         "Window ID: ?", 18, (200, 200, 200), (20, 20), anchor=s.Anchor.TOP_LEFT

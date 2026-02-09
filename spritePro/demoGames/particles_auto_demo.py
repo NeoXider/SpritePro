@@ -13,9 +13,7 @@ import spritePro as s  # noqa: E402
 def main():
     s.get_screen((900, 600), "Particles Auto Emit Demo")
 
-    title = s.TextSprite(
-        "Particles Auto Emit Demo", 28, (255, 255, 255), (s.WH_C.x, 30)
-    )
+    title = s.TextSprite("Particles Auto Emit Demo", 28, (255, 255, 255), (s.WH_C.x, 30))
     hints = s.TextSprite(
         "Слева: по времени  |  Синий квадрат: по расстоянию (только при движении)",
         18,

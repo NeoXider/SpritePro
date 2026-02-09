@@ -1,5 +1,4 @@
-import pygame
-from typing import Tuple, Optional, Union, TYPE_CHECKING
+from typing import Optional
 import sys
 from pathlib import Path
 
@@ -7,7 +6,6 @@ current_dir = Path(__file__).parent
 parent_dir = current_dir.parent.parent
 sys.path.append(str(parent_dir))
 
-from enum import IntEnum
 import spritePro
 from spritePro.sprite import Sprite
 
@@ -84,9 +82,7 @@ class PageManager:
             page.scene = self.scene
         if page.name in self.pages:
             if self.log_events:
-                spritePro.debug_log_warning(
-                    f"Warning: Page '{page.name}' already exists."
-                )
+                spritePro.debug_log_warning(f"Warning: Page '{page.name}' already exists.")
             return
         self.pages[page.name] = page
 
@@ -94,9 +90,7 @@ class PageManager:
         """Удаляет страницу по имени."""
         if page_type not in self.pages:
             if self.log_events:
-                spritePro.debug_log_warning(
-                    f"Warning: Page '{page_type}' does not exist."
-                )
+                spritePro.debug_log_warning(f"Warning: Page '{page_type}' does not exist.")
             return
         del self.pages[page_type]
 

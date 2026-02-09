@@ -64,9 +64,7 @@ def main():
     s.debug_log_info(f"Bar 1 fill amount: {bar.get_fill_amount()}")
     s.debug_log_info(f"Bar 2 fill amount: {bar2.get_fill_amount()}")
     # Create labels
-    title = s.TextSprite(
-        text="Simple Bar Demo", pos=(400, 50), font_size=24, color=(255, 255, 255)
-    )
+    title = s.TextSprite(text="Simple Bar Demo", pos=(400, 50), font_size=24, color=(255, 255, 255))
 
     instructions = s.TextSprite(
         text="A: Decrease | D: Increase | B: Change Background | F: Change Fill | C: Change Colors | S: Change Sizes | Q: Quit",
@@ -110,7 +108,9 @@ def main():
             new_fill2 = max(0.0, current_fill2 - 0.1)
             bar2.set_fill_amount(new_fill2, animate=True)
 
-            debug_text.text = f"Bar 1 (L→R): {int(new_fill1 * 100)}% | Bar 2 (R→L): {int(new_fill2 * 100)}%"
+            debug_text.text = (
+                f"Bar 1 (L→R): {int(new_fill1 * 100)}% | Bar 2 (R→L): {int(new_fill2 * 100)}%"
+            )
         elif s.input.was_pressed(pygame.K_d):
             # Increase both bars
             current_fill1 = bar.get_fill_amount()
@@ -121,7 +121,9 @@ def main():
             new_fill2 = min(1.0, current_fill2 + 0.1)
             bar2.set_fill_amount(new_fill2, animate=True)
 
-            debug_text.text = f"Bar 1 (L→R): {int(new_fill1 * 100)}% | Bar 2 (R→L): {int(new_fill2 * 100)}%"
+            debug_text.text = (
+                f"Bar 1 (L→R): {int(new_fill1 * 100)}% | Bar 2 (R→L): {int(new_fill2 * 100)}%"
+            )
         elif s.input.was_pressed(pygame.K_b):
             # Toggle between images and colors
             if not background_switched:
@@ -166,19 +168,13 @@ def main():
             bar2.bg.color = new_bg_color
             bar2.fill.color = new_fill_color
 
-            s.debug_log_info(
-                f"Colors changed! BG: {new_bg_color}, Fill: {new_fill_color}"
-            )
+            s.debug_log_info(f"Colors changed! BG: {new_bg_color}, Fill: {new_fill_color}")
         elif s.input.was_pressed(pygame.K_s):
             # Toggle sizes
             if not size_switched:
                 # Change to different sizes
-                bar.set_both_sizes(
-                    (400, 60), (350, 40)
-                )  # Bigger background, smaller fill
-                bar2.set_both_sizes(
-                    (200, 30), (250, 50)
-                )  # Smaller background, bigger fill
+                bar.set_both_sizes((400, 60), (350, 40))  # Bigger background, smaller fill
+                bar2.set_both_sizes((200, 30), (250, 50))  # Smaller background, bigger fill
                 size_switched = True
                 s.debug_log_info("Sizes changed!")
             else:

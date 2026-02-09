@@ -8,12 +8,12 @@ import pygame
 import spritePro as s
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def multiplayer_main(net: s.NetClient, role: str) -> None:
     # Окно и спрайты игроков.
     s.get_screen((800, 600), "Lesson 6 - Practice")
 
     # Глобальный контекст мультиплеера.
-    ctx = s.multiplayer.init_context(net, role, color)
+    ctx = s.multiplayer.init_context(net, role)
 
     me = s.Sprite("", (40, 40), (200, 300))
     other = s.Sprite("", (40, 40), (600, 300))
@@ -28,9 +28,7 @@ def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
 
     # Счет и UI.
     scores = {"host": 0, "client": 0}
-    score_text = s.TextSprite(
-        "", 26, (240, 240, 240), (20, 20), anchor=s.Anchor.TOP_LEFT
-    )
+    score_text = s.TextSprite("", 26, (240, 240, 240), (20, 20), anchor=s.Anchor.TOP_LEFT)
 
     # Сетевые параметры.
     remote_pos = [other.get_world_position().x, other.get_world_position().y]

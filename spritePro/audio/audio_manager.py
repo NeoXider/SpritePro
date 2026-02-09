@@ -137,9 +137,7 @@ class AudioManager:
             sound.set_volume(volume if volume is not None else self.sfx_volume)
             sound.play()
 
-    def play_music(
-        self, path: str, loop: bool = True, volume: Optional[float] = None
-    ) -> None:
+    def play_music(self, path: str, loop: bool = True, volume: Optional[float] = None) -> None:
         """Воспроизвести музыку.
 
         Args:

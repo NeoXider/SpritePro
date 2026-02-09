@@ -113,9 +113,9 @@ class DraggableSprite(Sprite):
             return
         mouse_world = self._get_mouse_world_pos()
         if not self.dragging:
-            if spritePro.input.was_mouse_pressed(
-                self.drag_button
-            ) and self._is_mouse_over(mouse_world):
+            if spritePro.input.was_mouse_pressed(self.drag_button) and self._is_mouse_over(
+                mouse_world
+            ):
                 self._start_drag(mouse_world)
             return
 
@@ -175,9 +175,7 @@ class DraggableSprite(Sprite):
     def _get_mouse_world_pos(self) -> Vector2:
         """Возвращает позицию мыши в мировых координатах."""
         mouse_pos = (
-            spritePro.input.mouse_pos
-            if hasattr(spritePro, "input")
-            else pygame.mouse.get_pos()
+            spritePro.input.mouse_pos if hasattr(spritePro, "input") else pygame.mouse.get_pos()
         )
         pos = Vector2(mouse_pos)
         if not getattr(self, "screen_space", False):

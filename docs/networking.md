@@ -156,10 +156,11 @@ while True:
 import pygame
 import spritePro as s
 
-def multiplayer_main(net: s.NetClient, role: str, color: str):
+def multiplayer_main(net: s.NetClient, role: str):
     s.get_screen((800, 600), "My Multiplayer")
+    ctx = s.multiplayer.init_context(net, role)
     me = s.Sprite("", (40, 40), (200, 300))
-    me.set_color((220, 70, 70) if color == "red" else (70, 120, 220))
+    me.set_color((220, 70, 70) if ctx.is_host else (70, 120, 220))
 
     while True:
         s.update(fill_color=(20, 20, 25))
@@ -183,7 +184,6 @@ s.networking.run(entry="module:function")
 - `--host` / `--port` — адрес и порт.
 - `--clients` — общее число окон в quick (хост + клиенты).
 - `--entry` — функция входа (`multiplayer_main` или `module:function`).
-- `--color` — цвет игрока (`red`/`blue`) в host‑режиме.
 - `--tick_rate` — тикрейт сервера (только для режима `--server`, по умолчанию 30).
 - `--net_debug` — сетевой debug в консоль.
 - `--client_spawn_delay` — задержка (сек) перед запуском каждого клиента в `--quick`.
@@ -228,7 +228,7 @@ client = s.NetClient("127.0.0.1", 5050, debug=True)
 python your_game.py --net_debug
 ```
 
-Логи выводятся в консоль и не связаны с обычным debug‑оверлеем.
+Логи выводятся в консоль. Дополнительно при использовании `run()` или при заданной переменной окружения `SPRITEPRO_NET_LOG_TAG` сетевые сообщения пишутся в файлы в каталоге **spritepro_logs/** (создаётся рядом со скриптом): `debug_net_<tag>.log` с тегами `host`, `client_0`, `client_1` и т.д. В строках лога указывается callsite. Критические ошибки (FATAL) дублируются в этот файл и в `s.debug_log_error`. Вывод в оверлей — через `net_log_to_overlay()`.
 
 ## MultiplayerContext (глобальный контекст)
 
@@ -238,8 +238,8 @@ python your_game.py --net_debug
 ```python
 import spritePro as s
 
-def multiplayer_main(net: s.NetClient, role: str, color: str):
-    _ = s.multiplayer.init_context(net, role, color, debug=False)
+def multiplayer_main(net: s.NetClient, role: str):
+    _ = s.multiplayer.init_context(net, role, debug=False)
     ctx = s.multiplayer_ctx
     # ctx.send("ready", {...})
     # for msg in ctx.poll(): ...
@@ -259,12 +259,6 @@ s.networking.run()
 - `seed` и `random` для детерминированного случайного генератора;
 - методы `send()`, `poll()`, `send_every()`.
 
-Цвет игрока хранится вне контекста и доступен через:
-
-```python
-color = s.multiplayer.get_color()
-```
-
 ### Детерминированный рандом
 
 По умолчанию контекст использует фиксированный сид `1337`, чтобы у всех клиентов
@@ -273,7 +267,7 @@ color = s.multiplayer.get_color()
 Если нужно задать свой сид:
 
 ```python
-_ = s.multiplayer.init_context(net, role, color, seed=42)
+_ = s.multiplayer.init_context(net, role, seed=42)
 ctx = s.multiplayer_ctx
 
 # или позже

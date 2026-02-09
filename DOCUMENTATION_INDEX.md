@@ -121,8 +121,9 @@
 
 #### [docs/networking.md](docs/networking.md)
 **Networking**
-- Минимальные TCP-хелперы
-- Пример мультиплеера
+- Минимальные TCP-хелперы, run(), MultiplayerContext
+- Файловые логи в spritepro_logs, net_log_to_overlay
+- Примеры мультиплеера
 
 #### [docs/timer.md](docs/timer.md)
 **Система времени**

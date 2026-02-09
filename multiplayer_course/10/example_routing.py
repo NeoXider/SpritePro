@@ -10,9 +10,9 @@ import pygame
 import spritePro as s
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def multiplayer_main(net: s.NetClient, role: str) -> None:
     s.get_screen((800, 600), "Lesson 10 - Routing")
-    ctx = s.multiplayer.init_context(net, role, color)
+    ctx = s.multiplayer.init_context(net, role)
 
     local_ping_count = 0
     local_emoji_count = 0
@@ -27,9 +27,7 @@ def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
         nonlocal local_emoji_count
         local_emoji_count += 1
         sym = payload.get("symbol", "?")
-        print(
-            f"  [local] on_emoji вызван symbol={sym} (раз локально: {local_emoji_count})"
-        )
+        print(f"  [local] on_emoji вызван symbol={sym} (раз локально: {local_emoji_count})")
 
     s.events.connect("ping", on_ping)
     s.events.connect("emoji", on_emoji)

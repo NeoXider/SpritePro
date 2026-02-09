@@ -80,9 +80,7 @@ class Animation:
         self.loop = loop
         self.on_complete = on_complete
         self.on_frame = on_frame
-        self.scene = (
-            scene if scene is not None else getattr(owner_sprite, "scene", None)
-        )
+        self.scene = scene if scene is not None else getattr(owner_sprite, "scene", None)
 
         self.current_frame = 0
         self.last_update = pygame.time.get_ticks()
@@ -110,9 +108,7 @@ class Animation:
             except (ImportError, AttributeError):
                 pass
 
-    def add_state(
-        self, name: str, frames: Sequence[Union[pygame.Surface, str]]
-    ) -> None:
+    def add_state(self, name: str, frames: Sequence[Union[pygame.Surface, str]]) -> None:
         """Добавление состояния анимации.
 
         Args:
@@ -316,15 +312,11 @@ class Animation:
                     continue
                 surface = spritePro.load_texture(frame)
                 if surface is None:
-                    self._warn(
-                        f"Animation frame path not loaded ({context}, idx={idx}): {frame}"
-                    )
+                    self._warn(f"Animation frame path not loaded ({context}, idx={idx}): {frame}")
                     continue
                 normalized.append(surface)
                 continue
-            self._warn(
-                f"Animation frame type unsupported ({context}, idx={idx}): {type(frame)}"
-            )
+            self._warn(f"Animation frame type unsupported ({context}, idx={idx}): {type(frame)}")
         return normalized
 
     def _warn(self, message: str) -> None:

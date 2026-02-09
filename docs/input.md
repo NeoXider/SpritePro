@@ -90,7 +90,7 @@ damage_event(amount=10)
 Можно отправлять события в сеть, не отказываясь от локального EventBus:
 
 ```python
-_ = s.multiplayer.init_context(net, role, color)
+_ = s.multiplayer.init_context(net, role)
 ctx = s.multiplayer_ctx
 
 # Локально + в сеть:

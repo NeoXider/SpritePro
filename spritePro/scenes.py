@@ -116,8 +116,7 @@ class SceneManager:
         params = list(sig.parameters.values())
         accepts_context = (
             any(
-                p.kind
-                in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+                p.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
                 for p in params
             )
             or len(params) >= 1
@@ -153,9 +152,7 @@ class SceneManager:
         if self.current_scene is not None:
             self._activate_scene(self.current_scene, context)
 
-    def set_active_scenes(
-        self, scenes_or_names: list[Scene | str], context=None
-    ) -> None:
+    def set_active_scenes(self, scenes_or_names: list[Scene | str], context=None) -> None:
         """Устанавливает список активных сцен.
 
         Args:
@@ -200,9 +197,7 @@ class SceneManager:
             return
         self._deactivate_scene(scene)
         if self.current_scene is scene:
-            self.current_scene = (
-                self._active_scenes[-1] if self._active_scenes else None
-            )
+            self.current_scene = self._active_scenes[-1] if self._active_scenes else None
 
     def is_scene_active(self, scene_or_name: Scene | str) -> bool:
         """Проверяет, активна ли сцена.
@@ -268,9 +263,7 @@ class SceneManager:
         """
         return self._scenes.get(name)
 
-    def set_scene_by_name(
-        self, name: str, context=None, recreate: bool = False
-    ) -> None:
+    def set_scene_by_name(self, name: str, context=None, recreate: bool = False) -> None:
         """Устанавливает сцену по имени, при необходимости пересоздает.
 
         Args:

@@ -79,9 +79,7 @@ class Ball(s.Sprite):
             for paddle in self.paddles:
                 if self.rect.colliderect(paddle.rect):
                     self.last_hit_at = now
-                    offset = (self.rect.centery - paddle.rect.centery) / (
-                        paddle.rect.height / 2
-                    )
+                    offset = (self.rect.centery - paddle.rect.centery) / (paddle.rect.height / 2)
                     self.direction.x *= -1
                     self.direction.y = max(-0.9, min(0.9, offset))
                     if self.direction.length_squared() == 0:

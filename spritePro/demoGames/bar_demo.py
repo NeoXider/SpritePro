@@ -16,7 +16,7 @@ if str(parent_dir) not in sys.path:
 
 import pygame
 import spritePro as s
-from spritePro.readySprites import Bar, create_bar
+from spritePro.readySprites import Bar
 from spritePro.constants import FillDirection
 
 
@@ -207,9 +207,7 @@ def create_control_labels():
     )
 
     controls.append(
-        s.TextSprite(
-            text="Controls:", pos=(650, 400), font_size=20, color=(255, 255, 255)
-        )
+        s.TextSprite(text="Controls:", pos=(650, 400), font_size=20, color=(255, 255, 255))
     )
 
     controls.append(
@@ -321,9 +319,7 @@ def main():
         elif s.input.was_pressed(pygame.K_e):
             # Toggle animation
             animation_enabled = not animation_enabled
-            s.debug_log_info(
-                f"Animation {'enabled' if animation_enabled else 'disabled'}"
-            )
+            s.debug_log_info(f"Animation {'enabled' if animation_enabled else 'disabled'}")
         elif s.input.was_pressed(pygame.K_r):
             # Reset all bars
             for bar in bars:

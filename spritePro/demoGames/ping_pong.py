@@ -253,9 +253,7 @@ spritePro.debug_log_info(f"Создаем мяч с позицией: ({WIDTH //
 ball = Ball(path / "Sprites" / "ball.png", (50, 50), (WIDTH // 2, HEIGHT // 2), 2)
 ball.set_color((255, 255, 255))
 
-spritePro.debug_log_info(
-    f"Создаем левую платформу с позицией: ({pading_x_player}, {HEIGHT // 2})"
-)
+spritePro.debug_log_info(f"Создаем левую платформу с позицией: ({pading_x_player}, {HEIGHT // 2})")
 player_left = Sprite(
     path / "Sprites" / "platforma.png",
     (120, 50),

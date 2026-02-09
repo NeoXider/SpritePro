@@ -55,6 +55,9 @@ cover/
 *.mo
 *.pot
 
+# SpritePro multiplayer / debug logs
+spritepro_logs/
+
 # Django stuff:
 *.log
 local_settings.py

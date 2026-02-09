@@ -86,9 +86,7 @@ def demo_basic_operations():
 
     s.debug_log_info("2. Загрузка данных...")
     loaded_data = s.utils.load("demo_basic.json")
-    s.debug_log_info(
-        f"   Загружено: {loaded_data['game_name']} v{loaded_data['version']}"
-    )
+    s.debug_log_info(f"   Загружено: {loaded_data['game_name']} v{loaded_data['version']}")
 
     s.debug_log_info("3. Проверка существования файла...")
     exists = s.utils.exists("demo_basic.json")
@@ -133,9 +131,7 @@ move_right=D
     """.strip()
     s.utils.save(text_data, "demo_config.txt", "text")
     loaded_text = s.utils.load("demo_config.txt", "text")
-    s.debug_log_info(
-        f"   Text: Сохранено {len(text_data)} символов, загружено {len(loaded_text)}"
-    )
+    s.debug_log_info(f"   Text: Сохранено {len(text_data)} символов, загружено {len(loaded_text)}")
 
     # Binary формат
     s.debug_log_info("3. Binary формат...")
@@ -182,9 +178,7 @@ def demo_custom_classes():
         and player.position == loaded_player.position
         and player.stats == loaded_player.stats
     )
-    s.debug_log_info(
-        f"   Атрибуты совпадают: {'[OK] Да' if attrs_match else '[FAIL] Нет'}"
-    )
+    s.debug_log_info(f"   Атрибуты совпадают: {'[OK] Да' if attrs_match else '[FAIL] Нет'}")
 
     s.debug_log_info()
 
@@ -195,9 +189,7 @@ def demo_advanced_features():
 
     # Создание менеджера с настройками
     s.debug_log_info("1. Создание менеджера с резервными копиями и сжатием...")
-    manager = SaveLoadManager(
-        default_file="demo_advanced.json", auto_backup=True, compression=True
-    )
+    manager = SaveLoadManager(default_file="demo_advanced.json", auto_backup=True, compression=True)
 
     # Большие данные для демонстрации сжатия
     large_data = {
@@ -217,9 +209,7 @@ def demo_advanced_features():
         f"{len(loaded_large['entity_data'])} сущностей"
     )
 
-    s.debug_log_info(
-        "4. Создание еще одного сохранения (для демонстрации резервных копий)..."
-    )
+    s.debug_log_info("4. Создание еще одного сохранения (для демонстрации резервных копий)...")
     time.sleep(1)  # Небольшая задержка для разных временных меток
     manager.save({"version": 2, "data": "updated"})
 
@@ -277,9 +267,7 @@ def demo_spritepro_objects():
             and sprite.angle == loaded_sprite.angle
             and abs(sprite.scale - loaded_sprite.scale) < 0.01
         )
-        s.debug_log_info(
-            f"   Атрибуты совпадают: {'[OK] Да' if attrs_ok else '[FAIL] Нет'}"
-        )
+        s.debug_log_info(f"   Атрибуты совпадают: {'[OK] Да' if attrs_ok else '[FAIL] Нет'}")
 
     except Exception as e:
         s.debug_log_info(f"   [WARN] Ошибка при работе со спрайтами: {e}")
@@ -308,7 +296,7 @@ def demo_error_handling():
         s.utils.save({"test": "data"}, "/root/forbidden/test.json")
         s.debug_log_info("   [FAIL] Неожиданно успешно")
     except s.utils.SaveLoadError as e:
-        s.debug_log_info(f"   [OK] Корректно обработана ошибка доступа")
+        s.debug_log_info("   [OK] Корректно обработана ошибка доступа")
 
     s.debug_log_info()
 

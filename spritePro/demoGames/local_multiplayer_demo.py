@@ -34,11 +34,11 @@ import pygame  # noqa: E402
 import spritePro as s  # noqa: E402
 
 
-def main(net: s.NetClient, role: str, color: str) -> None:
+def main(net: s.NetClient, role: str) -> None:
     s.get_screen((800, 600), "SpritePro Multiplayer Demo")
 
     # Контекст мультиплеера: хранит id/role и упрощает send/poll.
-    _ = s.multiplayer.init_context(net, role, color)
+    _ = s.multiplayer.init_context(net, role)
     ctx = s.multiplayer_ctx
 
     me = s.Sprite("", (50, 50), (200, 300))

@@ -23,11 +23,10 @@
 import json
 import pickle
 import gzip
-import os
 import shutil
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Union, Optional, Type, Callable, Tuple
+from typing import Any, Dict, List, Optional, Type, Callable, Tuple
 from datetime import datetime
 import logging
 from .logger import log_info
@@ -237,9 +236,7 @@ class SaveLoadManager:
             else:
                 raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
-        json_data = json.dumps(
-            data, indent=2, ensure_ascii=False, default=json_serializer
-        )
+        json_data = json.dumps(data, indent=2, ensure_ascii=False, default=json_serializer)
 
         if self.compression:
             with gzip.open(
@@ -473,9 +470,7 @@ class SaveLoadManager:
                 else:
                     raise SaveLoadError(f"Unsupported format: {file_format}")
 
-                logger.info(
-                    f"Successfully saved data to {filepath} ({file_format} format)"
-                )
+                logger.info(f"Successfully saved data to {filepath} ({file_format} format)")
                 return True
 
             except Exception as e:
@@ -521,9 +516,7 @@ class SaveLoadManager:
                     compressed_path = filepath.with_suffix(filepath.suffix + ".gz")
                     if not compressed_path.exists():
                         if default_value is not None:
-                            logger.info(
-                                f"File {filepath} not found, returning default value"
-                            )
+                            logger.info(f"File {filepath} not found, returning default value")
                             return default_value
                         else:
                             raise SaveLoadError(f"File not found: {filepath}")
@@ -546,9 +539,7 @@ class SaveLoadManager:
                 else:
                     raise SaveLoadError(f"Unsupported format: {file_format}")
 
-                logger.info(
-                    f"Successfully loaded data from {filepath} ({file_format} format)"
-                )
+                logger.info(f"Successfully loaded data from {filepath} ({file_format} format)")
                 return data
 
             except Exception as e:
@@ -571,9 +562,7 @@ class SaveLoadManager:
         compressed_path = filepath.with_suffix(filepath.suffix + ".gz")
         return filepath.exists() or compressed_path.exists()
 
-    def delete(
-        self, filename: Optional[str] = None, include_backups: bool = False
-    ) -> bool:
+    def delete(self, filename: Optional[str] = None, include_backups: bool = False) -> bool:
         """Удаляет файл сохранения.
 
         Args:
@@ -670,9 +659,7 @@ class PlayerPrefs:
         """
         if self._initialized:
             return
-        self._manager = SaveLoadManager(
-            filename, auto_backup=auto_backup, compression=compression
-        )
+        self._manager = SaveLoadManager(filename, auto_backup=auto_backup, compression=compression)
         self._initialized = True
 
     @classmethod
@@ -831,9 +818,7 @@ class PlayerPrefs:
         cls._set_value(key, str(value))
 
     @classmethod
-    def get_vector2(
-        cls, key: str, default: Tuple[int, int] = (0, 0)
-    ) -> Tuple[int, int]:
+    def get_vector2(cls, key: str, default: Tuple[int, int] = (0, 0)) -> Tuple[int, int]:
         """Получает 2D координату (вектор) по ключу.
 
         Args:
@@ -896,9 +881,7 @@ save_manager = SaveLoadManager()
 
 
 # Convenience functions
-def save(
-    data: Any, filename: Optional[str] = None, format_type: Optional[str] = None
-) -> bool:
+def save(data: Any, filename: Optional[str] = None, format_type: Optional[str] = None) -> bool:
     """Удобная функция для сохранения данных.
 
     Args:
@@ -975,9 +958,7 @@ def register_sprite_classes():
             return {
                 "image_path": getattr(sprite, "_image_path", ""),
                 "size": sprite.size if hasattr(sprite, "size") else (50, 50),
-                "pos": (sprite.rect.x, sprite.rect.y)
-                if hasattr(sprite, "rect")
-                else (0, 0),
+                "pos": (sprite.rect.x, sprite.rect.y) if hasattr(sprite, "rect") else (0, 0),
                 "speed": getattr(sprite, "speed", 0),
                 "angle": getattr(sprite, "angle", 0),
                 "scale": getattr(sprite, "scale", 1.0),

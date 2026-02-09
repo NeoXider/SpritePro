@@ -91,9 +91,7 @@ class Timer:
             except (ImportError, AttributeError):
                 pass
 
-    def start(
-        self, duration: Optional[Union[float, Tuple[float, float]]] = None
-    ) -> None:
+    def start(self, duration: Optional[Union[float, Tuple[float, float]]] = None) -> None:
         """(Пере)запускает таймер.
 
         Args:
@@ -266,9 +264,7 @@ if __name__ == "__main__":
 
     t1 = Timer(3.0, callback=say_hello, autostart=True)
 
-    t2 = Timer(
-        1.0, callback=lambda: s.debug_log_info("Tick"), repeat=True, autostart=True
-    )
+    t2 = Timer(1.0, callback=lambda: s.debug_log_info("Tick"), repeat=True, autostart=True)
 
     while True:
         t1.update()

@@ -7,12 +7,12 @@
 import spritePro as s
 
 
-def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
+def multiplayer_main(net: s.NetClient, role: str) -> None:
     # Окно лобби.
     s.get_screen((800, 600), "Lesson 4 - Practice")
 
     # Глобальный контекст мультиплеера.
-    ctx = s.multiplayer.init_context(net, role, color)
+    ctx = s.multiplayer.init_context(net, role)
 
     # Локальные данные игрока.
     name = "host" if ctx.is_host else "client"
@@ -21,9 +21,7 @@ def multiplayer_main(net: s.NetClient, role: str, color: str) -> None:
     joined = False
 
     # UI‑текст списка.
-    roster_text = s.TextSprite(
-        "", 24, (240, 240, 240), (20, 80), anchor=s.Anchor.TOP_LEFT
-    )
+    roster_text = s.TextSprite("", 24, (240, 240, 240), (20, 80), anchor=s.Anchor.TOP_LEFT)
     s.TextSprite("Lobby", 34, (240, 240, 240), (20, 20), anchor=s.Anchor.TOP_LEFT)
 
     while True:

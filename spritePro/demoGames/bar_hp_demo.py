@@ -81,13 +81,9 @@ def main():
         color=(255, 255, 255),
     )
 
-    hp_label1 = s.TextSprite(
-        text="HP: 75%", pos=(200, 200), font_size=20, color=(255, 255, 255)
-    )
+    hp_label1 = s.TextSprite(text="HP: 75%", pos=(200, 200), font_size=20, color=(255, 255, 255))
 
-    hp_label2 = s.TextSprite(
-        text="HP: 50%", pos=(200, 300), font_size=20, color=(255, 255, 255)
-    )
+    hp_label2 = s.TextSprite(text="HP: 50%", pos=(200, 300), font_size=20, color=(255, 255, 255))
 
     hp_label3 = s.TextSprite(
         text="HP: 20% (Критический)",

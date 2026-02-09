@@ -41,9 +41,7 @@ class CameraController:
         """Возвращает текущую позицию камеры."""
         return self._game.get_camera().copy()
 
-    def follow(
-        self, target, offset: Vector2 | Tuple[float, float] = (0.0, 0.0)
-    ) -> None:
+    def follow(self, target, offset: Vector2 | Tuple[float, float] = (0.0, 0.0)) -> None:
         """Включает слежение камеры за целью."""
         self._game.set_camera_follow(target, offset)
 
@@ -169,6 +167,14 @@ class GameContext:
         icon: str | None = None,
     ) -> pygame.Surface:
         """Создает окно и сохраняет параметры экрана."""
+        net_tag = os.environ.get("SPRITEPRO_NET_LOG_TAG")
+        if net_tag:
+            log_dir = os.environ.get("SPRITEPRO_LOG_DIR", "spritepro_logs")
+            try:
+                os.makedirs(log_dir, exist_ok=True)
+            except OSError:
+                pass
+            self.game.set_debug_log_file(path=os.path.join(log_dir, f"debug_{net_tag}.log"))
         pos = os.environ.get("SPRITEPRO_WINDOW_POS")
         if pos and pos.lower() != "center":
             try:

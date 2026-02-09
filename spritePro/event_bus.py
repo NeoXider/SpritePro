@@ -116,9 +116,7 @@ class EventBus:
         """
         self.get_event(event_name).connect(handler)
 
-    def disconnect(
-        self, event_name: str, handler: Callable[..., Any] | None = None
-    ) -> None:
+    def disconnect(self, event_name: str, handler: Callable[..., Any] | None = None) -> None:
         """Отписывает обработчик или очищает подписки события.
 
         Args:

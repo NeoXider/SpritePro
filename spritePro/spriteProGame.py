@@ -305,9 +305,7 @@ class SpriteProGame:
             if entry_obj is obj:
                 self.update_objects.remove(entry)
 
-    def get_sprites_by_class(
-        self, sprite_class: type, active_only: bool = True
-    ) -> List:
+    def get_sprites_by_class(self, sprite_class: type, active_only: bool = True) -> List:
         """Получает список всех спрайтов указанного класса.
 
         Args:
@@ -321,16 +319,10 @@ class SpriteProGame:
             >>> fountain_particles = game.get_sprites_by_class(FountainParticle)
             >>> all_sprites = game.get_sprites_by_class(Sprite, active_only=False)
         """
-        result = [
-            sprite for sprite in self.all_sprites if isinstance(sprite, sprite_class)
-        ]
+        result = [sprite for sprite in self.all_sprites if isinstance(sprite, sprite_class)]
 
         if active_only:
-            result = [
-                sprite
-                for sprite in result
-                if hasattr(sprite, "active") and sprite.active
-            ]
+            result = [sprite for sprite in result if hasattr(sprite, "active") and sprite.active]
 
         return result
 
@@ -637,9 +629,7 @@ class SpriteProGame:
         if self.debug_logs_enabled:
             self._draw_debug_logs(surface)
 
-    def draw_debug(
-        self, surface: pygame.Surface, wh_c: Vector2, dt: float | None = None
-    ) -> None:
+    def draw_debug(self, surface: pygame.Surface, wh_c: Vector2, dt: float | None = None) -> None:
         """Рисует полный debug overlay (сетка + маркеры + логи)."""
         self.draw_debug_grid(surface)
         self.draw_debug_overlay(surface, wh_c, dt=dt)
@@ -649,13 +639,9 @@ class SpriteProGame:
         if self._debug_font is None:
             self._debug_font = pygame.font.SysFont(None, self.debug_log_font_size)
         if self._debug_grid_font is None:
-            self._debug_grid_font = pygame.font.SysFont(
-                None, self.debug_grid_label_font_size
-            )
+            self._debug_grid_font = pygame.font.SysFont(None, self.debug_grid_label_font_size)
         if self._debug_camera_font is None:
-            self._debug_camera_font = pygame.font.SysFont(
-                None, self.debug_camera_font_size
-            )
+            self._debug_camera_font = pygame.font.SysFont(None, self.debug_camera_font_size)
         if self._debug_hud_font is None:
             self._debug_hud_font = pygame.font.SysFont(None, self.debug_hud_font_size)
 
@@ -666,9 +652,7 @@ class SpriteProGame:
         for entry in self._debug_logs:
             entry.age += dt
         self._debug_logs = [
-            entry
-            for entry in self._debug_logs
-            if entry.ttl <= 0 or entry.age <= entry.ttl
+            entry for entry in self._debug_logs if entry.ttl <= 0 or entry.age <= entry.ttl
         ]
 
     def _draw_debug_logs(self, surface: pygame.Surface) -> None:
@@ -716,17 +700,13 @@ class SpriteProGame:
         x = start_x
         while x <= camera.x + width:
             screen_x = int(x - camera.x)
-            pygame.draw.line(
-                grid_surface, grid_color, (screen_x, 0), (screen_x, height), 1
-            )
+            pygame.draw.line(grid_surface, grid_color, (screen_x, 0), (screen_x, height), 1)
             x += grid_size
 
         y = start_y
         while y <= camera.y + height:
             screen_y = int(y - camera.y)
-            pygame.draw.line(
-                grid_surface, grid_color, (0, screen_y), (width, screen_y), 1
-            )
+            pygame.draw.line(grid_surface, grid_color, (0, screen_y), (width, screen_y), 1)
             y += grid_size
 
         surface.blit(grid_surface, (0, 0))
@@ -772,19 +752,13 @@ class SpriteProGame:
             center_text = f"Point: {center_world[0]}, {center_world[1]}"
             mouse_text = f"Mouse: {mouse_world[0]}, {mouse_world[1]}"
 
-            center_surf = self._debug_camera_font.render(
-                center_text, True, self.debug_camera_color
-            )
-            mouse_surf = self._debug_camera_font.render(
-                mouse_text, True, self.debug_camera_color
-            )
+            center_surf = self._debug_camera_font.render(center_text, True, self.debug_camera_color)
+            mouse_surf = self._debug_camera_font.render(mouse_text, True, self.debug_camera_color)
 
             center_x = center[0] - center_surf.get_width() // 2
             mouse_x = center[0] - mouse_surf.get_width() // 2
             surface.blit(center_surf, (center_x, center[1] + 8))
-            surface.blit(
-                mouse_surf, (mouse_x, center[1] + 8 + center_surf.get_height() + 2)
-            )
+            surface.blit(mouse_surf, (mouse_x, center[1] + 8 + center_surf.get_height() + 2))
 
     def _draw_debug_hud(self, surface: pygame.Surface) -> None:
         """Рисует HUD с FPS и координатами камеры."""
