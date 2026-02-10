@@ -49,7 +49,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
         me.set_position(pos)
 
         # Отправка позиции.
-        ctx.send_every("pos", {"x": pos.x, "y": pos.y}, 0.05)
+        ctx.send_every("pos", {"pos": list(pos)}, 0.05)
 
         # Начисление очков по зоне.
         score_cooldown = max(0.0, score_cooldown - dt)
@@ -64,10 +64,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
             event = msg.get("event")
             data = msg.get("data", {})
             if event == "pos":
-                remote_pos[:] = [
-                    float(data.get("x", remote_pos[0])),
-                    float(data.get("y", remote_pos[1])),
-                ]
+                remote_pos[:] = data.get("pos", remote_pos)
             elif event == "score" and ctx.is_host:
                 # TODO: увеличьте счет и отправьте "score_update".
                 pass

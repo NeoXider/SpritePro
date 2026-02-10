@@ -544,7 +544,9 @@ def run(
             except ValueError:
                 index = 0
             if delay > 0:
-                time.sleep(delay * max(0, index))
+                # Delay applies to every client spawn in quick mode:
+                # client_0 waits 1*delay, client_1 waits 2*delay, etc.
+                time.sleep(delay * max(0, index + 1))
         entry = env_entry
         _run_worker(env_role, bind_host, connect_host, color, debug_enabled)
         return

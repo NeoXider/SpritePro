@@ -108,7 +108,7 @@ class GameScene(s.Scene):
         pos.x += dx * self.speed * dt
         pos.y += dy * self.speed * dt
         self.me.set_position(pos)
-        ctx.send_every("pos", {"x": pos.x, "y": pos.y}, 0.05)
+        ctx.send_every("pos", {"pos": list(pos)}, 0.05)
         # Зона очков в центре; кулдаун 0.5 сек между начислениями.
         self.score_cooldown = max(0.0, self.score_cooldown - dt)
         dx_t = pos.x - 400
@@ -123,10 +123,7 @@ class GameScene(s.Scene):
             event = msg.get("event")
             data = msg.get("data", {})
             if event == "pos":
-                self.remote_pos[:] = [
-                    float(data.get("x", self.remote_pos[0])),
-                    float(data.get("y", self.remote_pos[1])),
-                ]
+                self.remote_pos[:] = data.get("pos", self.remote_pos)
             elif event == "score" and ctx.is_host:
                 player_id = data.get("id")
                 if player_id in self.scores:

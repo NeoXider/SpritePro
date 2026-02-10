@@ -41,7 +41,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
         pos.y += dy * speed * dt
         me.set_position(pos)
 
-        ctx.send_every("pos", {"x": pos.x, "y": pos.y}, 0.05)
+        ctx.send_every("pos", {"pos": list(pos)}, 0.05)
 
         # Если игрок в радиусе 30 от центра (400,300) и кулдаун истёк — шлём score.
         score_cooldown = max(0.0, score_cooldown - dt)
@@ -56,10 +56,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
             event = msg.get("event")
             data = msg.get("data", {})
             if event == "pos":
-                remote_pos[:] = [
-                    float(data.get("x", remote_pos[0])),
-                    float(data.get("y", remote_pos[1])),
-                ]
+                remote_pos[:] = data.get("pos", remote_pos)
             elif event == "score" and ctx.is_host:
                 # Хост увеличивает счёт и рассылает актуальный score_update.
                 player_id = data.get("id")

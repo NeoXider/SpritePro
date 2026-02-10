@@ -39,16 +39,13 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
         me.set_position(pos)
 
         # Отправка позиции 20 раз/сек.
-        ctx.send_every("pos", {"x": pos.x, "y": pos.y}, 0.05)
+        ctx.send_every("pos", {"pos": list(pos)}, 0.05)
 
         # Прием позиции удаленного игрока.
         for msg in ctx.poll():
             if msg.get("event") == "pos":
                 d = msg.get("data", {})
-                remote_pos[:] = [
-                    float(d.get("x", remote_pos[0])),
-                    float(d.get("y", remote_pos[1])),
-                ]
+                remote_pos[:] = d.get("pos", [0, 0])
 
         # Применяем удаленную позицию.
         other.set_position(remote_pos)

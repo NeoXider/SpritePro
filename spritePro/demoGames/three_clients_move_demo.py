@@ -91,7 +91,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
 
             ctx.send_every(
                 "pos",
-                {"x": pos.x, "y": pos.y, "sender_id": ctx.client_id},
+                {"pos": list(pos), "sender_id": ctx.client_id},
                 1.0 / tick_rate,
             )
 
@@ -100,9 +100,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
                 continue
             data = msg.get("data", {})
             sender_id = data.get("sender_id")
-            try:
-                sender_id = int(sender_id)
-            except (TypeError, ValueError):
+            if sender_id is None:
                 continue
             if sender_id == ctx.client_id:
                 continue
@@ -117,8 +115,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
                     (0, 0),
                 )
                 others_id[sender_id] = label
-            other_pos = (float(data.get("x", 0)), float(data.get("y", 0)))
-            others[sender_id].set_position(other_pos)
+            others[sender_id].set_position(data.get("pos", [0, 0]))
 
         current_pos = me.get_world_position()
         me_id.set_text(f"ID: {ctx.client_id}")

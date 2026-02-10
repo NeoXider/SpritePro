@@ -43,13 +43,13 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
         me.set_position(pos)
 
         # Отправка позиции с лимитом.
-        # TODO: используйте ctx.send_every("pos", {"x": pos.x, "y": pos.y}, 0.05).
+        # TODO: используйте ctx.send_every("pos", {"pos": list(pos)}, 0.05).
         pass
 
         # Прием сетевых сообщений.
         for msg in ctx.poll():
             if msg.get("event") == "pos":
-                # TODO: прочитайте координаты и обновите remote_pos.
+                # TODO: прочитайте координаты из data и обновите remote_pos (например remote_pos[:] = data.get("pos", [0, 0])).
                 pass
 
         # Применяем позицию удаленного игрока.

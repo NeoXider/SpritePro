@@ -39,16 +39,13 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
         me.set_position(pos)
 
         # Отправляем pos не чаще чем раз в 0.2 сек — меньше нагрузки на сеть.
-        ctx.send_every("pos", {"x": pos.x, "y": pos.y}, 0.2)
+        ctx.send_every("pos", {"pos": list(pos)}, 0.2)
 
         # Читаем входящие сообщения; при pos обновляем remote_pos и двигаем other.
         for m in ctx.poll():
             if m.get("event") == "pos":
                 d = m.get("data", {})
-                remote_pos[:] = [
-                    float(d.get("x", remote_pos[0])),
-                    float(d.get("y", remote_pos[1])),
-                ]
+                remote_pos[:] = d.get("pos", [0, 0])
         other.set_position(remote_pos)
 
 

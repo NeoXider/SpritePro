@@ -69,21 +69,13 @@ def main(net: s.NetClient, role: str) -> None:
         pos.y += dy * speed * dt
         me.set_position(pos)
 
-        # Отправляем позицию 60 раз/сек.
-        ctx.send_every("pos", {"x": pos.x, "y": pos.y}, 1.0 / tick_rate)
+        # Отправляем позицию списком — list(Vector2) даёт [x, y].
+        ctx.send_every("pos", {"pos": list(pos)}, 1.0 / tick_rate)
         for msg in ctx.poll():
             if msg.get("event") == "pos":
                 data = msg.get("data", {})
-                remote_pos[:] = [
-                    float(data.get("x", remote_pos[0])),
-                    float(data.get("y", remote_pos[1])),
-                ]
-                sender_id = data.get("sender_id")
-                if sender_id is not None:
-                    try:
-                        other_id = int(sender_id)
-                    except (TypeError, ValueError):
-                        pass
+                remote_pos[:] = data.get("pos", [0, 0])
+                other_id = data.get("sender_id")
         other.set_position(remote_pos)
 
         me_id_text.set_text(f"ID: {ctx.client_id}")

@@ -71,11 +71,6 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
 
     def on_choice(choice: str, sender_id: int | None = None) -> None:
         nonlocal my_choice, other_choice, my_score, other_score, other_id, last_result_at
-        try:
-            sender_id = int(sender_id) if sender_id is not None else None
-        except (TypeError, ValueError):
-            sender_id = None
-
         # Не принимаем новые ходы, пока показываем результат.
         if last_result_at is not None:
             return
