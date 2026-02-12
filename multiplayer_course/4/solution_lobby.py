@@ -34,9 +34,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
     while True:
         # Основной тик.
         s.update(fill_color=(18, 18, 24))
-        me_text.set_text(
-            f"Я: {name} | role={ctx.role} | id={ctx.client_id} | window={window_tag}"
-        )
+        me_text.set_text(f"Я: {name} | role={ctx.role} | id={ctx.client_id} | window={window_tag}")
 
         # Отправка join один раз. Реле не отдаёт сообщение обратно отправителю,
         # поэтому добавляем себя в список локально — иначе хост не увидит себя в roster.
@@ -56,8 +54,8 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
                     continue
                 players.add(player_name)
                 if ctx.is_host:
-                        roster = sorted(players)
-                        ctx.send("roster", {"players": roster})
+                    roster = sorted(players)
+                    ctx.send("roster", {"players": roster})
             elif event == "roster":
                 roster = list(data.get("players", []))
 

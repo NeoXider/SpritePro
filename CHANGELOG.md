@@ -11,6 +11,40 @@
 - Продвинутые UI компоненты
 - Мобильная поддержка
 
+## [1.4.0] - 2025-02-12
+
+### Added
+- **Fluent Tween API (Do-твины)**: удобный цепочечный API в стиле DOTween.
+  - Методы на **Sprite**: `DoMove`, `DoMoveBy`, `DoScale`, `DoScaleBy`, `DoRotate`, `DoRotateBy`, `DoColor`, `DoAlpha`, `DoFadeIn`, `DoFadeOut`, `DoSize`, `DoPunchScale`, `DoShakePosition`, `DoShakeRotation`, `DoBezier` — по умолчанию `Ease.OutQuad`, автоудаление по завершении.
+  - **TweenHandle**: цепочка `SetEase`, `SetDelay`, `OnComplete`, `SetLoops`, `SetYoyo`, `Kill(complete=False|True)`.
+  - **Ease**: enum с именами In/Out/InOut по кривым (OutQuad, InCubic, InOutSine и др.), альтернатива `EasingType`.
+  - Зацикливание: режим reset по умолчанию, `SetYoyo(True)` для движения туда-обратно; при завершении (если не loop) твин сам снимается с обновления.
+- **Tween**: параметр `auto_remove_on_complete`; `stop(apply_end, call_on_complete)` для `Kill(complete=True)`; `set_easing()`; в пресетах — параметр `auto_remove_on_complete`.
+- **Демо**: `spritePro/demoGames/fluent_tween_demo.py` — примеры Do*, цепочки, циклы 8/9/0, Kill.
+- **Документация**: раздел «Fluent API (Do-твины)» в [docs/tween.md](docs/tween.md), таблицы методов Do* и TweenHandle, обновлены README и docs/README.md.
+- **Крестики-нолики (мультиплеер)**: анимации на Fluent Tween — появление символа в ячейке (DoPunchScale), пульс по выигрышной линии, отдача кнопки «Новая игра».
+
+### Changed
+- Версия библиотеки 1.4.0 (минор).
+
+## [1.3.4]
+
+### Added
+- **Модуль layout** (`spritePro.layout`): автолейаут для дочерних спрайтов.
+  - **Layout** наследует **Sprite**: лейаут можно перемещать; при `container=None` лейаут сам является контейнером (параметры size, pos, scene), дети при add/remove привязываются через set_parent.
+  - **LayoutDirection**: FLEX_ROW, FLEX_COLUMN, HORIZONTAL, VERTICAL, GRID, CIRCLE, LINE.
+  - **LayoutAlignMain** / **LayoutAlignCross**: выравнивание (START, CENTER, END, SPACE_BETWEEN, SPACE_AROUND, SPACE_EVENLY).
+  - **GridFlow**: ROW, COLUMN для сетки.
+  - Контейнер: Sprite, (x, y, w, h) или None (лейаут-спрайт как контейнер). Список расставляемых детей — **arranged_children**.
+  - Удобные функции: layout_flex_row, layout_flex_column, layout_horizontal, layout_vertical, layout_grid, layout_circle, layout_line.
+  - Авто-обновление при add/remove детей; ручной refresh/apply при смене параметров или типа.
+  - Для CIRCLE: rotate_children и offset_angle. gap и padding как число или кортеж.
+- **docs/layout.md**: описание API, Layout как Sprite, container=None, arranged_children, use_local, пример «лейаут как перемещаемый блок».
+- **spritePro/demoGames/layout_demo.py**: демо всех типов лейаута (FLEX_ROW, FLEX_COLUMN, GRID, HORIZONTAL, VERTICAL, CIRCLE, LINE).
+
+### Changed
+- Версия библиотеки 1.3.4 (минор).
+
 ## [1.3.3]
 
 ### Added

@@ -34,7 +34,7 @@ def _build_tween(
     start_value: Any,
     end_value: Any,
     duration: float,
-    easing: EasingType,
+    easing: Any,
     on_update: Callable[[Any], None],
     on_complete: Optional[Callable] = None,
     loop: bool = False,
@@ -43,6 +43,7 @@ def _build_tween(
     auto_start: bool = True,
     auto_register: bool = True,
     value_type: Optional[str] = None,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     return Tween(
         start_value=start_value,
@@ -57,6 +58,7 @@ def _build_tween(
         auto_start=auto_start,
         auto_register=auto_register,
         value_type=value_type,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -64,7 +66,7 @@ def tween_position(
     sprite,
     to: VectorInput,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     start: VectorInput | None = None,
     anchor: str | Anchor | None = None,
     on_complete: Optional[Callable] = None,
@@ -73,6 +75,7 @@ def tween_position(
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин позиции спрайта.
 
@@ -114,6 +117,7 @@ def tween_position(
         auto_start=auto_start,
         auto_register=auto_register,
         value_type="vector2",
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -121,7 +125,7 @@ def tween_move_by(
     sprite,
     delta: VectorInput,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     anchor: str | Anchor | None = None,
     on_complete: Optional[Callable] = None,
     loop: bool = False,
@@ -129,6 +133,7 @@ def tween_move_by(
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин перемещения на смещение."""
     start_pos = _to_vector2(sprite.position)
@@ -146,6 +151,7 @@ def tween_move_by(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -153,7 +159,7 @@ def tween_scale(
     sprite,
     to: float,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     start: float | None = None,
     on_complete: Optional[Callable] = None,
     loop: bool = False,
@@ -161,6 +167,7 @@ def tween_scale(
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин масштаба спрайта."""
     start_value = sprite.scale if start is None else start
@@ -180,6 +187,7 @@ def tween_scale(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -187,13 +195,14 @@ def tween_scale_by(
     sprite,
     delta: float,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     on_complete: Optional[Callable] = None,
     loop: bool = False,
     yoyo: bool = False,
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин относительного масштаба."""
     start_value = sprite.scale
@@ -210,6 +219,7 @@ def tween_scale_by(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -217,7 +227,7 @@ def tween_rotate(
     sprite,
     to: float,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     start: float | None = None,
     on_complete: Optional[Callable] = None,
     loop: bool = False,
@@ -225,6 +235,7 @@ def tween_rotate(
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин поворота спрайта."""
     start_value = sprite.angle if start is None else start
@@ -244,6 +255,7 @@ def tween_rotate(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -251,13 +263,14 @@ def tween_rotate_by(
     sprite,
     delta: float,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     on_complete: Optional[Callable] = None,
     loop: bool = False,
     yoyo: bool = False,
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин относительного поворота."""
     start_value = sprite.angle
@@ -274,6 +287,7 @@ def tween_rotate_by(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -281,7 +295,7 @@ def tween_color(
     sprite,
     to: ColorInput,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     start: ColorInput | None = None,
     on_complete: Optional[Callable] = None,
     loop: bool = False,
@@ -289,6 +303,7 @@ def tween_color(
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин цвета спрайта."""
     start_value = sprite.color if start is None else start
@@ -311,6 +326,7 @@ def tween_color(
         auto_start=auto_start,
         auto_register=auto_register,
         value_type="color",
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -318,7 +334,7 @@ def tween_alpha(
     sprite,
     to: int,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     start: int | None = None,
     on_complete: Optional[Callable] = None,
     loop: bool = False,
@@ -326,6 +342,7 @@ def tween_alpha(
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин прозрачности спрайта."""
     start_value = sprite.alpha if start is None else start
@@ -345,6 +362,7 @@ def tween_alpha(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -352,7 +370,7 @@ def tween_size(
     sprite,
     to: VectorInput,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     start: VectorInput | None = None,
     on_complete: Optional[Callable] = None,
     loop: bool = False,
@@ -360,6 +378,7 @@ def tween_size(
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин размера спрайта (ширина, высота)."""
     start_value = _to_vector2(start if start is not None else sprite.get_size())
@@ -381,6 +400,7 @@ def tween_size(
         auto_start=auto_start,
         auto_register=auto_register,
         value_type="vector2",
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -388,11 +408,12 @@ def tween_punch_scale(
     sprite,
     strength: float = 0.2,
     duration: float = 0.35,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     on_complete: Optional[Callable] = None,
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт короткий «удар» масштаба с возвратом.
 
@@ -427,6 +448,7 @@ def tween_punch_scale(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -434,12 +456,13 @@ def tween_shake_position(
     sprite,
     strength: VectorInput = (8, 8),
     duration: float = 0.4,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     anchor: str | Anchor | None = None,
     on_complete: Optional[Callable] = None,
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин дрожания позиции."""
     start_pos = _to_vector2(sprite.position)
@@ -469,6 +492,7 @@ def tween_shake_position(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -476,11 +500,12 @@ def tween_shake_rotation(
     sprite,
     strength: float = 10.0,
     duration: float = 0.4,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     on_complete: Optional[Callable] = None,
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин дрожания поворота."""
     start_angle = sprite.angle
@@ -505,19 +530,21 @@ def tween_shake_rotation(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
 def tween_fade_in(
     sprite,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     start: int | None = 0,
     to: int = 255,
     on_complete: Optional[Callable] = None,
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин появления (fade in)."""
     start_value = sprite.alpha if start is None else start
@@ -531,19 +558,21 @@ def tween_fade_in(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
 def tween_fade_out(
     sprite,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     start: int | None = None,
     to: int = 0,
     on_complete: Optional[Callable] = None,
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин исчезновения (fade out)."""
     start_value = sprite.alpha if start is None else start
@@ -557,6 +586,7 @@ def tween_fade_out(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )
 
 
@@ -612,13 +642,14 @@ def tween_bezier(
     control1: VectorInput,
     control2: VectorInput | None = None,
     duration: float = 1.0,
-    easing: EasingType = EasingType.LINEAR,
+    easing: Any = EasingType.LINEAR,
     start: VectorInput | None = None,
     anchor: str | Anchor | None = None,
     on_complete: Optional[Callable] = None,
     delay: float = 0.0,
     auto_start: bool = True,
     auto_register: bool = True,
+    auto_remove_on_complete: bool = False,
 ) -> Tween:
     """Создаёт твин движения по кривой Безье."""
     start_pos = _to_vector2(start if start is not None else sprite.position)
@@ -649,4 +680,5 @@ def tween_bezier(
         delay=delay,
         auto_start=auto_start,
         auto_register=auto_register,
+        auto_remove_on_complete=auto_remove_on_complete,
     )

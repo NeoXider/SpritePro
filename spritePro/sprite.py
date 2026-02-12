@@ -6,6 +6,24 @@ import spritePro
 from .resources import resource_cache
 from .angle_utils import angle_to_point
 from .constants import Anchor
+from .components.tween import TweenHandle, Ease
+from .tween_presets import (
+    tween_position,
+    tween_move_by,
+    tween_scale,
+    tween_scale_by,
+    tween_rotate,
+    tween_rotate_by,
+    tween_color,
+    tween_alpha,
+    tween_fade_in,
+    tween_fade_out,
+    tween_size,
+    tween_punch_scale,
+    tween_shake_position,
+    tween_shake_rotation,
+    tween_bezier,
+)
 
 if TYPE_CHECKING:
     from .scenes import Scene
@@ -559,6 +577,209 @@ class Sprite(pygame.sprite.Sprite):
             Tuple[int, int]: Размер спрайта (ширина, высота).
         """
         return self.size
+
+    def DoMove(
+        self,
+        to: VectorInput,
+        duration: float = 1.0,
+        anchor: str | Anchor | None = None,
+    ) -> TweenHandle:
+        """Fluent-твин: движение к позиции. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_position(
+            self,
+            to=to,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+            anchor=anchor,
+        )
+        return TweenHandle(t)
+
+    def DoMoveBy(
+        self,
+        delta: VectorInput,
+        duration: float = 1.0,
+        anchor: str | Anchor | None = None,
+    ) -> TweenHandle:
+        """Fluent-твин: смещение на delta. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_move_by(
+            self,
+            delta=delta,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+            anchor=anchor,
+        )
+        return TweenHandle(t)
+
+    def DoScale(self, to: float, duration: float = 1.0) -> TweenHandle:
+        """Fluent-твин: масштаб к значению. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_scale(
+            self,
+            to=to,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoScaleBy(self, delta: float, duration: float = 1.0) -> TweenHandle:
+        """Fluent-твин: изменение масштаба на delta. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_scale_by(
+            self,
+            delta=delta,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoRotate(self, to: float, duration: float = 1.0) -> TweenHandle:
+        """Fluent-твин: поворот к углу. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_rotate(
+            self,
+            to=to,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoRotateBy(self, delta: float, duration: float = 1.0) -> TweenHandle:
+        """Fluent-твин: поворот на delta градусов. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_rotate_by(
+            self,
+            delta=delta,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoColor(
+        self,
+        to: Tuple[int, int, int],
+        duration: float = 1.0,
+    ) -> TweenHandle:
+        """Fluent-твин: цвет к RGB. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_color(
+            self,
+            to=to,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoAlpha(self, to: int, duration: float = 1.0) -> TweenHandle:
+        """Fluent-твин: прозрачность к значению. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_alpha(
+            self,
+            to=to,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoFadeIn(self, duration: float = 1.0) -> TweenHandle:
+        """Fluent-твин: появление. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_fade_in(
+            self,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoFadeOut(self, duration: float = 1.0) -> TweenHandle:
+        """Fluent-твин: исчезновение. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_fade_out(
+            self,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoSize(self, to: VectorInput, duration: float = 1.0) -> TweenHandle:
+        """Fluent-твин: размер к (width, height). По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_size(
+            self,
+            to=to,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoPunchScale(
+        self,
+        strength: float = 0.2,
+        duration: float = 0.35,
+    ) -> TweenHandle:
+        """Fluent-твин: удар масштаба с возвратом. Автоудаление по завершении."""
+        t = tween_punch_scale(
+            self,
+            strength=strength,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoShakePosition(
+        self,
+        strength: VectorInput = (8, 8),
+        duration: float = 0.4,
+        anchor: str | Anchor | None = None,
+    ) -> TweenHandle:
+        """Fluent-твин: дрожание позиции. Автоудаление по завершении."""
+        t = tween_shake_position(
+            self,
+            strength=strength,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+            anchor=anchor,
+        )
+        return TweenHandle(t)
+
+    def DoShakeRotation(
+        self,
+        strength: float = 10.0,
+        duration: float = 0.4,
+    ) -> TweenHandle:
+        """Fluent-твин: дрожание поворота. Автоудаление по завершении."""
+        t = tween_shake_rotation(
+            self,
+            strength=strength,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+        )
+        return TweenHandle(t)
+
+    def DoBezier(
+        self,
+        end: VectorInput,
+        control1: VectorInput,
+        control2: VectorInput | None = None,
+        duration: float = 1.0,
+        anchor: str | Anchor | None = None,
+    ) -> TweenHandle:
+        """Fluent-твин: движение по кривой Безье. По умолчанию Ease.OutQuad, автоудаление по завершении."""
+        t = tween_bezier(
+            self,
+            end=end,
+            control1=control1,
+            control2=control2,
+            duration=duration,
+            easing=Ease.OutQuad,
+            auto_remove_on_complete=True,
+            anchor=anchor,
+        )
+        return TweenHandle(t)
 
     def get_world_position(self) -> Vector2:
         """Получает мировую позицию спрайта (с учетом камеры).

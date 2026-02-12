@@ -98,6 +98,7 @@ while True:
 - ✅ **Аудио менеджер** - управление звуком и музыкой централизованно
 - ✅ **Система сохранений** - PlayerPrefs как в Unity!
 - ✅ **Якоря позиционирования** - размещайте объекты точно где нужно
+- ✅ **Автолейаут (Layout)** - flex, сетка, круг, линия для автоматического размещения дочерних спрайтов ([документация](docs/layout.md))
 - ✅ **Мультиплеер** - можно делать сетевые игры: встроенный TCP relay, контекст (send/poll/send_every), EventBus для событий; быстрый старт через `s.networking.run()`. В репозитории есть **мини-курс по мультиплеерным играм** (папка `multiplayer_course/`) — 10 уроков от обмена сообщениями до готовой мини-игры с меню и результатами.
 
 ---
@@ -459,7 +460,7 @@ python spritePro/demoGames/ping_pong.py
 
 ### 🎨 Игровые системы
 - **Animation** - Система анимаций
-- **Tween** - Плавные переходы (easing функции)
+- **Tween** - Плавные переходы (easing); **Fluent API**: `sprite.DoMove(...).SetEase(Ease.OutQuad)` — см. [Tween](docs/tween.md#fluent-api-do-твины) и [Fluent Tween Demo](spritePro/demoGames/fluent_tween_demo.py)
 - **Timer** - Таймеры для событий
 - **Health** - Система здоровья
 - **ParticleEmitter** - Генератор частиц
@@ -488,7 +489,7 @@ python spritePro/demoGames/ping_pong.py
 ### 🧩 Полный список документации
 - Основы: [Game Loop](docs/game_loop.md) • [Input](docs/input.md) • [Debug](docs/debug.md) • [Camera & Particles](docs/camera_and_particles.md)
 - Спрайты и графика: [Sprite](docs/sprite.md) • [Surface](docs/surface.md) • [Text](docs/text.md) • [Text FPS](docs/text_fps.md) • [Color Effects](docs/color_effects.md) • [ReadySprites](docs/readySprites.md)
-- UI: [Button](docs/button.md) • [Toggle Button](docs/toggle_button.md) • [Bar](docs/bar.md) • [Bar Background](docs/bar_background.md) • [Pages](docs/pages.md)
+- UI: [Button](docs/button.md) • [Toggle Button](docs/toggle_button.md) • [Bar](docs/bar.md) • [Bar Background](docs/bar_background.md) • [Pages](docs/pages.md) • [Layout](docs/layout.md)
 - Компоненты: [Animation](docs/animation.md) • [Tween](docs/tween.md) • [Tween Presets](docs/tween_presets.md) • [Timer](docs/timer.md) • [Health](docs/health.md) • [Mouse Interactor](docs/mouse_interactor.md) • [Draggable Sprite](docs/draggable_sprite.md)
 - Эффекты и частицы: [Particles](docs/particles.md)
 - Аудио: [Audio](docs/audio.md)

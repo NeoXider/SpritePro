@@ -19,7 +19,7 @@ from .components.text import TextSprite
 from .components.draggable_sprite import DraggableSprite
 from .components.mouse_interactor import MouseInteractor
 from .components.animation import Animation
-from .components.tween import Tween, TweenManager, EasingType
+from .components.tween import Tween, TweenManager, TweenHandle, EasingType, Ease
 from .tween_presets import (
     tween_position,
     tween_move_by,
@@ -51,6 +51,20 @@ from .particles import (
     template_trail,
 )
 from .constants import Anchor
+from .layout import (
+    Layout,
+    LayoutDirection,
+    LayoutAlignMain,
+    LayoutAlignCross,
+    GridFlow,
+    layout_flex_row,
+    layout_flex_column,
+    layout_horizontal,
+    layout_vertical,
+    layout_grid,
+    layout_circle,
+    layout_line,
+)
 from .audio import AudioManager, Sound
 from .networking import NetServer, NetClient
 from . import networking
@@ -73,7 +87,9 @@ __all__ = [
     # Tweening
     "Tween",
     "TweenManager",
+    "TweenHandle",
     "EasingType",
+    "Ease",
     "tween_position",
     "tween_move_by",
     "tween_scale",
@@ -108,6 +124,19 @@ __all__ = [
     "PageManager",
     # Constants / audio
     "Anchor",
+    # Layout
+    "Layout",
+    "LayoutDirection",
+    "LayoutAlignMain",
+    "LayoutAlignCross",
+    "GridFlow",
+    "layout_flex_row",
+    "layout_flex_column",
+    "layout_horizontal",
+    "layout_vertical",
+    "layout_grid",
+    "layout_circle",
+    "layout_line",
     "AudioManager",
     "Sound",
     # Networking

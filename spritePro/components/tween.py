@@ -8,10 +8,9 @@ from pathlib import Path
 from pygame.math import Vector2
 
 import spritePro
-from spritePro.sprite import SpriteSceneInput
 
 
-def _is_scene_active(scene: SpriteSceneInput) -> bool:
+def _is_scene_active(scene: Any) -> bool:
     if scene is None:
         return True
     try:
@@ -56,6 +55,38 @@ class EasingType(IntFlag):
     EXPO = auto()
 
 
+class Ease(IntFlag):
+    """Удобные имена плавности в стиле DOTween (In/Out/InOut по кривым)."""
+
+    Linear = auto()
+    InQuad = auto()
+    OutQuad = auto()
+    InOutQuad = auto()
+    InCubic = auto()
+    OutCubic = auto()
+    InOutCubic = auto()
+    InQuart = auto()
+    OutQuart = auto()
+    InOutQuart = auto()
+    InQuint = auto()
+    OutQuint = auto()
+    InOutQuint = auto()
+    InSine = auto()
+    OutSine = auto()
+    InOutSine = auto()
+    InExpo = auto()
+    OutExpo = auto()
+    InOutExpo = auto()
+    InCirc = auto()
+    OutCirc = auto()
+    InOutCirc = auto()
+    InBack = auto()
+    OutBack = auto()
+    InOutBack = auto()
+    OutBounce = auto()
+    OutElastic = auto()
+
+
 class Tween:
     """Базовый класс для плавных переходов между значениями.
 
@@ -82,25 +113,148 @@ class Tween:
         is_paused (bool): Находится ли переход на паузе.
     """
 
-    # Словарь доступных функций плавности
+    # Словарь доступных функций плавности (EasingType + Ease)
+    def _linear(x):
+        return x
+
+    def _in_quad(x):
+        return x * x
+
+    def _out_quad(x):
+        return 1 - (1 - x) ** 2
+
+    def _in_out_quad(x):
+        return 2 * x * x if x < 0.5 else 1 - (1 - x) ** 2 * 2
+
+    def _in_cubic(x):
+        return x * x * x
+
+    def _out_cubic(x):
+        return 1 - (1 - x) ** 3
+
+    def _in_out_cubic(x):
+        return 4 * x * x * x if x < 0.5 else 1 - (1 - x) ** 3 * 4
+
+    def _in_quart(x):
+        return x * x * x * x
+
+    def _out_quart(x):
+        return 1 - (1 - x) ** 4
+
+    def _in_out_quart(x):
+        return 8 * x * x * x * x if x < 0.5 else 1 - (1 - x) ** 4 * 8
+
+    def _in_quint(x):
+        return x * x * x * x * x
+
+    def _out_quint(x):
+        return 1 - (1 - x) ** 5
+
+    def _in_out_quint(x):
+        return 16 * x**5 if x < 0.5 else 1 - (1 - x) ** 5 * 16
+
+    def _in_sine(x):
+        return 1 - math.cos(x * math.pi / 2)
+
+    def _out_sine(x):
+        return math.sin(x * math.pi / 2)
+
+    def _in_out_sine(x):
+        return -(math.cos(math.pi * x) - 1) / 2
+
+    def _in_expo(x):
+        return 0 if x == 0 else math.pow(2, 10 * (x - 1))
+
+    def _out_expo(x):
+        return 1 if x >= 1 else 1 - math.pow(2, -10 * x)
+
+    def _in_out_expo(x):
+        if x == 0:
+            return 0
+        if x >= 1:
+            return 1
+        return math.pow(2, 20 * x - 10) / 2 if x < 0.5 else 1 - math.pow(2, -20 * x + 10) / 2
+
+    def _in_circ(x):
+        return 1 - math.sqrt(1 - x * x)
+
+    def _out_circ(x):
+        return math.sqrt(1 - (1 - x) * (1 - x))
+
+    def _in_out_circ(x):
+        return (
+            (1 - math.sqrt(1 - (2 * x) ** 2)) / 2
+            if x < 0.5
+            else (math.sqrt(1 - (2 * x - 2) ** 2) + 1) / 2
+        )
+
+    _back_c = 1.70158
+
+    def _in_back(x, c=_back_c):
+        return c * x * x * x - (c - 1) * x * x
+
+    def _out_back(x, c=_back_c):
+        return 1 + (c - 1) * (1 - x) ** 2 + c * (1 - x) ** 3
+
+    def _in_out_back(x, c=_back_c):
+        if x < 0.5:
+            return ((c + 1) * (2 * x) ** 3 - c * (2 * x) ** 2) / 2
+        return ((c + 1) * (2 * x - 2) ** 3 + c * (2 * x - 2) ** 2) / 2 + 1
+
+    def _bounce(x):
+        return 1 - (math.cos(x * 4.5 * math.pi) * math.exp(-x * 3)) if x < 1 else 1
+
+    def _elastic(x):
+        return math.sin(x * 13 * math.pi) * math.exp(-x * 3) if x < 1 else 0
+
     EASING_FUNCTIONS = {
-        EasingType.LINEAR: lambda x: x,
-        EasingType.EASE_IN: lambda x: x * x,
-        EasingType.EASE_OUT: lambda x: 1 - (1 - x) * (1 - x),
-        EasingType.EASE_IN_OUT: lambda x: 3 * x * x - 2 * x * x * x,
-        EasingType.BOUNCE: lambda x: 1 - (math.cos(x * 4.5 * math.pi) * math.exp(-x * 3))
-        if x < 1
-        else 1,
-        EasingType.ELASTIC: lambda x: math.sin(x * 13 * math.pi) * math.exp(-x * 3) if x < 1 else 0,
+        EasingType.LINEAR: _linear,
+        EasingType.EASE_IN: _in_quad,
+        EasingType.EASE_OUT: _out_quad,
+        EasingType.EASE_IN_OUT: _in_out_quad,
+        EasingType.BOUNCE: _bounce,
+        EasingType.ELASTIC: _elastic,
         EasingType.BACK: lambda x: x * x * (2.70158 * x - 1.70158),
-        EasingType.CIRC: lambda x: 1 - math.sqrt(1 - x * x),
-        EasingType.QUAD: lambda x: x * x,
-        EasingType.CUBIC: lambda x: x * x * x,
-        EasingType.QUART: lambda x: x * x * x * x,
-        EasingType.QUINT: lambda x: x * x * x * x * x,
-        EasingType.SINE: lambda x: 1 - math.cos(x * math.pi / 2),
-        EasingType.EXPO: lambda x: 0 if x == 0 else math.pow(2, 10 * (x - 1)),
+        EasingType.CIRC: _in_circ,
+        EasingType.QUAD: _in_quad,
+        EasingType.CUBIC: _in_cubic,
+        EasingType.QUART: _in_quart,
+        EasingType.QUINT: _in_quint,
+        EasingType.SINE: _in_sine,
+        EasingType.EXPO: _in_expo,
+        Ease.Linear: _linear,
+        Ease.InQuad: _in_quad,
+        Ease.OutQuad: _out_quad,
+        Ease.InOutQuad: _in_out_quad,
+        Ease.InCubic: _in_cubic,
+        Ease.OutCubic: _out_cubic,
+        Ease.InOutCubic: _in_out_cubic,
+        Ease.InQuart: _in_quart,
+        Ease.OutQuart: _out_quart,
+        Ease.InOutQuart: _in_out_quart,
+        Ease.InQuint: _in_quint,
+        Ease.OutQuint: _out_quint,
+        Ease.InOutQuint: _in_out_quint,
+        Ease.InSine: _in_sine,
+        Ease.OutSine: _out_sine,
+        Ease.InOutSine: _in_out_sine,
+        Ease.InExpo: _in_expo,
+        Ease.OutExpo: _out_expo,
+        Ease.InOutExpo: _in_out_expo,
+        Ease.InCirc: _in_circ,
+        Ease.OutCirc: _out_circ,
+        Ease.InOutCirc: _in_out_circ,
+        Ease.InBack: _in_back,
+        Ease.OutBack: _out_back,
+        Ease.InOutBack: _in_out_back,
+        Ease.OutBounce: _bounce,
+        Ease.OutElastic: _elastic,
     }
+
+    @classmethod
+    def _get_easing_func(cls, easing: Any):
+        """Возвращает функцию плавности по EasingType или Ease."""
+        return cls.EASING_FUNCTIONS.get(easing, cls.EASING_FUNCTIONS[EasingType.LINEAR])
 
     def __init__(
         self,
@@ -116,7 +270,8 @@ class Tween:
         auto_start: bool = True,
         auto_register: bool = True,
         value_type: Optional[str] = None,
-        scene: SpriteSceneInput = None,
+        scene: Any = None,
+        auto_remove_on_complete: bool = False,
     ):
         """Инициализирует переход.
 
@@ -134,11 +289,12 @@ class Tween:
             auto_register (bool, optional): Автоматически регистрировать твин для обновления в spritePro.update(). По умолчанию True.
             value_type (Optional[str], optional): Тип значения ("vector2", "vector3", "color") или None (авто). По умолчанию None.
             scene (Scene | str, optional): Сцена, в которой активен твин. По умолчанию None.
+            auto_remove_on_complete (bool, optional): Снять твин с обновления после завершения. По умолчанию False.
         """
         self.start_value = start_value
         self.end_value = end_value
         self.duration = duration
-        self.easing = self.EASING_FUNCTIONS.get(easing, self.EASING_FUNCTIONS[EasingType.LINEAR])
+        self.easing = self._get_easing_func(easing)
         self.on_complete = on_complete
         self.loop = loop
         self.yoyo = yoyo
@@ -146,6 +302,7 @@ class Tween:
         self.on_update = on_update
         self.value_type = value_type
         self.scene = scene
+        self.auto_remove_on_complete = auto_remove_on_complete
 
         self.start_time = time.time()
         self.current_value = start_value
@@ -204,6 +361,11 @@ class Tween:
                     self.on_update(self.current_value)
                 if self.on_complete:
                     self.on_complete()
+                if self.auto_remove_on_complete:
+                    try:
+                        spritePro.unregister_update_object(self)
+                    except (ImportError, AttributeError):
+                        pass
                 return None
 
         progress = elapsed / self.duration
@@ -282,18 +444,22 @@ class Tween:
             self.is_paused = False
             self.start_time += time.time() - self.pause_time
 
-    def stop(self, apply_end: bool = True) -> None:
+    def stop(self, apply_end: bool = True, call_on_complete: bool = False) -> None:
         """Останавливает переход.
 
         Args:
             apply_end (bool, optional): Применить конечное значение при остановке.
                 По умолчанию True.
+            call_on_complete (bool, optional): Вызвать on_complete после применения конца.
+                По умолчанию False.
         """
         self.is_playing = False
         if apply_end:
             self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
             if self.on_update:
                 self.on_update(self.current_value)
+            if call_on_complete and self.on_complete:
+                self.on_complete()
 
     def start(self) -> None:
         """Запускает переход."""
@@ -318,6 +484,10 @@ class Tween:
         self.is_paused = False
         self.direction = 1
 
+    def set_easing(self, easing: Any) -> None:
+        """Устанавливает функцию плавности (EasingType или Ease)."""
+        self.easing = self._get_easing_func(easing)
+
     def get_progress(self) -> float:
         """Получает прогресс перехода (0-1).
 
@@ -336,6 +506,47 @@ class Tween:
         return min(1.0, elapsed / self.duration)
 
 
+class TweenHandle:
+    """Fluent-обёртка над одним Tween для цепочки SetEase, SetDelay, OnComplete, Kill."""
+
+    def __init__(self, tween: Tween):
+        self._tween = tween
+
+    @property
+    def tween(self) -> Tween:
+        return self._tween
+
+    def SetEase(self, ease: Any) -> "TweenHandle":
+        self._tween.set_easing(ease)
+        return self
+
+    def SetDelay(self, seconds: float) -> "TweenHandle":
+        self._tween.delay = seconds
+        return self
+
+    def OnComplete(self, callback: Optional[Callable] = None) -> "TweenHandle":
+        self._tween.on_complete = callback
+        return self
+
+    def SetLoops(self, count: int) -> "TweenHandle":
+        self._tween.loop = count != 0
+        return self
+
+    def SetYoyo(self, yoyo: bool = True) -> "TweenHandle":
+        self._tween.yoyo = yoyo
+        return self
+
+    def Kill(self, complete: bool = False) -> None:
+        if complete:
+            self._tween.stop(apply_end=True, call_on_complete=True)
+        else:
+            self._tween.stop(apply_end=False)
+        try:
+            spritePro.unregister_update_object(self._tween)
+        except (ImportError, AttributeError):
+            pass
+
+
 class TweenManager:
     """Менеджер для обработки нескольких переходов одновременно.
 
@@ -350,7 +561,7 @@ class TweenManager:
         tweens (Dict[str, Tween]): Словарь активных переходов.
     """
 
-    def __init__(self, auto_register: bool = True, scene: SpriteSceneInput = None):
+    def __init__(self, auto_register: bool = True, scene: Any = None):
         """Инициализирует менеджер переходов.
 
         Args:

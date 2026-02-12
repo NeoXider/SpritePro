@@ -239,6 +239,12 @@ class GameContext:
                 self.game.draw_debug_hud(self.screen)
 
         self.events = pygame.event.get()
+        try:
+            import spritePro as _sp
+
+            _sp.pygame_events = self.events
+        except Exception:
+            pass
         self.input.update(self.events)
         self.event_bus.send(GlobalEvents.TICK, dt=self.dt, frame_count=self.frame_count)
         if self.game.debug_enabled and self.game.debug_camera_drag_button is not None:

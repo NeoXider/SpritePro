@@ -8,6 +8,7 @@ def on_click():
     text.set_text(f"score: {score}")
     text.set_active(True)
     emitter.emit(button.rect.center)
+    s.PlayerPrefs.set_int("score", score)
 
 
 # Initialize the library
@@ -16,7 +17,7 @@ s.init()
 # Create a window
 s.get_screen((1280, 960), "My Game")
 
-score = 0
+score = s.PlayerPrefs.get_int("score", 0)
 
 bg = s.Sprite("", s.WH, s.WH_C)
 bg.set_color((0, 0, 180))

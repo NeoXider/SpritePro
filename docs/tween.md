@@ -55,6 +55,7 @@ tween_manager = s.TweenManager(scene="hud")
 - `auto_register` (bool): Автоматически регистрировать твин для обновления в spritePro.update(). По умолчанию: True
 - `value_type` (Optional[str]): "vector2", "vector3", "color" или None (авто). По умолчанию: None
 - `scene` (Scene | str, optional): Сцена, в которой активен твин. По умолчанию: None
+- `auto_remove_on_complete` (bool, optional): Снять твин с обновления после завершения. По умолчанию: False
 
 #### Методы Tween
 
@@ -62,7 +63,8 @@ tween_manager = s.TweenManager(scene="hud")
 - `update(dt: Optional[float] = None) -> Optional[Any]`: Обновить твин и получить текущее значение (dt автоматически берется из spritePro.dt, если не указан)
 - `pause()`: Поставить твин на паузу
 - `resume()`: Возобновить твин
-- `stop(apply_end: bool = True)`: Остановить твин (можно применить конечное значение)
+- `stop(apply_end: bool = True, call_on_complete: bool = False)`: Остановить твин; при `call_on_complete=True` после применения конца вызывается on_complete
+- `set_easing(easing)`: Установить плавность (EasingType или Ease)
 - `reset(apply_end: bool = False)`: Сбросить твин (можно применить конечное значение перед сбросом)
 - `get_progress() -> float`: Получить прогресс от 0.0 до 1.0
 
@@ -117,6 +119,76 @@ s.tween_position(sprite, to=(500, 300), duration=0.8, easing=s.EasingType.EASE_O
 s.tween_scale(sprite, to=1.4, duration=0.5, yoyo=True, loop=True)
 s.tween_color(sprite, to=(255, 120, 120), duration=1.0)
 ```
+
+### Fluent API (Do-твины)
+
+Удобный цепочечный API в стиле DOTween: методы на спрайте возвращают `TweenHandle`, у которого можно вызывать `SetEase`, `SetDelay`, `OnComplete`, `SetLoops`, `SetYoyo`, `Kill`.
+
+- **По умолчанию** у Do-твинов: плавность `Ease.OutQuad`, **автоудаление по завершении** (если не зациклен) — твин снимается с обновления после окончания.
+- **Зацикливание**: по умолчанию режим **reset** (каждый цикл с начала); `SetYoyo(True)` включает движение туда-обратно.
+- **Kill(complete=False)** (по умолчанию): остановить без применения конца, без вызова `on_complete`, удалить из обновлений.
+- **Kill(complete=True)**: применить конечное значение, вызвать `on_complete`, затем удалить.
+
+```python
+import spritePro as s
+
+player = s.Sprite("", (50, 50), (100, 300))
+player.set_color((120, 200, 255))
+
+# Простое движение (по умолчанию Ease.OutQuad, после завершения твин удалится)
+player.DoMove((500, 300), 1.2)
+
+# Цепочка: плавность, задержка, коллбек
+player.DoMove((200, 500), 1).SetEase(s.Ease.OutCubic).SetDelay(0.3).OnComplete(lambda: print("Done"))
+
+# Бесконечный yoyo-масштаб
+player.DoScale(1.5, 0.8).SetLoops(-1).SetYoyo(True)
+
+# Остановить и удалить без доведения до конца
+handle = player.DoMove((600, 400), 2)
+handle.Kill(complete=False)
+
+# Завершить принудительно: применить конец, вызвать on_complete, удалить
+handle = player.DoMove((600, 400), 2).OnComplete(callback)
+handle.Kill(complete=True)
+```
+
+#### Методы спрайта (Do*)
+
+| Метод | Описание |
+|-------|----------|
+| `DoMove(to, duration=1.0, anchor=None)` | Движение к позиции |
+| `DoMoveBy(delta, duration=1.0, anchor=None)` | Смещение на delta |
+| `DoScale(to, duration=1.0)` | Масштаб к значению |
+| `DoScaleBy(delta, duration=1.0)` | Изменение масштаба на delta |
+| `DoRotate(to, duration=1.0)` | Поворот к углу |
+| `DoRotateBy(delta, duration=1.0)` | Поворот на delta градусов |
+| `DoColor(to, duration=1.0)` | Цвет к RGB |
+| `DoAlpha(to, duration=1.0)` | Прозрачность |
+| `DoFadeIn(duration=1.0)` | Появление |
+| `DoFadeOut(duration=1.0)` | Исчезновение |
+| `DoSize(to, duration=1.0)` | Размер (width, height) |
+| `DoPunchScale(strength=0.2, duration=0.35)` | Удар масштаба |
+| `DoShakePosition(strength=(8,8), duration=0.4, anchor=None)` | Дрожание позиции |
+| `DoShakeRotation(strength=10, duration=0.4)` | Дрожание поворота |
+| `DoBezier(end, control1, control2=None, duration=1.0, anchor=None)` | Движение по Безье |
+
+#### Методы TweenHandle
+
+| Метод | Описание |
+|-------|----------|
+| `SetEase(ease)` | Плавность: `Ease.OutQuad`, `Ease.InCubic` и др. |
+| `SetDelay(seconds)` | Задержка перед стартом |
+| `OnComplete(callback)` | Вызов при завершении |
+| `SetLoops(count)` | Зацикливание; `-1` — бесконечно |
+| `SetYoyo(yoyo=True)` | Режим туда-обратно при цикле |
+| `Kill(complete=False)` | Остановить и удалить; при `complete=True` — применить конец и вызвать on_complete |
+
+#### Ease (удобные имена плавности)
+
+Доступны варианты по кривым: `Linear`, `InQuad`, `OutQuad`, `InOutQuad`, `InCubic`, `OutCubic`, `InOutCubic`, а также Quart, Quint, Sine, Expo, Circ, Back, `OutBounce`, `OutElastic`. Пример: `s.Ease.OutQuad`, `s.Ease.InOutCubic`.
+
+Демо: [fluent_tween_demo.py](../spritePro/demoGames/fluent_tween_demo.py).
 
 ### Базовое движение
 

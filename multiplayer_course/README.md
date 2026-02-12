@@ -46,6 +46,17 @@ python multiplayer_course/2/example_sync_positions.py --net_debug
 9. Финальный мини‑экзамен (требования + готовое решение).
 10. Роутинг событий (server / clients / all), лучшие практики и куда двигаться дальше.
 
+## Полный пример: Крестики-нолики
+
+В папке [tictactoe_example/](tictactoe_example/) — готовая пошаговая сетевая игра:
+- Turn-based логика (хост = X, клиент = O)
+- Синхронизация доски, перезапуск
+- UI на SpritePro (Layout, Sprite, Button, TextSprite, сцены)
+
+```bash
+python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py --quick
+```
+
 ## Дополнительно
 - В конце каждого урока есть раздел «Что еще изучить».
 - Практика намеренно содержит незаполненные участки кода.

@@ -36,9 +36,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
 
     while True:
         s.update(fill_color=(18, 18, 24))
-        me_text.set_text(
-            f"Я: {name} | role={ctx.role} | id={ctx.client_id} | window={window_tag}"
-        )
+        me_text.set_text(f"Я: {name} | role={ctx.role} | id={ctx.client_id} | window={window_tag}")
 
         # Один раз при входе шлём join. Реле не отдаёт сообщение обратно отправителю,
         # поэтому добавляем себя в players локально — иначе хост не увидит себя в roster.

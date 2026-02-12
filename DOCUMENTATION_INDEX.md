@@ -11,6 +11,12 @@
 - Примеры использования
 - Ссылки на всю документацию
 
+### [docs/OVERVIEW.md](docs/OVERVIEW.md) 📋
+**Краткий обзор SpritePro**
+- Layout, мультиплеер, основные подсистемы
+- Таблицы типов лейаутов, API
+- Полезные пути и команды запуска демо
+
 ### [ROADMAP.md](ROADMAP.md) 🗺️
 **План развития проекта**
 - Краткосрочные цели (v1.1 - v1.3)
@@ -100,6 +106,11 @@
 - Страницы и менеджер страниц
 - Автовключение/выключение спрайтов
 
+#### [docs/layout.md](docs/layout.md)
+**Layout**
+- Автолейаут: flex, сетка, окружность, линия
+- Контейнер — спрайт, rect или сам лейаут
+
 ### Игровые системы
 
 #### [docs/animation.md](docs/animation.md)
@@ -110,14 +121,14 @@
 
 #### [docs/tween.md](docs/tween.md)
 **Плавные переходы**
-- Easing функции
+- Easing функции (EasingType, Ease)
 - Анимация свойств
 - Цепочки анимаций
 
 #### [docs/tween_presets.md](docs/tween_presets.md)
-**Готовые твины**
+**Готовые твины и Fluent API**
 - Позиция, масштаб, поворот, цвет, прозрачность
-- Быстрые пресеты для спрайтов
+- **Fluent API** на Sprite: DoMove, DoScale, DoRotateBy, DoColor, DoFadeOut/In, SetEase, SetDelay, OnComplete, SetLoops, SetYoyo, Kill
 
 #### [docs/networking.md](docs/networking.md)
 **Networking**
@@ -152,6 +163,12 @@
 - Гравитация, скорость и углы
 - Слои отрисовки (sorting_order)
 - Частицы на основе изображений, поворот и масштаб
+
+#### [docs/camera_and_particles.md](docs/camera_and_particles.md)
+**Камера и частицы**
+- Управление камерой и режим слежения
+- Система частиц и их конфигурация
+- Примеры использования
 
 #### [docs/bar.md](docs/bar.md)
 **Прогресс-бары**
@@ -208,24 +225,16 @@
 - Настройка внешнего вида
 - Мониторинг производительности
 
-#### [docs/bar.md](docs/bar.md)
-**Прогресс-бары**
-- Unity-style fillAmount функциональность
-- 4 направления заполнения
-- Плавная анимация
-- Готовые к использованию компоненты
-
-#### [docs/bar_background.md](docs/bar_background.md)
-**Прогресс-бары с фоном**
-- Отдельные изображения для фона и заполнения
-- Фоновое изображение всегда видимо
-- Заполнение обрезается по направлению
-- Готовые к использованию компоненты
-
 ## 🎮 Демонстрационные игры
 
-
+- [Layout Demo](spritePro/demoGames/layout_demo.py) - Все типы лейаутов (flex, grid, circle, line)
+- [Menu/Shop Demo](spritePro/demoGames/menu_shop_demo.py) - Меню и инвентарь на Layout
+- [Fluent Tween Demo](spritePro/demoGames/fluent_tween_demo.py) - Fluent API: DoMove, DoScale, SetEase, SetLoops, OnComplete, Kill
+- [Tween Demo](spritePro/demoGames/tweenDemo.py) - Базовые твины
+- [Tween Presets Demo](spritePro/demoGames/tween_presets_demo.py) - Готовые пресеты твинов
 - [FPS Camera Demo](spritePro/demoGames/fps_camera_demo/fps_camera_demo.py) - Камера и FPS
+- [Local Multiplayer Demo](spritePro/demoGames/local_multiplayer_demo.py) - Сетевой мультиплеер
+- [TicTacToe Multiplayer](multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py) - Крестики-нолики по сети
 - [Save/Load Demo](spritePro/demoGames/save_load_demo.py) - Система сохранений
 - [Sorting Order Demo](spritePro/demoGames/sorting_order_demo.py) - Порядок отрисовки (слои)
 - [Particles Images Demo](spritePro/demoGames/particles_images_demo.py) - Частицы из изображений (c.png, platforma.png)
@@ -257,6 +266,7 @@
 - [docs/surface.md](docs/surface.md)
 - [docs/color_effects.md](docs/color_effects.md)
 - [docs/animation.md](docs/animation.md)
+- [docs/tween.md](docs/tween.md) — плавные переходы, Fluent API (DoMove, DoScale, ...)
 
 
 
@@ -264,12 +274,13 @@
 - [docs/button.md](docs/button.md)
 - [docs/toggle_button.md](docs/toggle_button.md)
 - [docs/text.md](docs/text.md)
+- [docs/layout.md](docs/layout.md)
 - [docs/mouse_interactor.md](docs/mouse_interactor.md)
 - [docs/draggable_sprite.md](docs/draggable_sprite.md)
 
 #### 🔧 Утилиты и инструменты
 - [docs/save_load.md](docs/save_load.md)
-- [docs/tween.md](docs/tween.md)
+- [docs/tween.md](docs/tween.md) — Tween, TweenManager, Fluent API
 - [docs/text_fps.md](docs/text_fps.md)
 - [docs/game_loop.md](docs/game_loop.md)
 - [docs/input.md](docs/input.md)
@@ -292,14 +303,15 @@
 5. [Простые демо](spritePro/demoGames/) - Практические примеры
 
 ### Для разработки игр
-1. [docs/gameSprite.md](docs/gameSprite.md) - Игровые объекты
+1. [docs/sprite.md](docs/sprite.md) - Спрайты и игровые объекты
 2. [docs/animation.md](docs/animation.md) - Анимации
-3. [docs/timer.md](docs/timer.md) - Игровое время
-4. [docs/health.md](docs/health.md) - Игровые системы
-5. [docs/save_load.md](docs/save_load.md) - Сохранения
+3. [docs/tween.md](docs/tween.md) - Плавные переходы (в т.ч. Fluent API)
+4. [docs/timer.md](docs/timer.md) - Игровое время
+5. [docs/health.md](docs/health.md) - Игровые системы
+6. [docs/save_load.md](docs/save_load.md) - Сохранения
 
 ### Для продвинутых разработчиков
-1. [docs/physicSprite.md](docs/physicSprite.md) - Физика
+1. [docs/layout.md](docs/layout.md) - Автолейауты
 2. [TECHNICAL_SPECS.md](TECHNICAL_SPECS.md) - Архитектура
 3. [PERFORMANCE.md](PERFORMANCE.md) - Оптимизация
 4. [CONTRIBUTING.md](CONTRIBUTING.md) - Участие в разработке
@@ -312,9 +324,10 @@
 ## 🔄 Обновления документации
 
 ### Последние обновления
-- **2024-06-01**: Добавлена система сохранения/загрузки
-- **2024-06-01**: Создан roadmap и технические спецификации
-- **2024-06-01**: Добавлено руководство по участию в проекте
+- **2026-02**: Fluent Tween API (DoMove, DoScale, SetEase, SetLoops, OnComplete, Kill) — демо fluent_tween_demo.py
+- **2026-02**: Layout, мультиплеер, крестики-нолики — обзор в docs/OVERVIEW.md
+- **2025-06**: Добавлена система сохранения/загрузки
+- **2025-06**: Создан roadmap и технические спецификации
 
 ### Планируемые обновления
 - Документация по системе инвентаря
@@ -333,9 +346,4 @@
 ---
 
 **Совет**: Используйте поиск по файлам (Ctrl+F) для быстрого поиска нужной информации в документации! 🔍
-### [docs/camera_and_particles.md](docs/camera_and_particles.md)
-**Камера и частицы**
-- Управление камерой и режим слежения
-- Система частиц и их конфигурация
-- Примеры использования
 
