@@ -618,6 +618,19 @@ class Sprite(pygame.sprite.Sprite):
         """
         return self.size
 
+    def set_size(self, size: VectorInput) -> "Sprite":
+        """Устанавливает ширину и высоту спрайта (в пикселях, не scale).
+
+        Args:
+            size: (ширина, высота) или Vector2.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
+        """
+        new_size = _coerce_vector2(size, tuple(self.size))
+        self.set_image(self._image_source, size=new_size)
+        return self
+
     def DoMove(
         self,
         to: VectorInput,
@@ -1262,13 +1275,35 @@ class Sprite(pygame.sprite.Sprite):
         self.active = value
         return self
 
-    def set_scene(self, scene: "SpriteSceneInput") -> "Sprite":
+    def set_scene(
+        self,
+        scene: "SpriteSceneInput",
+        unregister_when_none: bool = True,
+    ) -> "Sprite":
         """Назначает сцену спрайту (Scene или имя сцены).
+
+        При scene=None по умолчанию спрайт снимается с регистрации (перестаёт
+        обновляться и рисоваться). Если unregister_when_none=False — только
+        присваивается scene=None, регистрация не трогается (спрайт остаётся в игре).
+        При передаче сцены спрайт при необходимости регистрируется снова.
+
+        Args:
+            scene: Сцена или None (убрать привязку к сцене).
+            unregister_when_none: При scene=None: True — снять с регистрации,
+                False — оставить зарегистрированным, только обнулить scene.
 
         Returns:
             Sprite: self для цепочек вызовов.
         """
         self.scene = scene
+        if scene is None:
+            if unregister_when_none and self._game_registered:
+                spritePro.unregister_sprite(self)
+                self._game_registered = False
+        else:
+            if not self._game_registered:
+                spritePro.register_sprite(self)
+                self._game_registered = True
         return self
 
     def reset_sprite(self) -> "Sprite":

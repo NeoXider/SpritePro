@@ -145,7 +145,7 @@ sprite.set_world_position((10, 10), anchor=s.Anchor.TOP_LEFT)
 Методы установки и действия возвращают сам объект (`self`), поэтому их можно вызывать цепочкой.
 
 **Sprite** — возвращают `self`:
-- Установка: `set_position`, `set_scale`, `set_angle`, `rotate_to`, `set_alpha`, `set_color`, `set_sorting_order`, `look_at`, `set_screen_space`, `set_parent`, `set_world_position`, `set_image`, `set_rect_shape`, `set_circle_shape`, `set_ellipse_shape`, `set_polygon_shape`, `set_polyline`, `set_native_size`, `set_flip`, `set_active`, `set_scene`, `set_velocity`, `set_state`, `set_collision_targets`, `add_collision_target`, `add_collision_targets`, `remove_collision_target`, `remove_collision_targets`, `clear_collision_targets`, `limit_movement`.
+- Установка: `set_position`, `set_scale`, `set_angle`, `rotate_to`, `set_alpha`, `set_color`, `set_sorting_order`, `look_at`, `set_screen_space`, `set_parent`, `set_world_position`, `set_image`, `set_size`, `set_rect_shape`, `set_circle_shape`, `set_ellipse_shape`, `set_polygon_shape`, `set_polyline`, `set_native_size`, `set_flip`, `set_active`, `set_scene`, `set_velocity`, `set_state`, `set_collision_targets`, `add_collision_target`, `add_collision_targets`, `remove_collision_target`, `remove_collision_targets`, `clear_collision_targets`, `limit_movement`.
 - Движение и действие: `reset_sprite`, `move`, `move_towards`, `move_up`, `move_down`, `move_left`, `move_right`, `stop`, `rotate_by`, `fade_by`, `scale_by`, `handle_keyboard_input`.
 
 **TextSprite**: `set_text`, `set_color`, `set_font`. **Button**: `set_base_color`, `set_all_colors`, `set_all_scales`, `set_scale`, `set_sorting_order`, `on_click`, `on_hover`. **ToggleButton**: `set_state`, `set_colors`, `set_texts`, `toggle`. **Bar**: `set_fill_amount`, `set_fill_direction`, `set_image`, `set_fill_color` и др.
@@ -178,11 +178,21 @@ y = sprite.y  # y координата
 # Установка размера
 sprite.width = 100  # Устанавливает ширину
 sprite.height = 50  # Устанавливает высоту
+sprite.set_size((400, 300))  # Ширина и высота разом (пиксели, не scale)
 
 # Получение размера
 w = sprite.width  # ширина
 h = sprite.height  # высота
 ```
+
+### Размер (set_size) и примитивы
+
+- **set_size(size)** — задаёт ширину и высоту спрайта в пикселях (не масштаб). Аргумент: `(width, height)` или Vector2. Возвращает `self`.
+- **Примитивы** (`set_rect_shape`, `set_circle_shape`, `set_ellipse_shape`, `set_polygon_shape`, `set_polyline`): параметры **size** и **color** опциональны. Если `size=None` — используется текущий размер спрайта; если `color=None` — текущий цвет (tint) спрайта, при его отсутствии — белый. Пример: `sprite.set_color((120, 200, 255)).set_rect_shape(border_radius=20)`.
+
+### Сцена (set_scene)
+
+- **set_scene(scene, unregister_when_none=True)** — назначает спрайту сцену (объект `Scene` или имя сцены). Возвращает `self`. При **scene=None** по умолчанию спрайт снимается с регистрации (перестаёт обновляться и рисоваться). Если нужна только привязка к сцене без снятия с отрисовки — вызовите `set_scene(None, unregister_when_none=False)`. Пример: `sprite.set_scene(None)` — убрать с экрана; `sprite.set_scene(None, unregister_when_none=False)` — отвязать от сцены, но оставить в игре; `sprite.set_scene(my_scene)` — назначить сцену.
 
 ## Свойства
 

@@ -111,7 +111,8 @@
 **Layout**
 - Автолейаут: flex, сетка, окружность, линия
 - Контейнер — спрайт, rect или сам лейаут
-- Цепочки вызовов: add, add_children, remove, apply, refresh возвращают self
+- set_size((w, h)) при container=None — размер в пикселях, затем apply()
+- Цепочки вызовов: add, add_children, remove, apply, refresh, set_size возвращают self
 
 ### Игровые системы
 

@@ -182,6 +182,7 @@ class Layout(Sprite):
         pos: Optional[Tuple[float, float]] = None,
         scene: Optional[object] = None,
         debug_borders: bool = False,
+        auto_apply: bool = True,
     ):
         """Инициализирует лейаут.
 
@@ -217,8 +218,11 @@ class Layout(Sprite):
             pos: Позиция лейаута при container=None. Иначе не используется.
             scene: Сцена при container=None. Иначе берётся из контейнера.
             debug_borders: Если True, отображаются границы контейнера лейаута (для отладки).
+            auto_apply: Если True (по умолчанию), add/remove/set_size вызывают apply()
+                автоматически. Если False — лейаут ручной: обновление только по refresh()/apply().
         """
         self._debug_borders = bool(debug_borders)
+        self._auto_apply = bool(auto_apply)
         self._debug_overlay: Optional["Sprite"] = None
         if container is None:
             sz = size or (100, 100)
@@ -256,67 +260,68 @@ class Layout(Sprite):
         gx, gy = _normalize_gap(gap, gap_x, gap_y)
         self._gap_x = gx
         self._gap_y = gy
-        if self._children:
+        if self._auto_apply and self._children:
             self.apply()
         self._apply_debug_style()
 
     def _apply_debug_style(self) -> None:
-        """Включает или выключает отображение границ контейнера (для отладки)."""
-        if self.container is None:
-            if self._debug_borders:
-                self.set_alpha(_DEBUG_ALPHA)
-                self.set_rect_shape(
-                    size=tuple(self.rect.size),
+        """Включает или выключает отображение границ контейнера (для отладки).
+
+        Контейнер (сам лейаут при container=None) — слой -10. Обводка — отдельный
+        overlay на слое 10000, чтобы была поверх содержимого.
+        """
+        if self._debug_borders:
+            if self._debug_overlay is None:
+                self._debug_overlay = Sprite(
+                    "",
+                    (1, 1),
+                    (0, 0),
+                    scene=self.scene,
+                )
+                self._debug_overlay.set_rect_shape(
+                    size=(1, 1),
                     color=_DEBUG_BORDER_COLOR,
                     width=2,
-                    border_radius=0,
                 )
-            else:
+                self._debug_overlay.set_alpha(_DEBUG_ALPHA)
+                self._debug_overlay.sorting_order = 10000
+                if self.container is None:
+                    self._debug_overlay.set_parent(self, keep_world_position=False)
+                    if hasattr(self._debug_overlay, "local_position"):
+                        self._debug_overlay.local_position = (0, 0)
+                elif hasattr(self.container, "set_parent"):
+                    self._debug_overlay.set_parent(self.container, keep_world_position=False)
+                    if hasattr(self._debug_overlay, "local_position"):
+                        self._debug_overlay.local_position = (0, 0)
+            self._debug_overlay.active = True
+            self._sync_debug_overlay()
+            if self.container is None:
                 self.set_alpha(0)
-                self.set_rect_shape(
-                    size=tuple(self.rect.size),
-                    color=(0, 0, 0),
-                    width=0,
-                )
+                self.set_rect_shape(size=tuple(self.rect.size), color=(0, 0, 0), width=0)
+                self.sorting_order = -10
         else:
-            if self._debug_borders:
-                if self._debug_overlay is None:
-                    self._debug_overlay = Sprite(
-                        "",
-                        (1, 1),
-                        (0, 0),
-                        scene=self.scene,
-                    )
-                    self._debug_overlay.set_rect_shape(
-                        size=(1, 1),
-                        color=_DEBUG_BORDER_COLOR,
-                        width=2,
-                    )
-                    self._debug_overlay.set_alpha(_DEBUG_ALPHA)
-                    self._debug_overlay.sorting_order = -10
-                    if hasattr(self.container, "set_parent"):
-                        self._debug_overlay.set_parent(self.container, keep_world_position=False)
-                        if hasattr(self._debug_overlay, "local_position"):
-                            self._debug_overlay.local_position = (0, 0)
-                self._debug_overlay.active = True
-                self._sync_debug_overlay()
-            else:
-                if self._debug_overlay is not None:
-                    self._debug_overlay.active = False
+            if self._debug_overlay is not None:
+                self._debug_overlay.active = False
+            if self.container is None:
+                self.set_alpha(0)
+                self.set_rect_shape(size=tuple(self.rect.size), color=(0, 0, 0), width=0)
+                self.sorting_order = None
 
     def _sync_debug_overlay(self) -> None:
-        """Синхронизирует overlay с rect контейнера (при container не None)."""
+        """Синхронизирует overlay с rect контейнера."""
         if self._debug_overlay is None:
             return
         r = self._get_container_rect()
-        if hasattr(self.container, "rect"):
-            self._debug_overlay._apply_parent_transform()
         self._debug_overlay.set_rect_shape(
             size=(r.width, r.height),
             color=_DEBUG_BORDER_COLOR,
             width=2,
         )
-        if not hasattr(self.container, "rect"):
+        if self.container is None:
+            return
+        if hasattr(self.container, "rect"):
+            self._debug_overlay._apply_parent_transform()
+        else:
             self._debug_overlay.set_position((r.left, r.top), anchor=Anchor.TOP_LEFT)
 
     @property
@@ -328,6 +333,12 @@ class Layout(Sprite):
     def debug_borders(self, value: bool) -> None:
         self._debug_borders = bool(value)
         self._apply_debug_style()
+
+    def set_debug_borders(self, value: bool) -> "Layout":
+        """Включает или выключает обводку контейнера (для отладки и видимости границ). Возвращает self."""
+        self._debug_borders = bool(value)
+        self._apply_debug_style()
+        return self
 
     def _effective_container(
         self,
@@ -423,13 +434,30 @@ class Layout(Sprite):
             return (s[0], s[1])
         return (50, 50)
 
+    def set_size(self, size: Union[Tuple[float, float], Tuple[int, int], Sequence[float]]) -> "Layout":
+        """Устанавливает ширину и высоту лейаута (пиксели). При container=None пересчитывает детей.
+
+        Returns:
+            Layout: self для цепочек вызовов.
+        """
+        super().set_size(size)
+        if self.container is None:
+            if self._debug_borders:
+                self._apply_debug_style()
+            else:
+                self.set_rect_shape(size=tuple(self.rect.size), color=(0, 0, 0), width=0)
+                self.set_alpha(0)
+        if self._auto_apply:
+            self.apply()
+        return self
+
     def apply(self) -> "Layout":
         """Пересчитывает позиции всех дочерних спрайтов по текущему direction и применяет их.
 
         Returns:
             Layout: self для цепочек вызовов.
         """
-        if self.container is not None and self._debug_overlay is not None:
+        if self._debug_overlay is not None:
             self._sync_debug_overlay()
         if not self._children:
             return self
@@ -862,7 +890,8 @@ class Layout(Sprite):
             self._children.append(child)
             if self.container is None and hasattr(child, "set_parent"):
                 child.set_parent(self, keep_world_position=False)
-        self.apply()
+        if self._auto_apply:
+            self.apply()
         return self
 
     def add_children(self, *children: pygame.sprite.Sprite) -> "Layout":
@@ -879,7 +908,8 @@ class Layout(Sprite):
                 self._children.append(c)
                 if self.container is None and hasattr(c, "set_parent"):
                     c.set_parent(self, keep_world_position=False)
-        self.apply()
+        if self._auto_apply:
+            self.apply()
         return self
 
     def remove(self, child: pygame.sprite.Sprite) -> "Layout":
@@ -897,7 +927,8 @@ class Layout(Sprite):
             self._children.remove(child)
             if self.container is None and hasattr(child, "set_parent"):
                 child.set_parent(None, keep_world_position=True)
-        self.apply()
+        if self._auto_apply:
+            self.apply()
         return self
 
     def remove_children(self, *children: pygame.sprite.Sprite) -> "Layout":
@@ -916,7 +947,22 @@ class Layout(Sprite):
                 self._children.remove(c)
                 if self.container is None and hasattr(c, "set_parent"):
                     c.set_parent(None, keep_world_position=True)
-        self.apply()
+        if self._auto_apply:
+            self.apply()
+        return self
+
+    @property
+    def auto_apply(self) -> bool:
+        """Режим автообновления: True — add/remove/set_size вызывают apply(); False — только refresh()/apply()."""
+        return self._auto_apply
+
+    @auto_apply.setter
+    def auto_apply(self, value: bool) -> None:
+        self._auto_apply = bool(value)
+
+    def set_auto_apply(self, value: bool) -> "Layout":
+        """Включает или выключает автообновление при add/remove/set_size. Возвращает self."""
+        self._auto_apply = bool(value)
         return self
 
     @property
@@ -938,10 +984,15 @@ def layout_flex_row(
     use_local: bool = False,
     child_anchor: Optional[Anchor] = None,
     wrap: bool = True,
+    size: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    pos: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    scene: Optional[object] = None,
+    auto_apply: bool = True,
 ) -> Layout:
     """Расставляет детей в ряд (flex row) и возвращает настроенный Layout.
 
     При wrap=True элементы переносятся на следующую строку при нехватке ширины.
+    При container=None можно задать size и pos (и scene) — размер и позиция контейнера.
 
     Args:
         container: Спрайт с rect или кортеж (x, y, w, h). Контейнер для расстановки.
@@ -953,10 +1004,13 @@ def layout_flex_row(
         use_local: True — позиции в локальных координатах контейнера.
         child_anchor: Якорь при установке позиции детей. None — якорь спрайта.
         wrap: Перенос на следующую строку при нехватке ширины. По умолчанию True.
+        size: При container=None — (ширина, высота) контейнера в пикселях.
+        pos: При container=None — (x, y) позиция центра контейнера.
+        scene: При container=None — сцена для лейаута.
+        auto_apply: True — сразу вызвать apply(); False — ручной режим, вызовите refresh() позже.
 
     Returns:
-        Экземпляр Layout с уже вызванным apply(). Можно менять параметры и вызывать
-        apply() снова.
+        Экземпляр Layout (с уже вызванным apply() при auto_apply=True).
     """
     layout = Layout(
         container,
@@ -969,8 +1023,13 @@ def layout_flex_row(
         use_local=use_local,
         child_anchor=child_anchor,
         wrap=wrap,
+        size=size,
+        pos=pos,
+        scene=scene,
+        auto_apply=auto_apply,
     )
-    layout.apply()
+    if auto_apply:
+        layout.apply()
     return layout
 
 
@@ -984,10 +1043,15 @@ def layout_flex_column(
     use_local: bool = False,
     child_anchor: Optional[Anchor] = None,
     wrap: bool = True,
+    size: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    pos: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    scene: Optional[object] = None,
+    auto_apply: bool = True,
 ) -> Layout:
     """Расставляет детей в колонку (flex column) и возвращает Layout.
 
     При wrap=True элементы переносятся в следующую колонку при нехватке высоты.
+    При container=None можно задать size, pos и scene.
 
     Args:
         container: Спрайт с rect или кортеж (x, y, w, h).
@@ -999,9 +1063,13 @@ def layout_flex_column(
         use_local: True — локальные координаты контейнера.
         child_anchor: Якорь позиционирования детей.
         wrap: Перенос в следующую колонку при нехватке высоты. По умолчанию True.
+        size: При container=None — (ширина, высота) контейнера в пикселях.
+        pos: При container=None — (x, y) позиция центра контейнера.
+        scene: При container=None — сцена для лейаута.
+        auto_apply: True — сразу apply(); False — ручной режим.
 
     Returns:
-        Экземпляр Layout с вызванным apply().
+        Экземпляр Layout (с вызванным apply() при auto_apply=True).
     """
     layout = Layout(
         container,
@@ -1014,8 +1082,13 @@ def layout_flex_column(
         use_local=use_local,
         child_anchor=child_anchor,
         wrap=wrap,
+        size=size,
+        pos=pos,
+        scene=scene,
+        auto_apply=auto_apply,
     )
-    layout.apply()
+    if auto_apply:
+        layout.apply()
     return layout
 
 
@@ -1028,8 +1101,14 @@ def layout_horizontal(
     align_cross: LayoutAlignCross = LayoutAlignCross.CENTER,
     use_local: bool = False,
     child_anchor: Optional[Anchor] = None,
+    size: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    pos: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    scene: Optional[object] = None,
+    auto_apply: bool = True,
 ) -> Layout:
     """Расставляет детей в один горизонтальный ряд без переноса (не flex).
+
+    При container=None можно задать size, pos и scene.
 
     Args:
         container: Спрайт с rect или кортеж (x, y, w, h).
@@ -1040,9 +1119,13 @@ def layout_horizontal(
         align_cross: Выравнивание по поперечной оси.
         use_local: True — локальные координаты контейнера.
         child_anchor: Якорь позиционирования детей.
+        size: При container=None — (ширина, высота) контейнера.
+        pos: При container=None — (x, y) позиция центра.
+        scene: При container=None — сцена.
+        auto_apply: True — сразу apply(); False — ручной режим.
 
     Returns:
-        Экземпляр Layout с вызванным apply().
+        Экземпляр Layout (с вызванным apply() при auto_apply=True).
     """
     layout = Layout(
         container,
@@ -1054,8 +1137,13 @@ def layout_horizontal(
         align_cross=align_cross,
         use_local=use_local,
         child_anchor=child_anchor,
+        size=size,
+        pos=pos,
+        scene=scene,
+        auto_apply=auto_apply,
     )
-    layout.apply()
+    if auto_apply:
+        layout.apply()
     return layout
 
 
@@ -1068,8 +1156,14 @@ def layout_vertical(
     align_cross: LayoutAlignCross = LayoutAlignCross.CENTER,
     use_local: bool = False,
     child_anchor: Optional[Anchor] = None,
+    size: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    pos: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    scene: Optional[object] = None,
+    auto_apply: bool = True,
 ) -> Layout:
     """Расставляет детей в одну вертикальную колонку без переноса (не flex).
+
+    При container=None можно задать size, pos и scene.
 
     Args:
         container: Спрайт с rect или кортеж (x, y, w, h).
@@ -1080,9 +1174,13 @@ def layout_vertical(
         align_cross: Выравнивание по поперечной оси.
         use_local: True — локальные координаты контейнера.
         child_anchor: Якорь позиционирования детей.
+        size: При container=None — (ширина, высота) контейнера.
+        pos: При container=None — (x, y) позиция центра.
+        scene: При container=None — сцена.
+        auto_apply: True — сразу apply(); False — ручной режим.
 
     Returns:
-        Экземпляр Layout с вызванным apply().
+        Экземпляр Layout (с вызванным apply() при auto_apply=True).
     """
     layout = Layout(
         container,
@@ -1094,8 +1192,13 @@ def layout_vertical(
         align_cross=align_cross,
         use_local=use_local,
         child_anchor=child_anchor,
+        size=size,
+        pos=pos,
+        scene=scene,
+        auto_apply=auto_apply,
     )
-    layout.apply()
+    if auto_apply:
+        layout.apply()
     return layout
 
 
@@ -1112,28 +1215,36 @@ def layout_grid(
     align_cross: LayoutAlignCross = LayoutAlignCross.CENTER,
     use_local: bool = False,
     child_anchor: Optional[Anchor] = None,
+    size: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    pos: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    scene: Optional[object] = None,
+    auto_apply: bool = True,
 ) -> Layout:
     """Расставляет детей в сетку rows x cols и возвращает Layout.
 
     Если заданы только rows или только cols, второе измерение вычисляется по количеству
-    детей. flow задаёт порядок заполнения: по строкам (ROW) или по столбцам (COLUMN).
+    детей. При container=None можно задать size, pos и scene.
 
     Args:
         container: Спрайт с rect или кортеж (x, y, w, h).
         children: Список спрайтов для размещения в сетку.
-        rows: Количество строк. Опционально (можно задать только cols).
+        rows: Количество строк. Опционально.
         cols: Количество столбцов. Опционально.
         gap_x: Зазор по горизонтали. По умолчанию 10.
         gap_y: Зазор по вертикали. По умолчанию 10.
         padding: Отступ от границ контейнера.
         flow: ROW — заполнение по строкам, COLUMN — по столбцам.
         align_main: Выравнивание по основной оси.
-        align_cross: Выравнивание внутри ячейки (START, CENTER, END).
+        align_cross: Выравнивание внутри ячейки.
         use_local: True — локальные координаты контейнера.
         child_anchor: Якорь позиционирования детей.
+        size: При container=None — (ширина, высота) контейнера.
+        pos: При container=None — (x, y) позиция центра.
+        scene: При container=None — сцена.
+        auto_apply: True — сразу apply(); False — ручной режим.
 
     Returns:
-        Экземпляр Layout с вызванным apply().
+        Экземпляр Layout (с вызванным apply() при auto_apply=True).
     """
     layout = Layout(
         container,
@@ -1149,8 +1260,13 @@ def layout_grid(
         align_cross=align_cross,
         use_local=use_local,
         child_anchor=child_anchor,
+        size=size,
+        pos=pos,
+        scene=scene,
+        auto_apply=auto_apply,
     )
-    layout.apply()
+    if auto_apply:
+        layout.apply()
     return layout
 
 
@@ -1165,8 +1281,14 @@ def layout_circle(
     padding: Union[int, float, Sequence[Union[int, float]]] = 0,
     use_local: bool = False,
     child_anchor: Optional[Anchor] = None,
+    size: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    pos: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    scene: Optional[object] = None,
+    auto_apply: bool = True,
 ) -> Layout:
     """Расставляет детей по окружности с центром в центре контейнера.
+
+    При container=None можно задать size, pos и scene.
 
     Args:
         container: Спрайт с rect или кортеж (x, y, w, h). Центр окружности — центр rect.
@@ -1179,9 +1301,13 @@ def layout_circle(
         padding: Отступ от границ контейнера.
         use_local: True — локальные координаты контейнера.
         child_anchor: Якорь позиционирования детей.
+        size: При container=None — (ширина, высота) контейнера.
+        pos: При container=None — (x, y) позиция центра.
+        scene: При container=None — сцена.
+        auto_apply: True — сразу apply(); False — ручной режим.
 
     Returns:
-        Экземпляр Layout с вызванным apply().
+        Экземпляр Layout (с вызванным apply() при auto_apply=True).
     """
     layout = Layout(
         container,
@@ -1195,8 +1321,13 @@ def layout_circle(
         padding=padding,
         use_local=use_local,
         child_anchor=child_anchor,
+        size=size,
+        pos=pos,
+        scene=scene,
+        auto_apply=auto_apply,
     )
-    layout.apply()
+    if auto_apply:
+        layout.apply()
     return layout
 
 
@@ -1207,11 +1338,15 @@ def layout_line(
     padding: Union[int, float, Sequence[Union[int, float]]] = 0,
     use_local: bool = False,
     child_anchor: Optional[Anchor] = None,
+    size: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    pos: Optional[Union[Tuple[float, float], Tuple[int, int]]] = None,
+    scene: Optional[object] = None,
+    auto_apply: bool = True,
 ) -> Layout:
     """Расставляет детей вдоль ломаной линии (равномерно по длине).
 
-    Точки задаются в мировых координатах; при use_local они интерпретируются
-    относительно контейнера.
+    Точки задаются в мировых координатах; при use_local — относительно контейнера.
+    При container=None можно задать size, pos и scene.
 
     Args:
         container: Спрайт с rect или кортеж (x, y, w, h). Нужен при use_local.
@@ -1220,9 +1355,13 @@ def layout_line(
         padding: Отступ от границ контейнера (при use_local).
         use_local: True — точки в локальных координатах контейнера.
         child_anchor: Якорь позиционирования детей.
+        size: При container=None — (ширина, высота) контейнера.
+        pos: При container=None — (x, y) позиция центра.
+        scene: При container=None — сцена.
+        auto_apply: True — сразу apply(); False — ручной режим.
 
     Returns:
-        Экземпляр Layout с вызванным apply().
+        Экземпляр Layout (с вызванным apply() при auto_apply=True).
     """
     layout = Layout(
         container,
@@ -1232,6 +1371,11 @@ def layout_line(
         padding=padding,
         use_local=use_local,
         child_anchor=child_anchor,
+        size=size,
+        pos=pos,
+        scene=scene,
+        auto_apply=auto_apply,
     )
-    layout.apply()
+    if auto_apply:
+        layout.apply()
     return layout

@@ -44,21 +44,42 @@
 - **child_anchor**: якорь при установке позиции ребёнка (тип `Anchor` из [sprite.md](sprite.md)); по умолчанию `Anchor.CENTER`.
 - **wrap**: для FLEX_ROW и FLEX_COLUMN — автоперенос при нехватке места (по умолчанию `True`: FLEX_ROW переносит на следующую строку, FLEX_COLUMN — в следующую колонку).
 
+### Обводка контейнера (debug_borders)
+
+Для отладки и видимости границ контейнера можно включить обводку: при **debug_borders=True** рисуется полупрозрачная синяя рамка по границам контейнера (при `container=None` — по rect лейаута). Включить/выключить можно в любой момент:
+
+- свойство: `layout.debug_borders = True` или `layout.debug_borders = False`;
+- метод (возвращает `self`): `layout.set_debug_borders(True)`.
+
+При создании лейаута: `Layout(..., debug_borders=True)` или в удобных функциях пока нет параметра — используйте свойство или метод после создания.
+
 ## Когда вызывается apply()
 
-**Автоматически** — только при изменении состава детей через методы Layout:
+По умолчанию лейаут **автоматический** (`auto_apply=True`): при каждом изменении состава детей или размера контейнера вызывается `apply()`:
 
-- после `add(child)`;
-- после `add_children(...)`;
-- после `remove(child)`;
-- после `remove_children(...)`.
+- после `add(child)` / `add_children(...)` / `remove(child)` / `remove_children(...)`;
+- после `set_size(...)` у лейаута (при `container=None`).
 
-**Вручную** — во всех остальных случаях нужно вызывать `apply()` или `refresh()`:
+**Вручную** нужно вызывать `apply()` или `refresh()` при:
 
-- смена типа лейаута (`direction = LayoutDirection.GRID` и т.д.);
-- изменение параметров (gap, padding, align_main, radius, points, rows, cols, rotate_children, offset_angle и т.д.);
-- смена контейнера или его размеров;
-- если список детей был изменён снаружи (не через add/remove).
+- смене типа лейаута (`direction = LayoutDirection.GRID` и т.д.);
+- изменении параметров (gap, padding, align_main, radius, points, rows, cols и т.д.);
+- смене контейнера или его размеров извне;
+- изменении списка детей снаружи (не через add/remove).
+
+### Ручной режим (auto_apply=False)
+
+Если при создании лейаута передать **auto_apply=False**, то `add`, `add_children`, `remove`, `remove_children` и `set_size` **не** вызывают `apply()`. Позиции детей не пересчитываются до явного вызова `refresh()` или `apply()`. Удобно, когда вы делаете несколько изменений подряд и хотите обновить расстановку один раз в конце.
+
+```python
+# Ручной режим: добавили, переместили список, обновили один раз
+layout = s.layout_flex_column(None, [], gap=10, pos=s.WH_C, size=(300, 200), auto_apply=False)
+layout.add(btn1).add(btn2).add(btn3)
+# ... при необходимости изменить порядок в layout.arranged_children или параметры ...
+layout.refresh()
+```
+
+Свойство **layout.auto_apply** можно читать и менять: `layout.auto_apply = False` переключает в ручной режим, `layout.auto_apply = True` — обратно в автоматический.
 
 Методы `add`, `add_children`, `remove`, `remove_children`, `apply`, `refresh` возвращают сам лейаут (`self`), поэтому можно вызывать цепочкой: `layout.add(box1).add(box2).refresh()` или `layout.add_children(a, b, c)`.
 
@@ -113,14 +134,34 @@ layout = Layout(
     child_anchor=None,
     wrap=True,              # для FLEX_ROW / FLEX_COLUMN — автоперенос
     size=None,              # при container=None — (width, height)
-    pos=None,               # при container=None — (x, y)
-    scene=None,             # при container=None — сцена
+    pos=None,                # при container=None — (x, y)
+    scene=None,              # при container=None — сцена
+    auto_apply=True,         # False — ручной режим, apply() только по refresh()/apply()
 )
 layout.apply()
 layout.refresh()   # то же, что apply()
 ```
 
 **Лейаут как контейнер** (`container=None`): создаётся невидимый спрайт с заданными `size` и `pos`. Дети добавляются через `add()`/`add_children()` и привязываются к лейауту как к родителю; при перемещении лейаута они двигаются вместе с ним. Список расставляемых элементов — **arranged_children** (при `container=None` совпадает с **children** от Sprite).
+
+### Удобные функции: size, pos, scene
+
+Во все функции `layout_flex_row`, `layout_flex_column`, `layout_horizontal`, `layout_vertical`, `layout_grid`, `layout_circle`, `layout_line` можно передать опциональные аргументы **size**, **pos**, **scene**. Они имеют смысл при **container=None** и задают размер контейнера, позицию центра и сцену в одном вызове (без цепочки `.set_position().set_size()`):
+
+```python
+import spritePro as s
+
+# Лейаут-колонка по центру экрана 400×300
+layout = s.layout_flex_column(
+    None,
+    [text, button, exit_button],
+    gap=20,
+    pos=s.WH_C,
+    size=(400, 300),
+)
+# То же через цепочку:
+# layout = s.layout_flex_column(None, [...], gap=20).set_position(s.WH_C).set_size((400, 300))
+```
 
 ### Методы изменения детей (с авто apply)
 
@@ -277,7 +318,14 @@ layout.add(btn1).add(btn2)
 # apply() вызывается автоматически после add; при смене параметров — layout.apply() или layout.refresh()
 # Перемещение лейаута перемещает и кнопки
 layout.set_position((150, 250))
+
+# Изменение размера (только при container=None): ширина и высота в пикселях, после чего вызывается apply()
+layout.set_size((400, 300))
 ```
+
+## Изменение размера (set_size)
+
+При **container=None** у лейаута можно вызвать **set_size((width, height))** — задаются ширина и высота контейнера в пикселях (не scale). Метод переопределён: после изменения размера вызывается **apply()**, поэтому позиции детей пересчитываются автоматически. Возвращает `self` для цепочек: `layout.set_position(center).set_size((400, 300))`.
 
 ## Ссылки
 
