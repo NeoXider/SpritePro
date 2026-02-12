@@ -65,6 +65,7 @@ from .layout import (
     layout_circle,
     layout_line,
 )
+from .scroll import ScrollView
 from .audio import AudioManager, Sound
 from .networking import NetServer, NetClient
 from . import networking
@@ -72,6 +73,7 @@ from . import multiplayer
 
 from . import utils
 from . import readySprites
+from . import readyScenes
 from .utils import save_load
 
 __all__ = [
@@ -137,6 +139,7 @@ __all__ = [
     "layout_grid",
     "layout_circle",
     "layout_line",
+    "ScrollView",
     "AudioManager",
     "Sound",
     # Networking
@@ -219,6 +222,7 @@ __all__ = [
     # Modules
     "utils",
     "readySprites",
+    "readyScenes",
     # methods
     "init",
     "get_screen",

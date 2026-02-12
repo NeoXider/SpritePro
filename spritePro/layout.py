@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import math
 from enum import Enum
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Callable, List, Optional, Sequence, Tuple, Union
 
 import pygame
 
@@ -434,7 +434,9 @@ class Layout(Sprite):
             return (s[0], s[1])
         return (50, 50)
 
-    def set_size(self, size: Union[Tuple[float, float], Tuple[int, int], Sequence[float]]) -> "Layout":
+    def set_size(
+        self, size: Union[Tuple[float, float], Tuple[int, int], Sequence[float]]
+    ) -> "Layout":
         """Устанавливает ширину и высоту лейаута (пиксели). При container=None пересчитывает детей.
 
         Returns:
@@ -875,39 +877,88 @@ class Layout(Sprite):
         self.apply()
         return self
 
-    def add(self, child: pygame.sprite.Sprite) -> "Layout":
-        """Добавляет одного ребёнка в конец списка и пересчитывает позиции.
+    def _resolve_index(self, index: int, length: Optional[int] = None) -> int:
+        """Преобразует отрицательный индекс: -1 → последняя позиция, -2 → предпоследняя и т.д."""
+        n = length if length is not None else len(self._children)
+        if index >= 0:
+            return min(index, n)
+        return max(0, n + 1 + index)
+
+    def add(
+        self,
+        child: pygame.sprite.Sprite,
+        index: Optional[int] = None,
+    ) -> "Layout":
+        """Добавляет одного ребёнка в список и пересчитывает позиции.
 
         При container=None ребёнок привязывается к лейауту через set_parent(self).
 
         Args:
             child: Спрайт для добавления в лейаут.
+            index: Индекс вставки (0 — в начало, -1 — в конец). None — в конец.
 
         Returns:
             Layout: self для цепочек вызовов.
         """
         if child not in self._children:
-            self._children.append(child)
+            if index is None:
+                self._children.append(child)
+            else:
+                pos = self._resolve_index(index)
+                self._children.insert(pos, child)
             if self.container is None and hasattr(child, "set_parent"):
                 child.set_parent(self, keep_world_position=False)
         if self._auto_apply:
             self.apply()
         return self
 
-    def add_children(self, *children: pygame.sprite.Sprite) -> "Layout":
-        """Добавляет нескольких детей в конец и пересчитывает позиции.
+    def add_at_start(self, child: pygame.sprite.Sprite) -> "Layout":
+        """Добавляет ребёнка в начало списка. Возвращает self."""
+        return self.add(child, index=0)
+
+    def add_children(
+        self,
+        *children: pygame.sprite.Sprite,
+        index: Optional[int] = None,
+    ) -> "Layout":
+        """Добавляет нескольких детей в список и пересчитывает позиции.
 
         Args:
             *children: Спрайты для добавления в лейаут.
+            index: Индекс вставки первого (0 — в начало, -1 — в конец). None — все в конец.
 
         Returns:
             Layout: self для цепочек вызовов.
         """
-        for c in children:
+        for i, c in enumerate(children):
             if c not in self._children:
-                self._children.append(c)
+                if index is None:
+                    self._children.append(c)
+                else:
+                    pos = self._resolve_index(index) + i
+                    self._children.insert(pos, c)
                 if self.container is None and hasattr(c, "set_parent"):
                     c.set_parent(self, keep_world_position=False)
+        if self._auto_apply:
+            self.apply()
+        return self
+
+    def move(self, child: pygame.sprite.Sprite, index: int) -> "Layout":
+        """Переносит ребёнка на новую позицию в списке (меняет порядок отрисовки/расстановки).
+
+        Args:
+            child: Спрайт, уже находящийся в лейауте.
+            index: Новый индекс (0 — в начало, -1 — в конец, -2 — предпоследний и т.д.).
+
+        Returns:
+            Layout: self для цепочек вызовов.
+        """
+        if child not in self._children:
+            return self
+        self._children.remove(child)
+        n = len(self._children)
+        pos = self._resolve_index(index, length=n)
+        self._children.insert(pos, child)
         if self._auto_apply:
             self.apply()
         return self
@@ -947,6 +998,31 @@ class Layout(Sprite):
                 self._children.remove(c)
                 if self.container is None and hasattr(c, "set_parent"):
                     c.set_parent(None, keep_world_position=True)
+        if self._auto_apply:
+            self.apply()
+        return self
+
+    def reverse(self) -> "Layout":
+        """Разворачивает порядок детей (первый станет последним и наоборот). Возвращает self."""
+        self._children.reverse()
+        if self._auto_apply:
+            self.apply()
+        return self
+
+    def sort(
+        self,
+        *,
+        key: Optional[Callable[[pygame.sprite.Sprite], object]] = None,
+        reverse: bool = False,
+    ) -> "Layout":
+        """Сортирует список детей по условию (key). Возвращает self.
+
+        Args:
+            key: Функция от одного спрайта, возвращающая значение для сравнения.
+                Примеры: key=lambda s: s.rect.y, key=lambda s: getattr(s, 'order', 0).
+            reverse: True — по убыванию.
+        """
+        self._children.sort(key=key, reverse=reverse)
         if self._auto_apply:
             self.apply()
         return self

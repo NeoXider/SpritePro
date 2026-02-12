@@ -13,8 +13,8 @@ import spritePro as s  # noqa: E402
 def main() -> None:
     s.get_screen((900, 620), "Tween Presets Demo")
 
-    sprite = s.Sprite("", (60, 60), s.WH_C).set_color((120, 200, 255)).set_rect_shape(
-        border_radius=20
+    sprite = (
+        s.Sprite("", (60, 60), s.WH_C).set_color((120, 200, 255)).set_rect_shape(border_radius=20)
     )
     target = s.Sprite("", (20, 20), (750, 120)).set_color((255, 200, 120))
 

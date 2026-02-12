@@ -11,6 +11,25 @@
 - Продвинутые UI компоненты
 - Мобильная поддержка
 
+## [1.4.6]
+
+### Added
+- **Готовые сцены (readyScenes)** — модуль `spritePro.readyScenes` для подключения готовых сцен в играх. **ChatScene** — мультиплеерный чат с историей, полем имени, сообщениями (время ЧЧ:ММ:СС), скроллом (колёсико и перетаскивание мышью по области), маской обрезки по viewport. **ChatStyle** — класс стиля (цвета, шрифты, отступы); можно переопределить перед использованием. Подключение: `from spritePro.readyScenes import ChatScene, ChatStyle`; после инициализации мультиплеера — `s.scene.add_scene("chat", ChatScene)` и `s.scene.set_scene_by_name("chat", recreate=True)`.
+- **ScrollView**: параметр **use_mask=True** (по умолчанию) — контент за границами viewport не отображается (клиппинг); опциональный аргумент **mouse_drag_delta_y** в **update_from_input()** для скролла перетаскиванием мыши по области.
+- **TextSprite**: свойство **input_active** — при `True` и пустом тексте отображается курсор «|»; при первом вводе символ курсора исчезает. Для сцен с полем ввода выставляйте `input_active` у активного поля перед вызовом `input()`.
+
+### Changed
+- Чат перенесён в библиотеку: сцена и стиль в `spritePro.readyScenes.chat`; пример запуска — `multiplayer_course/Chat/example_chat.py` (импорт ChatScene, ChatStyle из readyScenes).
+- **Документация**: [docs/layout.md](docs/layout.md) — раздел «Скролл (ScrollView)» дополнен: use_mask, скролл мышью; [docs/README.md](docs/README.md) — добавлен раздел «Готовые сцены (readyScenes)»; [README.md](README.md) — упоминание готовых сцен в «Что внутри».
+- Версия библиотеки 1.4.6 (патч).
+
+## [1.4.5]
+
+### Added
+- **Layout: вставка и перестановка детей** — `add(child, index=None)`: при указании **index** вставка в произвольное место (0 — в начало). `add_at_start(child)` — в начало. `add_children(*children, index=None)` — при **index** вставка с указанной позиции. `move(child, index)` — перенос уже добавленного ребёнка на новую позицию в списке (меняет порядок расстановки).
+- **Документация**: [docs/layout.md](docs/layout.md) — раздел «Добавление в начало/по индексу и move».
+- Версия библиотеки 1.4.5 (патч).
+
 ## [1.4.4]
 
 ### Added

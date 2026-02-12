@@ -166,17 +166,52 @@ layout = s.layout_flex_column(
 ### Методы изменения детей (с авто apply)
 
 ```python
-layout.add(child)
-layout.add_children(child1, child2)
+layout.add(child)                    # в конец
+layout.add(child, index=0)            # в начало
+layout.add_at_start(child)           # в начало (удобный алиас)
+layout.add_children(child1, child2)  # в конец
+layout.add_children(c1, c2, index=0) # в начало
+layout.move(child, index)            # перенести ребёнка на новую позицию (0 — в начало)
+layout.reverse()                     # перевернуть порядок детей
+layout.sort(key=lambda s: s.rect.y)  # сортировка по условию (key)
+layout.sort(key=lambda s: s.rect.y, reverse=True)
 layout.remove(child)
 layout.remove_children(child1, child2)
 ```
 
-При `container=None` метод `add` вызывает у ребёнка `set_parent(layout)`, `remove` — `set_parent(None)`.
+- **add(child, index=None)** — при **index** вставка в указанную позицию (0 — в начало, -1 — в конец), иначе в конец.
+- **add_at_start(child)** — то же, что `add(child, index=0)`.
+- **add_children(*children, index=None)** — при **index** первая вставка с этой позиции (поддерживаются -1, -2 и т.д.), иначе все в конец.
+- **move(child, index)** — ребёнок уже в лейауте; меняется только его порядок в списке. **index** может быть отрицательным: -1 — в конец, -2 — предпоследний и т.д.
+- **reverse()** — разворачивает порядок детей (первый ↔ последний). Возвращает self.
+- **sort(key=None, reverse=False)** — сортирует детей по **key** (функция от одного спрайта, возвращает значение для сравнения). Примеры: `key=lambda s: s.rect.y`, `key=lambda s: getattr(s, 'order', 0)`. **reverse=True** — по убыванию. Возвращает self.
+
+При `container=None` метод `add` (и вставки) вызывает у ребёнка `set_parent(layout)`, `remove` — `set_parent(None)`.
 
 ### Список детей
 
 - **arranged_children** — список спрайтов, которые расставляет лейаут (только для чтения). При `container=None` совпадает с **children** (наследуется от Sprite).
+
+### Скролл (ScrollView)
+
+Модуль **spritePro.scroll** предоставляет **ScrollView** — скроллируемую область для контента (Layout). Поддерживается **вертикальный и горизонтальный** скролл.
+
+- **viewport**: rect или pos+size. Контент задаётся через **set_content(layout)**.
+- **scroll_x**, **scroll_y** — смещение по осям; **scroll_max_x**, **scroll_max_y** (и алиас **scroll_max** = scroll_max_y).
+- **scroll_by(delta_y, delta_x=0)** — сместить скролл (один аргумент — только по вертикали).
+- **update_from_input(input_state, mouse_drag_delta_x=..., mouse_drag_delta_y=...)** — колёсико мыши (wheel_x — горизонталь, wheel_y — вертикаль) и перетаскивание.
+- **apply_scroll()** — позиционирует контент по текущим scroll_x и scroll_y.
+- **use_mask** (по умолчанию `True`) — контент за границами viewport обрезается (клиппинг в сцене).
+
+```python
+from spritePro.scroll import ScrollView
+
+scroll = ScrollView(pos=(50, 80), size=(400, 300), scroll_speed=40, use_mask=True)
+scroll.set_content(my_layout)
+# В update сцены: колёсико (X и Y) и перетаскивание
+scroll.update_from_input(context.input, mouse_drag_delta_x=dx, mouse_drag_delta_y=dy)
+scroll.apply_scroll()
+```
 
 ## Удобные функции
 

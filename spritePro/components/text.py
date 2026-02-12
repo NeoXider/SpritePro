@@ -80,12 +80,23 @@ class TextSprite(Sprite):
 
         # сохраняем параметры текста
         self._text = text
+        self._input_active = False
         self.color = color
         self.font_path = font_name
         self.font_size = font_size
 
         # создаём и рендерим шрифт через set_font
         self.set_font(font_name, font_size)
+
+    @property
+    def input_active(self) -> bool:
+        """Режим ввода: при True и пустом тексте отображается курсор «|»."""
+        return self._input_active
+
+    @input_active.setter
+    def input_active(self, value: bool) -> None:
+        self._input_active = bool(value)
+        self.set_font(self.font_path, self.font_size)
 
     @property
     def text(self) -> str:
@@ -175,7 +186,8 @@ class TextSprite(Sprite):
         except FileNotFoundError:
             self.font = pygame.font.SysFont("arial", font_size)
 
-        surf = self.font.render(self._text, True, self.color)
+        display_str = self._text if self._text else ("|" if self._input_active else "")
+        surf = self.font.render(display_str, True, self.color)
         self.set_image(surf)
         return self
 
