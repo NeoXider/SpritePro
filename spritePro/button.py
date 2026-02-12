@@ -132,37 +132,49 @@ class Button(Sprite):
         # Логика мыши
         self.interactor = MouseInteractor(sprite=self, on_click=on_click)
 
-    def set_base_color(self, base_color: tuple = (255, 255, 255)):
+    def set_base_color(self, base_color: tuple = (255, 255, 255)) -> "Button":
         """Устанавливает базовый цвет кнопки.
 
         Args:
             base_color (tuple, optional): Кортеж из трех целых чисел, представляющий базовый цвет кнопки. По умолчанию (255, 255, 255).
+
+        Returns:
+            Button: self для цепочек вызовов.
         """
         self.base_color = base_color
+        return self
 
-    def set_all_colors(self, base_color: tuple, press_color: tuple, hover_color: tuple):
+    def set_all_colors(self, base_color: tuple, press_color: tuple, hover_color: tuple) -> "Button":
         """Устанавливает все три состояния цвета для кнопки.
 
         Args:
             base_color (tuple): Кортеж из трех целых чисел, представляющий базовый цвет кнопки.
             press_color (tuple): Кортеж из трех целых чисел, представляющий цвет кнопки при нажатии.
             hover_color (tuple): Кортеж из трех целых чисел, представляющий цвет кнопки при наведении.
+
+        Returns:
+            Button: self для цепочек вызовов.
         """
         self.base_color = base_color
         self.press_color = press_color
         self.hover_color = hover_color
+        return self
 
-    def set_all_scales(self, base_scale: float, hover_scale: float, press_scale: float):
+    def set_all_scales(self, base_scale: float, hover_scale: float, press_scale: float) -> "Button":
         """Устанавливает базовый, ховер и пресс масштабы для кнопки.
 
         Args:
             base_scale (float): Базовый масштаб кнопки.
             hover_scale (float): Масштаб кнопки при наведении.
             press_scale (float): Масштаб кнопки при нажатии.
+
+        Returns:
+            Button: self для цепочек вызовов.
         """
         self.set_scale(base_scale, update=True)
         self.hover_scale_delta = hover_scale - base_scale
         self.press_scale_delta = press_scale - base_scale
+        return self
 
     def update(self, screen: pygame.Surface = None):
         """Обновляет состояние кнопки и отрисовывает её на экране.
@@ -229,8 +241,12 @@ class Button(Sprite):
         else:
             self.set_scale(self._target_scale, False)
 
-    def set_sorting_order(self, order: int) -> None:
-        """Устанавливает порядок отрисовки и синхронизирует его с текстом."""
+    def set_sorting_order(self, order: int) -> "Button":
+        """Устанавливает порядок отрисовки и синхронизирует его с текстом.
+
+        Returns:
+            Button: self для цепочек вызовов.
+        """
         super().set_sorting_order(order)
         label = getattr(self, "text_sprite", None)
         if label is not None:
@@ -238,39 +254,51 @@ class Button(Sprite):
                 label.set_sorting_order(order)
             except Exception:
                 pass
+        return self
 
-    def set_scale(self, scale: float, update: bool = True):
+    def set_scale(self, scale: float, update: bool = True) -> "Button":
         """Устанавливает масштаб кнопки.
 
         Args:
             scale (float): Новое значение масштаба.
             update (bool, optional): Обновлять ли базовый масштаб. По умолчанию True.
+
+        Returns:
+            Button: self для цепочек вызовов.
         """
         if update:
             self.start_scale = scale
         super().set_scale(scale)
-        # Keep label visually in sync with button scale
         if getattr(self, "text_sprite", None) is not None:
             try:
                 self.text_sprite.set_scale(scale)
             except Exception:
                 pass
+        return self
 
-    def on_click(self, func: Callable):
+    def on_click(self, func: Callable) -> "Button":
         """Устанавливает функцию обработчик клика для кнопки.
 
         Args:
             func (Callable): Функция, которая будет вызвана при клике на кнопку.
+
+        Returns:
+            Button: self для цепочек вызовов.
         """
         self.interactor.on_click = func
+        return self
 
-    def on_hover(self, func: Callable):
+    def on_hover(self, func: Callable) -> "Button":
         """Устанавливает функцию обработчик наведения для кнопки.
 
         Args:
             func (Callable): Функция, которая будет вызвана при наведении на кнопку.
+
+        Returns:
+            Button: self для цепочек вызовов.
         """
         self.interactor.on_hover_enter = func
+        return self
 
     def kill(self) -> None:
         """Удаляет кнопку из игры и освобождает все связанные ресурсы.

@@ -37,38 +37,30 @@ def create_demo_bars():
     # Horizontal bars - using fon.jpeg image with proper sizes and anchors
     h_bar1 = Bar(
         image=path_sprites + "fon.jpeg",
-        size=(250, 40),  # Specify exact bar dimensions
+        size=(250, 40),
         pos=(350, 120),
         fill_direction=FillDirection.HORIZONTAL_LEFT_TO_RIGHT,
         fill_amount=0.7,
         animate_duration=0.5,
-    )
-    h_bar1.set_fill_type(
-        FillDirection.LEFT_TO_RIGHT, s.Anchor.MID_LEFT
-    )  # Left anchor for left-to-right
+    ).set_fill_type(FillDirection.LEFT_TO_RIGHT, s.Anchor.MID_LEFT)
 
     h_bar2 = Bar(
         image=path_sprites + "fon.jpeg",
-        size=(250, 40),  # Specify exact bar dimensions
+        size=(250, 40),
         pos=(350, 200),
         fill_direction=FillDirection.HORIZONTAL_RIGHT_TO_LEFT,
         fill_amount=0.5,
         animate_duration=0.5,
-    )
-    h_bar2.set_fill_type(
-        FillDirection.RIGHT_TO_LEFT, s.Anchor.MID_RIGHT
-    )  # Right anchor for right-to-left
+    ).set_fill_type(FillDirection.RIGHT_TO_LEFT, s.Anchor.MID_RIGHT)
 
-    # Additional horizontal bar with center anchor
     h_bar3 = Bar(
         image=path_sprites + "fon.jpeg",
-        size=(250, 40),  # Specify exact bar dimensions
+        size=(250, 40),
         pos=(350, 280),
         fill_direction=FillDirection.HORIZONTAL_LEFT_TO_RIGHT,
         fill_amount=0.6,
         animate_duration=0.5,
-    )
-    h_bar3.set_fill_type(FillDirection.LEFT_TO_RIGHT, s.Anchor.CENTER)  # Center anchor
+    ).set_fill_type(FillDirection.LEFT_TO_RIGHT, s.Anchor.CENTER)
 
     # Vertical bars - using fon.jpeg image with proper sizes and anchors
     v_bar1 = Bar(

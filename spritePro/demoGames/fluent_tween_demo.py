@@ -59,9 +59,15 @@ def main() -> None:
         if active_kill_handle:
             active_kill_handle.Kill(complete=False)
             active_kill_handle = None
-        box.set_position(base_pos).set_scale(base_scale).rotate_to(base_angle).set_alpha(base_alpha).set_color(base_color)
-        box_loop.set_position(base_pos_loop).set_scale(1.0).set_color((255, 180, 100)).set_alpha(255)
-        box_kill.set_position(base_pos_kill).set_scale(1.0).set_color((150, 255, 150)).set_alpha(255)
+        box.set_position(base_pos).set_scale(base_scale).rotate_to(base_angle).set_alpha(
+            base_alpha
+        ).set_color(base_color)
+        box_loop.set_position(base_pos_loop).set_scale(1.0).set_color((255, 180, 100)).set_alpha(
+            255
+        )
+        box_kill.set_position(base_pos_kill).set_scale(1.0).set_color((150, 255, 150)).set_alpha(
+            255
+        )
 
     while True:
         s.update(fill_color=(20, 20, 30))

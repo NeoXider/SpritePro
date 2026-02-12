@@ -142,16 +142,25 @@ sprite.set_world_position((10, 10), anchor=s.Anchor.TOP_LEFT)
 
 ### Цепочки вызовов
 
-Методы установки возвращают сам спрайт (`self`), поэтому их можно вызывать цепочкой:
+Методы установки и действия возвращают сам объект (`self`), поэтому их можно вызывать цепочкой.
 
-- `set_position`, `set_scale`, `set_angle`, `rotate_to`, `set_alpha`, `set_color`, `set_sorting_order`, `look_at`
+**Sprite** — возвращают `self`:
+- Установка: `set_position`, `set_scale`, `set_angle`, `rotate_to`, `set_alpha`, `set_color`, `set_sorting_order`, `look_at`, `set_screen_space`, `set_parent`, `set_world_position`, `set_image`, `set_rect_shape`, `set_circle_shape`, `set_ellipse_shape`, `set_polygon_shape`, `set_polyline`, `set_native_size`, `set_flip`, `set_active`, `set_scene`, `set_velocity`, `set_state`, `set_collision_targets`, `add_collision_target`, `add_collision_targets`, `remove_collision_target`, `remove_collision_targets`, `clear_collision_targets`, `limit_movement`.
+- Движение и действие: `reset_sprite`, `move`, `move_towards`, `move_up`, `move_down`, `move_left`, `move_right`, `stop`, `rotate_by`, `fade_by`, `scale_by`, `handle_keyboard_input`.
+
+**TextSprite**: `set_text`, `set_color`, `set_font`. **Button**: `set_base_color`, `set_all_colors`, `set_all_scales`, `set_scale`, `set_sorting_order`, `on_click`, `on_hover`. **ToggleButton**: `set_state`, `set_colors`, `set_texts`, `toggle`. **Bar**: `set_fill_amount`, `set_fill_direction`, `set_image`, `set_fill_color` и др.
 
 ```python
-# Один вызов вместо нескольких строк
+# Установка и стиль
 sprite.set_position((100, 200)).set_scale(1.5).set_alpha(200).set_color((255, 100, 100))
+sprite.set_rect_shape((80, 40), color=(200, 100, 50)).set_position((200, 300))
 
-# Сброс состояния перед анимацией
-box.set_position(base_pos).set_scale(1.0).rotate_to(0).set_alpha(255).set_color((255, 255, 255))
+# Движение и границы (в цикле update)
+player.handle_keyboard_input().limit_movement(screen.get_rect())
+
+# Текст и кнопка
+text.set_text("Hello").set_color((255, 0, 0)).set_font(None, 32)
+btn.on_click(clicked).on_hover(hovered).set_base_color((200, 100, 100))
 ```
 
 **Удобные свойства для быстрого доступа:**

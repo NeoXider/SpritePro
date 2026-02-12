@@ -133,20 +133,29 @@ class ToggleButton(Button):
         if self.on_toggle:
             self.on_toggle(self.is_on)
 
-    def toggle(self):
-        """Переключает состояние кнопки между ВКЛ и ВЫКЛ."""
+    def toggle(self) -> "ToggleButton":
+        """Переключает состояние кнопки между ВКЛ и ВЫКЛ.
+
+        Returns:
+            ToggleButton: self для цепочек вызовов.
+        """
         self.is_on = not self.is_on
         self._update_appearance()
+        return self
 
-    def set_state(self, is_on: bool):
+    def set_state(self, is_on: bool) -> "ToggleButton":
         """Устанавливает состояние переключателя напрямую.
 
         Args:
             is_on (bool): True для состояния ВКЛ, False для состояния ВЫКЛ.
+
+        Returns:
+            ToggleButton: self для цепочек вызовов.
         """
         if self.is_on != is_on:
             self.is_on = is_on
             self._update_appearance()
+        return self
 
     def _update_appearance(self):
         """Обновляет внешний вид кнопки на основе текущего состояния."""
@@ -160,27 +169,37 @@ class ToggleButton(Button):
         self.hover_color = self._adjust_brightness(base_color, self.hover_brightness)
         self.press_color = self._adjust_brightness(base_color, self.press_brightness)
 
-    def set_colors(self, color_on: Tuple[int, int, int], color_off: Tuple[int, int, int]):
+    def set_colors(
+        self, color_on: Tuple[int, int, int], color_off: Tuple[int, int, int]
+    ) -> "ToggleButton":
         """Устанавливает цвета ВКЛ и ВЫКЛ для кнопки-переключателя.
 
         Args:
             color_on (Tuple[int, int, int]): RGB цвет для состояния ВКЛ.
             color_off (Tuple[int, int, int]): RGB цвет для состояния ВЫКЛ.
+
+        Returns:
+            ToggleButton: self для цепочек вызовов.
         """
         self.color_on = color_on
         self.color_off = color_off
         self._update_appearance()
+        return self
 
-    def set_texts(self, text_on: str, text_off: str):
+    def set_texts(self, text_on: str, text_off: str) -> "ToggleButton":
         """Устанавливает текстовые метки ВКЛ и ВЫКЛ для кнопки-переключателя.
 
         Args:
             text_on (str): Текст для отображения когда ВКЛ.
             text_off (str): Текст для отображения когда ВЫКЛ.
+
+        Returns:
+            ToggleButton: self для цепочек вызовов.
         """
         self.text_on = text_on
         self.text_off = text_off
         self._update_appearance()
+        return self
 
 
 if __name__ == "__main__":

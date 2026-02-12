@@ -129,49 +129,55 @@ class TextSprite(Sprite):
                     self.text += e.unicode
         return self.text
 
-    def set_text(self, new_text: str = None):
+    def set_text(self, new_text: str = None) -> "TextSprite":
         """Обновляет текст спрайта и перерисовывает изображение.
 
         Args:
             new_text (str, optional): Новый текст для отображения. Если None, используется существующий текст. По умолчанию None.
+
+        Returns:
+            TextSprite: self для цепочек вызовов.
         """
         if new_text is not None:
             self._text = new_text
-        # переложим логику рендера в set_font, сохраняя текущий шрифт
         self.set_font(self.font_path, self.font_size)
+        return self
 
-    def set_color(self, new_color: Tuple[int, int, int]):
+    def set_color(self, new_color: Tuple[int, int, int]) -> "TextSprite":
         """Обновляет цвет текста и перерисовывает изображение.
 
         Args:
             new_color (Tuple[int, int, int]): Новый цвет текста в формате RGB.
+
+        Returns:
+            TextSprite: self для цепочек вызовов.
         """
         self.color = new_color
-        # перерисовываем с текущим шрифтом и текстом
         self.set_font(self.font_path, self.font_size)
+        return self
 
-    def set_font(self, font_name: Optional[Union[str, Path]], font_size: int):
+    def set_font(self, font_name: Optional[Union[str, Path]], font_size: int) -> "TextSprite":
         """Устанавливает шрифт и размер, затем отрисовывает текст на новой поверхности.
 
         Args:
             font_name (Optional[Union[str, Path]]): Путь к файлу .ttf или None для системного шрифта.
             font_size (int): Размер шрифта в пунктах.
+
+        Returns:
+            TextSprite: self для цепочек вызовов.
         """
         self.font_size = font_size
-        # загружаем шрифт
         try:
             if font_name:
                 self.font = pygame.font.Font(str(font_name), font_size)
             else:
                 self.font = pygame.font.SysFont(None, font_size)
         except FileNotFoundError:
-            # fallback на системный Arial
             self.font = pygame.font.SysFont("arial", font_size)
 
-        # рендерим текстовую поверхность
         surf = self.font.render(self._text, True, self.color)
-        # обновляем изображение спрайта
         self.set_image(surf)
+        return self
 
 
 if __name__ == "__main__":

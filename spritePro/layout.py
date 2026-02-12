@@ -423,12 +423,16 @@ class Layout(Sprite):
             return (s[0], s[1])
         return (50, 50)
 
-    def apply(self) -> None:
-        """Пересчитывает позиции всех дочерних спрайтов по текущему direction и применяет их."""
+    def apply(self) -> "Layout":
+        """Пересчитывает позиции всех дочерних спрайтов по текущему direction и применяет их.
+
+        Returns:
+            Layout: self для цепочек вызовов.
+        """
         if self.container is not None and self._debug_overlay is not None:
             self._sync_debug_overlay()
         if not self._children:
-            return
+            return self
         rect = self._get_container_rect()
         inner = self._inner_rect(rect)
         cx = inner.centerx
@@ -447,6 +451,7 @@ class Layout(Sprite):
             self._apply_circle(rect, inner, cx, cy)
         elif self.direction == LayoutDirection.LINE:
             self._apply_line()
+        return self
 
     def _apply_row(
         self,
@@ -833,29 +838,41 @@ class Layout(Sprite):
         for child, (px, py) in zip(children, positions):
             self._set_child_position(child, (px, py))
 
-    def refresh(self) -> None:
-        """Пересчитывает позиции детей. Алиас для apply()."""
-        self.apply()
+    def refresh(self) -> "Layout":
+        """Пересчитывает позиции детей. Алиас для apply().
 
-    def add(self, child: pygame.sprite.Sprite) -> None:
+        Returns:
+            Layout: self для цепочек вызовов.
+        """
+        self.apply()
+        return self
+
+    def add(self, child: pygame.sprite.Sprite) -> "Layout":
         """Добавляет одного ребёнка в конец списка и пересчитывает позиции.
 
         При container=None ребёнок привязывается к лейауту через set_parent(self).
 
         Args:
             child: Спрайт для добавления в лейаут.
+
+        Returns:
+            Layout: self для цепочек вызовов.
         """
         if child not in self._children:
             self._children.append(child)
             if self.container is None and hasattr(child, "set_parent"):
                 child.set_parent(self, keep_world_position=False)
         self.apply()
+        return self
 
-    def add_children(self, *children: pygame.sprite.Sprite) -> None:
+    def add_children(self, *children: pygame.sprite.Sprite) -> "Layout":
         """Добавляет нескольких детей в конец и пересчитывает позиции.
 
         Args:
             *children: Спрайты для добавления в лейаут.
+
+        Returns:
+            Layout: self для цепочек вызовов.
         """
         for c in children:
             if c not in self._children:
@@ -863,28 +880,36 @@ class Layout(Sprite):
                 if self.container is None and hasattr(c, "set_parent"):
                     c.set_parent(self, keep_world_position=False)
         self.apply()
+        return self
 
-    def remove(self, child: pygame.sprite.Sprite) -> None:
+    def remove(self, child: pygame.sprite.Sprite) -> "Layout":
         """Удаляет одного ребёнка из лейаута и пересчитывает позиции остальных.
 
         При container=None у ребёнка вызывается set_parent(None).
 
         Args:
             child: Спрайт для удаления из лейаута.
+
+        Returns:
+            Layout: self для цепочек вызовов.
         """
         if child in self._children:
             self._children.remove(child)
             if self.container is None and hasattr(child, "set_parent"):
                 child.set_parent(None, keep_world_position=True)
         self.apply()
+        return self
 
-    def remove_children(self, *children: pygame.sprite.Sprite) -> None:
+    def remove_children(self, *children: pygame.sprite.Sprite) -> "Layout":
         """Удаляет перечисленных детей из лейаута и пересчитывает позиции.
 
         При container=None у каждого удаляемого ребёнка вызывается set_parent(None).
 
         Args:
             *children: Спрайты для удаления из лейаута.
+
+        Returns:
+            Layout: self для цепочек вызовов.
         """
         for c in children:
             if c in self._children:
@@ -892,6 +917,7 @@ class Layout(Sprite):
                 if self.container is None and hasattr(c, "set_parent"):
                     c.set_parent(None, keep_world_position=True)
         self.apply()
+        return self
 
     @property
     def arranged_children(self) -> List[pygame.sprite.Sprite]:

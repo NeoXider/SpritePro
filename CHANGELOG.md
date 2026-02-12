@@ -11,15 +11,29 @@
 - Продвинутые UI компоненты
 - Мобильная поддержка
 
+## [1.4.2] - 2025-02-12
+
+### Changed
+- **Цепочки вызовов (продолжение)** — возврат `self` добавлен для методов движения, коллизий и UI:
+  - **Sprite**: `limit_movement`, `reset_sprite`, `move`, `move_towards`, `move_up`, `move_down`, `move_left`, `move_right`, `stop`, `rotate_by`, `fade_by`, `scale_by`, `handle_keyboard_input`, `remove_collision_target`, `remove_collision_targets`, `clear_collision_targets`.
+  - **Button**: `on_click`, `on_hover`.
+  - **ToggleButton**: `toggle`.
+- **Документация**: [docs/sprite.md](docs/sprite.md) — раздел «Цепочки вызовов» дополнен списком методов движения и примером с `handle_keyboard_input().limit_movement()`.
+- Версия библиотеки 1.4.2 (патч).
+
 ## [1.4.1] - 2025-02-12
 
 ### Changed
-- **Sprite: цепочки вызовов (fluent setters)** — методы установки возвращают `self`, можно вызывать цепочкой:
-  - `set_position`, `set_scale`, `set_angle`, `rotate_to`, `set_alpha`, `set_color`, `set_sorting_order`, `look_at`.
-  - Пример: `sprite.set_position((100, 200)).set_scale(1.5).set_alpha(200).set_color((255, 100, 100))`.
-  - Обратная совместимость сохранена (возвращаемое значение можно не использовать).
-- Демо `fluent_tween_demo.py`: сброс состояния спрайтов переписан на цепочки вызовов.
-- Документация: в [docs/sprite.md](docs/sprite.md) добавлен раздел «Цепочки вызовов» с перечнем методов и примером.
+- **Цепочки вызовов (fluent setters)** — методы установки возвращают `self` для цепочек:
+  - **Sprite**: `set_position`, `set_scale`, `set_angle`, `rotate_to`, `set_alpha`, `set_color`, `set_sorting_order`, `look_at`, `set_screen_space`, `set_parent`, `set_world_position`, `set_image`, `set_rect_shape`, `set_circle_shape`, `set_ellipse_shape`, `set_polygon_shape`, `set_polyline`, `set_native_size`, `set_flip`, `set_active`, `set_scene`, `set_velocity`, `set_state`, `set_collision_targets`, `add_collision_target`, `add_collision_targets`.
+  - **TextSprite**: `set_text`, `set_color`, `set_font`.
+  - **Button**: `set_base_color`, `set_all_colors`, `set_all_scales`, `set_scale`, `set_sorting_order`.
+  - **ToggleButton**: `set_state`, `set_colors`, `set_texts`.
+  - **Bar**: `set_fill_amount`, `set_fill_direction`, `set_animate_duration`, `set_fill_type`, `set_image`, `set_fill_image`, `set_fill_color`, `set_background_image`, `set_background_size`, `set_fill_size`, `set_both_sizes`.
+  - **Layout**: `add`, `add_children`, `remove`, `remove_children`, `apply`, `refresh`.
+  - Обратная совместимость сохранена.
+- **Демо**: в `fluent_tween_demo`, `layout_demo`, `primitives_demo`, `tween_presets_demo`, `bar_demo` использованы цепочки вызовов.
+- **Документация**: [docs/sprite.md](docs/sprite.md) — раздел «Цепочки вызовов» расширен; [docs/layout.md](docs/layout.md) — добавлено про цепочки `add`/`apply`/`refresh`.
 - Версия библиотеки 1.4.1 (патч).
 
 ## [1.4.0] - 2025-02-12

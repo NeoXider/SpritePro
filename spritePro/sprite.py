@@ -358,15 +358,19 @@ class Sprite(pygame.sprite.Sprite):
             pass
         return self
 
-    def set_screen_space(self, locked: bool = True) -> None:
+    def set_screen_space(self, locked: bool = True) -> "Sprite":
         """Фиксирует спрайт к экрану (без смещения камерой).
 
         Args:
             locked (bool, optional): Если True, спрайт не будет смещаться камерой. По умолчанию True.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.screen_space = locked
         for child in self.children:
             child.set_screen_space(locked)
+        return self
 
     @property
     def anchor(self) -> Anchor:
@@ -396,12 +400,15 @@ class Sprite(pygame.sprite.Sprite):
             self._set_world_center(Vector2(self.rect.center))
             self._sync_local_offset()
 
-    def set_parent(self, parent: Optional["Sprite"], keep_world_position: bool = True) -> None:
+    def set_parent(self, parent: Optional["Sprite"], keep_world_position: bool = True) -> "Sprite":
         """Устанавливает родительский спрайт для создания иерархии.
 
         Args:
             parent (Optional[Sprite]): Родительский спрайт или None для удаления родителя.
             keep_world_position (bool, optional): Сохранять ли мировую позицию при установке родителя. По умолчанию True.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
 
         Raises:
             ValueError: Если спрайт пытается стать родителем самому себе.
@@ -409,7 +416,7 @@ class Sprite(pygame.sprite.Sprite):
         if parent is self:
             raise ValueError("Sprite cannot be its own parent")
         if parent is self.parent:
-            return
+            return self
         world_pos = self.get_world_position()
         if self.parent:
             try:
@@ -433,6 +440,7 @@ class Sprite(pygame.sprite.Sprite):
             else:
                 self._set_world_center(self.get_world_position())
             self.local_offset = Vector2()
+        return self
 
     def set_position(self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER) -> "Sprite":
         """Устанавливает позицию спрайта с заданным якорем и обновляет стартовые координаты.
@@ -823,12 +831,15 @@ class Sprite(pygame.sprite.Sprite):
 
     def set_world_position(
         self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER
-    ) -> None:
+    ) -> "Sprite":
         """Устанавливает мировую позицию спрайта с учетом якоря.
 
         Args:
             position (VectorInput): Мировая позиция (x, y).
             anchor (str | Anchor, optional): Якорь позиционирования. По умолчанию Anchor.CENTER.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         world_pos = _coerce_vector2(position, self.rect.center)
         current_anchor = self.anchor
@@ -839,6 +850,7 @@ class Sprite(pygame.sprite.Sprite):
             self.anchor = current_anchor
         self._sync_local_offset()
         self._update_children_world_positions()
+        return self
 
     def _set_world_center(self, position: Vector2) -> None:
         """Устанавливает центр спрайта в мировых координатах."""
@@ -870,12 +882,15 @@ class Sprite(pygame.sprite.Sprite):
         self,
         image_source="",
         size: Optional[VectorInput] = None,
-    ):
+    ) -> "Sprite":
         """Устанавливает новое изображение для спрайта.
 
         Args:
             image_source (str | Path | pygame.Surface): Путь к файлу изображения или объект Surface.
             size (Optional[VectorInput]): Новые размеры (ширина, высота) или None для сохранения оригинального размера.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
 
         Note:
             Если файл не найден, создается прозрачная поверхность.
@@ -931,94 +946,146 @@ class Sprite(pygame.sprite.Sprite):
         self._transform_dirty = True
         self._color_dirty = True
         self._mask_dirty = True
+        return self
+
+    def _shape_color(self, color: Optional[Tuple[int, int, int]]) -> Tuple[int, int, int]:
+        """Цвет для примитивов: color или текущий tint спрайта, иначе белый."""
+        if color is not None:
+            return color
+        return self.color if self.color is not None else (255, 255, 255)
 
     def set_rect_shape(
         self,
         size: Optional[VectorInput] = None,
-        color: Tuple[int, int, int] = (255, 255, 255),
+        color: Optional[Tuple[int, int, int]] = None,
         width: int = 0,
         border_radius: int = 0,
-    ) -> None:
-        """Создает прямоугольник через pygame.draw и назначает его как изображение."""
+    ) -> "Sprite":
+        """Создает прямоугольник через pygame.draw и назначает его как изображение.
+
+        Args:
+            size: (ширина, высота) или None — текущий размер спрайта.
+            color: RGB или None — текущий цвет спрайта (или белый).
+        Returns:
+            Sprite: self для цепочек вызовов.
+        """
         target_size = _coerce_vector2(size, tuple(self.size))
+        fill = self._shape_color(color)
         surface = pygame.Surface(_vector2_to_int_tuple(target_size), pygame.SRCALPHA)
         pygame.draw.rect(
-            surface, color, surface.get_rect(), width=width, border_radius=border_radius
+            surface, fill, surface.get_rect(), width=width, border_radius=border_radius
         )
         self.set_image(surface)
+        return self
 
     def set_circle_shape(
         self,
         radius: Optional[int] = None,
-        color: Tuple[int, int, int] = (255, 255, 255),
+        color: Optional[Tuple[int, int, int]] = None,
         width: int = 0,
-    ) -> None:
-        """Создает круг через pygame.draw и назначает его как изображение."""
+    ) -> "Sprite":
+        """Создает круг через pygame.draw и назначает его как изображение.
+
+        Args:
+            radius: Радиус или None — половина меньшей стороны текущего размера.
+            color: RGB или None — текущий цвет спрайта (или белый).
+        Returns:
+            Sprite: self для цепочек вызовов.
+        """
         if radius is None:
             radius = int(min(self.size) * 0.5)
         radius = max(1, int(radius))
         diameter = radius * 2
+        fill = self._shape_color(color)
         surface = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
-        pygame.draw.circle(surface, color, (radius, radius), radius, width=width)
+        pygame.draw.circle(surface, fill, (radius, radius), radius, width=width)
         self.set_image(surface)
+        return self
 
     def set_ellipse_shape(
         self,
         size: Optional[VectorInput] = None,
-        color: Tuple[int, int, int] = (255, 255, 255),
+        color: Optional[Tuple[int, int, int]] = None,
         width: int = 0,
-    ) -> None:
-        """Создает эллипс через pygame.draw и назначает его как изображение."""
+    ) -> "Sprite":
+        """Создает эллипс через pygame.draw и назначает его как изображение.
+
+        Args:
+            size: (ширина, высота) или None — текущий размер спрайта.
+            color: RGB или None — текущий цвет спрайта (или белый).
+        Returns:
+            Sprite: self для цепочек вызовов.
+        """
         target_size = _coerce_vector2(size, tuple(self.size))
+        fill = self._shape_color(color)
         surface = pygame.Surface(_vector2_to_int_tuple(target_size), pygame.SRCALPHA)
-        pygame.draw.ellipse(surface, color, surface.get_rect(), width=width)
+        pygame.draw.ellipse(surface, fill, surface.get_rect(), width=width)
         self.set_image(surface)
+        return self
 
     def set_polygon_shape(
         self,
         points: Sequence[Tuple[float, float]],
-        color: Tuple[int, int, int] = (255, 255, 255),
+        color: Optional[Tuple[int, int, int]] = None,
         width: int = 0,
         padding: int = 2,
-    ) -> None:
-        """Создает многоугольник по списку точек и назначает его как изображение."""
+    ) -> "Sprite":
+        """Создает многоугольник по списку точек и назначает его как изображение.
+
+        Args:
+            points: Список вершин (x, y).
+            color: RGB или None — текущий цвет спрайта (или белый).
+        Returns:
+            Sprite: self для цепочек вызовов.
+        """
         if not points:
-            return
+            return self
         xs = [p[0] for p in points]
         ys = [p[1] for p in points]
         min_x, max_x = min(xs), max(xs)
         min_y, max_y = min(ys), max(ys)
         width_px = int(max_x - min_x) + padding * 2
         height_px = int(max_y - min_y) + padding * 2
+        fill = self._shape_color(color)
         surface = pygame.Surface((max(1, width_px), max(1, height_px)), pygame.SRCALPHA)
         shifted = [(p[0] - min_x + padding, p[1] - min_y + padding) for p in points]
-        pygame.draw.polygon(surface, color, shifted, width=width)
+        pygame.draw.polygon(surface, fill, shifted, width=width)
         self.set_image(surface)
+        return self
 
     def set_polyline(
         self,
         points: Sequence[Tuple[float, float]],
-        color: Tuple[int, int, int] = (255, 255, 255),
+        color: Optional[Tuple[int, int, int]] = None,
         width: int = 2,
         closed: bool = False,
         padding: int = 2,
         world_points: bool = False,
-    ) -> None:
-        """Создает линию/полилинию по списку точек и назначает её как изображение."""
+    ) -> "Sprite":
+        """Создает линию/полилинию по списку точек и назначает её как изображение.
+
+        Args:
+            points: Список точек (x, y).
+            color: RGB или None — текущий цвет спрайта (или белый).
+        Returns:
+            Sprite: self для цепочек вызовов.
+        """
         if len(points) < 2:
-            return
+            return self
         xs = [p[0] for p in points]
         ys = [p[1] for p in points]
         min_x, max_x = min(xs), max(xs)
         min_y, max_y = min(ys), max(ys)
         width_px = int(max_x - min_x) + padding * 2
         height_px = int(max_y - min_y) + padding * 2
+        fill = self._shape_color(color)
         surface = pygame.Surface((max(1, width_px), max(1, height_px)), pygame.SRCALPHA)
         shifted = [(p[0] - min_x + padding, p[1] - min_y + padding) for p in points]
-        pygame.draw.lines(surface, color, closed, shifted, width=width)
+        pygame.draw.lines(surface, fill, closed, shifted, width=width)
         self.set_image(surface)
         if world_points:
             self.position = ((min_x + max_x) * 0.5, (min_y + max_y) * 0.5)
+        return self
 
     def kill(self) -> None:
         """Удаляет спрайт из игры и освобождает все связанные ресурсы.
@@ -1033,13 +1100,16 @@ class Sprite(pygame.sprite.Sprite):
             child.set_parent(None, keep_world_position=True)
         super().kill()
 
-    def set_native_size(self):
+    def set_native_size(self) -> "Sprite":
         """Сбрасывает спрайт к оригинальным размерам изображения.
 
         Перезагружает изображение с оригинальной шириной и высотой.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
-        # перезагружаем изображение без параметра size → ставит оригинальный размер
         self.set_image(self._image_source, size=None)
+        return self
 
     def update(self, screen: pygame.Surface = None):
         """Обновляет состояние спрайта и отрисовывает его на экране.
@@ -1126,17 +1196,21 @@ class Sprite(pygame.sprite.Sprite):
 
             self._color_dirty = False
 
-    def set_flip(self, flip_h: bool, flip_v: bool):
+    def set_flip(self, flip_h: bool, flip_v: bool) -> "Sprite":
         """Устанавливает состояние горизонтального и вертикального отражения спрайта.
 
         Args:
             flip_h (bool): Отразить спрайт по горизонтали.
             flip_v (bool): Отразить спрайт по вертикали.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         if self.flipped_h != flip_h or self.flipped_v != flip_v:
             self.flipped_h = flip_h
             self.flipped_v = flip_v
             self._transform_dirty = True
+        return self
 
     @property
     def active(self) -> bool:
@@ -1176,55 +1250,75 @@ class Sprite(pygame.sprite.Sprite):
         """
         return self.active
 
-    def set_active(self, value: bool):
+    def set_active(self, value: bool) -> "Sprite":
         """Устанавливает состояние активности спрайта.
 
         Args:
             value (bool): Новое состояние активности.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.active = value
+        return self
 
-    def set_scene(self, scene: "SpriteSceneInput") -> None:
-        """Назначает сцену спрайту (Scene или имя сцены)."""
+    def set_scene(self, scene: "SpriteSceneInput") -> "Sprite":
+        """Назначает сцену спрайту (Scene или имя сцены).
+
+        Returns:
+            Sprite: self для цепочек вызовов.
+        """
         self.scene = scene
+        return self
 
-    def reset_sprite(self):
+    def reset_sprite(self) -> "Sprite":
         """Сбрасывает спрайт в начальную позицию и состояние.
 
         Восстанавливает начальную позицию, обнуляет скорость и устанавливает
         состояние в "idle".
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.rect.center = self.start_pos
         self.velocity = pygame.math.Vector2(0, 0)
         self.state = "idle"
+        return self
 
-    def move(self, dx: float, dy: float):
+    def move(self, dx: float, dy: float) -> "Sprite":
         """Перемещает спрайт на указанное расстояние.
 
         Args:
             dx (float): Расстояние перемещения по оси X.
             dy (float): Расстояние перемещения по оси Y.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         cx, cy = self.rect.center
         self.rect.center = (int(cx + dx * self.speed), int(cy + dy * self.speed))
+        return self
 
     def move_towards(
         self,
         target_pos: Tuple[float, float],
         speed: Optional[float] = None,
         use_dt: bool = False,
-    ):
+    ) -> "Sprite":
         """Перемещает спрайт к указанной целевой позиции.
 
         Args:
             target_pos (Tuple[float, float]): Целевая позиция (x, y).
             speed (Optional[float]): Скорость движения. Если None, используется self.speed.
             use_dt (bool, optional): Использовать delta time для независимого от частоты кадров движения. По умолчанию False.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         if speed is None:
             speed = self.speed
         if speed <= 0:
-            return
+            return self
         current_pos = pygame.math.Vector2(self.rect.center)
         target_vector = pygame.math.Vector2(target_pos)
         direction = target_vector - current_pos
@@ -1242,30 +1336,32 @@ class Sprite(pygame.sprite.Sprite):
             self.rect.center = (int(target_vector.x), int(target_vector.y))
             self.velocity = pygame.math.Vector2(0, 0)
             self.state = "idle"
-            return
+            return self
 
         direction.normalize_ip()
         self.velocity = direction * step_distance
         self.state = "moving"
 
-        # Auto-flip based on movement direction
-        if (
-            self.auto_flip and abs(direction.x) > 0.1
-        ):  # Only flip if significant horizontal movement
+        if self.auto_flip and abs(direction.x) > 0.1:
             if direction.x < 0:
                 self.set_flip(True, self.flipped_v)
             else:
                 self.set_flip(False, self.flipped_v)
+        return self
 
-    def set_velocity(self, vx: float, vy: float):
+    def set_velocity(self, vx: float, vy: float) -> "Sprite":
         """Устанавливает скорость спрайта напрямую.
 
         Args:
             vx (float): Скорость по оси X.
             vy (float): Скорость по оси Y.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.velocity.x = vx
         self.velocity.y = vy
+        return self
 
     def get_velocity(self) -> Tuple[float, float]:
         """Получает текущую скорость спрайта.
@@ -1275,45 +1371,61 @@ class Sprite(pygame.sprite.Sprite):
         """
         return (self.velocity.x, self.velocity.y)
 
-    def move_up(self, speed: Optional[float] = None):
+    def move_up(self, speed: Optional[float] = None) -> "Sprite":
         """Перемещает спрайт вверх.
 
         Args:
             speed (Optional[float]): Скорость движения. Если None, используется self.speed.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.velocity.y = -(speed if speed is not None else self.speed)
         self.state = "moving"
+        return self
 
-    def move_down(self, speed: Optional[float] = None):
+    def move_down(self, speed: Optional[float] = None) -> "Sprite":
         """Перемещает спрайт вниз.
 
         Args:
             speed (Optional[float]): Скорость движения. Если None, используется self.speed.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.velocity.y = speed if speed is not None else self.speed
         self.state = "moving"
+        return self
 
-    def move_left(self, speed: Optional[float] = None):
+    def move_left(self, speed: Optional[float] = None) -> "Sprite":
         """Перемещает спрайт влево.
 
         Args:
             speed (Optional[float]): Скорость движения. Если None, используется self.speed.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.velocity.x = -(speed or self.speed)
         if self.auto_flip:
             self.set_flip(True, self.flipped_v)
         self.state = "moving"
+        return self
 
-    def move_right(self, speed: Optional[float] = None):
+    def move_right(self, speed: Optional[float] = None) -> "Sprite":
         """Перемещает спрайт вправо.
 
         Args:
             speed (Optional[float]): Скорость движения. Если None, используется self.speed.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.velocity.x = speed or self.speed
         if self.auto_flip:
             self.set_flip(False, self.flipped_v)
         self.state = "moving"
+        return self
 
     def handle_keyboard_input(
         self,
@@ -1321,7 +1433,7 @@ class Sprite(pygame.sprite.Sprite):
         down_key=pygame.K_DOWN,
         left_key=pygame.K_LEFT,
         right_key=pygame.K_RIGHT,
-    ):
+    ) -> "Sprite":
         """Обрабатывает ввод с клавиатуры для движения спрайта.
 
         Args:
@@ -1329,6 +1441,9 @@ class Sprite(pygame.sprite.Sprite):
             down_key (int, optional): Код клавиши для движения вниз. По умолчанию pygame.K_DOWN.
             left_key (int, optional): Код клавиши для движения влево. По умолчанию pygame.K_LEFT.
             right_key (int, optional): Код клавиши для движения вправо. По умолчанию pygame.K_RIGHT.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         keys = pygame.key.get_pressed()
 
@@ -1369,47 +1484,65 @@ class Sprite(pygame.sprite.Sprite):
         # Если двигаемся по диагонали, нормализуем скорость
         if self.velocity.x != 0 and self.velocity.y != 0:
             self.velocity = self.velocity.normalize() * self.speed
+        return self
 
-    def stop(self):
-        """Останавливает движение спрайта и обнуляет скорость."""
+    def stop(self) -> "Sprite":
+        """Останавливает движение спрайта и обнуляет скорость.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
+        """
         self.velocity.x = 0
         self.velocity.y = 0
+        return self
 
-    def rotate_by(self, angle_change: float):
+    def rotate_by(self, angle_change: float) -> "Sprite":
         """Поворачивает спрайт на относительный угол.
 
         Args:
             angle_change (float): Изменение угла в градусах.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         if angle_change != 0:
             self.angle += angle_change
             self._transform_dirty = True
+        return self
 
-    def fade_by(self, amount: int, min_alpha: int = 0, max_alpha: int = 255):
+    def fade_by(self, amount: int, min_alpha: int = 0, max_alpha: int = 255) -> "Sprite":
         """Изменяет прозрачность спрайта на относительное значение.
 
         Args:
             amount (int): Величина изменения прозрачности.
             min_alpha (int, optional): Минимальное значение прозрачности. По умолчанию 0.
             max_alpha (int, optional): Максимальное значение прозрачности. По умолчанию 255.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         new_alpha = max(min_alpha, min(max_alpha, self.alpha + amount))
         if self.alpha != new_alpha:
             self.alpha = new_alpha
             self._color_dirty = True
+        return self
 
-    def scale_by(self, amount: float, min_scale: float = 0.0, max_scale: float = 2.0):
+    def scale_by(self, amount: float, min_scale: float = 0.0, max_scale: float = 2.0) -> "Sprite":
         """Изменяет масштаб спрайта на относительное значение.
 
         Args:
             amount (float): Величина изменения масштаба.
             min_scale (float, optional): Минимальное значение масштаба. По умолчанию 0.0.
             max_scale (float, optional): Максимальное значение масштаба. По умолчанию 2.0.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         new_scale = max(min_scale, min(max_scale, self.scale + amount))
         if self.scale != new_scale:
             self.scale = new_scale
             self._transform_dirty = True
+        return self
 
     def distance_to(self, target: Union["Sprite", VectorInput]) -> float:
         """Вычисляет расстояние до цели.
@@ -1437,14 +1570,18 @@ class Sprite(pygame.sprite.Sprite):
 
         return self.get_world_position().distance_to(target_pos)
 
-    def set_state(self, state: str):
+    def set_state(self, state: str) -> "Sprite":
         """Устанавливает текущее состояние спрайта.
 
         Args:
             state (str): Имя нового состояния.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         if state in self.states:
             self.state = state
+        return self
 
     def is_in_state(self, state: str) -> bool:
         """Проверяет, находится ли спрайт в указанном состоянии.
@@ -1486,7 +1623,7 @@ class Sprite(pygame.sprite.Sprite):
         padding_right: int = 0,
         padding_top: int = 0,
         padding_bottom: int = 0,
-    ):
+    ) -> "Sprite":
         """Ограничивает движение спрайта в пределах указанных границ.
 
         Args:
@@ -1499,6 +1636,9 @@ class Sprite(pygame.sprite.Sprite):
             padding_right (int, optional): Отступ справа. По умолчанию 0.
             padding_top (int, optional): Отступ сверху. По умолчанию 0.
             padding_bottom (int, optional): Отступ снизу. По умолчанию 0.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         if check_left and self.rect.left < bounds.left + padding_left:
             self.rect.left = bounds.left + padding_left
@@ -1508,6 +1648,7 @@ class Sprite(pygame.sprite.Sprite):
             self.rect.top = bounds.top + padding_top
         if check_bottom and self.rect.bottom > bounds.bottom - padding_bottom:
             self.rect.bottom = bounds.bottom - padding_bottom
+        return self
 
     def _resolve_collisions(self):
         """Internal method to resolve penetrations with `self.collision_targets`."""
@@ -1550,54 +1691,73 @@ class Sprite(pygame.sprite.Sprite):
                 if hasattr(self, "collide"):
                     collider_rect.center = self.rect.center
 
-    def set_collision_targets(self, obstacles: list):
+    def set_collision_targets(self, obstacles: list) -> "Sprite":
         """Устанавливает или перезаписывает список спрайтов для коллизий.
 
         Args:
             obstacles (list): Список спрайтов или pygame.sprite.Group.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.collision_targets = list(obstacles)
+        return self
 
-    def add_collision_target(self, obstacle):
+    def add_collision_target(self, obstacle) -> "Sprite":
         """Добавляет один спрайт в список коллизий.
 
         Args:
             obstacle: Спрайт для добавления в список коллизий.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         if self.collision_targets is None:
             self.collision_targets = []
         if obstacle not in self.collision_targets:
             self.collision_targets.append(obstacle)
+        return self
 
-    def add_collision_targets(self, obstacles: list):
+    def add_collision_targets(self, obstacles: list) -> "Sprite":
         """Добавляет список или группу спрайтов в список коллизий.
 
         Args:
             obstacles (list): Список или группа спрайтов для добавления.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         if self.collision_targets is None:
             self.collision_targets = []
         for obstacle in obstacles:
             if obstacle not in self.collision_targets:
                 self.collision_targets.append(obstacle)
+        return self
 
-    def remove_collision_target(self, obstacle):
+    def remove_collision_target(self, obstacle) -> "Sprite":
         """Удаляет один спрайт из списка коллизий.
 
         Args:
             obstacle: Спрайт для удаления из списка коллизий.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         if self.collision_targets:
             try:
                 self.collision_targets.remove(obstacle)
             except ValueError:
-                pass  # Ignore if obstacle is not in the list
+                pass
+        return self
 
-    def remove_collision_targets(self, obstacles: list):
+    def remove_collision_targets(self, obstacles: list) -> "Sprite":
         """Удаляет список или группу спрайтов из списка коллизий.
 
         Args:
             obstacles (list): Список или группа спрайтов для удаления.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         if self.collision_targets:
             for obstacle in obstacles:
@@ -1605,7 +1765,13 @@ class Sprite(pygame.sprite.Sprite):
                     self.collision_targets.remove(obstacle)
                 except ValueError:
                     pass
+        return self
 
-    def clear_collision_targets(self):
-        """Отключает все коллизии для этого спрайта."""
+    def clear_collision_targets(self) -> "Sprite":
+        """Отключает все коллизии для этого спрайта.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
+        """
         self.collision_targets = None
+        return self

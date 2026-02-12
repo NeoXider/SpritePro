@@ -26,9 +26,7 @@ from spritePro.layout import (
 
 def _make_box(size=(30, 30), color=(255, 200, 100)):
     """Квадрат-спрайт для использования как ребёнок лейаута."""
-    sp = s.Sprite("", size, (0, 0))
-    sp.set_rect_shape(size=size, color=color, border_radius=4)
-    return sp
+    return s.Sprite("", size, (0, 0)).set_rect_shape(size=size, color=color, border_radius=4)
 
 
 PAD_TOP = 78
@@ -41,9 +39,9 @@ MAIN_CONT_RADIUS = 12
 
 def _make_zone_container(w, h, scene):
     """Контейнер зоны — спрайт с рамкой, позиция задаётся главным лейаутом."""
-    cont = s.Sprite("", (w, h), (0, 0), scene=scene)
-    cont.set_rect_shape(size=(w, h), color=(60, 60, 80), width=0, border_radius=8)
-    return cont
+    return s.Sprite("", (w, h), (0, 0), scene=scene).set_rect_shape(
+        size=(w, h), color=(60, 60, 80), width=0, border_radius=8
+    )
 
 
 def _add_zone_label(cont, label_text, scene):
@@ -70,20 +68,22 @@ class LayoutDemoScene(s.Scene):
 
         main_w = W - 2 * PAD_SIDE
         main_h = H - PAD_TOP - PAD_BOTTOM
-        main_cont = s.Sprite(
-            "",
-            (main_w, main_h),
-            (PAD_SIDE + main_w / 2, PAD_TOP + main_h / 2),
-            scene=self,
-            sorting_order=-2,
+        main_cont = (
+            s.Sprite(
+                "",
+                (main_w, main_h),
+                (PAD_SIDE + main_w / 2, PAD_TOP + main_h / 2),
+                scene=self,
+                sorting_order=-2,
+            )
+            .set_rect_shape(
+                size=(main_w, main_h),
+                color=MAIN_CONT_COLOR,
+                width=MAIN_CONT_BORDER,
+                border_radius=MAIN_CONT_RADIUS,
+            )
+            .set_position((PAD_SIDE, PAD_TOP), anchor=s.Anchor.TOP_LEFT)
         )
-        main_cont.set_rect_shape(
-            size=(main_w, main_h),
-            color=MAIN_CONT_COLOR,
-            width=MAIN_CONT_BORDER,
-            border_radius=MAIN_CONT_RADIUS,
-        )
-        main_cont.set_position((PAD_SIDE, PAD_TOP), anchor=s.Anchor.TOP_LEFT)
         self._main_cont = main_cont
         self._main_w = main_w
         self._main_h = main_h

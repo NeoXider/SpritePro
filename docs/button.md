@@ -130,6 +130,9 @@ def click_handler():
     print("Кнопка нажата!")
     
 button.on_click(click_handler)
+
+# Методы возвращают self — можно цепочкой
+button.on_click(click_handler).on_hover(hover_handler).set_base_color((100, 150, 200))
 ```
 
 ## Состояния кнопки

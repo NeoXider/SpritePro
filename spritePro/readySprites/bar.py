@@ -95,12 +95,15 @@ class Bar(Sprite):
         # Set initial image
         self._update_clipped_image()
 
-    def set_fill_amount(self, value: float, animate: bool = True) -> None:
+    def set_fill_amount(self, value: float, animate: bool = True) -> "Bar":
         """Устанавливает значение заполнения полосы.
 
         Args:
             value (float): Значение заполнения от 0.0 до 1.0.
             animate (bool, optional): Анимировать ли изменение. По умолчанию True.
+
+        Returns:
+            Bar: self для цепочек вызовов.
         """
         self._target_fill = max(0.0, min(1.0, value))  # Clamp to 0-1
 
@@ -111,6 +114,7 @@ class Bar(Sprite):
         else:
             self._is_animating = True
             self._animation_timer = 0.0
+        return self
 
     def get_fill_amount(self) -> float:
         """Получает текущее значение заполнения.
@@ -138,63 +142,70 @@ class Bar(Sprite):
         """
         self.set_fill_amount(value, animate=True)
 
-    def set_fill_direction(self, direction: Union[str, FillDirection]) -> None:
+    def set_fill_direction(self, direction: Union[str, FillDirection]) -> "Bar":
         """Устанавливает направление заполнения полосы.
 
         Args:
             direction (Union[str, FillDirection]): Новое направление заполнения.
+
+        Returns:
+            Bar: self для цепочек вызовов.
         """
         self._fill_direction = direction
         self._update_clipped_image()
+        return self
 
-    def set_animate_duration(self, duration: float) -> None:
+    def set_animate_duration(self, duration: float) -> "Bar":
         """Устанавливает длительность анимации для изменений заполнения.
 
         Args:
             duration (float): Длительность анимации в секундах. 0 = без анимации.
+
+        Returns:
+            Bar: self для цепочек вызовов.
         """
         self._animate_duration = duration
+        return self
 
     def set_fill_type(
         self,
         fill_direction: Union[str, FillDirection],
         anchor: Union[str, Anchor] = Anchor.CENTER,
-    ) -> None:
+    ) -> "Bar":
         """Устанавливает направление заполнения и якорь для полосы.
 
         Args:
             fill_direction (Union[str, FillDirection]): Направление заполнения (например, "left_to_right", "bottom_to_top").
             anchor (Union[str, Anchor], optional): Точка якоря для позиционирования. По умолчанию CENTER.
-        """
-        # Set fill direction
-        self.set_fill_direction(fill_direction)
 
-        # Set anchor using parent's set_position method
+        Returns:
+            Bar: self для цепочек вызовов.
+        """
+        self.set_fill_direction(fill_direction)
         current_pos = self.get_position()
         if current_pos:
             self.set_position(current_pos, anchor)
+        return self
 
     def set_image(
         self,
         image_source: Union[str, Path, pygame.Surface] = "",
         size: Optional[Tuple[int, int]] = None,
-    ) -> None:
+    ) -> "Bar":
         """Устанавливает новое изображение для полосы и обновляет обрезку.
 
         Args:
             image_source (Union[str, Path, pygame.Surface], optional): Путь к файлу изображения, pygame Surface или пустая строка. По умолчанию "".
             size (Optional[Tuple[int, int]], optional): Новые размеры (ширина, высота) или None для сохранения оригинального размера.
+
+        Returns:
+            Bar: self для цепочек вызовов.
         """
-        # Use parent's set_image method (handles loading, fallback, and scaling properly)
         super().set_image(image_source, size)
-
-        # Update the base original image for clipping (use parent's scaled image)
-        # This is the image that will be clipped based on fill_amount
         self._base_original_image = self.original_image.copy()
-
-        # Recalculate clipping with new image (only if attributes are initialized)
         if hasattr(self, "_current_fill"):
             self._update_clipped_image()
+        return self
 
     def _update_clipped_image(self) -> None:
         """Обновляет изображение полосы на основе текущего значения заполнения и направления.
@@ -644,21 +655,25 @@ class BarWithBackground(Bar):
         else:
             return pygame.Rect(0, 0, fill_width, height)
 
-    def set_fill_image(self, fill_image: Union[str, Path, pygame.Surface] = ""):
+    def set_fill_image(self, fill_image: Union[str, Path, pygame.Surface] = "") -> "Bar":
         """Устанавливает новое изображение заполнения.
 
         Args:
             fill_image (Union[str, Path, pygame.Surface], optional): Новый путь к изображению заполнения, поверхность или пустая строка. По умолчанию "".
+
+        Returns:
+            Bar: self для цепочек вызовов.
         """
         self._fill_image_source = fill_image
         self._create_fill_sprite()
         self._update_clipped_image()
+        return self
 
     def set_fill_color(
         self,
         color: Union[Tuple[int, int, int], Tuple[int, int, int, int]],
         alpha: Optional[int] = None,
-    ):
+    ) -> "Bar":
         """Устанавливает цвет изображения заполнения.
 
         Создает новую поверхность с указанным цветом для fill изображения.
@@ -667,8 +682,10 @@ class BarWithBackground(Bar):
         Args:
             color (Union[Tuple[int, int, int], Tuple[int, int, int, int]]): Цвет в формате RGB или RGBA (0-255).
             alpha (Optional[int], optional): Альфа-канал (0-255). Используется только если color в формате RGB. По умолчанию None (255).
+
+        Returns:
+            Bar: self для цепочек вызовов.
         """
-        # Определяем RGB и альфа
         if len(color) == 4:
             r, g, b, a = color
             self._fill_color = (r, g, b)
@@ -682,51 +699,69 @@ class BarWithBackground(Bar):
         fill_surface = pygame.Surface(self._fill_size, pygame.SRCALPHA)
         fill_surface.fill((r, g, b, self._fill_alpha))
 
-        # Обновляем fill поверхность
         self._fill_surface = pygame.transform.scale(fill_surface, self._fill_size)
         self._update_clipped_image()
+        return self
 
-    def set_background_image(self, background_image: Union[str, Path, pygame.Surface] = ""):
+    def set_background_image(
+        self, background_image: Union[str, Path, pygame.Surface] = ""
+    ) -> "Bar":
         """Устанавливает новое фоновое изображение.
 
         Args:
             background_image (Union[str, Path, pygame.Surface], optional): Новый путь к фоновому изображению, поверхность или пустая строка. По умолчанию "".
+
+        Returns:
+            Bar: self для цепочек вызовов.
         """
         self.set_image(background_image)
+        return self
 
-    def set_background_size(self, size: Tuple[int, int]):
+    def set_background_size(self, size: Tuple[int, int]) -> "Bar":
         """Устанавливает новый размер фона.
 
         Args:
             size (Tuple[int, int]): Новый размер фона (ширина, высота).
+
+        Returns:
+            Bar: self для цепочек вызовов.
         """
         self._background_size = size
         self.set_size(size)
+        return self
 
-    def set_fill_size(self, size: Tuple[int, int]):
+    def set_fill_size(self, size: Tuple[int, int]) -> "Bar":
         """Устанавливает новый размер заполнения.
 
         Args:
             size (Tuple[int, int]): Новый размер заполнения (ширина, высота).
+
+        Returns:
+            Bar: self для цепочек вызовов.
         """
         self._fill_size = size
         self._create_fill_sprite()
         self._update_clipped_image()
+        return self
 
-    def set_both_sizes(self, background_size: Tuple[int, int], fill_size: Tuple[int, int]):
+    def set_both_sizes(self, background_size: Tuple[int, int], fill_size: Tuple[int, int]) -> "Bar":
         """Устанавливает размеры фона и заполнения.
 
         Args:
             background_size (Tuple[int, int]): Новый размер фона (ширина, высота).
             fill_size (Tuple[int, int]): Новый размер заполнения (ширина, высота).
+
+        Returns:
+            Bar: self для цепочек вызовов.
         """
         self._background_size = background_size
         self._fill_size = fill_size
         self.set_size(background_size)
         self._create_fill_sprite()
         self._update_clipped_image()
+        return self
 
-    def set_fill_amount(self, value: float, animate: bool = True) -> None:
+    def set_fill_amount(self, value: float, animate: bool = True) -> "Bar":
         """Устанавливает значение заполнения полосы.
 
         Args:
@@ -742,6 +777,7 @@ class BarWithBackground(Bar):
         else:
             self._is_animating = True
             self._animation_timer = 0.0
+        return self
 
     def get_fill_amount(self) -> float:
         """Получает текущее значение заполнения.

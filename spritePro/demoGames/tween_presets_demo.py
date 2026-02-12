@@ -13,11 +13,10 @@ import spritePro as s  # noqa: E402
 def main() -> None:
     s.get_screen((900, 620), "Tween Presets Demo")
 
-    sprite = s.Sprite("", (60, 60), s.WH_C)
-    sprite.set_color((120, 200, 255))
-
-    target = s.Sprite("", (20, 20), (750, 120))
-    target.set_color((255, 200, 120))
+    sprite = s.Sprite("", (60, 60), s.WH_C).set_color((120, 200, 255)).set_rect_shape(
+        border_radius=20
+    )
+    target = s.Sprite("", (20, 20), (750, 120)).set_color((255, 200, 120))
 
     title = s.TextSprite("Tween Presets Demo", 28, (255, 255, 255), (s.WH_C.x, 24))
 
@@ -44,12 +43,11 @@ def main() -> None:
     }
 
     def reset() -> None:
-        sprite.set_position(base_state["pos"])
-        sprite.set_scale(base_state["scale"])
-        sprite.rotate_to(base_state["angle"])
-        sprite.set_alpha(base_state["alpha"])
-        sprite.set_color(base_state["color"])
-        sprite.set_image(sprite._image_source, size=base_state["size"])
+        sprite.set_rect_shape(sprite.size, border_radius=20).set_position(
+            base_state["pos"]
+        ).set_scale(base_state["scale"]).rotate_to(base_state["angle"]).set_alpha(
+            base_state["alpha"]
+        ).set_color(base_state["color"]).set_image(sprite._image_source, size=base_state["size"])
 
     while True:
         s.update(fill_color=(20, 20, 30))

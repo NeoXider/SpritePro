@@ -60,6 +60,8 @@
 - смена контейнера или его размеров;
 - если список детей был изменён снаружи (не через add/remove).
 
+Методы `add`, `add_children`, `remove`, `remove_children`, `apply`, `refresh` возвращают сам лейаут (`self`), поэтому можно вызывать цепочкой: `layout.add(box1).add(box2).refresh()` или `layout.add_children(a, b, c)`.
+
 ## Circle: rotate_children и offset_angle
 
 - **rotate_children** (bool, по умолчанию `True`): автоматически задавать каждому ребёнку угол поворота (`sprite.angle`) так, чтобы спрайт был ориентирован по окружности (например, «верх» смотрит наружу). Если `False`, позиции по окружности меняются, угол спрайта не трогается.
@@ -270,9 +272,9 @@ layout = Layout(
     pos=(100, 200),
     scene=scene,
 )
-layout.add(btn1)
-layout.add(btn2)
-layout.apply()
+layout.add(btn1).add(btn2)
+# или layout.add_children(btn1, btn2)
+# apply() вызывается автоматически после add; при смене параметров — layout.apply() или layout.refresh()
 # Перемещение лейаута перемещает и кнопки
 layout.set_position((150, 250))
 ```
