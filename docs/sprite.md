@@ -140,6 +140,20 @@ sprite.set_world_position((400, 300))
 sprite.set_world_position((10, 10), anchor=s.Anchor.TOP_LEFT)
 ```
 
+### Цепочки вызовов
+
+Методы установки возвращают сам спрайт (`self`), поэтому их можно вызывать цепочкой:
+
+- `set_position`, `set_scale`, `set_angle`, `rotate_to`, `set_alpha`, `set_color`, `set_sorting_order`, `look_at`
+
+```python
+# Один вызов вместо нескольких строк
+sprite.set_position((100, 200)).set_scale(1.5).set_alpha(200).set_color((255, 100, 100))
+
+# Сброс состояния перед анимацией
+box.set_position(base_pos).set_scale(1.0).rotate_to(0).set_alpha(255).set_color((255, 255, 255))
+```
+
 **Удобные свойства для быстрого доступа:**
 ```python
 # Установка позиции через свойство

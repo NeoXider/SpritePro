@@ -182,13 +182,17 @@ class Sprite(pygame.sprite.Sprite):
         """
         return self.scale
 
-    def set_scale(self, value: float):
+    def set_scale(self, value: float) -> "Sprite":
         """Устанавливает масштаб спрайта.
 
         Args:
             value (float): Новый масштаб спрайта.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.scale = value
+        return self
 
     @property
     def angle(self) -> float:
@@ -218,28 +222,39 @@ class Sprite(pygame.sprite.Sprite):
         """
         return self.angle
 
-    def set_angle(self, value: float):
+    def set_angle(self, value: float) -> "Sprite":
         """Устанавливает угол поворота спрайта.
 
         Args:
             value (float): Новый угол поворота в градусах.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.angle = value
+        return self
 
-    def rotate_to(self, value: float):
+    def rotate_to(self, value: float) -> "Sprite":
         """Поворачивает спрайт к указанному углу.
 
         Args:
             value (float): Целевой угол поворота в градусах.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.set_angle(value)
+        return self
 
-    def look_at(self, target: "SpriteSceneInput", offset: float = 0.0) -> None:
+    def look_at(self, target: "SpriteSceneInput", offset: float = 0.0) -> "Sprite":
         """Поворачивает спрайт в сторону цели.
 
         Args:
             target (SpriteSceneInput): Целевой спрайт или позиция (x, y).
             offset (float, optional): Дополнительный угол в градусах.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         origin = self.get_world_position()
         if hasattr(target, "get_world_position"):
@@ -250,6 +265,7 @@ class Sprite(pygame.sprite.Sprite):
             target_pos = _coerce_vector2(target, origin)
         angle = angle_to_point(origin, target_pos, offset=offset)
         self.rotate_to(angle)
+        return self
 
     @property
     def alpha(self) -> int:
@@ -280,13 +296,17 @@ class Sprite(pygame.sprite.Sprite):
         """
         return self.alpha
 
-    def set_alpha(self, value: int):
+    def set_alpha(self, value: int) -> "Sprite":
         """Устанавливает прозрачность спрайта.
 
         Args:
             value (int): Новая прозрачность (0-255).
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.alpha = value
+        return self
 
     @property
     def color(self) -> Optional[Tuple[int, int, int]]:
@@ -308,27 +328,35 @@ class Sprite(pygame.sprite.Sprite):
             self._color = value
             self._color_dirty = True
 
-    def set_color(self, value: Tuple[int, int, int]):
+    def set_color(self, value: Tuple[int, int, int]) -> "Sprite":
         """Устанавливает цвет спрайта (для обратной совместимости).
 
         Args:
             value (Tuple[int, int, int]): Новый цвет в формате RGB.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.color = value
+        return self
 
-    def set_sorting_order(self, order: int) -> None:
+    def set_sorting_order(self, order: int) -> "Sprite":
         """Устанавливает порядок отрисовки (слой), аналогично Unity's sortingOrder.
 
         Меньшие значения отрисовываются сзади, большие - спереди.
 
         Args:
             order (int): Новый порядок отрисовки.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
         """
         self.sorting_order = int(order)
         try:
             spritePro.get_game().set_sprite_layer(self, self.sorting_order)
         except Exception:
             pass
+        return self
 
     def set_screen_space(self, locked: bool = True) -> None:
         """Фиксирует спрайт к экрану (без смещения камерой).
@@ -406,12 +434,15 @@ class Sprite(pygame.sprite.Sprite):
                 self._set_world_center(self.get_world_position())
             self.local_offset = Vector2()
 
-    def set_position(self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER) -> None:
+    def set_position(self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER) -> "Sprite":
         """Устанавливает позицию спрайта с заданным якорем и обновляет стартовые координаты.
 
         Args:
             position (VectorInput): Новая позиция спрайта (x, y).
             anchor (str | Anchor, optional): Якорь для установки позиции. По умолчанию Anchor.CENTER.
+
+        Returns:
+            Sprite: self для цепочек вызовов.
 
         Raises:
             ValueError: Если указан неподдерживаемый якорь.
@@ -436,6 +467,7 @@ class Sprite(pygame.sprite.Sprite):
         self._set_world_center(Vector2(self.rect.center))
         if self.parent:
             self.local_offset = self.get_world_position() - self.parent.get_world_position()
+        return self
 
     def get_position(self) -> Tuple[int, int]:
         """Получает текущую позицию спрайта (координаты центра).
