@@ -11,6 +11,14 @@
 - Продвинутые UI компоненты
 - Мобильная поддержка
 
+## [1.4.9]
+
+### Added
+- **Tween.completion_value** — при **SetYoyo(True)** запоминается исходная стартовая позиция; при **Kill(complete=True)** применяется она (логический конец анимации), а не конец текущего полуцикла. Можно вызывать DoKill(True) и сразу новый DoMoveBy без ручного set_position.
+
+### Changed
+- **Документация**: [docs/tween.md](docs/tween.md), докстринг DoKill — уточнено поведение Kill(complete=True) при yoyo.
+
 ## [1.4.8]
 
 ### Fixed

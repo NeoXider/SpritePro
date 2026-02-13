@@ -297,9 +297,12 @@ class Tween:
         self.easing = self._get_easing_func(easing)
         self.on_complete = on_complete
         self.loop = loop
-        self.loop_count: int = -1 if loop else 0  # -1 = бесконечно, 0 = без повтора, 1+ = столько проходов
+        self.loop_count: int = (
+            -1 if loop else 0
+        )  # -1 = бесконечно, 0 = без повтора, 1+ = столько проходов
         self._loops_done: int = 0
         self.yoyo = yoyo
+        self.completion_value: Any = None  # при Kill(complete=True) применить это значение вместо end_value (для yoyo = старт)
         self.delay = delay
         self.on_update = on_update
         self.value_type = value_type
@@ -413,6 +416,14 @@ class Tween:
         except Exception:
             return end if t >= 1.0 else start
 
+    def _copy_value(self, value: Any) -> Any:
+        """Копия значения для completion_value (Vector2, tuple, list, скаляр)."""
+        if hasattr(value, "copy"):
+            return value.copy()
+        if isinstance(value, (list, tuple)):
+            return type(value)(value)
+        return value
+
     @staticmethod
     def _is_sequence(value: Any) -> bool:
         """Проверяет, является ли значение последовательностью."""
@@ -469,7 +480,10 @@ class Tween:
         """
         self.is_playing = False
         if apply_end:
-            self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
+            if self.completion_value is not None:
+                self.current_value = self._copy_value(self.completion_value)
+            else:
+                self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
             if self.on_update:
                 self.on_update(self.current_value)
             if call_on_complete and self.on_complete:
@@ -552,6 +566,8 @@ class TweenHandle:
 
     def SetYoyo(self, yoyo: bool = True) -> "TweenHandle":
         self._tween.yoyo = yoyo
+        if yoyo:
+            self._tween.completion_value = self._tween._copy_value(self._tween.start_value)
         return self
 
     def Restart(self, apply_end: bool = False) -> "TweenHandle":
