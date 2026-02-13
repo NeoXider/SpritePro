@@ -297,6 +297,8 @@ class Tween:
         self.easing = self._get_easing_func(easing)
         self.on_complete = on_complete
         self.loop = loop
+        self.loop_count: int = -1 if loop else 0  # -1 = бесконечно, 0 = без повтора, 1+ = столько проходов
+        self._loops_done: int = 0
         self.yoyo = yoyo
         self.delay = delay
         self.on_update = on_update
@@ -346,7 +348,7 @@ class Tween:
             return self.start_value
 
         if elapsed >= self.duration:
-            if self.loop:
+            if self.loop_count == -1:
                 if self.yoyo:
                     self.direction *= -1
                     self.start_time = now
@@ -354,22 +356,31 @@ class Tween:
                 else:
                     self.start_time = now
                 return self.end_value
-            else:
-                self.is_playing = False
-                self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
-                if self.on_update:
-                    self.on_update(self.current_value)
-                target = getattr(self, "target_sprite", None)
-                if target is not None and callable(getattr(target, "_remove_tween", None)):
-                    target._remove_tween(self)
-                if self.on_complete:
-                    self.on_complete()
-                if self.auto_remove_on_complete:
-                    try:
-                        spritePro.unregister_update_object(self)
-                    except (ImportError, AttributeError):
-                        pass
-                return None
+            if self.loop_count > 0:
+                self._loops_done += 1
+                if self._loops_done < self.loop_count:
+                    if self.yoyo:
+                        self.direction *= -1
+                        self.start_time = now
+                        self.start_value, self.end_value = self.end_value, self.start_value
+                    else:
+                        self.start_time = now
+                    return self.end_value
+            self.is_playing = False
+            self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
+            if self.on_update:
+                self.on_update(self.current_value)
+            target = getattr(self, "target_sprite", None)
+            if target is not None and callable(getattr(target, "_remove_tween", None)):
+                target._remove_tween(self)
+            if self.on_complete:
+                self.on_complete()
+            if self.auto_remove_on_complete:
+                try:
+                    spritePro.unregister_update_object(self)
+                except (ImportError, AttributeError):
+                    pass
+            return None
 
         progress = elapsed / self.duration
         eased = self.easing(progress)
@@ -486,6 +497,7 @@ class Tween:
         self.is_playing = True
         self.is_paused = False
         self.direction = 1
+        self._loops_done = 0
 
     def set_easing(self, easing: Any) -> None:
         """Устанавливает функцию плавности (EasingType или Ease)."""
@@ -532,7 +544,10 @@ class TweenHandle:
         return self
 
     def SetLoops(self, count: int) -> "TweenHandle":
-        self._tween.loop = count != 0
+        """count: 0 = без повтора (один проход), 1 = один проход, 2+ = столько проходов, -1 = бесконечно."""
+        self._tween.loop_count = -1 if count < 0 else count
+        self._tween.loop = self._tween.loop_count != 0
+        self._tween._loops_done = 0
         return self
 
     def SetYoyo(self, yoyo: bool = True) -> "TweenHandle":
