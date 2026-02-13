@@ -141,6 +141,7 @@ class Sprite(pygame.sprite.Sprite):
         self.collision_targets = None
         self._transformed_image = None
         self.mask = None
+        self._active_tweens: List[object] = []
 
         self.set_image(sprite, self.size_vector)
         # Устанавливаем позицию с указанным якорем
@@ -631,6 +632,40 @@ class Sprite(pygame.sprite.Sprite):
         self.set_image(self._image_source, size=new_size)
         return self
 
+    def _add_tween(self, tween: object) -> None:
+        if tween not in self._active_tweens:
+            self._active_tweens.append(tween)
+
+    def _remove_tween(self, tween: object) -> None:
+        if tween in self._active_tweens:
+            self._active_tweens.remove(tween)
+
+    def _register_tween(self, tween: object) -> TweenHandle:
+        tween.target_sprite = self  # type: ignore[attr-defined]
+        self._add_tween(tween)
+        return TweenHandle(tween)
+
+    def DoKill(self, complete: bool = False) -> "Sprite":
+        """Останавливает все твины этого спрайта (DoMove, DoScale и т.д.).
+
+        Args:
+            complete: Если True — применить конечные значения и вызвать on_complete.
+
+        Returns:
+            Sprite: self для цепочек.
+        """
+        for t in list(self._active_tweens):
+            try:
+                t.stop(apply_end=complete, call_on_complete=complete)
+            except Exception:
+                pass
+            try:
+                spritePro.unregister_update_object(t)
+            except (ImportError, AttributeError):
+                pass
+        self._active_tweens.clear()
+        return self
+
     def DoMove(
         self,
         to: VectorInput,
@@ -646,7 +681,7 @@ class Sprite(pygame.sprite.Sprite):
             auto_remove_on_complete=True,
             anchor=anchor,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoMoveBy(
         self,
@@ -663,7 +698,7 @@ class Sprite(pygame.sprite.Sprite):
             auto_remove_on_complete=True,
             anchor=anchor,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoScale(self, to: float, duration: float = 1.0) -> TweenHandle:
         """Fluent-твин: масштаб к значению. По умолчанию Ease.OutQuad, автоудаление по завершении."""
@@ -674,7 +709,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoScaleBy(self, delta: float, duration: float = 1.0) -> TweenHandle:
         """Fluent-твин: изменение масштаба на delta. По умолчанию Ease.OutQuad, автоудаление по завершении."""
@@ -685,7 +720,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoRotate(self, to: float, duration: float = 1.0) -> TweenHandle:
         """Fluent-твин: поворот к углу. По умолчанию Ease.OutQuad, автоудаление по завершении."""
@@ -696,7 +731,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoRotateBy(self, delta: float, duration: float = 1.0) -> TweenHandle:
         """Fluent-твин: поворот на delta градусов. По умолчанию Ease.OutQuad, автоудаление по завершении."""
@@ -707,7 +742,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoColor(
         self,
@@ -722,7 +757,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoAlpha(self, to: int, duration: float = 1.0) -> TweenHandle:
         """Fluent-твин: прозрачность к значению. По умолчанию Ease.OutQuad, автоудаление по завершении."""
@@ -733,7 +768,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoFadeIn(self, duration: float = 1.0) -> TweenHandle:
         """Fluent-твин: появление. По умолчанию Ease.OutQuad, автоудаление по завершении."""
@@ -743,7 +778,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoFadeOut(self, duration: float = 1.0) -> TweenHandle:
         """Fluent-твин: исчезновение. По умолчанию Ease.OutQuad, автоудаление по завершении."""
@@ -753,7 +788,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoSize(self, to: VectorInput, duration: float = 1.0) -> TweenHandle:
         """Fluent-твин: размер к (width, height). По умолчанию Ease.OutQuad, автоудаление по завершении."""
@@ -764,7 +799,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoPunchScale(
         self,
@@ -779,7 +814,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoShakePosition(
         self,
@@ -796,7 +831,7 @@ class Sprite(pygame.sprite.Sprite):
             auto_remove_on_complete=True,
             anchor=anchor,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoShakeRotation(
         self,
@@ -811,7 +846,7 @@ class Sprite(pygame.sprite.Sprite):
             easing=Ease.OutQuad,
             auto_remove_on_complete=True,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def DoBezier(
         self,
@@ -832,7 +867,7 @@ class Sprite(pygame.sprite.Sprite):
             auto_remove_on_complete=True,
             anchor=anchor,
         )
-        return TweenHandle(t)
+        return self._register_tween(t)
 
     def get_world_position(self) -> Vector2:
         """Получает мировую позицию спрайта (с учетом камеры).

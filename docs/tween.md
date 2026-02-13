@@ -122,7 +122,7 @@ s.tween_color(sprite, to=(255, 120, 120), duration=1.0)
 
 ### Fluent API (Do-твины)
 
-Удобный цепочечный API в стиле DOTween: методы на спрайте возвращают `TweenHandle`, у которого можно вызывать `SetEase`, `SetDelay`, `OnComplete`, `SetLoops`, `SetYoyo`, `Kill`.
+Удобный цепочечный API в стиле DOTween: методы на спрайте возвращают **твин** (`TweenHandle`), **не спрайт**. Хэндл можно сохранить в переменную и затем только его удалить (`Kill`) или перезапустить (`Restart`). У `TweenHandle`: `SetEase`, `SetDelay`, `OnComplete`, `SetLoops`, `SetYoyo`, `Restart`, `Kill`.
 
 - **По умолчанию** у Do-твинов: плавность `Ease.OutQuad`, **автоудаление по завершении** (если не зациклен) — твин снимается с обновления после окончания.
 - **Зацикливание**: по умолчанию режим **reset** (каждый цикл с начала); `SetYoyo(True)` включает движение туда-обратно.
@@ -144,13 +144,22 @@ player.DoMove((200, 500), 1).SetEase(s.Ease.OutCubic).SetDelay(0.3).OnComplete(l
 # Бесконечный yoyo-масштаб
 player.DoScale(1.5, 0.8).SetLoops(-1).SetYoyo(True)
 
-# Остановить и удалить без доведения до конца
+# Сохранить хэндл и потом остановить только этот твин
 handle = player.DoMove((600, 400), 2)
 handle.Kill(complete=False)
+
+# Перезапустить твин с начала (работает и после Kill)
+handle = player.DoMove((200, 200), 1)
+handle.Restart()  # или Restart(apply_end=True), чтобы перед сбросом применить конец
 
 # Завершить принудительно: применить конец, вызвать on_complete, удалить
 handle = player.DoMove((600, 400), 2).OnComplete(callback)
 handle.Kill(complete=True)
+
+# Убить все твины спрайта (без хранения хэндлов)
+player.DoMove((100, 100), 1).SetLoops(-1)
+player.DoScale(2, 0.5)
+player.DoKill(complete=False)  # остановить все, не доводя до конца
 ```
 
 #### Методы спрайта (Do*)
@@ -172,6 +181,7 @@ handle.Kill(complete=True)
 | `DoShakePosition(strength=(8,8), duration=0.4, anchor=None)` | Дрожание позиции |
 | `DoShakeRotation(strength=10, duration=0.4)` | Дрожание поворота |
 | `DoBezier(end, control1, control2=None, duration=1.0, anchor=None)` | Движение по Безье |
+| `DoKill(complete=False)` | Остановить все твины этого спрайта (DoMove, DoScale и т.д.) |
 
 #### Методы TweenHandle
 
@@ -182,6 +192,7 @@ handle.Kill(complete=True)
 | `OnComplete(callback)` | Вызов при завершении |
 | `SetLoops(count)` | Зацикливание; `-1` — бесконечно |
 | `SetYoyo(yoyo=True)` | Режим туда-обратно при цикле |
+| `Restart(apply_end=False)` | Сбросить в начало и запустить заново; работает и после Kill() |
 | `Kill(complete=False)` | Остановить и удалить; при `complete=True` — применить конец и вызвать on_complete |
 
 #### Ease (удобные имена плавности)

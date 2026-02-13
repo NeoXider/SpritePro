@@ -359,6 +359,9 @@ class Tween:
                 self.current_value = self._lerp_value(self.start_value, self.end_value, 1.0)
                 if self.on_update:
                     self.on_update(self.current_value)
+                target = getattr(self, "target_sprite", None)
+                if target is not None and callable(getattr(target, "_remove_tween", None)):
+                    target._remove_tween(self)
                 if self.on_complete:
                     self.on_complete()
                 if self.auto_remove_on_complete:
@@ -536,11 +539,27 @@ class TweenHandle:
         self._tween.yoyo = yoyo
         return self
 
+    def Restart(self, apply_end: bool = False) -> "TweenHandle":
+        """Сбрасывает твин в начало и запускает заново. Работает и после Kill() (твин снова регистрируется)."""
+        self._tween.reset(apply_end=apply_end)
+        self._tween.start()
+        try:
+            spritePro.register_update_object(self._tween)
+        except (ImportError, AttributeError):
+            pass
+        target = getattr(self._tween, "target_sprite", None)
+        if target is not None and callable(getattr(target, "_add_tween", None)):
+            target._add_tween(self._tween)
+        return self
+
     def Kill(self, complete: bool = False) -> None:
         if complete:
             self._tween.stop(apply_end=True, call_on_complete=True)
         else:
             self._tween.stop(apply_end=False)
+        target = getattr(self._tween, "target_sprite", None)
+        if target is not None and callable(getattr(target, "_remove_tween", None)):
+            target._remove_tween(self._tween)
         try:
             spritePro.unregister_update_object(self._tween)
         except (ImportError, AttributeError):
