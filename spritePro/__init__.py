@@ -13,6 +13,7 @@ from .scenes import Scene, SceneManager
 from .sprite import Sprite
 from .button import Button
 from .toggle_button import ToggleButton
+from .slider import Slider
 
 from .components.timer import Timer
 from .components.text import TextSprite
@@ -81,6 +82,7 @@ __all__ = [
     "Sprite",
     "Button",
     "ToggleButton",
+    "Slider",
     "Timer",
     "TextSprite",
     "DraggableSprite",

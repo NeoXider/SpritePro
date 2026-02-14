@@ -2,27 +2,11 @@
     "version": "1.0",
     "name": "New Scene",
     "camera": {
-        "x": 0.0,
-        "y": 0.0,
-        "zoom": 1.0
+        "x": 1013.3439511542518,
+        "y": -381.201894545868,
+        "zoom": 0.1707533638412678
     },
     "objects": [
-        {
-            "id": "6e0f02d2",
-            "name": "amogus",
-            "sprite_path": "D:\\GIT\\_fork\\SpritePro\\tools\\sprite_editor\\assets\\amogus.png",
-            "transform": {
-                "x": -768,
-                "y": -96,
-                "rotation": -0.41403555998883235,
-                "scale_x": 0.1,
-                "scale_y": 0.1
-            },
-            "z_index": 0,
-            "visible": true,
-            "locked": false,
-            "custom_data": {}
-        },
         {
             "id": "2917ed07",
             "name": "background_game",
@@ -30,11 +14,59 @@
             "transform": {
                 "x": 1440,
                 "y": -480,
-                "rotation": 0.0,
+                "rotation": -0.5,
                 "scale_x": 1.0,
                 "scale_y": 1.0
             },
             "z_index": 1,
+            "visible": true,
+            "locked": false,
+            "custom_data": {}
+        },
+        {
+            "id": "6e0f02d2",
+            "name": "amogus",
+            "sprite_path": "D:\\GIT\\_fork\\SpritePro\\tools\\sprite_editor\\assets\\amogus.png",
+            "transform": {
+                "x": 256,
+                "y": 416,
+                "rotation": -15.414035559988832,
+                "scale_x": 0.1622222222222222,
+                "scale_y": 0.2264608599779493
+            },
+            "z_index": 2,
+            "visible": true,
+            "locked": false,
+            "custom_data": {}
+        },
+        {
+            "id": "ece52657",
+            "name": "amogus (copy)",
+            "sprite_path": "D:\\GIT\\_fork\\SpritePro\\tools\\sprite_editor\\assets\\amogus.png",
+            "transform": {
+                "x": -96,
+                "y": -128,
+                "rotation": -8.414035559988832,
+                "scale_x": 0.1622222222222222,
+                "scale_y": 0.2264608599779493
+            },
+            "z_index": 2,
+            "visible": true,
+            "locked": false,
+            "custom_data": {}
+        },
+        {
+            "id": "18ff2bc6",
+            "name": "amogus (copy) (copy)",
+            "sprite_path": "D:\\GIT\\_fork\\SpritePro\\tools\\sprite_editor\\assets\\amogus.png",
+            "transform": {
+                "x": 608,
+                "y": 448,
+                "rotation": -15.414035559988832,
+                "scale_x": 0.14601444444444445,
+                "scale_y": 0.4251556833568785
+            },
+            "z_index": 2,
             "visible": true,
             "locked": false,
             "custom_data": {}

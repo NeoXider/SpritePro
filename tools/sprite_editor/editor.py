@@ -3,29 +3,25 @@
 """
 
 import os
-import sys
-import math
-import copy
+import importlib.util
+import re
+from pathlib import Path
 import pygame
 from pygame.math import Vector2
-from typing import Optional, List, Tuple, Dict, Any, Callable
-from dataclasses import dataclass, field
+from typing import Optional, List, Tuple, Dict, Callable
+from dataclasses import dataclass
 from enum import Enum, auto
 
-# Файловый диалог через pygame
-try:
-    import tkinter as tk
-    from tkinter import filedialog
-    TKINTER_AVAILABLE = True
-except ImportError:
-    TKINTER_AVAILABLE = False
-    filedialog = None
+# Файловый диалог через tkinter
+TKINTER_AVAILABLE = importlib.util.find_spec("tkinter") is not None
 
 # Поддержка запуска напрямую и как модуля
 try:
-    from .scene import Scene, SceneObject, Transform, Camera
+    from .scene import Scene, SceneObject, Camera
+    from .ui.windows import SettingsWindow, WindowManager
 except ImportError:
-    from scene import Scene, SceneObject, Transform, Camera
+    from scene import Scene, SceneObject, Camera
+    from ui.windows import SettingsWindow, WindowManager
 
 
 class ToolType(Enum):
@@ -40,6 +36,9 @@ class EditorState:
     """Состояние для Undo/Redo"""
     objects: List[Dict]
     camera: Dict
+    grid_size: int
+    grid_visible: bool
+    snap_to_grid: bool
 
 
 class SpriteEditor:
@@ -87,8 +86,10 @@ class SpriteEditor:
         # Камера
         self.camera = Vector2(0, 0)
         self.zoom = 1.0
-        self.min_zoom = 0.1
-        self.max_zoom = 5.0
+        self.min_zoom = 0.01  # 1%
+        self.max_zoom = 10.0  # 1000%
+        self.min_grid_size = 8
+        self.max_grid_size = 256
         
         # Инструменты
         self.current_tool = ToolType.SELECT
@@ -107,6 +108,8 @@ class SpriteEditor:
         self.mouse_dragging = False
         self.drag_start = Vector2(0, 0)
         self.camera_drag_start = Vector2(0, 0)
+        self._drag_object_starts: Dict[str, Dict[str, float]] = {}
+        self._transform_changed_during_drag = False
         
         # Undo/Redo стек
         self.undo_stack: List[EditorState] = []
@@ -122,9 +125,31 @@ class SpriteEditor:
         
         # Кнопки тулбара (для кликов)
         self._toolbar_buttons: Dict[str, pygame.Rect] = {}
+        self._inspector_actions: List[Tuple[pygame.Rect, Callable[[], None]]] = []
+        self._statusbar_controls: Dict[str, pygame.Rect] = {}
+        self._active_slider: Optional[str] = None
+        self._active_text_input: Optional[str] = None
+        self._text_input_buffers: Dict[str, str] = {"zoom_input": "", "grid_input": ""}
+        self._property_input_rects: Dict[str, pygame.Rect] = {}
+
+        # Иерархия
+        self.hierarchy_scroll = 0
+        self.hierarchy_item_height = 22
+        self._hierarchy_visible_capacity = 0
+
+        # Окна/страницы
+        self.window_manager = WindowManager()
+        self.settings_window = SettingsWindow(
+            pygame.Rect(self.width // 2 - 190, self.height // 2 - 140, 380, 280)
+        )
+        self.window_manager.register(self.settings_window)
+
+        # Строка состояния
+        self.status_message = "Ready"
+        self.status_message_timer = 2.0
         
         # Запуск
-        self._save_state()
+        self._save_state(mark_modified=False)
 
     def _get_viewport_rect(self) -> pygame.Rect:
         """Возвращает прямоугольник viewport"""
@@ -148,17 +173,33 @@ class SpriteEditor:
         center = Vector2(viewport.center)
         return (world_pos - self.camera) * self.zoom + center
 
-    def _save_state(self) -> None:
+    def _sync_scene_camera(self) -> None:
+        """Синхронизирует параметры камеры в модели сцены."""
+        self.scene.camera.x = self.camera.x
+        self.scene.camera.y = self.camera.y
+        self.scene.camera.zoom = self.zoom
+
+    def _set_status(self, message: str, ttl: float = 2.0) -> None:
+        """Показывает краткий статус в нижней панели."""
+        self.status_message = message
+        self.status_message_timer = ttl
+
+    def _save_state(self, mark_modified: bool = True) -> None:
         """Сохраняет состояние для Undo"""
+        self._sync_scene_camera()
         state = EditorState(
             objects=[obj.to_dict() for obj in self.scene.objects],
-            camera=self.scene.camera.to_dict()
+            camera=self.scene.camera.to_dict(),
+            grid_size=self.scene.grid_size,
+            grid_visible=self.scene.grid_visible,
+            snap_to_grid=self.scene.snap_to_grid,
         )
         self.undo_stack.append(state)
         if len(self.undo_stack) > self.max_undo:
             self.undo_stack.pop(0)
         self.redo_stack.clear()
-        self.modified = True
+        if mark_modified:
+            self.modified = True
 
     def undo(self) -> None:
         """Отменяет последнее действие"""
@@ -184,6 +225,9 @@ class SpriteEditor:
         self.camera.x = self.scene.camera.x
         self.camera.y = self.scene.camera.y
         self.zoom = self.scene.camera.zoom
+        self.scene.grid_size = state.grid_size
+        self.scene.grid_visible = state.grid_visible
+        self.scene.snap_to_grid = state.snap_to_grid
         self.selected_objects.clear()
 
     def add_sprite(self, sprite_path: str, world_pos: Optional[Vector2] = None) -> SceneObject:
@@ -222,8 +266,12 @@ class SpriteEditor:
         if not self.selected_objects:
             return []
         new_objects = []
+        used_names = {obj.name for obj in self.scene.objects}
         for obj in self.selected_objects:
             new_obj = obj.copy()
+            base_name = self._get_clone_base_name(obj.name)
+            new_obj.name = self._make_next_clone_name(base_name, used_names)
+            used_names.add(new_obj.name)
             new_obj.transform.x += 50
             new_obj.transform.y += 50
             self.scene.add_object(new_obj)
@@ -231,6 +279,20 @@ class SpriteEditor:
         self.selected_objects = new_objects
         self._save_state()
         return new_objects
+
+    def _get_clone_base_name(self, name: str) -> str:
+        match = re.match(r"^(.*)\s\((\d+)\)$", name.strip())
+        if match:
+            return match.group(1).strip()
+        return name.strip()
+
+    def _make_next_clone_name(self, base_name: str, used_names: set[str]) -> str:
+        i = 1
+        while True:
+            candidate = f"{base_name} ({i})"
+            if candidate not in used_names:
+                return candidate
+            i += 1
 
     def select_object(self, obj: Optional[SceneObject], add_to_selection: bool = False) -> None:
         """Выделяет объект"""
@@ -312,9 +374,13 @@ class SpriteEditor:
             elif event.type == pygame.VIDEORESIZE:
                 self.width, self.height = event.w, event.h
                 self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+                self.settings_window.rect.center = (self.width // 2, self.height // 2)
             
             elif event.type == pygame.KEYDOWN:
                 self._handle_keydown(event)
+
+            elif event.type == pygame.TEXTINPUT:
+                self._handle_text_input_text(event)
             
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self._handle_mousedown(event)
@@ -330,6 +396,9 @@ class SpriteEditor:
 
     def _handle_keydown(self, event: pygame.event.Event) -> None:
         """Обработка нажатий клавиш"""
+        if self._handle_text_input_keydown(event):
+            return
+
         keys = pygame.key.get_pressed()
         
         # Инструменты
@@ -341,6 +410,8 @@ class SpriteEditor:
             self.current_tool = ToolType.ROTATE
         elif event.key == pygame.K_t:
             self.current_tool = ToolType.SCALE
+        elif event.key == pygame.K_F1:
+            self.window_manager.toggle("settings")
         
         # Ctrl
         elif keys[pygame.K_LCTRL] or keys[pygame.K_RCTRL]:
@@ -370,18 +441,36 @@ class SpriteEditor:
         
         if event.button == 1:  # Левая кнопка
             self.mouse_pressed = True
+            self._transform_changed_during_drag = False
+
+            # Если активен текстовый ввод в статусбаре, клик вне поля подтверждает значение
+            if self._active_text_input and not self._click_in_any_text_input(event.pos):
+                self._deactivate_text_input(apply=True)
+            
+            # Модальные окна/страницы
+            if self.window_manager.handle_click((int(self.mouse_pos.x), int(self.mouse_pos.y))):
+                return
+            
+            # Status bar (слайдеры/переключатели)
+            if self._handle_statusbar_click(self.mouse_pos):
+                return
             
             # Проверяем клик по toolbar (выбор инструментов)
             if self.mouse_pos.y <= self.ui_top_height:
                 self._handle_toolbar_click(self.mouse_pos)
                 return
             
+            # Проверяем клик по inspector (правая панель)
+            if self.mouse_pos.x >= self.width - self.ui_right_width:
+                if self._handle_inspector_click(self.mouse_pos):
+                    return
+            
             # Проверяем клик по hierarchy (левая панель)
             if self.mouse_pos.x <= self.ui_left_width:
                 obj = self._handle_hierarchy_click(self.mouse_pos)
                 if obj:
                     keys = pygame.key.get_pressed()
-                    self.select_object(obj, add_to_selection=keys[pygame.K_LSHIFT])
+                    self.select_object(obj, add_to_selection=keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT])
                     return
             
             # Проверяем клик по объекту в viewport
@@ -390,7 +479,7 @@ class SpriteEditor:
                 obj = self.get_object_at(self.mouse_world_pos)
                 if obj:
                     keys = pygame.key.get_pressed()
-                    self.select_object(obj, add_to_selection=keys[pygame.K_LSHIFT])
+                    self.select_object(obj, add_to_selection=keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT])
                 else:
                     # Клик по пустому пространству
                     if self.current_tool == ToolType.SELECT:
@@ -399,6 +488,7 @@ class SpriteEditor:
                 # Сохраняем позиции для перетаскивания
                 self.drag_start = self.mouse_world_pos.copy()
                 self.camera_drag_start = Vector2(event.pos)  # Для pan
+                self._capture_drag_state()
                 self.mouse_dragging = True
         
         elif event.button == 2:  # Средняя кнопка - панорамирование
@@ -427,6 +517,10 @@ class SpriteEditor:
                 return
             elif self._toolbar_buttons.get("grid", pygame.Rect(0,0,0,0)).collidepoint(pos.x, pos.y):
                 self.scene.grid_visible = not self.scene.grid_visible
+                self._save_state()
+                return
+            elif self._toolbar_buttons.get("settings", pygame.Rect(0,0,0,0)).collidepoint(pos.x, pos.y):
+                self.window_manager.toggle("settings")
                 return
         
         # Проверяем выбор инструментов
@@ -452,9 +546,17 @@ class SpriteEditor:
     def _new_scene(self) -> None:
         """Создать новую сцену"""
         self.scene = Scene(name="New Scene")
+        self.scene.grid_size = 10
+        self.filepath = None
         self.selected_objects.clear()
         self.image_cache.clear()
-        self._save_state()
+        self.camera = Vector2(0, 0)
+        self.zoom = 1.0
+        self.undo_stack.clear()
+        self.redo_stack.clear()
+        self._save_state(mark_modified=False)
+        self.modified = False
+        self._set_status("New scene created")
 
     def _add_sprite_dialog(self) -> None:
         """Открыть диалог выбора файла для добавления спрайта"""
@@ -487,38 +589,51 @@ class SpriteEditor:
 
     def _handle_hierarchy_click(self, pos: Vector2) -> Optional[SceneObject]:
         """Обработка клика по иерархии"""
-        y = self.ui_top_height + 35
-        for obj in self.scene.objects:
-            if y > self.height - self.ui_bottom_height - 20:
-                break
-            
-            item_rect = pygame.Rect(10, y, self.ui_left_width - 20, 22)
-            if item_rect.collidepoint(pos.x, pos.y):
-                return obj
-            
-            y += 22
+        list_top = self.ui_top_height + 35
+        list_bottom = self.height - self.ui_bottom_height - 8
+        if pos.y < list_top or pos.y > list_bottom:
+            return None
+
+        self._clamp_hierarchy_scroll()
+        index = int((pos.y - list_top) // self.hierarchy_item_height) + self.hierarchy_scroll
+        if 0 <= index < len(self.scene.objects):
+            return self.scene.objects[index]
         return None
 
     def _handle_mouseup(self, event: pygame.event.Event) -> None:
         """Обработка отжатия кнопки мыши"""
-        if event.button == 1 and self.mouse_dragging:
-            self._save_state()
+        if event.button == 1:
+            if self._active_slider is not None:
+                self._active_slider = None
+                self._save_state()
+            elif self.mouse_dragging and self._transform_changed_during_drag:
+                self._save_state()
         
         self.mouse_pressed = False
         self.mouse_dragging = False
+        self._drag_object_starts.clear()
+        self._transform_changed_during_drag = False
 
     def _handle_mousewheel(self, event: pygame.event.Event) -> None:
         """Обработка колеса мыши (zoom)"""
+        mouse_pos = Vector2(pygame.mouse.get_pos())
+        hierarchy_rect = pygame.Rect(
+            0,
+            self.ui_top_height,
+            self.ui_left_width,
+            self.height - self.ui_top_height - self.ui_bottom_height,
+        )
+        viewport_rect = self._get_viewport_rect()
+
+        if hierarchy_rect.collidepoint(mouse_pos.x, mouse_pos.y):
+            self.hierarchy_scroll -= event.y
+            self._clamp_hierarchy_scroll()
+            return
+        if not viewport_rect.collidepoint(mouse_pos.x, mouse_pos.y):
+            return
+
         zoom_factor = 1.1 if event.y > 0 else 1 / 1.1
-        new_zoom = self.zoom * zoom_factor
-        
-        if self.min_zoom <= new_zoom <= self.max_zoom:
-            # Zoom к позиции мыши
-            mouse_pos = pygame.mouse.get_pos()
-            mouse_world_before = self.screen_to_world(Vector2(mouse_pos))
-            self.zoom = new_zoom
-            mouse_world_after = self.screen_to_world(Vector2(mouse_pos))
-            self.camera += mouse_world_before - mouse_world_after
+        self._set_zoom(self.zoom * zoom_factor, Vector2(pygame.mouse.get_pos()))
 
     def _handle_dropfile(self, event: pygame.event.Event) -> None:
         """Обработка перетаскивания файлов"""
@@ -534,6 +649,13 @@ class SpriteEditor:
         """Обновление логики"""
         self.mouse_pos = Vector2(pygame.mouse.get_pos())
         self.mouse_world_pos = self.screen_to_world(self.mouse_pos)
+        self._sync_scene_camera()
+        
+        if self.status_message_timer > 0:
+            self.status_message_timer = max(0.0, self.status_message_timer - (self.clock.get_time() / 1000.0))
+        
+        if self._active_slider and pygame.mouse.get_pressed()[0]:
+            self._update_active_slider(self.mouse_pos.x)
         
         keys = pygame.key.get_pressed()
         
@@ -575,36 +697,62 @@ class SpriteEditor:
         for obj in self.selected_objects:
             if obj.locked:
                 continue
-            obj.transform.x = self._snap_to_grid(self.drag_start.x + dx)
-            obj.transform.y = self._snap_to_grid(self.drag_start.y + dy)
+            start = self._drag_object_starts.get(obj.id)
+            if start is None:
+                continue
+            new_x = self._snap_to_grid(start["x"] + dx)
+            new_y = self._snap_to_grid(start["y"] + dy)
+            if abs(new_x - obj.transform.x) > 1e-6 or abs(new_y - obj.transform.y) > 1e-6:
+                self._transform_changed_during_drag = True
+            obj.transform.x = new_x
+            obj.transform.y = new_y
 
     def _update_rotate(self) -> None:
         """Обновление вращения при перетаскивании"""
         if not self.selected_objects:
             return
+        mouse_dx = self.mouse_pos.x - self.camera_drag_start.x
+        angle_delta = mouse_dx * 0.5
+        keys = pygame.key.get_pressed()
+        snap_angle = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
         
-        obj = self.selected_objects[0]
-        if obj.locked:
-            return
-        
-        # Вычисляем угол от центра объекта до курсора мыши
-        dx = self.mouse_world_pos.x - obj.transform.x
-        dy = self.mouse_world_pos.y - obj.transform.y
-        
-        # Угол в градусах
-        angle = math.degrees(math.atan2(-dy, dx)) - 90
-        obj.transform.rotation = angle
-
-    def _update_scale(self) -> None:
-        """Обновление масштаба при перетаскивании"""
         for obj in self.selected_objects:
             if obj.locked:
                 continue
-            dx = (self.mouse_world_pos.x - obj.transform.x) / 50
-            dy = (self.mouse_world_pos.y - obj.transform.y) / 50
-            scale = max(0.1, 1 + dx + dy)
-            obj.transform.scale_x = max(0.1, scale)
-            obj.transform.scale_y = max(0.1, scale)
+            start = self._drag_object_starts.get(obj.id)
+            if start is None:
+                continue
+            new_angle = start["rotation"] + angle_delta
+            if snap_angle:
+                new_angle = round(new_angle / 15.0) * 15.0
+            if abs(new_angle - obj.transform.rotation) > 1e-6:
+                self._transform_changed_during_drag = True
+            obj.transform.rotation = new_angle
+
+    def _update_scale(self) -> None:
+        """Обновление масштаба при перетаскивании"""
+        dx = (self.mouse_world_pos.x - self.drag_start.x) / 100.0
+        dy = (self.mouse_world_pos.y - self.drag_start.y) / 100.0
+        keys = pygame.key.get_pressed()
+        uniform = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
+        
+        for obj in self.selected_objects:
+            if obj.locked:
+                continue
+            start = self._drag_object_starts.get(obj.id)
+            if start is None:
+                continue
+            if uniform:
+                delta = (dx + dy) * 0.5
+                new_sx = max(0.05, start["scale_x"] + delta)
+                new_sy = max(0.05, start["scale_y"] + delta)
+            else:
+                new_sx = max(0.05, start["scale_x"] + dx)
+                new_sy = max(0.05, start["scale_y"] + dy)
+            if abs(new_sx - obj.transform.scale_x) > 1e-6 or abs(new_sy - obj.transform.scale_y) > 1e-6:
+                self._transform_changed_during_drag = True
+            obj.transform.scale_x = new_sx
+            obj.transform.scale_y = new_sy
 
     def render(self) -> None:
         """Отрисовка"""
@@ -612,6 +760,7 @@ class SpriteEditor:
         
         self._render_viewport()
         self._render_ui()
+        self._render_windows()
         
         pygame.display.flip()
 
@@ -721,7 +870,9 @@ class SpriteEditor:
         h *= obj.transform.scale_y * self.zoom
         
         # Масштабируем изображение
-        scaled = pygame.transform.scale(sprite, (int(w), int(h)))
+        scaled_w = max(1, int(w))
+        scaled_h = max(1, int(h))
+        scaled = pygame.transform.scale(sprite, (scaled_w, scaled_h))
         
         # Вращение
         if obj.transform.rotation != 0:
@@ -891,52 +1042,42 @@ class SpriteEditor:
         self.screen.blit(text, (self.width // 2 - text.get_width() // 2, 12))
         
         # Кнопки справа
-        btn_x = self.width - 175
-        
-        # Кнопка Add Sprite
-        add_rect = pygame.Rect(btn_x, 8, 45, 24)
-        is_add_hover = add_rect.collidepoint(mouse_pos)
-        pygame.draw.rect(self.screen, (50, 100, 50) if is_add_hover else (40, 60, 40), add_rect, border_radius=4)
-        add_text = self.font.render("Add", True, self.colors["ui_text"])
-        self.screen.blit(add_text, (btn_x + 8, 13))
-        
-        # Кнопка Load
-        load_rect = pygame.Rect(btn_x + 50, 8, 45, 24)
-        is_load_hover = load_rect.collidepoint(mouse_pos)
-        pygame.draw.rect(self.screen, (50, 50, 80) if is_load_hover else (40, 40, 60), load_rect, border_radius=4)
-        load_text = self.font.render("Load", True, self.colors["ui_text"])
-        self.screen.blit(load_text, (btn_x + 55, 13))
-        
-        # Кнопка Save
-        save_rect = pygame.Rect(btn_x + 100, 8, 45, 24)
-        is_save_hover = save_rect.collidepoint(mouse_pos)
-        pygame.draw.rect(self.screen, (50, 50, 55) if is_save_hover else (40, 40, 45), save_rect, border_radius=4)
-        save_text = self.font.render("Save", True, self.colors["ui_text"])
-        self.screen.blit(save_text, (btn_x + 105, 13))
-        
-        # Кнопка New
-        new_rect = pygame.Rect(btn_x + 150, 8, 45, 24)
-        is_new_hover = new_rect.collidepoint(mouse_pos)
-        pygame.draw.rect(self.screen, (50, 50, 55) if is_new_hover else (40, 40, 45), new_rect, border_radius=4)
-        new_text = self.font.render("New", True, self.colors["ui_text"])
-        self.screen.blit(new_text, (btn_x + 158, 13))
-        
-        # Кнопка Toggle Grid
-        grid_rect = pygame.Rect(btn_x + 150, 8, 35, 24)
-        is_grid_hover = grid_rect.collidepoint(mouse_pos)
-        bg_color = self.colors["ui_accent"] if self.scene.grid_visible else (40, 40, 45)
-        pygame.draw.rect(self.screen, bg_color if is_grid_hover else (40, 40, 45), grid_rect, border_radius=4)
-        grid_text = self.font.render("Grid", True, (30, 30, 35) if self.scene.grid_visible else self.colors["ui_text"])
-        self.screen.blit(grid_text, (btn_x + 148, 13))
-        
-        # Сохраняем rect кнопок для обработки кликов
-        self._toolbar_buttons = {
-            "add": add_rect,
-            "load": load_rect,
-            "save": save_rect,
-            "new": new_rect,
-            "grid": grid_rect
-        }
+        buttons = [
+            ("settings", "Settings", 72),
+            ("grid", "Grid", 52),
+            ("new", "New", 45),
+            ("save", "Save", 45),
+            ("load", "Load", 45),
+            ("add", "Add", 45),
+        ]
+        gap = 6
+        total_width = sum(btn[2] for btn in buttons) + gap * (len(buttons) - 1)
+        btn_x = self.width - total_width - 10
+        self._toolbar_buttons = {}
+
+        for key, label, width in buttons:
+            rect = pygame.Rect(btn_x, 8, width, 24)
+            is_hovered = rect.collidepoint(mouse_pos)
+            if key == "add":
+                color = (50, 100, 50) if is_hovered else (40, 60, 40)
+            elif key == "load":
+                color = (50, 50, 80) if is_hovered else (40, 40, 60)
+            elif key == "grid":
+                base = self.colors["ui_accent"] if self.scene.grid_visible else (40, 40, 45)
+                color = base if not is_hovered else (70, 170, 255) if self.scene.grid_visible else (50, 50, 55)
+            elif key == "settings":
+                color = (62, 58, 82) if is_hovered else (48, 44, 66)
+            else:
+                color = (50, 50, 55) if is_hovered else (40, 40, 45)
+            pygame.draw.rect(self.screen, color, rect, border_radius=4)
+            text_color = (25, 25, 30) if key == "grid" and self.scene.grid_visible else self.colors["ui_text"]
+            label_surface = self.font.render(label, True, text_color)
+            self.screen.blit(
+                label_surface,
+                (rect.centerx - label_surface.get_width() // 2, rect.y + 5),
+            )
+            self._toolbar_buttons[key] = rect
+            btn_x += width + gap
 
     def _render_hierarchy(self) -> None:
         """Отрисовка панели иерархии (слева)"""
@@ -951,13 +1092,19 @@ class SpriteEditor:
         text = self.font_bold.render("Objects", True, self.colors["ui_text"])
         self.screen.blit(text, (10, self.ui_top_height + 10))
         
-        # Список объектов
+        # Список объектов со скроллом
+        list_top = self.ui_top_height + 35
+        list_bottom = self.height - self.ui_bottom_height - 8
+        list_height = max(0, list_bottom - list_top)
+        self._hierarchy_visible_capacity = max(1, list_height // self.hierarchy_item_height)
+        self._clamp_hierarchy_scroll()
+
+        start_index = self.hierarchy_scroll
+        end_index = min(len(self.scene.objects), start_index + self._hierarchy_visible_capacity)
+
         mouse_pos = pygame.mouse.get_pos()
-        y = self.ui_top_height + 35
-        
-        for obj in self.scene.objects:
-            if y > self.height - self.ui_bottom_height - 20:
-                break
+        y = list_top
+        for obj in self.scene.objects[start_index:end_index]:
             
             is_selected = obj in self.selected_objects
             
@@ -976,10 +1123,50 @@ class SpriteEditor:
             
             # Индикатор видимости
             visibility = "👁" if obj.visible else "○"
-            text = self.font.render(f"{visibility} {obj.name}", True, color)
+            max_name_width = self.ui_left_width - 30
+            clipped_name = self._fit_text_to_width(f"{visibility} {obj.name}", max_name_width, self.font)
+            text = self.font.render(clipped_name, True, color)
             
             self.screen.blit(text, (15, y + 3))
-            y += 22
+            y += self.hierarchy_item_height
+
+        self._render_hierarchy_scrollbar(list_top, list_bottom)
+
+    def _fit_text_to_width(self, text: str, max_width: int, font: pygame.font.Font) -> str:
+        if font.size(text)[0] <= max_width:
+            return text
+        ellipsis = "..."
+        left, right = 0, len(text)
+        best = ellipsis
+        while left <= right:
+            mid = (left + right) // 2
+            candidate = text[:mid].rstrip() + ellipsis
+            if font.size(candidate)[0] <= max_width:
+                best = candidate
+                left = mid + 1
+            else:
+                right = mid - 1
+        return best
+
+    def _clamp_hierarchy_scroll(self) -> None:
+        max_scroll = max(0, len(self.scene.objects) - max(1, self._hierarchy_visible_capacity))
+        self.hierarchy_scroll = max(0, min(self.hierarchy_scroll, max_scroll))
+
+    def _render_hierarchy_scrollbar(self, list_top: int, list_bottom: int) -> None:
+        total = len(self.scene.objects)
+        visible = max(1, self._hierarchy_visible_capacity)
+        if total <= visible:
+            return
+        track_rect = pygame.Rect(self.ui_left_width - 8, list_top, 4, list_bottom - list_top)
+        pygame.draw.rect(self.screen, (50, 50, 55), track_rect, border_radius=2)
+
+        ratio = visible / total
+        thumb_h = max(20, int(track_rect.height * ratio))
+        max_scroll = max(1, total - visible)
+        t = self.hierarchy_scroll / max_scroll
+        thumb_y = track_rect.y + int((track_rect.height - thumb_h) * t)
+        thumb_rect = pygame.Rect(track_rect.x, thumb_y, track_rect.width, thumb_h)
+        pygame.draw.rect(self.screen, (110, 110, 120), thumb_rect, border_radius=2)
 
     def _render_inspector(self) -> None:
         """Отрисовка панели свойств (справа)"""
@@ -993,6 +1180,8 @@ class SpriteEditor:
         # Заголовок
         text = self.font_bold.render("Properties", True, self.colors["ui_text"])
         self.screen.blit(text, (x + 10, self.ui_top_height + 10))
+        self._inspector_actions = []
+        self._property_input_rects = {}
         
         if not self.selected_objects:
             hint = self.font.render("No selection", True, (100, 100, 100))
@@ -1005,21 +1194,207 @@ class SpriteEditor:
         # Name
         y = self._render_property_row(x, y, "Name", obj.name)
         
-        # Transform
+        # Transform (editable)
         y += 10
-        y = self._render_property_row(x, y, "Position X", f"{obj.transform.x:.1f}")
-        y = self._render_property_row(x, y, "Position Y", f"{obj.transform.y:.1f}")
-        y = self._render_property_row(x, y, "Rotation", f"{obj.transform.rotation:.1f}°")
-        y = self._render_property_row(x, y, "Scale X", f"{obj.transform.scale_x:.2f}")
-        y = self._render_property_row(x, y, "Scale Y", f"{obj.transform.scale_y:.2f}")
+        y = self._render_numeric_property_row(
+            x, y, "Position X", obj.transform.x, -10.0, 10.0, "x", "{:.1f}"
+        )
+        y = self._render_numeric_property_row(
+            x, y, "Position Y", obj.transform.y, -10.0, 10.0, "y", "{:.1f}"
+        )
+        y = self._render_numeric_property_row(
+            x, y, "Rotation", obj.transform.rotation, -5.0, 5.0, "rotation", "{:.1f} deg"
+        )
+        y = self._render_numeric_property_row(
+            x, y, "Scale X", obj.transform.scale_x, -0.1, 0.1, "scale_x", "{:.2f}"
+        )
+        y = self._render_numeric_property_row(
+            x, y, "Scale Y", obj.transform.scale_y, -0.1, 0.1, "scale_y", "{:.2f}"
+        )
+        
+        # Размеры
+        native_w, native_h = self._get_object_native_size(obj)
+        size_x, size_y = self._get_object_display_size(obj)
+        y += 8
+        y = self._render_property_row(x, y, "Image Size", f"{native_w} x {native_h}")
+        y = self._render_numeric_property_row(x, y, "Size X", size_x, -8.0, 8.0, "width", "{:.1f}px")
+        y = self._render_numeric_property_row(x, y, "Size Y", size_y, -8.0, 8.0, "height", "{:.1f}px")
         
         # Sprite path
         y += 10
         sprite_text = os.path.basename(obj.sprite_path) if obj.sprite_path else "None"
         y = self._render_property_row(x, y, "Sprite", sprite_text)
         
-        # Z-Index
-        y = self._render_property_row(x, y, "Z-Index", str(obj.z_index))
+        # Z-Index и флаги
+        y = self._render_numeric_property_row(x, y, "Z-Index", float(obj.z_index), -1.0, 1.0, "z_index", "{:.0f}")
+        y += 8
+        y = self._render_toggle_property_row(x, y, "Visible", obj.visible, "visible")
+        y = self._render_toggle_property_row(x, y, "Locked", obj.locked, "locked")
+
+    def _render_numeric_property_row(
+        self,
+        x: int,
+        y: int,
+        label: str,
+        value: float,
+        dec_step: float,
+        inc_step: float,
+        prop: str,
+        fmt: str,
+    ) -> int:
+        label_text = self.font.render(label, True, self.colors["ui_text"])
+        self.screen.blit(label_text, (x + 10, y))
+
+        minus_rect = pygame.Rect(x + self.ui_right_width - 112, y + 1, 18, 18)
+        input_rect = pygame.Rect(x + self.ui_right_width - 90, y + 1, 60, 18)
+        plus_rect = pygame.Rect(x + self.ui_right_width - 24, y + 1, 18, 18)
+        input_name = f"prop_input_{prop}"
+        self._property_input_rects[input_name] = input_rect
+
+        self._draw_property_input_box(
+            name=input_name,
+            rect=input_rect,
+            value_display=self._format_numeric_for_input(prop, value),
+        )
+        self._draw_small_button(minus_rect, "-")
+        self._draw_small_button(plus_rect, "+")
+
+        self._inspector_actions.append(
+            (
+                input_rect,
+                lambda n=input_name, v=self._format_numeric_for_input(prop, value): self._activate_text_input(n, v),
+            )
+        )
+        self._inspector_actions.append(
+            (minus_rect, lambda p=prop, d=dec_step: self._adjust_selected_property(p, d))
+        )
+        self._inspector_actions.append(
+            (plus_rect, lambda p=prop, d=inc_step: self._adjust_selected_property(p, d))
+        )
+        return y + 20
+
+    def _draw_property_input_box(self, name: str, rect: pygame.Rect, value_display: str) -> None:
+        active = self._active_text_input == name
+        hovered = rect.collidepoint(pygame.mouse.get_pos())
+        bg = (62, 62, 70) if active else (48, 48, 56) if hovered else (42, 42, 50)
+        border = self.colors["ui_accent"] if active else (95, 95, 110)
+        pygame.draw.rect(self.screen, bg, rect, border_radius=3)
+        pygame.draw.rect(self.screen, border, rect, 1, border_radius=3)
+        if active:
+            display = f"{self._text_input_buffers.get(name, '')}|"
+        else:
+            display = value_display
+        text_surface = self.font.render(display, True, (235, 235, 240))
+        self.screen.blit(text_surface, (rect.x + 3, rect.y + 2))
+
+    def _format_numeric_for_input(self, prop: str, value: float) -> str:
+        if prop == "z_index":
+            return str(int(round(value)))
+        text = f"{value:.3f}".rstrip("0").rstrip(".")
+        return text if text else "0"
+
+    def _render_toggle_property_row(
+        self,
+        x: int,
+        y: int,
+        label: str,
+        value: bool,
+        prop: str,
+    ) -> int:
+        label_text = self.font.render(label, True, self.colors["ui_text"])
+        self.screen.blit(label_text, (x + 10, y))
+        
+        btn_rect = pygame.Rect(x + self.ui_right_width - 60, y + 1, 50, 18)
+        color = self.colors["ui_accent"] if value else (55, 55, 62)
+        fg = (25, 25, 30) if value else self.colors["ui_text"]
+        pygame.draw.rect(self.screen, color, btn_rect, border_radius=3)
+        text = self.font.render("ON" if value else "OFF", True, fg)
+        self.screen.blit(text, (btn_rect.centerx - text.get_width() // 2, y + 2))
+        self._inspector_actions.append((btn_rect, lambda p=prop: self._toggle_selected_property(p)))
+        return y + 20
+
+    def _draw_small_button(self, rect: pygame.Rect, caption: str) -> None:
+        mouse_pos = pygame.mouse.get_pos()
+        hovered = rect.collidepoint(mouse_pos)
+        pygame.draw.rect(
+            self.screen,
+            (58, 58, 64) if hovered else (44, 44, 50),
+            rect,
+            border_radius=3,
+        )
+        cap = self.font.render(caption, True, self.colors["ui_text"])
+        self.screen.blit(cap, (rect.centerx - cap.get_width() // 2, rect.y + 1))
+
+    def _handle_inspector_click(self, pos: Vector2) -> bool:
+        for rect, action in self._inspector_actions:
+            if rect.collidepoint(pos.x, pos.y):
+                action()
+                return True
+        return True
+
+    def _get_object_native_size(self, obj: SceneObject) -> Tuple[int, int]:
+        sprite = self._get_sprite_image(obj)
+        if sprite is None:
+            return (0, 0)
+        return sprite.get_width(), sprite.get_height()
+
+    def _get_object_display_size(self, obj: SceneObject) -> Tuple[float, float]:
+        native_w, native_h = self._get_object_native_size(obj)
+        return native_w * obj.transform.scale_x, native_h * obj.transform.scale_y
+
+    def _adjust_selected_property(self, prop: str, delta: float) -> None:
+        changed = False
+        for obj in self.selected_objects:
+            if obj.locked and prop not in ("visible", "locked"):
+                continue
+            if prop == "x":
+                obj.transform.x += delta
+                changed = True
+            elif prop == "y":
+                obj.transform.y += delta
+                changed = True
+            elif prop == "rotation":
+                obj.transform.rotation += delta
+                changed = True
+            elif prop == "scale_x":
+                obj.transform.scale_x = max(0.05, obj.transform.scale_x + delta)
+                changed = True
+            elif prop == "scale_y":
+                obj.transform.scale_y = max(0.05, obj.transform.scale_y + delta)
+                changed = True
+            elif prop == "z_index":
+                obj.z_index += int(delta)
+                changed = True
+            elif prop in ("width", "height"):
+                native_w, native_h = self._get_object_native_size(obj)
+                if prop == "width" and native_w > 0:
+                    current_w = native_w * obj.transform.scale_x
+                    obj.transform.scale_x = max(0.05, (current_w + delta) / native_w)
+                    changed = True
+                if prop == "height" and native_h > 0:
+                    current_h = native_h * obj.transform.scale_y
+                    obj.transform.scale_y = max(0.05, (current_h + delta) / native_h)
+                    changed = True
+        if changed:
+            self.scene._sort_by_z_index()
+            self._save_state()
+
+    def _toggle_selected_property(self, prop: str) -> None:
+        if not self.selected_objects:
+            return
+        changed = False
+        if prop == "visible":
+            new_value = not self.selected_objects[0].visible
+            for obj in self.selected_objects:
+                obj.visible = new_value
+                changed = True
+        elif prop == "locked":
+            new_value = not self.selected_objects[0].locked
+            for obj in self.selected_objects:
+                obj.locked = new_value
+                changed = True
+        if changed:
+            self._save_state()
 
     def _render_property_row(self, x: int, y: int, label: str, value: str) -> int:
         """Отрисовка строки свойства"""
@@ -1047,13 +1422,356 @@ class SpriteEditor:
         )
         self.screen.blit(mouse_text, (10, self.height - 22))
         
-        # Zoom
-        zoom_text = self.font.render(f"Zoom: {self.zoom * 100:.0f}%", True, self.colors["ui_text"])
-        self.screen.blit(zoom_text, (self.width - 100, self.height - 22))
-        
-        # Grid
-        grid_text = self.font.render(f"Grid: {self.scene.grid_size}px", True, self.colors["ui_text"])
-        self.screen.blit(grid_text, (self.width // 2 - 50, self.height - 22))
+        slider_y = self.height - 19
+        slider_h = 9
+        zoom_slider = pygame.Rect(max(180, self.width // 2 - 180), slider_y, 140, slider_h)
+        grid_slider = pygame.Rect(zoom_slider.right + 120, slider_y, 140, slider_h)
+        self._statusbar_controls["zoom"] = zoom_slider
+        self._statusbar_controls["grid"] = grid_slider
+
+        zoom_label = self.font.render("Zoom", True, self.colors["ui_text"])
+        grid_label = self.font.render("Grid", True, self.colors["ui_text"])
+        self.screen.blit(zoom_label, (zoom_slider.x - 40, self.height - 23))
+        self.screen.blit(grid_label, (grid_slider.x - 34, self.height - 23))
+
+        self._draw_slider(
+            zoom_slider,
+            value=self.zoom,
+            min_value=self.min_zoom,
+            max_value=self.max_zoom,
+            accent=self.colors["ui_accent"],
+        )
+        self._draw_slider(
+            grid_slider,
+            value=float(self.scene.grid_size),
+            min_value=float(self.min_grid_size),
+            max_value=float(self.max_grid_size),
+            accent=(150, 130, 255),
+        )
+
+        # Переключатель snap
+        snap_rect = pygame.Rect(grid_slider.right + 14, self.height - 24, 80, 18)
+        self._statusbar_controls["snap"] = snap_rect
+        snap_color = self.colors["ui_accent"] if self.scene.snap_to_grid else (55, 55, 62)
+        snap_fg = (25, 25, 30) if self.scene.snap_to_grid else self.colors["ui_text"]
+        pygame.draw.rect(self.screen, snap_color, snap_rect, border_radius=3)
+        snap_text = self.font.render("Snap ON" if self.scene.snap_to_grid else "Snap OFF", True, snap_fg)
+        self.screen.blit(snap_text, (snap_rect.centerx - snap_text.get_width() // 2, snap_rect.y + 2))
+
+        # Текстовые значения справа
+        zoom_input_rect = pygame.Rect(self.width - 190, self.height - 24, 72, 18)
+        grid_input_rect = pygame.Rect(self.width - 108, self.height - 24, 72, 18)
+        self._statusbar_controls["zoom_input"] = zoom_input_rect
+        self._statusbar_controls["grid_input"] = grid_input_rect
+
+        self._draw_status_input_box(
+            name="zoom_input",
+            rect=zoom_input_rect,
+            value_display=f"{self.zoom * 100:.0f}",
+            suffix="%",
+        )
+        self._draw_status_input_box(
+            name="grid_input",
+            rect=grid_input_rect,
+            value_display=str(self.scene.grid_size),
+            suffix="px",
+        )
+
+        # Статус
+        if self.status_message_timer > 0:
+            status = self.font.render(self.status_message, True, (160, 160, 170))
+            self.screen.blit(status, (self.width // 2 - status.get_width() // 2, self.height - 22))
+
+    def _draw_slider(
+        self,
+        rect: pygame.Rect,
+        value: float,
+        min_value: float,
+        max_value: float,
+        accent: Tuple[int, int, int],
+    ) -> None:
+        pygame.draw.rect(self.screen, (55, 55, 62), rect, border_radius=4)
+        ratio = 0.0 if max_value <= min_value else (value - min_value) / (max_value - min_value)
+        ratio = max(0.0, min(1.0, ratio))
+        fill_width = int(rect.width * ratio)
+        if fill_width > 0:
+            pygame.draw.rect(
+                self.screen,
+                accent,
+                pygame.Rect(rect.x, rect.y, fill_width, rect.height),
+                border_radius=4,
+            )
+        thumb_x = rect.x + int(rect.width * ratio)
+        thumb_rect = pygame.Rect(thumb_x - 3, rect.y - 2, 6, rect.height + 4)
+        pygame.draw.rect(self.screen, (225, 225, 230), thumb_rect, border_radius=3)
+
+    def _draw_status_input_box(self, name: str, rect: pygame.Rect, value_display: str, suffix: str) -> None:
+        active = self._active_text_input == name
+        bg = (62, 62, 70) if active else (45, 45, 52)
+        pygame.draw.rect(self.screen, bg, rect, border_radius=3)
+        pygame.draw.rect(self.screen, self.colors["ui_border"], rect, 1, border_radius=3)
+
+        if active:
+            text = self._text_input_buffers.get(name, "")
+            display = f"{text}|"
+        else:
+            display = f"{value_display}{suffix}"
+        text_surface = self.font.render(display, True, self.colors["ui_text"])
+        self.screen.blit(text_surface, (rect.x + 4, rect.y + 2))
+
+    def _handle_statusbar_click(self, pos: Vector2) -> bool:
+        if pos.y < self.height - self.ui_bottom_height:
+            return False
+        zoom_rect = self._statusbar_controls.get("zoom")
+        grid_rect = self._statusbar_controls.get("grid")
+        snap_rect = self._statusbar_controls.get("snap")
+        zoom_input_rect = self._statusbar_controls.get("zoom_input")
+        grid_input_rect = self._statusbar_controls.get("grid_input")
+
+        if zoom_input_rect and zoom_input_rect.collidepoint(pos.x, pos.y):
+            self._activate_text_input("zoom_input", f"{self.zoom * 100:.0f}")
+            return True
+        if grid_input_rect and grid_input_rect.collidepoint(pos.x, pos.y):
+            self._activate_text_input("grid_input", str(self.scene.grid_size))
+            return True
+
+        if self._active_text_input:
+            self._deactivate_text_input(apply=True)
+
+        if zoom_rect and zoom_rect.collidepoint(pos.x, pos.y):
+            self._active_slider = "zoom"
+            self._update_active_slider(pos.x)
+            return True
+        if grid_rect and grid_rect.collidepoint(pos.x, pos.y):
+            self._active_slider = "grid"
+            self._update_active_slider(pos.x)
+            return True
+        if snap_rect and snap_rect.collidepoint(pos.x, pos.y):
+            self.scene.snap_to_grid = not self.scene.snap_to_grid
+            self._save_state()
+            return True
+        return False
+
+    def _click_in_status_input(self, pos: tuple[int, int]) -> bool:
+        for key in ("zoom_input", "grid_input"):
+            rect = self._statusbar_controls.get(key)
+            if rect and rect.collidepoint(pos):
+                return True
+        return False
+
+    def _click_in_property_input(self, pos: tuple[int, int]) -> bool:
+        for rect in self._property_input_rects.values():
+            if rect.collidepoint(pos):
+                return True
+        return False
+
+    def _click_in_any_text_input(self, pos: tuple[int, int]) -> bool:
+        return self._click_in_status_input(pos) or self._click_in_property_input(pos)
+
+    def _activate_text_input(self, name: str, initial_value: str = "") -> None:
+        if self._active_text_input is not None and self._active_text_input != name:
+            self._deactivate_text_input(apply=True)
+        self._text_input_buffers[name] = initial_value
+        self._active_text_input = name
+
+    def _deactivate_text_input(self, apply: bool) -> None:
+        if self._active_text_input is None:
+            return
+        if apply:
+            self._apply_text_input_value(self._active_text_input)
+        self._active_text_input = None
+
+    def _handle_text_input_keydown(self, event: pygame.event.Event) -> bool:
+        name = self._active_text_input
+        if name is None:
+            return False
+
+        if event.key == pygame.K_RETURN:
+            self._deactivate_text_input(apply=True)
+            return True
+        if event.key == pygame.K_ESCAPE:
+            self._deactivate_text_input(apply=False)
+            return True
+        if event.key == pygame.K_BACKSPACE:
+            self._text_input_buffers[name] = self._text_input_buffers[name][:-1]
+            return True
+
+        ch = event.unicode
+        if ch and self._is_allowed_input_char(ch):
+            self._text_input_buffers[name] += ch
+            return True
+        keypad_map = {
+            pygame.K_KP0: "0",
+            pygame.K_KP1: "1",
+            pygame.K_KP2: "2",
+            pygame.K_KP3: "3",
+            pygame.K_KP4: "4",
+            pygame.K_KP5: "5",
+            pygame.K_KP6: "6",
+            pygame.K_KP7: "7",
+            pygame.K_KP8: "8",
+            pygame.K_KP9: "9",
+            pygame.K_KP_PERIOD: ".",
+            pygame.K_KP_MINUS: "-",
+            pygame.K_MINUS: "-",
+            pygame.K_PERIOD: ".",
+            pygame.K_COMMA: ",",
+        }
+        if event.key in keypad_map:
+            self._text_input_buffers[name] += keypad_map[event.key]
+        return True
+
+    def _handle_text_input_text(self, event: pygame.event.Event) -> bool:
+        name = self._active_text_input
+        if name is None:
+            return False
+        text = event.text or ""
+        filtered = "".join(ch for ch in text if self._is_allowed_input_char(ch))
+        if filtered:
+            self._text_input_buffers[name] += filtered
+        return True
+
+    def _is_allowed_input_char(self, ch: str) -> bool:
+        return ch in "0123456789.,-"
+
+    def _apply_text_input_value(self, name: str) -> None:
+        raw = self._text_input_buffers.get(name, "").strip().replace(",", ".")
+        if not raw:
+            return
+        try:
+            if name == "zoom_input":
+                percent = float(raw)
+                value = percent * 0.01
+                prev = self.zoom
+                self._set_zoom(value, Vector2(pygame.mouse.get_pos()))
+                if abs(self.zoom - prev) > 1e-9:
+                    self._save_state()
+            elif name == "grid_input":
+                value = int(float(raw))
+                value = max(self.min_grid_size, min(self.max_grid_size, value))
+                if value != self.scene.grid_size:
+                    self.scene.grid_size = value
+                    self._save_state()
+            elif name.startswith("prop_input_"):
+                prop = name.replace("prop_input_", "", 1)
+                value = float(raw)
+                self._set_selected_property_value(prop, value)
+        except ValueError:
+            self._set_status("Invalid input", ttl=2.0)
+
+    def _set_selected_property_value(self, prop: str, value: float) -> None:
+        if not self.selected_objects:
+            return
+        changed = False
+        for obj in self.selected_objects:
+            if obj.locked and prop not in ("visible", "locked"):
+                continue
+            if prop == "x":
+                if abs(obj.transform.x - value) > 1e-9:
+                    obj.transform.x = value
+                    changed = True
+            elif prop == "y":
+                if abs(obj.transform.y - value) > 1e-9:
+                    obj.transform.y = value
+                    changed = True
+            elif prop == "rotation":
+                if abs(obj.transform.rotation - value) > 1e-9:
+                    obj.transform.rotation = value
+                    changed = True
+            elif prop == "scale_x":
+                new_value = max(0.05, value)
+                if abs(obj.transform.scale_x - new_value) > 1e-9:
+                    obj.transform.scale_x = new_value
+                    changed = True
+            elif prop == "scale_y":
+                new_value = max(0.05, value)
+                if abs(obj.transform.scale_y - new_value) > 1e-9:
+                    obj.transform.scale_y = new_value
+                    changed = True
+            elif prop == "z_index":
+                new_value = int(round(value))
+                if obj.z_index != new_value:
+                    obj.z_index = new_value
+                    changed = True
+            elif prop in ("width", "height"):
+                native_w, native_h = self._get_object_native_size(obj)
+                if prop == "width" and native_w > 0:
+                    new_scale = max(0.05, value / native_w)
+                    if abs(obj.transform.scale_x - new_scale) > 1e-9:
+                        obj.transform.scale_x = new_scale
+                        changed = True
+                if prop == "height" and native_h > 0:
+                    new_scale = max(0.05, value / native_h)
+                    if abs(obj.transform.scale_y - new_scale) > 1e-9:
+                        obj.transform.scale_y = new_scale
+                        changed = True
+        if changed:
+            self.scene._sort_by_z_index()
+            self._save_state()
+
+    def _update_active_slider(self, mouse_x: float) -> None:
+        if self._active_slider is None:
+            return
+        rect = self._statusbar_controls.get(self._active_slider)
+        if rect is None or rect.width <= 0:
+            return
+        ratio = (mouse_x - rect.x) / rect.width
+        ratio = max(0.0, min(1.0, ratio))
+        if self._active_slider == "zoom":
+            value = self.min_zoom + ratio * (self.max_zoom - self.min_zoom)
+            self._set_zoom(value, Vector2(pygame.mouse.get_pos()))
+            return
+        if self._active_slider == "grid":
+            value = int(round(self.min_grid_size + ratio * (self.max_grid_size - self.min_grid_size)))
+            self._set_grid_size(value)
+
+    def _capture_drag_state(self) -> None:
+        self._drag_object_starts = {}
+        for obj in self.selected_objects:
+            self._drag_object_starts[obj.id] = {
+                "x": obj.transform.x,
+                "y": obj.transform.y,
+                "rotation": obj.transform.rotation,
+                "scale_x": obj.transform.scale_x,
+                "scale_y": obj.transform.scale_y,
+            }
+
+    def _set_zoom(self, new_zoom: float, mouse_pos: Optional[Vector2] = None) -> None:
+        clamped = max(self.min_zoom, min(self.max_zoom, new_zoom))
+        if abs(clamped - self.zoom) < 1e-6:
+            return
+        if mouse_pos is None:
+            mouse_pos = Vector2(pygame.mouse.get_pos())
+        mouse_world_before = self.screen_to_world(mouse_pos)
+        self.zoom = clamped
+        mouse_world_after = self.screen_to_world(mouse_pos)
+        self.camera += mouse_world_before - mouse_world_after
+
+    def _set_grid_size(self, new_size: int) -> None:
+        clamped = max(self.min_grid_size, min(self.max_grid_size, int(new_size)))
+        self.scene.grid_size = clamped
+
+    def _render_windows(self) -> None:
+        self.settings_window.render(
+            self.screen,
+            self.font,
+            self.font_bold,
+            self.colors,
+            scene_grid_visible=self.scene.grid_visible,
+            scene_snap_to_grid=self.scene.snap_to_grid,
+            on_toggle_grid=self._toggle_grid_visibility,
+            on_toggle_snap=self._toggle_snap,
+            zoom_text=f"{self.zoom * 100:.0f}%",
+            grid_text=f"{self.scene.grid_size}px",
+        )
+
+    def _toggle_grid_visibility(self) -> None:
+        self.scene.grid_visible = not self.scene.grid_visible
+        self._save_state()
+
+    def _toggle_snap(self) -> None:
+        self.scene.snap_to_grid = not self.scene.snap_to_grid
+        self._save_state()
 
     def _save_scene(self, filepath: Optional[str] = None) -> None:
         """Сохранение сцены"""
@@ -1064,11 +1782,17 @@ class SpriteEditor:
             filepath = self._show_save_dialog()
             if not filepath:
                 return
-        
-        self.scene.save(filepath)
+        filepath = str(Path(filepath).expanduser())
+        self._sync_scene_camera()
+        try:
+            self.scene.save(filepath)
+        except Exception as e:
+            self._set_status(f"Save failed: {e}", ttl=4.0)
+            return
         self.filepath = filepath
         self.scene.name = os.path.splitext(os.path.basename(filepath))[0]
         self.modified = False
+        self._set_status(f"Saved: {os.path.basename(filepath)}")
 
     def _load_scene(self, filepath: Optional[str] = None) -> None:
         """Загрузка сцены"""
@@ -1085,9 +1809,13 @@ class SpriteEditor:
             self.camera.x = self.scene.camera.x
             self.camera.y = self.scene.camera.y
             self.zoom = self.scene.camera.zoom
-            self._save_state()
+            self.undo_stack.clear()
+            self.redo_stack.clear()
+            self._save_state(mark_modified=False)
+            self.modified = False
+            self._set_status(f"Loaded: {os.path.basename(filepath)}")
         except Exception as e:
-            print(f"Error loading scene: {e}")
+            self._set_status(f"Load failed: {e}", ttl=4.0)
 
     def _show_save_dialog(self) -> Optional[str]:
         """Показать диалог сохранения"""
@@ -1105,7 +1833,8 @@ class SpriteEditor:
                 title="Сохранить сцену",
                 defaultextension=".json",
                 filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
-                initialfile=self.scene.name
+                initialfile=self.scene.name,
+                initialdir=os.path.dirname(self.filepath) if self.filepath else ".",
             )
             
             root.destroy()

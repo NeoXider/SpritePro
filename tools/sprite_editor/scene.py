@@ -76,7 +76,7 @@ class SceneObject:
     def copy(self) -> "SceneObject":
         """Создаёт копию объекта с новым id"""
         new_obj = SceneObject(
-            name=self.name + " (copy)",
+            name=self.name,
             sprite_path=self.sprite_path,
             transform=self.transform.copy(),
             z_index=self.z_index,
@@ -113,7 +113,7 @@ class Scene:
     version: str = "1.0"
     camera: Camera = field(default_factory=Camera)
     objects: List[SceneObject] = field(default_factory=list)
-    grid_size: int = 32
+    grid_size: int = 10
     grid_visible: bool = True
     snap_to_grid: bool = True
 
@@ -167,7 +167,10 @@ class Scene:
 
     def save(self, filepath: str) -> None:
         """Сохраняет сцену в JSON файл"""
-        with open(filepath, 'w', encoding='utf-8') as f:
+        path = Path(filepath)
+        if path.parent and not path.parent.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open('w', encoding='utf-8') as f:
             json.dump(self.to_dict(), f, indent=4, ensure_ascii=False)
 
     @classmethod
