@@ -170,6 +170,9 @@ __all__ = [
     "move_camera",
     "set_camera_position",
     "get_camera_position",
+    "get_camera_zoom",
+    "set_camera_zoom",
+    "zoom_camera",
     "set_camera_follow",
     "clear_camera_follow",
     "process_camera_input",
@@ -347,6 +350,33 @@ def get_camera_position() -> Vector2:
         Vector2: Копия позиции камеры.
     """
     return _context.camera.get_position()
+
+
+def get_camera_zoom() -> float:
+    """Получает текущий зум камеры.
+
+    Returns:
+        float: Значение зума (1.0 = без зума).
+    """
+    return _context.game.get_camera_zoom()
+
+
+def set_camera_zoom(zoom: float) -> None:
+    """Устанавливает зум камеры.
+
+    Args:
+        zoom (float): Значение зума (от 0.1 до 5.0).
+    """
+    _context.game.set_camera_zoom(zoom)
+
+
+def zoom_camera(factor: float) -> None:
+    """Увеличивает/уменьшает зум камеры.
+
+    Args:
+        factor (float): Множитель зума (например, 1.1 для увеличения, 0.9 для уменьшения).
+    """
+    _context.game.zoom_camera(factor)
 
 
 def set_camera_follow(

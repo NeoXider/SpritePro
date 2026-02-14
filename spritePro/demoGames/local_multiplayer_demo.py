@@ -42,6 +42,7 @@ def main(net: s.NetClient, role: str) -> None:
     ctx = s.multiplayer_ctx
 
     me = s.Sprite("", (50, 50), (200, 300))
+    me.DoScale(1.5, 1).SetLoops(-1).SetYoyo(True)
     other = s.Sprite("", (50, 50), (600, 300))
 
     my_color = (220, 70, 70) if ctx.is_host else (70, 120, 220)

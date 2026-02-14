@@ -5,6 +5,33 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0]
+
+### Added
+- **Sprite Editor** — визуальный редактор спрайтов в стиле Unity
+  - **Viewport** — центральная область редактирования с сеткой
+  - **Инструменты**: Select (V), Move (G), Rotate (R), Scale (T)
+  - **UI панели**: Hierarchy (слева), Inspector (справа), Toolbar (сверху), Statusbar (снизу)
+  - **Drag & Drop** — перетаскивание изображений из проводника
+  - **Undo/Redo** — Ctrl+Z / Ctrl+Y
+  - **Копирование/Вставка** — Ctrl+C / Ctrl+V
+  - **Камера**: zoom колесом мыши, pan средней кнопкой
+  - **Сетка**: настраиваемый размер, привязка к сетке
+  - **Сохранение/Загрузка**: JSON формат
+- **CLI команда** — запуск редактора: `python -m spritePro.cli --editor` или `-e`
+- **Модуль scene** — классы Scene, SceneObject, Transform для работы со сценами
+- **Документация**: [docs/sprite_editor.md](docs/sprite_editor.md)
+
+### Changed
+- Версия библиотеки 2.0.0 (мажорный релиз — новый редактор)
+- Обновлена документация: добавлен раздел о редакторе в README
+- Улучшена структура проекта: редактор вынесен в tools/sprite_editor
+
+### Fixed
+- Добавлена поддержка Python 3.13
+
+---
+
 ## [Unreleased]
 
 ### Планируется

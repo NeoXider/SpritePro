@@ -68,6 +68,16 @@
 - Цепочки вызовов (set_position, set_scale, set_alpha и др. возвращают self)
 - Базовые методы отрисовки
 
+#### [docs/sprite_editor.md](docs/sprite_editor.md)
+**Редактор спрайтов (Sprite Editor)**
+- Запуск редактора: `python -m spritePro.cli --editor`
+- Интерфейс: Viewport, Hierarchy, Inspector, Toolbar
+- Инструменты: Select (V), Move (G), Rotate (R), Scale (T)
+- Drag & Drop изображений
+- Сохранение/Загрузка в JSON
+- Undo/Redo, копирование/вставка
+- Камера: zoom колесом, pan средней кнопкой
+
 
 
 ### UI компоненты

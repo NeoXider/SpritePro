@@ -1,0 +1,46 @@
+{
+    "version": "1.0",
+    "name": "New Scene",
+    "camera": {
+        "x": 0.0,
+        "y": 0.0,
+        "zoom": 1.0
+    },
+    "objects": [
+        {
+            "id": "6e0f02d2",
+            "name": "amogus",
+            "sprite_path": "D:\\GIT\\_fork\\SpritePro\\tools\\sprite_editor\\assets\\amogus.png",
+            "transform": {
+                "x": -768,
+                "y": -96,
+                "rotation": -0.41403555998883235,
+                "scale_x": 0.1,
+                "scale_y": 0.1
+            },
+            "z_index": 0,
+            "visible": true,
+            "locked": false,
+            "custom_data": {}
+        },
+        {
+            "id": "2917ed07",
+            "name": "background_game",
+            "sprite_path": "D:\\GIT\\_fork\\SpritePro\\tools\\sprite_editor\\assets\\background_game.png",
+            "transform": {
+                "x": 1440,
+                "y": -480,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 1,
+            "visible": true,
+            "locked": false,
+            "custom_data": {}
+        }
+    ],
+    "grid_size": 32,
+    "grid_visible": true,
+    "snap_to_grid": true
+}

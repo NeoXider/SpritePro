@@ -1,7 +1,15 @@
 import argparse
 import logging
+import os
+import sys
 from pathlib import Path
 from textwrap import dedent
+
+# Add parent directory to path for tools
+_spritepro_dir = Path(__file__).parent
+_parent_dir = _spritepro_dir.parent
+if str(_parent_dir) not in sys.path:
+    sys.path.insert(0, str(_parent_dir))
 
 
 MAIN_TEMPLATE = dedent(
@@ -104,15 +112,27 @@ def create_project(target: Path) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Create a minimal SpritePro project")
+    parser = argparse.ArgumentParser(description="SpritePro tools")
     parser.add_argument(
         "--create",
         metavar="PATH",
         nargs="?",
         const="main.py",
-        help="Project folder or path to main.py",
+        help="Create a new project: --create [path]",
+    )
+    parser.add_argument(
+        "--editor",
+        "-e",
+        action="store_true",
+        help="Launch the Sprite Editor",
     )
     args = parser.parse_args()
+
+    if args.editor:
+        from tools.sprite_editor.editor import SpriteEditor
+        editor = SpriteEditor()
+        editor.run()
+        return
 
     if not args.create:
         parser.print_help()

@@ -34,6 +34,9 @@ class SpriteProGame:
             return
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.camera = Vector2()
+        self.camera_zoom = 1.0
+        self.camera_min_zoom = 0.1
+        self.camera_max_zoom = 5.0
         self.camera_target: pygame.sprite.Sprite | None = None
         self.camera_offset = Vector2()
         self.update_objects: list = []  # Объекты для автоматического обновления
@@ -213,6 +216,31 @@ class SpriteProGame:
             Vector2: Позиция камеры.
         """
         return self.camera
+
+    def get_camera_zoom(self) -> float:
+        """Получает текущий зум камеры.
+
+        Returns:
+            float: Значение зума (1.0 = без зума).
+        """
+        return self.camera_zoom
+
+    def set_camera_zoom(self, zoom: float) -> None:
+        """Устанавливает зум камеры.
+
+        Args:
+            zoom: Значение зума (от 0.1 до 5.0).
+        """
+        self.camera_zoom = max(self.camera_min_zoom, min(self.camera_max_zoom, zoom))
+
+    def zoom_camera(self, factor: float) -> None:
+        """Увеличивает/уменьшает зум камеры.
+
+        Args:
+            factor: Множитель зума (например, 1.1 для увеличения, 0.9 для уменьшения).
+        """
+        new_zoom = self.camera_zoom * factor
+        self.set_camera_zoom(new_zoom)
 
     def shake_camera(
         self, strength: Vector2 | tuple[float, float] = (12, 12), duration: float = 0.35

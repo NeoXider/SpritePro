@@ -1,0 +1,30 @@
+{
+    "version": "1.0",
+    "name": "New Scene",
+    "camera": {
+        "x": 0.0,
+        "y": 0.0,
+        "zoom": 1.0
+    },
+    "objects": [
+        {
+            "id": "08733daa",
+            "name": "amogus",
+            "sprite_path": "D:\\GIT\\_fork\\SpritePro\\tools\\sprite_editor\\assets\\amogus.png",
+            "transform": {
+                "x": 300,
+                "y": 450,
+                "rotation": -2.254081229016492,
+                "scale_x": 0.1,
+                "scale_y": 0.1
+            },
+            "z_index": 0,
+            "visible": true,
+            "locked": false,
+            "custom_data": {}
+        }
+    ],
+    "grid_size": 10,
+    "grid_visible": true,
+    "snap_to_grid": true
+}
