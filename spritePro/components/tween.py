@@ -833,17 +833,17 @@ if __name__ == "__main__":
         y_pos += 60
 
     # Создаем текст для отображения названий типов плавности
-    font = pygame.font.Font(None, 24)
     texts = []
     y_pos = 50
     for easing_type in EasingType:
-        text = font.render(easing_type.name, True, (255, 255, 255))
+        text = spritePro.TextSprite(easing_type.name, color = (255, 255, 255))
         texts.append((text, (20, y_pos + 15)))
+        text.position = (100, y_pos+ 15)
         y_pos += 60
 
     # Добавляем инструкции
-    instructions = font.render("Press SPACE to pause/resume, ESC to exit", True, (255, 255, 255))
-    instructions_pos = (screen.get_width() // 2 - instructions.get_width() // 2, 10)
+    instructions = spritePro.TextSprite("Press SPACE to pause/resume, ESC to exit", color= (255, 255, 255))
+    instructions_pos = (screen.get_width() // 2 - instructions.image.get_width() // 2, 10)
 
     paused = False
 
@@ -871,13 +871,6 @@ if __name__ == "__main__":
         # Обновляем спрайты
         for sprite in sprites:
             sprite.update(screen)
-
-        # Отображаем названия типов плавности
-        for text, pos in texts:
-            screen.blit(text, pos)
-
-        # Отображаем инструкции
-        screen.blit(instructions, instructions_pos)
 
         # Обработка событий
         for event in spritePro.pygame_events:

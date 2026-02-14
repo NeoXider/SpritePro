@@ -15,6 +15,10 @@ from spritePro.layout import (
     layout_flex_row,
     layout_flex_column,
     layout_grid,
+    layout_horizontal,
+    layout_vertical,
+    layout_circle,
+    layout_line,
 )
 from spritePro.constants import Anchor
 
@@ -165,7 +169,7 @@ class MenuPage(s.Page):
         layout_flex_column(
             panel,
             [title, btn_shop, btn_inv, btn_settings, btn_exit],
-            gap=14,
+            gap=20,
             padding=PAD * 2,
             align_main=LayoutAlignMain.CENTER,
             align_cross=LayoutAlignCross.CENTER,
