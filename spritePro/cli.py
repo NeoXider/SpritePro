@@ -129,9 +129,9 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.editor:
-        from tools.sprite_editor.editor import SpriteEditor
-        editor = SpriteEditor()
-        editor.run()
+        import spritePro as s
+
+        s.editor.launch_editor()
         return
 
     if not args.create:

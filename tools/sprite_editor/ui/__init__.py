@@ -1,5 +1,5 @@
-"""UI-модули редактора спрайтов."""
+"""Compatibility wrapper: re-exports from spritePro.editor.ui."""
 
-from .windows import EditorWindow, SettingsWindow, WindowManager
+from spritePro.editor.ui import EditorWindow, SettingsWindow, WindowManager
 
 __all__ = ["EditorWindow", "SettingsWindow", "WindowManager"]

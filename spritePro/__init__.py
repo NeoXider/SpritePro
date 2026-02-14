@@ -14,6 +14,7 @@ from .sprite import Sprite
 from .button import Button
 from .toggle_button import ToggleButton
 from .slider import Slider
+from . import editor
 
 from .components.timer import Timer
 from .components.text import TextSprite
@@ -83,6 +84,7 @@ __all__ = [
     "Button",
     "ToggleButton",
     "Slider",
+    "editor",
     "Timer",
     "TextSprite",
     "DraggableSprite",

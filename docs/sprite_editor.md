@@ -1,7 +1,7 @@
 # Sprite Editor
 
 Встроенный редактор спрайтов в стиле Unity для визуального создания игровых сцен.
-Редактор поддерживает модульные окна/страницы, интерактивный Inspector и настройку камеры/сетки через слайдеры.
+Редактор поддерживает модульные окна/страницы, интерактивный Inspector, настройку камеры/сетки через слайдеры и рамку предпросмотра камеры в viewport.
 
 ## Содержание
 
@@ -35,8 +35,11 @@ python -m spritePro.cli --editor
 # Или короткий вариант
 python -m spritePro.cli -e
 
+# Как отдельный модуль editor
+python -m spritePro.editor
+
 # Напрямую
-python tools/sprite_editor/editor.py
+python -m spritePro.editor
 ```
 
 ### Первая сцена
@@ -45,7 +48,7 @@ python tools/sprite_editor/editor.py
 2. Перетащите изображения (PNG, JPG, BMP) из проводника на сцену
 3. Спрайты появятся в центре viewport
 4. Перетаскивайте спрайты для расстановки
-5. Настройте Zoom/Grid слайдерами в нижней панели
+5. Настройте Zoom/Grid слайдерами или текстовыми полями в нижней панели
 6. Сохраните сцену (Ctrl+S или кнопка Save)
 
 ---
@@ -58,16 +61,22 @@ python tools/sprite_editor/editor.py
 |--------|---------|
 | CLI | `python -m spritePro.cli --editor` |
 | CLI (короткий) | `python -m spritePro.cli -e` |
-| Напрямую | `python tools/sprite_editor/editor.py` |
-| Из Python | `from tools.sprite_editor.editor import SpriteEditor; SpriteEditor().run()` |
+| Editor module | `python -m spritePro.editor` |
+| Напрямую | `python -m spritePro.editor` |
+| Из Python | `import spritePro as s; s.editor.launch_editor()` |
 
 ### Параметры при запуске
 
 Можно передать размер окна:
 
 ```python
-from tools.sprite_editor.editor import SpriteEditor
+import spritePro as s
+from spritePro.editor.editor import SpriteEditor
 
+# Вариант 1: простой запуск
+s.editor.launch_editor()
+
+# Вариант 2: если нужен кастомный размер окна
 editor = SpriteEditor(size=(1280, 720))
 editor.run()
 ```
@@ -93,7 +102,7 @@ editor.run()
 │        │                                            │ Sprite: player.png │
 │        │                                            │ Z-Index: 0        │
 ├────────┴────────────────────────────────────────────┴────────────────────┤
-│  X: 100  Y: 200  │  Zoom: 100%  │  Grid: 32px  │  Snap: ON            │
+│  X: 100  Y: 200  │  Zoom: 100%  │  Grid: 10px  │  Snap: ON            │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -132,6 +141,7 @@ editor.run()
 - Сеткой (включается/выключается)
 - Спрайтами
 - Gizmo выделения
+- Рамкой предпросмотра камеры `800x600` (что увидит игрок при стандартном запуске)
 
 #### Statusbar (Нижняя панель)
 
@@ -140,6 +150,7 @@ editor.run()
 - **Grid** - размер клетки сетки
 - **Snap** - включена ли привязка к сетке
 - **Слайдеры** - прямое управление Zoom и Grid
+- **Поля ввода** - точный ввод Zoom (%) и Grid (px)
 
 ---
 
@@ -202,8 +213,8 @@ editor.run()
 |----------|-----------|
 | Zoom (приближение/отдаление) | Колесо мыши |
 | Pan (перемещение вида) | Средняя кнопка мыши (зажать и тянуть) |
-| Точный Zoom | Слайдер Zoom в статусбаре |
-| Размер сетки | Слайдер Grid в статусбаре |
+| Точный Zoom | Слайдер или ввод значения в `%` (от `1` до `1000`) |
+| Размер сетки | Слайдер или ввод значения в `px` |
 
 ### Работа с объектами
 
@@ -241,26 +252,24 @@ editor.run()
 ### Загрузка сцены
 
 ```python
-from tools.sprite_editor.scene import Scene
+from spritePro.editor.scene import Scene
 
 # Загрузка из файла
 scene = Scene.load("my_scene.json")
 
 # Создание редактора с загруженной сценой
-from tools.sprite_editor.editor import SpriteEditor
-editor = SpriteEditor()
-editor.scene = scene
-editor.run()
+import spritePro as s
+s.editor.launch_editor()
 ```
 
 ### Программное создание сцены
 
 ```python
-from tools.sprite_editor.scene import Scene, SceneObject, Transform
+from spritePro.editor.scene import Scene, SceneObject, Transform
 
 # Создание сцены
 scene = Scene(name="My Game")
-scene.grid_size = 32
+scene.grid_size = 10
 scene.snap_to_grid = True
 
 # Добавление объектов
@@ -309,7 +318,7 @@ scene.save("level1.json")
             "custom_data": {}
         }
     ],
-    "grid_size": 32,
+    "grid_size": 10,
     "grid_visible": true,
     "snap_to_grid": true
 }
@@ -374,7 +383,7 @@ scene.save("level1.json")
 
 ```python
 import spritePro as s
-from tools.sprite_editor.scene import Scene
+from spritePro.editor.scene import Scene
 
 # Загружаем сцену
 scene = Scene.load("level1.json")
@@ -416,28 +425,42 @@ while True:
     s.update(fill_color=(20, 20, 30))
 ```
 
+### Короткий путь (рекомендуется)
+
+```python
+import spritePro as s
+
+s.get_screen((800, 600), "My Game")
+runtime = s.editor.spawn_scene("level1.json", scene=s.get_current_scene(), apply_camera=True)
+
+# Быстро получаем нужные объекты по имени и вешаем логику
+player = runtime.first("player")
+enemies = runtime.startswith("enemy")
+```
+
+Полный рабочий пример находится в `spritePro/demoGames/editor_scene_runtime_demo.py`.
+
 ### Создание редактора внутри игры
 
 ```python
 # Можно запустить редактор как отдельное окно
 # и затем загрузить результат в игру
-from tools.sprite_editor.editor import SpriteEditor
+import spritePro as s
+from spritePro.editor.scene import Scene
 
 # Редактирование
-editor = SpriteEditor()
-editor.scene.name = "Level 1"
-editor.run()
+s.editor.launch_editor()
 
 # После выхода - редактор сохранит сцену в scene.name.json
 # Загружаем в игру
-game_scene = Scene.load(f"{editor.scene.name}.json")
+game_scene = Scene.load("Level 1.json")
 ```
 
 ---
 
 ## Окна и страницы
 
-Редактор использует модульную систему окон (`tools/sprite_editor/ui/windows.py`):
+Редактор использует модульную систему окон (`spritePro/editor/ui/windows.py`):
 
 - `Settings` - отдельное окно с вкладками `Scene` и `View`
 - вкладки расширяются в отдельном модуле без правок основного цикла редактора
@@ -445,10 +468,23 @@ game_scene = Scene.load(f"{editor.scene.name}.json")
 
 ### Добавление новой страницы в Settings
 
-1. Откройте `tools/sprite_editor/ui/windows.py`
+1. Откройте `spritePro/editor/ui/windows.py`
 2. Добавьте имя вкладки в `SettingsWindow(... page_titles=[...])`
 3. Добавьте рендер новой страницы в `SettingsWindow.render(...)`
 4. Вынесите логику страницы в `_render_<page>_page(...)`
+
+---
+
+## Переезд редактора в пакет
+
+Начиная с текущей версии, основной код редактора находится внутри пакета `spritePro`:
+
+- `spritePro/editor/editor.py` — основной цикл и инструменты редактора
+- `spritePro/editor/ui/windows.py` — модуль окон/вкладок (`Settings`)
+- `spritePro/editor/scene.py` — модель данных сцены
+- `spritePro/editor/runtime.py` — запуск сцены в рантайме (`spawn_scene`)
+
+Папка `tools/sprite_editor` оставлена только для обратной совместимости (тонкие реэкспорты).
 
 ---
 
@@ -476,7 +512,7 @@ game_scene = Scene.load(f"{editor.scene.name}.json")
 ### Создание платформера
 
 ```python
-from tools.sprite_editor.scene import Scene, SceneObject, Transform
+from spritePro.editor.scene import Scene, SceneObject, Transform
 
 # Создаём сцену
 scene = Scene(name="platformer_level1")
@@ -522,14 +558,23 @@ scene.save("level1.json")
 ### Структура проекта
 
 ```
-tools/sprite_editor/
-├── __init__.py          # Экспорт основных классов
-├── editor.py            # Главный класс редактора
-├── scene.py             # Модель данных (Scene, SceneObject, Transform)
-├── components.py        # UI-компоненты (UIButton/UIInputField/UISlider)
+spritePro/editor/
+├── __init__.py          # launch_editor, spawn_scene и экспорт API
+├── __main__.py          # запуск: python -m spritePro.editor
+├── editor.py            # главный цикл/инструменты редактора
+├── scene.py             # модель Scene/SceneObject/Transform/Camera
+├── runtime.py           # spawn_scene(...) для рантайма
 └── ui/
     ├── __init__.py
-    └── windows.py       # Модуль окон/страниц редактора
+    └── windows.py       # модуль окон/страниц редактора
+
+tools/sprite_editor/
+├── __init__.py          # совместимость со старыми импортами
+├── editor.py            # совместимость (реэкспорт из spritePro.editor.editor)
+├── scene.py             # совместимость (реэкспорт из spritePro.editor.scene)
+└── ui/
+    ├── __init__.py      # совместимость
+    └── windows.py       # совместимость
 ```
 
 ### Архитектура
