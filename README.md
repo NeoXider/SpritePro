@@ -1,5 +1,4 @@
 <div align="center">
-<img width="1910" height="1023" alt="image" src="https://github.com/user-attachments/assets/01947bfe-d5e6-40cb-ba75-c03f2d4aeb9d" />
 
 # 🎮 [SpritePro](https://github.com/NeoXider/SpritePro)
 
@@ -20,6 +19,8 @@
 ## 🎨 Sprite Editor — визуальный редактор сцен
 
 В SpritePro появился **встроенный редактор спрайтов** в стиле Unity: создавайте сцены визуально, расставляйте объекты мышью и сохраняйте в JSON для использования в игре.
+
+<img width="800" alt="Sprite Editor" src="https://github.com/user-attachments/assets/01947bfe-d5e6-40cb-ba75-c03f2d4aeb9d" />
 
 ### Запуск через терминал
 
