@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 import pygame
 import spritePro as s
@@ -18,6 +18,77 @@ class SpawnedObject:
     data: SceneObject
     sprite: s.Sprite
     base_position: pygame.Vector2
+
+    def placement(self) -> Dict[str, Any]:
+        """Данные из сцены: pos, size, angle, sorting_order, screen_space, scene.
+        Подходит для передачи в Button, TextSprite, ToggleButton и др.; параметры можно переопределить."""
+        sp = self.sprite
+        return {
+            "pos": (sp.rect.x, sp.rect.y),
+            "size": (sp.rect.width, sp.rect.height),
+            "angle": getattr(sp, "angle", 0.0),
+            "sorting_order": self.data.z_index,
+            "screen_space": getattr(self.data, "screen_space", False),
+            "scene": getattr(sp, "scene", None) or s.get_current_scene(),
+        }
+
+    def to_button(self, **kwargs) -> s.Button:
+        """Создаёт кнопку с размещением из сцены. Исходный спрайт скрывается, self.sprite указывает на кнопку.
+        Любые параметры (text, on_click, size, pos, ...) можно переопределить через kwargs."""
+        p = self.placement()
+        pos = kwargs.pop("pos", p["pos"])
+        size = kwargs.pop("size", p["size"])
+        scene = kwargs.pop("scene", p["scene"])
+        sorting_order = kwargs.pop("sorting_order", p["sorting_order"])
+        btn = s.Button("", size, pos, scene=scene, sorting_order=sorting_order, **kwargs)
+        btn.screen_space = p["screen_space"]
+        if hasattr(self.sprite, "set_active"):
+            self.sprite.set_active(False)
+        self.sprite = btn
+        return btn
+
+    def to_text_sprite(self, **kwargs) -> s.TextSprite:
+        """Создаёт TextSprite с размещением из сцены. Исходный спрайт скрывается, self.sprite указывает на текст.
+        Переопределяйте text, font_size, color, pos и др. через kwargs."""
+        p = self.placement()
+        pos = kwargs.pop("pos", p["pos"])
+        scene = kwargs.pop("scene", p["scene"])
+        sorting_order = kwargs.pop("sorting_order", p["sorting_order"])
+        text = kwargs.pop("text", "")
+        txt = s.TextSprite(text, pos=pos, scene=scene, sorting_order=sorting_order, **kwargs)
+        txt.screen_space = p["screen_space"]
+        if hasattr(self.sprite, "set_active"):
+            self.sprite.set_active(False)
+        self.sprite = txt
+        return txt
+
+    def to_toggle(self, **kwargs) -> s.ToggleButton:
+        """Создаёт переключатель с размещением из сцены. Исходный спрайт скрывается.
+        Переопределяйте text_on, text_off, on_toggle и др. через kwargs."""
+        p = self.placement()
+        pos = kwargs.pop("pos", p["pos"])
+        size = kwargs.pop("size", p["size"])
+        scene = kwargs.pop("scene", p["scene"])
+        sorting_order = kwargs.pop("sorting_order", p["sorting_order"])
+        toggle = s.ToggleButton("", size, pos, scene=scene, **kwargs)
+        toggle.sorting_order = sorting_order
+        toggle.screen_space = p["screen_space"]
+        if hasattr(self.sprite, "set_active"):
+            self.sprite.set_active(False)
+        self.sprite = toggle
+        return toggle
+
+    def Button(self, **kw):
+        """Алиас для to_button()."""
+        return self.to_button(**kw)
+
+    def TextSprite(self, **kw):
+        """Алиас для to_text_sprite()."""
+        return self.to_text_sprite(**kw)
+
+    def Toggle(self, **kw):
+        """Алиас для to_toggle()."""
+        return self.to_toggle(**kw)
 
 
 @dataclass
