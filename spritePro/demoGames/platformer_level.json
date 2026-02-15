@@ -1,0 +1,200 @@
+{
+    "version": "1.0",
+    "name": "platformer_level",
+    "camera": {
+        "scene_x": 174.47935116900868,
+        "scene_y": 420.4058724460524,
+        "scene_zoom": 1.1000000000000014,
+        "game_x": 0,
+        "game_y": 0,
+        "game_zoom": 1
+    },
+    "objects": [
+        {
+            "id": "ground",
+            "name": "PlatformBOT",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                70,
+                200,
+                70
+            ],
+            "transform": {
+                "x": 400,
+                "y": 580,
+                "rotation": 0,
+                "scale_x": 1,
+                "scale_y": 1
+            },
+            "z_index": 0,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 800,
+                "height": 20
+            }
+        },
+        {
+            "id": "p1",
+            "name": "Platform",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                70,
+                200,
+                70
+            ],
+            "transform": {
+                "x": 200,
+                "y": 480,
+                "rotation": 0,
+                "scale_x": 1,
+                "scale_y": 1
+            },
+            "z_index": 0,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 150,
+                "height": 20
+            }
+        },
+        {
+            "id": "p2",
+            "name": "Platform",
+            "sprite_path": "D:/GIT/_fork/SpritePro/spritePro/demoGames/Sprites/platforma.png",
+            "sprite_shape": "image",
+            "sprite_color": [
+                70,
+                200,
+                70
+            ],
+            "transform": {
+                "x": 400,
+                "y": 380,
+                "rotation": 0,
+                "scale_x": 0.3555555555555556,
+                "scale_y": 0.36923076923076925
+            },
+            "z_index": 0,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 150,
+                "height": 20
+            }
+        },
+        {
+            "id": "p3",
+            "name": "Platform",
+            "sprite_path": "D:/GIT/_fork/SpritePro/spritePro/demoGames/Sprites/платформа.jpg",
+            "sprite_shape": "image",
+            "sprite_color": [
+                70,
+                200,
+                70
+            ],
+            "transform": {
+                "x": 130,
+                "y": 320,
+                "rotation": 0.0,
+                "scale_x": 0.06666666666666667,
+                "scale_y": 0.05924170616113744
+            },
+            "z_index": 0,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 161,
+                "height": 23
+            }
+        },
+        {
+            "id": "p4",
+            "name": "Platform top",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                70,
+                200,
+                70
+            ],
+            "transform": {
+                "x": 550,
+                "y": 200,
+                "rotation": 0,
+                "scale_x": 1,
+                "scale_y": 1
+            },
+            "z_index": 0,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 200,
+                "height": 20
+            }
+        },
+        {
+            "id": "83e0fd1b",
+            "name": "Platform (1)",
+            "sprite_path": "",
+            "sprite_shape": "ellipse",
+            "sprite_color": [
+                70,
+                200,
+                70
+            ],
+            "transform": {
+                "x": 200,
+                "y": 90,
+                "rotation": 0.0,
+                "scale_x": 1,
+                "scale_y": 1
+            },
+            "z_index": 0,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 161,
+                "height": 23
+            }
+        },
+        {
+            "id": "player1",
+            "name": "Player",
+            "sprite_path": "",
+            "sprite_shape": "ellipse",
+            "sprite_color": [
+                255,
+                80,
+                80
+            ],
+            "transform": {
+                "x": 400,
+                "y": 200,
+                "rotation": 0,
+                "scale_x": 1,
+                "scale_y": 1
+            },
+            "z_index": 10,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 40,
+                "height": 60
+            }
+        }
+    ],
+    "grid_size": 10,
+    "grid_visible": true,
+    "grid_labels_visible": false,
+    "snap_to_grid": true
+}

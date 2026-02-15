@@ -69,14 +69,9 @@
 - Базовые методы отрисовки
 
 #### [docs/sprite_editor.md](docs/sprite_editor.md)
-**Редактор спрайтов (Sprite Editor)**
-- Запуск редактора: `python -m spritePro.cli --editor`
-- Интерфейс: Viewport, Hierarchy, Inspector, Toolbar
-- Инструменты: Select (V), Move (G), Rotate (R), Scale (T)
-- Drag & Drop изображений
-- Сохранение/Загрузка в JSON
-- Undo/Redo, копирование/вставка
-- Камера: zoom колесом, pan средней кнопкой
+**Редактор спрайтов (Sprite Editor)** — один документ покрывает и редактор, и использование сцен в своём проекте.
+- **Редактор:** запуск (`python -m spritePro.cli --editor`), интерфейс (Viewport, Hierarchy, Inspector, Toolbar), инструменты (Select, Move, Rotate, Scale), типы спрайтов (Image, Rect/Circle/Ellipse), Drag & Drop, сохранение/загрузка JSON, Undo/Redo, камера.
+- **Использование сцены в своей игре:** загрузка сцены в коде, `s.editor.spawn_scene("level.json", scene=..., apply_camera=True)`, получение объектов по имени (`runtime.first("player")`, `runtime.startswith("enemy")`). Пример: [editor_scene_runtime_demo.py](spritePro/demoGames/editor_scene_runtime_demo.py).
 
 
 
@@ -93,6 +88,18 @@
 - Кнопки-переключатели
 - Состояния вкл/выкл
 - Группы переключателей
+
+#### [docs/slider.md](docs/slider.md)
+**Слайдер**
+- Slider(Sprite), два режима: auto_register и ручная отрисовка
+- handle_event(), draw(screen), on_change
+- Примеры в сцене и вне игрового цикла
+
+#### [docs/text_input.md](docs/text_input.md)
+**Поле ввода текста**
+- TextInput(Button), placeholder, value, max_length
+- on_change, on_submit, Enter/Escape/TEXTINPUT
+- activate/deactivate, handle_event
 
 #### [docs/text.md](docs/text.md)
 **Система текста**
@@ -161,9 +168,15 @@
 - Сцены и их жизненный цикл
 
 #### [docs/input.md](docs/input.md)
-**Ввод и события**
-- InputState как в Unity
-- EventBus
+**Ввод**
+- InputState (was_pressed, is_pressed, оси, мышь)
+- Сырые события pygame
+
+#### [docs/events.md](docs/events.md)
+**События (EventBus)**
+- EventBus: connect, send, disconnect, get_event
+- GlobalEvents: QUIT, KEY_DOWN, KEY_UP, MOUSE_DOWN, MOUSE_UP, TICK
+- LocalEvent, роутинг и сеть (route, net)
 
 #### [docs/debug.md](docs/debug.md)
 **Debug Overlay**
@@ -286,6 +299,8 @@
 #### 🖱️ Пользовательский интерфейс
 - [docs/button.md](docs/button.md)
 - [docs/toggle_button.md](docs/toggle_button.md)
+- [docs/slider.md](docs/slider.md)
+- [docs/text_input.md](docs/text_input.md)
 - [docs/text.md](docs/text.md)
 - [docs/layout.md](docs/layout.md)
 - [docs/mouse_interactor.md](docs/mouse_interactor.md)
@@ -297,6 +312,7 @@
 - [docs/text_fps.md](docs/text_fps.md)
 - [docs/game_loop.md](docs/game_loop.md)
 - [docs/input.md](docs/input.md)
+- [docs/events.md](docs/events.md)
 - [docs/debug.md](docs/debug.md)
 - [docs/pages.md](docs/pages.md)
 
@@ -337,6 +353,8 @@
 ## 🔄 Обновления документации
 
 ### Последние обновления
+- **2026-02**: Общий модуль `grid_renderer` для сетки и подписей (игра + редактор); зум-адаптивная плотность подписей. Редактор: переключатель Labels (статусбар и Settings → Scene). Button и TextSprite по умолчанию `screen_space=True`. Документация: debug.md, sprite_editor.md, button.md, text.md.
+- **2026-02**: Slider(Sprite), TextInput(Button), auto_register у Sprite; документация slider.md, text_input.md, events.md
 - **2026-02**: Fluent Tween API (DoMove, DoScale, SetEase, SetLoops, OnComplete, Kill) — демо fluent_tween_demo.py
 - **2026-02**: Layout, мультиплеер, крестики-нолики — обзор в docs/OVERVIEW.md
 - **2025-06**: Добавлена система сохранения/загрузки

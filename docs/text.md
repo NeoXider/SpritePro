@@ -26,6 +26,8 @@ TextSprite extends the base Sprite class to handle text rendering, making it eas
 - `anchor` (str | Anchor): Anchor for positioning. Default: Anchor.CENTER
 - `scene` (Scene | str): Scene this text sprite belongs to. Default: None
 
+По умолчанию TextSprite в режиме **screen_space=True**: позиция и размер не зависят от камеры и зума. Для текста в мировых координатах (например над объектом) вызовите `.set_screen_space(False)`.
+
 **Пример использования якоря:**
 ```python
 # Текст в левом верхнем углу

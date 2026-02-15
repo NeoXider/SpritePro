@@ -114,8 +114,10 @@ class SettingsWindow(EditorWindow):
         colors: Dict[str, Color],
         *,
         scene_grid_visible: bool,
+        scene_grid_labels_visible: bool,
         scene_snap_to_grid: bool,
         on_toggle_grid: Callable[[], None],
+        on_toggle_grid_labels: Callable[[], None],
         on_toggle_snap: Callable[[], None],
         zoom_text: str,
         grid_text: str,
@@ -131,8 +133,10 @@ class SettingsWindow(EditorWindow):
                 colors,
                 body,
                 scene_grid_visible=scene_grid_visible,
+                scene_grid_labels_visible=scene_grid_labels_visible,
                 scene_snap_to_grid=scene_snap_to_grid,
                 on_toggle_grid=on_toggle_grid,
+                on_toggle_grid_labels=on_toggle_grid_labels,
                 on_toggle_snap=on_toggle_snap,
             )
             return
@@ -146,8 +150,10 @@ class SettingsWindow(EditorWindow):
         body: pygame.Rect,
         *,
         scene_grid_visible: bool,
+        scene_grid_labels_visible: bool,
         scene_snap_to_grid: bool,
         on_toggle_grid: Callable[[], None],
+        on_toggle_grid_labels: Callable[[], None],
         on_toggle_snap: Callable[[], None],
     ) -> None:
         row_h = 26
@@ -161,6 +167,16 @@ class SettingsWindow(EditorWindow):
             "Grid Visible",
             scene_grid_visible,
             on_toggle_grid,
+        )
+        y += row_h + 8
+        self._render_toggle_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Grid Labels",
+            scene_grid_labels_visible,
+            on_toggle_grid_labels,
         )
         y += row_h + 8
         self._render_toggle_row(

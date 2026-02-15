@@ -1,4 +1,6 @@
-# Ввод и события
+# Ввод
+
+Состояние клавиш и мыши каждый кадр. Для подписки на именованные события (EventBus, глобальные события) см. [События (events.md)](events.md).
 
 ## InputState (как в Unity)
 
@@ -32,9 +34,9 @@ while True:
 - `s.input.was_mouse_released(button)`
 - `s.input.mouse_pos`, `s.input.mouse_rel`, `s.input.mouse_wheel`
 
-## EventBus
+## EventBus (кратко)
 
-Для подписки на события используйте `s.events`:
+Подробная документация: [events.md](events.md). Кратко — подписка на события:
 
 ```python
 import spritePro as s
@@ -84,6 +86,8 @@ damage_event(amount=10)
 - `s.globalEvents.KEY_DOWN`, `s.globalEvents.KEY_UP`
 - `s.globalEvents.MOUSE_DOWN`, `s.globalEvents.MOUSE_UP`
 - `s.globalEvents.TICK` (каждый кадр, payload: `dt`, `frame_count`, `time_since_start`)
+
+Подробнее: [events.md](events.md).
 
 ### EventBus + мультиплеер
 

@@ -14,6 +14,7 @@ from .sprite import Sprite
 from .button import Button
 from .toggle_button import ToggleButton
 from .slider import Slider
+from .text_input import TextInput
 from . import editor
 
 from .components.timer import Timer
@@ -84,6 +85,7 @@ __all__ = [
     "Button",
     "ToggleButton",
     "Slider",
+    "TextInput",
     "editor",
     "Timer",
     "TextSprite",
@@ -224,6 +226,7 @@ __all__ = [
     "set_debug_hud_style",
     "set_debug_hud_enabled",
     "set_debug_camera_input",
+    "set_debug_wheel_zoom",
     "set_console_log_enabled",
     "set_console_log_color_enabled",
     # Modules
@@ -234,6 +237,7 @@ __all__ = [
     "init",
     "get_screen",
     "update",
+    "quit_requested",
 ]
 
 FPS: int = 60
@@ -609,6 +613,11 @@ def set_debug_camera_input(mouse_button: int | None = 3) -> None:
     _context.game.set_debug_camera_input(mouse_button)
 
 
+def set_debug_wheel_zoom(enabled: bool = True) -> None:
+    """Включает или отключает зум колёсиком мыши в debug-режиме. По умолчанию True."""
+    _context.game.set_debug_wheel_zoom(enabled)
+
+
 def set_debug_log_palette(
     info: tuple[int, int, int] | None = None,
     warning: tuple[int, int, int] | None = None,
@@ -750,6 +759,11 @@ def update(
     """
     _context.update(fps, fill_color, update_display, *update_objects)
     _sync_globals()
+
+
+def quit_requested() -> bool:
+    """True, если было запрошено закрытие окна (событие QUIT). В цикле выходите: if s.quit_requested(): break."""
+    return _context.quit_requested()
 
 
 def set_scene(scene: Scene | None) -> None:

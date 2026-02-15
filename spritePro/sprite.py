@@ -96,6 +96,7 @@ class Sprite(pygame.sprite.Sprite):
         sorting_order: int | None = None,
         anchor: str | Anchor = Anchor.CENTER,
         scene: "SpriteSceneInput" = None,
+        auto_register: bool = True,
     ):
         """Инициализирует новый экземпляр спрайта.
 
@@ -106,6 +107,8 @@ class Sprite(pygame.sprite.Sprite):
             speed (float, optional): Скорость движения. По умолчанию 0.
             sorting_order (int | None, optional): Порядок отрисовки (слой). По умолчанию None.
             anchor (str | Anchor, optional): Якорь для позиционирования. По умолчанию Anchor.CENTER.
+            auto_register (bool, optional): Регистрировать ли спрайт в игровом контексте. По умолчанию True.
+                При False спрайт нужно отрисовывать вручную.
         """
         super().__init__()
         self.size_vector = _coerce_vector2(size, (50, 50))
@@ -144,16 +147,15 @@ class Sprite(pygame.sprite.Sprite):
         self._active_tweens: List[object] = []
 
         self.set_image(sprite, self.size_vector)
-        # Устанавливаем позицию с указанным якорем
         self.set_position(self.start_pos, anchor=anchor)
-        spritePro.register_sprite(self)
-        # Apply initial sorting order if provided
-        if self.sorting_order is not None:
-            try:
-                spritePro.get_game().set_sprite_layer(self, int(self.sorting_order))
-            except Exception:
-                pass
-        self._game_registered = True
+        if auto_register:
+            spritePro.register_sprite(self)
+            if self.sorting_order is not None:
+                try:
+                    spritePro.get_game().set_sprite_layer(self, int(self.sorting_order))
+                except Exception:
+                    pass
+            self._game_registered = True
 
     @property
     def scale(self) -> float:
@@ -1200,13 +1202,33 @@ class Sprite(pygame.sprite.Sprite):
             screen = screen or spritePro.screen
             if screen is not None:
                 if getattr(self, "screen_space", False):
+                    # Режим screen space: привязаны к экрану, не к камере — без зума и смещения, размер 1:1
                     screen.blit(self.image, self.rect)
                 else:
-                    camera = getattr(spritePro.get_game(), "camera", Vector2())
-                    draw_rect = self.rect.copy()
-                    draw_rect.x -= int(camera.x)
-                    draw_rect.y -= int(camera.y)
-                    screen.blit(self.image, draw_rect)
+                    game = spritePro.get_game()
+                    camera = getattr(game, "camera", Vector2())
+                    zoom = getattr(game, "camera_zoom", 1.0)
+                    if zoom == 1.0:
+                        draw_rect = self.rect.copy()
+                        draw_rect.x -= int(camera.x)
+                        draw_rect.y -= int(camera.y)
+                        screen.blit(self.image, draw_rect)
+                    else:
+                        cx = screen.get_width() / 2
+                        cy = screen.get_height() / 2
+                        screen_x = (self.rect.x - camera.x) * zoom + cx * (1 - zoom)
+                        screen_y = (self.rect.y - camera.y) * zoom + cy * (1 - zoom)
+                        w, h = self.image.get_size()
+                        if w < 1 or h < 1:
+                            draw_rect = self.rect.copy()
+                            draw_rect.x = int(screen_x)
+                            draw_rect.y = int(screen_y)
+                            screen.blit(self.image, draw_rect)
+                        else:
+                            scaled_w = max(1, int(w * zoom))
+                            scaled_h = max(1, int(h * zoom))
+                            scaled = pygame.transform.smoothscale(self.image, (scaled_w, scaled_h))
+                            screen.blit(scaled, (int(screen_x), int(screen_y)))
         self._sync_local_offset()
         self._update_children_world_positions()
 

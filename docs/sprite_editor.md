@@ -3,6 +3,8 @@
 Встроенный редактор спрайтов в стиле Unity для визуального создания игровых сцен.
 Редактор поддерживает модульные окна/страницы, интерактивный Inspector, настройку камеры/сетки через слайдеры и рамку предпросмотра камеры в viewport.
 
+**Что описано в этом документе:** 1) сам редактор — запуск, интерфейс, инструменты, сохранение/загрузка; 2) **использование созданных в редакторе сцен в своей игре** — загрузка JSON, `spawn_scene`, получение объектов по имени (см. [Интеграция с SpritePro](#интеграция-с-spritepro)).
+
 ## Содержание
 
 - [Быстрый старт](#быстрый-старт)
@@ -13,6 +15,7 @@
 - [Сохранение и загрузка](#сохранение-и-загрузка)
 - [Формат JSON](#формат-json)
 - [Горячие клавиши](#горячие-клавиши)
+- [Интеграция с SpritePro](#интеграция-с-spritepro) — использование сцены в своей игре
 
 ---
 
@@ -100,7 +103,7 @@ editor.run()
 │        │                                            │ Scale Y: [1.0]    │
 │        │                                            │                    │
 │        │                                            │ Sprite: player.png │
-│        │                                            │ Z-Index: 0        │
+│        │                                            │ Sorting Order: 0   │
 ├────────┴────────────────────────────────────────────┴────────────────────┤
 │  X: 100  Y: 200  │  Zoom: 100%  │  Grid: 10px  │  Snap: ON            │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -111,7 +114,7 @@ editor.run()
 #### Toolbar (Верхняя панель)
 
 - **Инструменты**: Select, Move, Rotate, Scale
-- **Кнопки**: Add, Load, Save, New, Grid, Settings
+- **Кнопки**: Add (изображение), Rect, Circle, Ellipse (примитивы), Load, Save, New, Grid, Settings
 - **Название сцены**: отображается в центре
 - **Индикатор изменений**: `*` означает несохранённые изменения
 
@@ -132,13 +135,18 @@ editor.run()
 - **Image Size** - реальный размер исходного файла в пикселях
 - **Size X/Y** - фактический размер объекта на сцене (редактируется раздельно)
 - **Sprite** - путь к файлу изображения
-- **Z-Index** - слой отрисовки (редактируется)
-- **Visible / Locked** - флаги объекта (переключатели ON/OFF)
+- **Sprite Type** — выпадающий список: Image (картинка по пути), Rectangle, Circle, Ellipse. При выборе примитива размер задаётся в Size X / Size Y (пиксели), цвет — в Color R, G, B (0–255).
+- **Sprite** — путь к изображению (только для типа Image).
+- **Color R / G / B** — цвет примитива (только для Rectangle / Circle / Ellipse).
+- **Sorting Order** — слой отрисовки (редактируется).
+- **Screen Space** — переключатель ON/OFF: при включении объект в игре не зависит от камеры и зума (фиксирован к экрану).
+- **Visible / Locked** — флаги объекта (переключатели ON/OFF).
 
 #### Viewport (Центральная область)
 
 Область редактирования с:
-- Сеткой (включается/выключается)
+- Сеткой (включается/выключается кнопкой Grid в тулбаре)
+- Подписями координат на сетке (включаются/выключаются кнопкой Labels в статусбаре или в Settings → Scene). Плотность подписей зависит от зума: при отдалении камеры подписи реже.
 - Спрайтами
 - Gizmo выделения
 - Рамкой предпросмотра камеры `800x600` (что увидит игрок при стандартном запуске)
@@ -149,6 +157,7 @@ editor.run()
 - **Zoom** - текущий масштаб
 - **Grid** - размер клетки сетки
 - **Snap** - включена ли привязка к сетке
+- **Labels** - показывать ли подписи координат на сетке (зум-адаптивная плотность)
 - **Слайдеры** - прямое управление Zoom и Grid
 - **Поля ввода** - точный ввод Zoom (%) и Grid (px)
 
@@ -462,7 +471,7 @@ game_scene = Scene.load("Level 1.json")
 
 Редактор использует модульную систему окон (`spritePro/editor/ui/windows.py`):
 
-- `Settings` - отдельное окно с вкладками `Scene` и `View`
+- `Settings` - отдельное окно с вкладками `Scene` и `View`. На вкладке Scene: Grid Visible, Grid Labels (подписи координат на сетке), Snap To Grid.
 - вкладки расширяются в отдельном модуле без правок основного цикла редактора
 - кнопка `Settings` и горячая клавиша `F1` открывают/закрывают окно
 
@@ -509,40 +518,55 @@ game_scene = Scene.load("Level 1.json")
 
 ## Примеры использования
 
+### Типы спрайтов (Sprite Type)
+
+В редакторе объект может быть:
+
+- **Image** — отображается картинка по пути `sprite_path` (добавление через Add или перетаскивание файла).
+- **Rectangle** — примитив «прямоугольник». Размер в Inspector: Size X, Size Y (пиксели). Цвет: Color R, G, B (0–255). В тулбаре: кнопка **Rect**.
+- **Circle** — примитив «круг». Размер и цвет так же в Inspector. В тулбаре: кнопка **Circle**.
+- **Ellipse** — примитив «эллипс». В тулбаре: кнопка **Ellipse**.
+
+В Inspector выпадающий список **Sprite Type** переключает тип (Image → Rectangle → Circle → Ellipse → Image). Для примитивов размер хранится в `custom_data` (width, height), цвет — в `sprite_color`. В игре при загрузке сцены через `spawn_scene` примитивы создаются как спрайты с соответствующими формами.
+
 ### Создание платформера
+
+Уровень можно собрать в редакторе: кнопки **Rect** / **Circle** для платформ и игрока, задать имена (например `Player`, `Platform`), размеры и цвета в Inspector, сохранить в JSON. Запуск демо:
+
+```bash
+python -m spritePro.demoGames.platformer_demo
+```
+
+Программное создание сцены с примитивами:
 
 ```python
 from spritePro.editor.scene import Scene, SceneObject, Transform
 
-# Создаём сцену
 scene = Scene(name="platformer_level1")
 
-# Добавляем платформы
-platforms = [
-    ("ground", "assets/ground.png", 400, 550, 800, 40),
-    ("platform1", "assets/platform.png", 200, 400, 150, 20),
-    ("platform2", "assets/platform.png", 600, 300, 150, 20),
-]
+# Платформа как примитив (rectangle)
+obj = SceneObject(
+    name="Platform",
+    sprite_path="",
+    sprite_shape="rectangle",
+    sprite_color=(70, 200, 70),
+    transform=Transform(x=400, y=580),
+    custom_data={"width": 800, "height": 20},
+)
+scene.add_object(obj)
 
-for name, path, x, y, w, h in platforms:
-    obj = SceneObject(
-        name=name,
-        sprite_path=path,
-        transform=Transform(x=x, y=y),
-        z_index=0
-    )
-    scene.add_object(obj)
-
-# Добавляем игрока
+# Игрок — примитив
 player = SceneObject(
     name="Player",
-    sprite_path="assets/player.png",
-    transform=Transform(x=100, y=500),
-    z_index=10
+    sprite_path="",
+    sprite_shape="rectangle",
+    sprite_color=(255, 80, 80),
+    transform=Transform(x=400, y=200),
+    custom_data={"width": 40, "height": 60},
+    z_index=10,
 )
 scene.add_object(player)
 
-# Сохраняем
 scene.save("level1.json")
 ```
 
@@ -563,6 +587,7 @@ spritePro/editor/
 ├── __main__.py          # запуск: python -m spritePro.editor
 ├── editor.py            # главный цикл/инструменты редактора
 ├── scene.py             # модель Scene/SceneObject/Transform/Camera
+├── sprite_types.py      # типы спрайтов: Image, Rectangle, Circle, Ellipse (примитивы)
 ├── runtime.py           # spawn_scene(...) для рантайма
 └── ui/
     ├── __init__.py
@@ -580,7 +605,7 @@ tools/sprite_editor/
 ### Архитектура
 
 - **Scene** - контейнер объектов, камеры, настроек сетки
-- **SceneObject** - отдельный объект с трансформацией и путём к спрайту
+- **SceneObject** — объект с трансформацией, путём к спрайту (Image), типом примитива (sprite_shape: rectangle/circle/ellipse) и цветом (sprite_color)
 - **Transform** - позиция, вращение, масштаб
 - **SpriteEditor** - главный класс с игровым циклом и обработкой событий
 - **ToolType** - перечисление инструментов (Select, Move, Rotate, Scale)

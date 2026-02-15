@@ -38,6 +38,7 @@ class MouseInteractor:
         on_mouse_up: Optional[Callable[[], None]] = None,
         on_hover_enter: Optional[Callable[[], None]] = None,
         on_hover_exit: Optional[Callable[[], None]] = None,
+        mouse_button: int = 1,
     ):
         """Инициализирует компонент взаимодействия с мышью.
 
@@ -48,6 +49,7 @@ class MouseInteractor:
             on_mouse_up (Optional[Callable[[], None]], optional): Функция, вызываемая при отпускании кнопки мыши. По умолчанию None.
             on_hover_enter (Optional[Callable[[], None]], optional): Функция, вызываемая при первом входе мыши в область спрайта. По умолчанию None.
             on_hover_exit (Optional[Callable[[], None]], optional): Функция, вызываемая при выходе мыши из области спрайта. По умолчанию None.
+            mouse_button (int, optional): Номер кнопки мыши для клика (1=левая, 2=средняя, 3=правая). Колёсико (4/5) игнорируется. По умолчанию 1.
         """
         self.sprite = sprite
         self.on_click = on_click
@@ -55,6 +57,7 @@ class MouseInteractor:
         self.on_mouse_up = on_mouse_up
         self.on_hover_enter = on_hover_enter
         self.on_hover_exit = on_hover_exit
+        self.mouse_button = mouse_button
 
         self._hovered = False
         self._pressed = False
@@ -88,7 +91,28 @@ class MouseInteractor:
         """
         events = events or spritePro.pygame_events
         pos = pygame.mouse.get_pos()
-        collided = self.sprite.rect.collidepoint(pos)
+        if getattr(self.sprite, "screen_space", False):
+            check_pos = pos
+        else:
+            try:
+                game = spritePro.get_game()
+                cam = getattr(game, "camera", None)
+                zoom = getattr(game, "camera_zoom", 1.0)
+                if cam is not None and zoom != 0:
+                    try:
+                        screen = spritePro.screen
+                        cx = screen.get_width() / 2
+                        cy = screen.get_height() / 2
+                    except Exception:
+                        cx, cy = 400, 300
+                    wx = cam.x + (pos[0] - cx * (1 - zoom)) / zoom
+                    wy = cam.y + (pos[1] - cy * (1 - zoom)) / zoom
+                    check_pos = (wx, wy)
+                else:
+                    check_pos = pos
+            except Exception:
+                check_pos = pos
+        collided = self.sprite.rect.collidepoint(check_pos)
 
         # hover enter / exit
         if collided and not self._hovered:
@@ -100,13 +124,13 @@ class MouseInteractor:
             if self.on_hover_exit:
                 self.on_hover_exit()
 
-        # mouse down / up
+        # mouse down / up (только выбранная кнопка: 1=левая, 2=средняя, 3=правая; колёсико 4/5 не считаем)
         for e in events:
-            if e.type == pygame.MOUSEBUTTONDOWN and collided:
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == self.mouse_button and collided:
                 self._pressed = True
                 if self.on_mouse_down:
                     self.on_mouse_down()
-            elif e.type == pygame.MOUSEBUTTONUP:
+            elif e.type == pygame.MOUSEBUTTONUP and e.button == self.mouse_button:
                 if self._pressed:
                     if collided and self.on_click:
                         self.on_click()

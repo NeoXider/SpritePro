@@ -140,6 +140,7 @@ class GameContext:
         self.time_since_start: float = 0.0
         self._start_time: float = time.perf_counter()
         self._startup_log_done = False
+        self._quit_requested = False
         GameContext._instance = self
 
     @classmethod
@@ -186,6 +187,7 @@ class GameContext:
                 pass
         self.screen = pygame.display.set_mode(size)
         self.screen_rect = self.screen.get_rect()
+        self._quit_requested = False
         pygame.display.set_caption(title)
         if icon:
             icon_surface = resource_cache.load_texture(icon)
@@ -255,8 +257,12 @@ class GameContext:
 
         for event in self.events:
             if event.type == pygame.QUIT:
+                self._quit_requested = True
                 self.event_bus.send(GlobalEvents.QUIT, event=event)
-                raise SystemExit
+            elif event.type == pygame.MOUSEWHEEL:
+                if self.game.debug_enabled and getattr(self.game, "debug_wheel_zoom_enabled", True):
+                    factor = 1.15 if event.y > 0 else 1 / 1.15
+                    self.game.zoom_camera(factor)
             elif event.type == pygame.KEYDOWN:
                 self.event_bus.send(GlobalEvents.KEY_DOWN, key=event.key, event=event)
             elif event.type == pygame.KEYUP:
@@ -298,6 +304,14 @@ class GameContext:
 
         if update_display:
             pygame.display.update()
+
+        if self._quit_requested:
+            import sys
+            sys.exit(0)
+
+    def quit_requested(self) -> bool:
+        """Возвращает True, если было событие выхода (закрытие окна)."""
+        return self._quit_requested
 
     def register_sprite(self, sprite: pygame.sprite.Sprite) -> None:
         """Регистрирует спрайт в игровом контексте."""

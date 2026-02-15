@@ -7,6 +7,7 @@ import pygame
 from pygame.math import Vector2
 
 from .camera_effects import CameraShake
+from . import grid_renderer
 
 
 class SpriteProGame:
@@ -60,10 +61,12 @@ class SpriteProGame:
         self.console_log_enabled = True
         self.console_log_color_enabled = True
         self.debug_start_time = time.monotonic()
-        self.debug_grid_size = 100
-        self.debug_grid_color = (80, 80, 80)
-        self.debug_grid_alpha = 120
-        self.debug_grid_label_color = (130, 130, 130)
+        self.debug_grid_size = 10
+        self.debug_grid_color = (35, 35, 40)
+        self.debug_grid_major_color = (50, 50, 55)
+        self.debug_grid_super_color = (70, 70, 80)
+        self.debug_grid_alpha = 255
+        self.debug_grid_label_color = (95, 95, 100)
         self.debug_grid_label_every = 1
         self.debug_grid_label_limit = 10000
         self.debug_grid_labels_enabled = True
@@ -72,6 +75,7 @@ class SpriteProGame:
         self.debug_camera_color = (255, 80, 80)
         self.debug_camera_font_size = 16
         self.debug_camera_drag_button: int | None = 3
+        self.debug_wheel_zoom_enabled = True
         self.debug_hud_anchor = "top_left"
         self.debug_hud_padding = 8
         self.debug_hud_color = (170, 220, 255)
@@ -490,6 +494,10 @@ class SpriteProGame:
         """Настраивает кнопку мыши для управления камерой в debug."""
         self.debug_camera_drag_button = mouse_button
 
+    def set_debug_wheel_zoom(self, enabled: bool = True) -> None:
+        """Включает или отключает зум колёсиком мыши в debug-режиме. По умолчанию True."""
+        self.debug_wheel_zoom_enabled = bool(enabled)
+
     def set_debug_log_file(
         self,
         enabled: bool | None = None,
@@ -715,56 +723,44 @@ class SpriteProGame:
             y += y_step
 
     def _draw_debug_grid(self, surface: pygame.Surface) -> None:
-        """Рисует мировую сетку и подписи координат."""
-        grid_size = max(4, int(self.debug_grid_size))
+        """Мировая сетка и подписи координат через общий grid_renderer (зум-адаптивные подписи)."""
+        grid_size = max(1, int(self.debug_grid_size))
         width, height = surface.get_size()
         camera = self.camera
-        start_x = int(camera.x // grid_size) * grid_size
-        start_y = int(camera.y // grid_size) * grid_size
+        zoom = self.camera_zoom if self.camera_zoom > 0 else 1.0
+        cx, cy = width / 2, height / 2
+        offset_x = cx * (1 - zoom) if zoom != 1.0 else 0
+        offset_y = cy * (1 - zoom) if zoom != 1.0 else 0
 
-        grid_color = (*self.debug_grid_color, self.debug_grid_alpha)
-        grid_surface = pygame.Surface((width, height), pygame.SRCALPHA)
+        def world_to_screen(wx: float, wy: float) -> Tuple[float, float]:
+            return ((wx - camera.x) * zoom + offset_x, (wy - camera.y) * zoom + offset_y)
 
-        x = start_x
-        while x <= camera.x + width:
-            screen_x = int(x - camera.x)
-            pygame.draw.line(grid_surface, grid_color, (screen_x, 0), (screen_x, height), 1)
-            x += grid_size
+        left_world = camera.x - offset_x / zoom
+        right_world = camera.x + (width - offset_x) / zoom
+        top_world = camera.y - offset_y / zoom
+        bottom_world = camera.y + (height - offset_y) / zoom
 
-        y = start_y
-        while y <= camera.y + height:
-            screen_y = int(y - camera.y)
-            pygame.draw.line(grid_surface, grid_color, (0, screen_y), (width, screen_y), 1)
-            y += grid_size
-
-        surface.blit(grid_surface, (0, 0))
-
-        if not self.debug_grid_labels_enabled or self._debug_grid_font is None:
-            return
-
-        label_every = max(1, int(self.debug_grid_label_every))
-        labels_drawn = 0
-        max_labels = self.debug_grid_label_limit
-        x_index = 0
-        x = start_x
-        while x <= camera.x + width and labels_drawn < max_labels:
-            y_index = 0
-            y = start_y
-            while y <= camera.y + height and labels_drawn < max_labels:
-                if x_index % label_every == 0 and y_index % label_every == 0:
-                    screen_x = int(x - camera.x) + 2
-                    screen_y = int(y - camera.y) + 2
-                    if 0 <= screen_x <= width - 20 and 0 <= screen_y <= height - 12:
-                        label = f"{int(x)},{int(y)}"
-                        text_surf = self._debug_grid_font.render(
-                            label, True, self.debug_grid_label_color
-                        )
-                        surface.blit(text_surf, (screen_x, screen_y))
-                        labels_drawn += 1
-                y += grid_size
-                y_index += 1
-            x += grid_size
-            x_index += 1
+        grid_renderer.draw_world_grid(
+            surface,
+            surface.get_rect(),
+            left_world,
+            right_world,
+            top_world,
+            bottom_world,
+            world_to_screen,
+            grid_size,
+            zoom,
+            grid_color=self.debug_grid_color,
+            major_color=getattr(self, "debug_grid_major_color", (50, 50, 55)),
+            super_color=getattr(self, "debug_grid_super_color", (70, 70, 80)),
+            grid_alpha=self.debug_grid_alpha,
+            draw_labels=bool(self.debug_grid_labels_enabled and self._debug_grid_font),
+            label_font=self._debug_grid_font,
+            label_color=self.debug_grid_label_color,
+            label_limit=self.debug_grid_label_limit,
+            base_label_every=max(1, int(self.debug_grid_label_every)),
+            min_label_px=50,
+        )
 
     def _draw_camera_marker(self, surface: pygame.Surface, wh_c: Vector2) -> None:
         """Рисует маркер центра камеры и координаты."""
@@ -773,9 +769,14 @@ class SpriteProGame:
         pygame.draw.circle(surface, (0, 0, 0), center, 4, 1)
         if self._debug_camera_font is not None:
             cam = self.camera
-            center_world = (int(cam.x + wh_c.x), int(cam.y + wh_c.y))
+            zoom = self.camera_zoom if self.camera_zoom != 0 else 1.0
+            cx, cy = wh_c.x, wh_c.y
+            center_world = (int(cam.x + cx), int(cam.y + cy))
             mouse_pos = pygame.mouse.get_pos()
-            mouse_world = (int(cam.x + mouse_pos[0]), int(cam.y + mouse_pos[1]))
+            mouse_world = (
+                int(cam.x + (mouse_pos[0] - cx * (1 - zoom)) / zoom),
+                int(cam.y + (mouse_pos[1] - cy * (1 - zoom)) / zoom),
+            )
 
             center_text = f"Point: {center_world[0]}, {center_world[1]}"
             mouse_text = f"Mouse: {mouse_world[0]}, {mouse_world[1]}"
