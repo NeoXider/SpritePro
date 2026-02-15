@@ -413,14 +413,18 @@ class SpriteEditor:
         if obj.sprite_path in self.image_cache:
             return self.image_cache[obj.sprite_path]
         
-        # Базовые директории для поиска
         editor_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(os.path.dirname(editor_dir))
-        
-        # Пробуем разные варианты пути
+        scene_dir = os.path.dirname(self.filepath) if self.filepath else None
+
         search_paths = [
             obj.sprite_path,
             os.path.abspath(obj.sprite_path),
+        ]
+        if scene_dir:
+            search_paths.append(os.path.join(scene_dir, obj.sprite_path))
+            search_paths.append(os.path.join(scene_dir, os.path.basename(obj.sprite_path)))
+        search_paths.extend([
             os.path.join(self.assets_folder, obj.sprite_path),
             os.path.join(self.assets_folder, "images", obj.sprite_path),
             os.path.join(editor_dir, "assets", obj.sprite_path),
@@ -429,7 +433,8 @@ class SpriteEditor:
             os.path.join(project_root, "assets", "images", obj.sprite_path),
             os.path.join("assets", obj.sprite_path),
             os.path.join("assets", "images", obj.sprite_path),
-        ]
+            os.path.join(os.getcwd(), obj.sprite_path),
+        ])
         
         for path in search_paths:
             try:

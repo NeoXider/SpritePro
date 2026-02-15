@@ -65,7 +65,7 @@
         {
             "id": "p2",
             "name": "Platform",
-            "sprite_path": "D:/GIT/_fork/SpritePro/spritePro/demoGames/Sprites/platforma.png",
+            "sprite_path": "Sprites/platforma.png",
             "sprite_shape": "image",
             "sprite_color": [
                 70,
@@ -91,7 +91,7 @@
         {
             "id": "p3",
             "name": "Platform",
-            "sprite_path": "D:/GIT/_fork/SpritePro/spritePro/demoGames/Sprites/платформа.jpg",
+            "sprite_path": "Sprites/платформа.jpg",
             "sprite_shape": "image",
             "sprite_color": [
                 70,

@@ -50,12 +50,16 @@ class RuntimeScene:
 
 
 def _resolve_sprite_path(scene_path: Path, raw_path: str) -> Optional[Path]:
+    if not raw_path or not raw_path.strip():
+        return None
     path = Path(raw_path)
-    if path.exists():
+    if path.is_absolute() and path.exists():
         return path
     basename = path.name
     candidates = [
+        scene_path.parent / raw_path.strip(),
         scene_path.parent / basename,
+        Path.cwd() / raw_path.strip(),
         Path.cwd() / basename,
         Path.cwd() / "assets" / basename,
         Path.cwd() / "assets" / "images" / basename,
