@@ -70,8 +70,9 @@
 
 #### [docs/sprite_editor.md](docs/sprite_editor.md)
 **Редактор спрайтов (Sprite Editor)** — один документ покрывает и редактор, и использование сцен в своём проекте.
-- **Редактор:** запуск (`python -m spritePro.cli --editor`), интерфейс (Viewport, Hierarchy, Inspector, Toolbar), инструменты (Select, Move, Rotate, Scale), типы спрайтов (Image, Rect/Circle/Ellipse), Drag & Drop, сохранение/загрузка JSON, Undo/Redo, камера.
-- **Использование сцены в своей игре:** загрузка сцены в коде, `s.editor.spawn_scene("level.json", scene=..., apply_camera=True)`, получение объектов по имени (`runtime.first("player")`, `runtime.startswith("enemy")`). Пример: [editor_scene_runtime_demo.py](spritePro/demoGames/editor_scene_runtime_demo.py).
+- **Редактор:** запуск (`python -m spritePro.cli --editor`), интерфейс (Viewport, Hierarchy, Inspector, Toolbar), инструменты (Select, Move, Rotate, Scale), типы спрайтов (Image, Rect/Circle/Ellipse), Drag & Drop, сохранение/загрузка JSON, координаты по центру объекта, Undo/Redo, камера.
+- **Использование сцены в игре:** `spawn_scene("level.json", scene=...)`, получение по имени (`rt.first("player")`, `rt.exact("name")`, `rt.startswith("enemy")`), `placement()` (pos = центр), `to_button`, `to_text_sprite`, `to_toggle`, `.Sprite(**kwargs)`.
+- **Экспорт сцены из кода в JSON:** `EditorScene.export_from_runtime(scene_instance_or_class, path)` — round-trip: код → JSON → правки в редакторе → загрузка в игре. Примеры: [editor_scene_runtime_demo.py](spritePro/demoGames/editor_scene_runtime_demo.py), [scenes_demo editor.py](spritePro/demoGames/scenes_demo editor.py).
 
 
 
@@ -269,6 +270,7 @@
 - [Bar Background Demo](spritePro/demoGames/bar_background_demo.py) - Прогресс-бары с отдельными фоновыми и заполняющими изображениями
 - [Input + EventBus Demo](spritePro/demoGames/input_events_demo.py) - Ввод и события
 - [Scenes Demo](spritePro/demoGames/scenes_demo.py) - Сцены
+- [Scenes Demo (editor)](spritePro/demoGames/scenes_demo editor.py) - Сцены с загрузкой из JSON редактора; экспорт сцены из кода в JSON (round-trip)
 - [Resource Cache Demo](spritePro/demoGames/resource_cache_demo.py) - Кэш ресурсов
 - [Drag & Drop Demo](spritePro/demoGames/drag_drop_demo.py) - Перетаскивание
 - [Debug Overlay Demo](spritePro/demoGames/debug_overlay_demo.py) - Отладочная сетка и логи
@@ -353,6 +355,7 @@
 ## 🔄 Обновления документации
 
 ### Последние обновления
+- **2026-02**: Редактор сцен: экспорт из кода в JSON (`Scene.export_from_runtime`), координаты по центру объекта; runtime: `placement()` возвращает центр, `to_button`/`to_text_sprite`/`to_toggle`, `.Sprite(**kwargs)`, `exact(name)`. Демо [scenes_demo editor.py](spritePro/demoGames/scenes_demo editor.py) — загрузка сцены из JSON, логика в коде. Документация: sprite_editor.md (разделы «Координаты в редакторе», «Экспорт сцены из кода в JSON», обновлённая интеграция).
 - **2026-02**: Общий модуль `grid_renderer` для сетки и подписей (игра + редактор); зум-адаптивная плотность подписей. Редактор: переключатель Labels (статусбар и Settings → Scene). Button и TextSprite по умолчанию `screen_space=True`. Документация: debug.md, sprite_editor.md, button.md, text.md.
 - **2026-02**: Slider(Sprite), TextInput(Button), auto_register у Sprite; документация slider.md, text_input.md, events.md
 - **2026-02**: Fluent Tween API (DoMove, DoScale, SetEase, SetLoops, OnComplete, Kill) — демо fluent_tween_demo.py

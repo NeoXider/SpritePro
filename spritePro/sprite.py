@@ -130,6 +130,7 @@ class Sprite(pygame.sprite.Sprite):
         self._transform_dirty = True
         self._color_dirty = True
         self._color = (255, 255, 255)
+        self._shape_fill_color = None
         self._angle = 0
         self._scale = 1.0
         self._alpha = 255
@@ -330,6 +331,7 @@ class Sprite(pygame.sprite.Sprite):
         if self._color != value:
             self._color = value
             self._color_dirty = True
+            self._shape_fill_color = None
 
     def set_color(self, value: Tuple[int, int, int]) -> "Sprite":
         """Устанавливает цвет спрайта (для обратной совместимости).
@@ -998,6 +1000,7 @@ class Sprite(pygame.sprite.Sprite):
         self._transform_dirty = True
         self._color_dirty = True
         self._mask_dirty = True
+        self._shape_fill_color = None
         return self
 
     def _shape_color(self, color: Optional[Tuple[int, int, int]]) -> Tuple[int, int, int]:
@@ -1028,6 +1031,8 @@ class Sprite(pygame.sprite.Sprite):
             surface, fill, surface.get_rect(), width=width, border_radius=border_radius
         )
         self.set_image(surface)
+        self.color = fill
+        self._shape_fill_color = fill
         return self
 
     def set_circle_shape(
@@ -1052,6 +1057,8 @@ class Sprite(pygame.sprite.Sprite):
         surface = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
         pygame.draw.circle(surface, fill, (radius, radius), radius, width=width)
         self.set_image(surface)
+        self.color = fill
+        self._shape_fill_color = fill
         return self
 
     def set_ellipse_shape(
@@ -1073,6 +1080,8 @@ class Sprite(pygame.sprite.Sprite):
         surface = pygame.Surface(_vector2_to_int_tuple(target_size), pygame.SRCALPHA)
         pygame.draw.ellipse(surface, fill, surface.get_rect(), width=width)
         self.set_image(surface)
+        self.color = fill
+        self._shape_fill_color = fill
         return self
 
     def set_polygon_shape(
@@ -1259,11 +1268,13 @@ class Sprite(pygame.sprite.Sprite):
             self._mask_dirty = True
 
         if self._color_dirty:
-            # Start with the transformed image and apply color/alpha
             self.image = self._transformed_image.copy()
             if self._alpha != 255:
                 self.image.set_alpha(self._alpha)
-            if self._color != (255, 255, 255):
+            shape_fill = getattr(self, "_shape_fill_color", None)
+            if shape_fill is not None and self._color == shape_fill:
+                pass
+            elif self._color != (255, 255, 255):
                 self.image.fill(self._color, special_flags=pygame.BLEND_RGBA_MULT)
 
             self._color_dirty = False

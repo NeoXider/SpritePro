@@ -35,11 +35,15 @@
 ## [Unreleased]
 
 ### Added
+- **Экспорт сцены из кода в JSON** — `Scene.from_runtime(scene_instance)` и `Scene.export_from_runtime(scene_or_class, filepath)` в `spritePro.editor.scene`. Имена объектов = атрибуты сцены, позиция = центр спрайта; round-trip: код → JSON → правки в редакторе → загрузка в игре. Демо: `scenes_demo editor.py`.
+- **Runtime сцен из редактора:** `placement()` возвращает **pos как центр** (rect.centerx, centery); `to_button`, `to_text_sprite`, `to_toggle` используют его по умолчанию. `exact(name)` — поиск по точному имени. Демо SceneA загружает сцену из `scene_a.json` через `spawn_scene`, вешает логику через `rt.exact("mover").Sprite(speed=1)`, `to_button`, `to_toggle` и т.д.
 - **Типы спрайтов в редакторе** — примитивы Rectangle, Circle, Ellipse (по аналогии с Unity: GameObject → 2D → Square). Модуль `spritePro.editor.sprite_types`. В тулбаре кнопки Rect, Circle, Ellipse; в Inspector выпадающий список Sprite Type (Image / Rectangle / Circle / Ellipse) и для примитивов — Color R/G/B и размер (Size X/Y). В сцене: `sprite_shape`, `sprite_color`, для примитивов размер в `custom_data` (width, height). Runtime создаёт соответствующие спрайты при загрузке сцены.
 - **Общий модуль отрисовки сетки** — `spritePro.grid_renderer`: единая функция `draw_world_grid()` для игры и редактора. Сетка (шаг 10/50/500) и подписи координат с плотностью, зависящей от зума (чем меньше зум — реже подписи, без «мельтешения» текста).
 - **Редактор: подписи координат на сетке** — переключатель «Labels ON/OFF» в статусбаре и в Settings → Scene (Grid Labels). Подписи используют ту же зум-адаптивную логику, что и в игре.
 
 ### Changed
+- **Редактор:** позиция объекта в JSON и в viewport — **центр** спрайта (transform.x, transform.y). Экспорт из runtime записывает rect.center.
+- **Sprite (примитивы):** при `set_rect_shape`/`set_circle_shape`/`set_ellipse_shape` сохраняются цвет и флаг `_shape_fill_color`, чтобы цвет не терялся при перезапуске сцены и не применялся двойной тинт.
 - **Button и TextSprite** — по умолчанию `screen_space=True`: позиция и размер не зависят от камеры и зума. Для кнопки/текста в мировых координатах (например над объектом) можно вызвать `.set_screen_space(False)`.
 - **Debug-сетка** — подписи координат рисуются через `grid_renderer` с адаптивным шагом (min_label_px, «удобные» шаги 1/2/5/10/25/50). Редактор рисует сетку и подписи тем же модулем.
 

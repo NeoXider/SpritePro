@@ -14,8 +14,10 @@
 - [Управление](#управление)
 - [Сохранение и загрузка](#сохранение-и-загрузка)
 - [Формат JSON](#формат-json)
+- [Координаты в редакторе](#координаты-в-редакторе)
 - [Горячие клавиши](#горячие-клавиши)
 - [Интеграция с SpritePro](#интеграция-с-spritepro) — использование сцены в своей игре
+- [Экспорт сцены из кода в JSON](#экспорт-сцены-из-кода-в-json) — round-trip: код → JSON → редактор → игра
 
 ---
 
@@ -340,8 +342,8 @@ scene.save("level1.json")
 | `id` | str | Уникальный идентификатор |
 | `name` | str | Отображаемое имя |
 | `sprite_path` | str | Путь к файлу изображения |
-| `transform.x` | float | Позиция по X |
-| `transform.y` | float | Позиция по Y |
+| `transform.x` | float | Центр объекта по X |
+| `transform.y` | float | Центр объекта по Y |
 | `transform.rotation` | float | Угол поворота в градусах |
 | `transform.scale_x` | float | Масштаб по X |
 | `transform.scale_y` | float | Масштаб по Y |
@@ -349,6 +351,12 @@ scene.save("level1.json")
 | `visible` | bool | Видимость объекта |
 | `locked` | bool | Защита от редактирования |
 | `custom_data` | dict | Пользовательские данные |
+
+---
+
+## Координаты в редакторе
+
+В редакторе **позиция объекта** (`transform.x`, `transform.y`) хранится как **центр** спрайта. При отрисовке и при перетаскивании используется центр; при экспорте из игры в JSON также записывается центр. Это согласовано с якорем CENTER по умолчанию у Sprite/Button/TextSprite в SpritePro.
 
 ---
 
@@ -434,20 +442,42 @@ while True:
     s.update(fill_color=(20, 20, 30))
 ```
 
-### Короткий путь (рекомендуется)
+### Короткий путь (рекомендуется): spawn_scene и RuntimeScene
 
 ```python
 import spritePro as s
+from spritePro.editor.runtime import spawn_scene
 
 s.get_screen((800, 600), "My Game")
-runtime = s.editor.spawn_scene("level1.json", scene=s.get_current_scene(), apply_camera=True)
+rt = spawn_scene("level1.json", scene=s.get_current_scene(), apply_camera=True)
 
-# Быстро получаем нужные объекты по имени и вешаем логику
-player = runtime.first("player")
-enemies = runtime.startswith("enemy")
+# По имени (без учёта регистра) или точное имя
+player = rt.first("player")      # первый с именем "player"
+obj = rt.exact("Player")         # точное совпадение имени
+enemies = rt.startswith("enemy") # все, чьё имя начинается с "enemy"
 ```
 
-Полный рабочий пример находится в `spritePro/demoGames/editor_scene_runtime_demo.py`.
+**Размещение из сцены:** `placement()` возвращает данные из сцены: **pos (центр)**, size, angle, sorting_order, screen_space, scene. Этим пользуются хелперы ниже; позиция — центр объекта (как в редакторе).
+
+**Превращение заготовки в кнопку/текст/переключатель:**
+
+```python
+# Спрайт из сцены — только применить доп. параметры (speed, цвет уже из JSON)
+mover = rt.exact("mover").Sprite(speed=1)
+
+# Прямоугольник из сцены → кнопка (размер/позиция из сцены, в коде — текст и колбэк)
+btn = rt.exact("button").to_button(text="Click me", on_click=my_callback)
+
+# → текстовый спрайт
+label = rt.exact("label").to_text_sprite(text="Hello", font_size=32, color=(255,255,255))
+
+# → переключатель
+toggle = rt.exact("toggle").to_toggle(text_on="ON", text_off="OFF", on_toggle=my_toggle)
+```
+
+Алиасы: `to_button` = `Button()`, `to_text_sprite` = `TextSprite()`, `to_toggle` = `Toggle()`.
+
+Полные примеры: `spritePro/demoGames/editor_scene_runtime_demo.py`, **Scenes Demo (editor)** — `spritePro/demoGames/scenes_demo editor.py` (сцена загружается из JSON, логика вешается в коде).
 
 ### Создание редактора внутри игры
 
@@ -464,6 +494,28 @@ s.editor.launch_editor()
 # Загружаем в игру
 game_scene = Scene.load("Level 1.json")
 ```
+
+---
+
+## Экспорт сцены из кода в JSON
+
+Чтобы править в редакторе сцену, изначально собранную в коде, её можно один раз экспортировать в JSON. Дальше: правки в редакторе → сохранение → загрузка в игре из JSON.
+
+**API:**
+
+```python
+from spritePro.editor.scene import Scene as EditorScene
+
+# Вариант 1: из экземпляра сцены (после set_scene_by_name)
+EditorScene.export_from_runtime(s.scene.current_scene, "scene_a.json")
+
+# Вариант 2: передать класс сцены (создаётся временный экземпляр для экспорта)
+EditorScene.export_from_runtime(SceneA, "scene_a.json")
+```
+
+**Что попадает в JSON:** имена объектов = имена атрибутов сцены (например `mover`, `button`, `label`). Позиция — центр спрайта; размер, цвет, путь к картинке — из самих спрайтов. Учитываются только корневые спрайты (без parent). После экспорта можно открыть файл в редакторе, изменить layout и сохранить; в игре загружать сцену через `spawn_scene("scene_a.json", scene=self)` и вешать логику через `rt.exact("mover").Sprite(speed=1)`, `rt.exact("button").to_button(...)` и т.д.
+
+Пример полного цикла (код → JSON → редактор → загрузка из JSON в игре): `spritePro/demoGames/scenes_demo editor.py`.
 
 ---
 

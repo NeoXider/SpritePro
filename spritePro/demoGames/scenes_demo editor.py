@@ -1,3 +1,6 @@
+"""
+Сцены Demo → JSON редактора → правка в редакторе → загрузка в игре (round-trip).
+"""
 import sys
 from pathlib import Path
 import random
@@ -9,6 +12,7 @@ parent_dir = current_dir.parent.parent
 sys.path.insert(0, str(parent_dir))
 
 import spritePro as s  # noqa: E402
+from spritePro.editor.runtime import spawn_scene
 
 
 def _enter_pressed() -> bool:
@@ -22,64 +26,45 @@ def _is_current(scene: s.Scene) -> bool:
 class SceneA(s.Scene):
     def __init__(self):
         super().__init__()
-        self.label = s.TextSprite(
-            "Scene A (Press Enter)",
-            32,
-            (255, 255, 255),
-            (400, 300),
-            scene=self,
+        rt = spawn_scene(current_dir / "scene_a.json", scene=self, apply_camera=False)
+
+        self.label = rt.exact("label").to_text_sprite(
+            text="Scene A (Press Enter)", font_size=32, color=(255, 255, 255)
         )
-        self.hint = s.TextSprite(
-            "Enter: switch  |  Tab: overlay  |  Space: toggle  |  R: restart  |  Click: button",
-            22,
-            (200, 200, 200),
-            (400, 540),
-            scene=self,
+        self.hint = rt.exact("hint").to_text_sprite(
+            text="Enter: switch  |  Tab: overlay  |  Space: toggle  |  R: restart  |  Click: button",
+            font_size=22,
+            color=(200, 200, 200),
         )
-        self.mover = s.Sprite("", (60, 60), (150, 300), speed=1, scene=self)
-        self.mover.set_color((120, 200, 255))
-        self.button = s.Button(
-            "",
-            size=(170, 50),
-            pos=(140, 120),
+        self.mover = rt.exact("mover").Sprite(speed=1)
+        self.button = rt.exact("button").to_button(
             text="Click me",
             text_size=22,
             base_color=(210, 210, 210),
             hover_color=(235, 235, 235),
             press_color=(180, 180, 180),
             on_click=self._on_button_click,
-            scene=self,
         )
-        self.toggle = s.ToggleButton(
-            "",
-            size=(170, 50),
-            pos=(140, 180),
+        self.toggle = rt.exact("toggle").to_toggle(
             text_on="Toggle: ON",
             text_off="Toggle: OFF",
             text_size=20,
             color_on=(80, 180, 120),
             color_off=(180, 80, 80),
             on_toggle=self._on_toggle,
-            scene=self,
         )
         self.timer_count = 0
-        self.timer_label = s.TextSprite(
-            "Timer: 0",
-            20,
-            (220, 220, 220),
-            (140, 240),
-            anchor=s.Anchor.TOP_LEFT,
-            scene=self,
+        self.timer_label = rt.exact("timer_label").to_text_sprite(
+            text="Timer: 0", font_size=20, color=(220, 220, 220)
         )
+        self.timer_label.anchor = s.Anchor.TOP_LEFT
         self.tick_timer = s.Timer(
             1.0, callback=self._tick_timer, repeat=True, autostart=True, scene=self
         )
-        self.toggle_obj = s.Sprite("", (100, 40), (650, 120), scene=self)
-        self.toggle_obj.set_color((255, 180, 90))
+        self.toggle_obj = rt.exact("toggle_obj").Sprite()
         self.toggle_visible = True
         self.move_tween = None
-        self.anim_sprite = s.Sprite("", (40, 40), (650, 300), scene=self)
-        self.anim_sprite.set_color((200, 220, 255))
+        self.anim_sprite = rt.exact("anim_sprite").Sprite()
         self.anim = s.Animation(
             self.anim_sprite,
             frames=self._make_anim_frames(),
@@ -229,9 +214,15 @@ class SceneB(s.Scene):
 def main():
     s.get_screen((800, 600), "Scenes Demo")
     s.enable_debug(True)
+
     s.scene.add_scene("scene_a", SceneA)
     s.scene.add_scene("scene_b", SceneB)
     s.scene.set_scene_by_name("scene_a")
+
+    # Экспорт в JSON редактора: имена = атрибуты сцены (label, mover, button, ...), данные из спрайтов.
+    from spritePro.editor.scene import Scene as EditorScene
+
+    EditorScene.export_from_runtime(SceneA, str(current_dir / "scene_a.json"))
 
     while True:
         s.update(fill_color=(10, 10, 20))

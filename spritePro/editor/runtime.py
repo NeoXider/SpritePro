@@ -20,11 +20,11 @@ class SpawnedObject:
     base_position: pygame.Vector2
 
     def placement(self) -> Dict[str, Any]:
-        """Данные из сцены: pos, size, angle, sorting_order, screen_space, scene.
-        Подходит для передачи в Button, TextSprite, ToggleButton и др.; параметры можно переопределить."""
+        """Данные из сцены: pos (центр), size, angle, sorting_order, screen_space, scene.
+        Подходит для передачи в Button, TextSprite, ToggleButton (якорь CENTER по умолчанию)."""
         sp = self.sprite
         return {
-            "pos": (sp.rect.x, sp.rect.y),
+            "pos": (sp.rect.centerx, sp.rect.centery),
             "size": (sp.rect.width, sp.rect.height),
             "angle": getattr(sp, "angle", 0.0),
             "sorting_order": self.data.z_index,
@@ -78,6 +78,14 @@ class SpawnedObject:
         self.sprite = toggle
         return toggle
 
+    def Sprite(self, **kwargs) -> s.Sprite:
+        """Возвращает спрайт из сцены и применяет к нему kwargs (speed, и др.).
+        Позиция/размер/слой берутся из сцены, в коде задаёте только логику."""
+        for key, value in kwargs.items():
+            if hasattr(self.sprite, key):
+                setattr(self.sprite, key, value)
+        return self.sprite
+
     def Button(self, **kw):
         """Алиас для to_button()."""
         return self.to_button(**kw)
@@ -118,6 +126,10 @@ class RuntimeScene:
             if key.startswith(p):
                 out.extend(items)
         return out
+
+    def save(self, path: str) -> None:
+        """Сохраняет сцену (источник, из которого спавнили) в JSON. Удобно для round-trip с редактором."""
+        self.source.save(path)
 
 
 def _resolve_sprite_path(scene_path: Path, raw_path: str) -> Optional[Path]:

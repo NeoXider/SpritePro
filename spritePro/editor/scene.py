@@ -225,3 +225,84 @@ class Scene:
     def load(cls, filepath: str) -> "Scene":
         with Path(filepath).open("r", encoding="utf-8") as f:
             return cls.from_dict(json.load(f))
+
+    @classmethod
+    def from_runtime(cls, runtime_scene: Any) -> "Scene":
+        """Собирает editor.Scene из экземпляра runtime-сцены: имена объектов — из имён
+        атрибутов сцены, позиция/размер/цвет — из спрайтов (rect, color).
+        Учитываются только корневые спрайты (без parent). Button/TextSprite/Sprite — по rect и color.
+        """
+        if isinstance(runtime_scene, type):
+            runtime_scene = runtime_scene()
+        name = getattr(runtime_scene.__class__, "__name__", "Untitled Scene")
+        ed_scene = cls(name=name)
+        seen = set()
+
+        for attr_name in dir(runtime_scene):
+            if attr_name.startswith("_"):
+                continue
+            try:
+                obj = getattr(runtime_scene, attr_name)
+            except Exception:
+                continue
+            if callable(obj) or obj is None:
+                continue
+            if id(obj) in seen:
+                continue
+            if not hasattr(obj, "rect"):
+                continue
+            rect = getattr(obj, "rect", None)
+            if rect is None:
+                continue
+            parent = getattr(obj, "parent", None)
+            if parent is not None:
+                continue
+            seen.add(id(obj))
+
+            color = (255, 255, 255)
+            if hasattr(obj, "color") and obj.color is not None:
+                c = obj.color
+                if isinstance(c, (tuple, list)) and len(c) >= 3:
+                    color = (int(c[0]), int(c[1]), int(c[2]))
+
+            sprite_path = ""
+            sprite_shape = "rectangle"
+            if getattr(obj, "_image_source", None) and isinstance(obj._image_source, str):
+                if obj._image_source.strip():
+                    sprite_path = obj._image_source.strip()
+                    sprite_shape = "image"
+
+            z = 0
+            if hasattr(obj, "sorting_order") and obj.sorting_order is not None:
+                z = int(obj.sorting_order)
+
+            custom_data: Dict[str, Any] = {}
+            if hasattr(rect, "width") and hasattr(rect, "height"):
+                custom_data["width"] = int(rect.width)
+                custom_data["height"] = int(rect.height)
+
+            screen_space = getattr(obj, "screen_space", False)
+
+            # Редактор хранит позицию как центр объекта; в runtime rect может быть с любым якорем — экспортируем центр.
+            cx = float(rect.centerx) if hasattr(rect, "centerx") else float(rect.x) + float(getattr(rect, "width", 0)) / 2
+            cy = float(rect.centery) if hasattr(rect, "centery") else float(rect.y) + float(getattr(rect, "height", 0)) / 2
+
+            ed_scene.add_object(
+                SceneObject(
+                    name=attr_name,
+                    sprite_path=sprite_path,
+                    sprite_shape=sprite_shape,
+                    sprite_color=color,
+                    transform=Transform(x=cx, y=cy),
+                    z_index=z,
+                    screen_space=screen_space,
+                    custom_data=custom_data,
+                )
+            )
+
+        return ed_scene
+
+    @classmethod
+    def export_from_runtime(cls, runtime_scene: Any, filepath: str) -> None:
+        """Строит editor.Scene из runtime-сцены и сохраняет в JSON (имена и данные из спрайтов)."""
+        cls.from_runtime(runtime_scene).save(filepath)
