@@ -1,6 +1,5 @@
 import argparse
 import logging
-import os
 import sys
 from pathlib import Path
 from textwrap import dedent
@@ -23,6 +22,7 @@ MAIN_TEMPLATE = dedent(
     def main():
         s.get_screen(config.WINDOW_SIZE, "My SpritePro Game")
         s.enable_debug(True)
+        s.set_debug_hud_enabled(show_camera=False)
         s.set_debug_camera_input(3)
         s.debug_log_info("Game started")
         s.set_scene(MainScene())
@@ -58,29 +58,21 @@ MAIN_SCENE_TEMPLATE = dedent(
             if SCENE_JSON.exists():
                 try:
                     self.runtime_scene = spawn_scene(SCENE_JSON, scene=self, apply_camera=True)
-                    player_obj = self.runtime_scene.first(
-                        PLAYER_NAME
-                    )
+                    player_obj = self.runtime_scene.first(PLAYER_NAME)
                     if player_obj is None:
                         s.debug_log_warning(
-                            f"Player '{PLAYER_NAME}' not found in {SCENE_JSON.name}. Using fallback."
+                            f"Player '{PLAYER_NAME}' not found in {SCENE_JSON.name}."
                         )
-                        self._spawn_fallback_player()
-                    
-                    self.player = player_obj.Sprite(speed=5)
+                    else:
+                        self.player = player_obj.Sprite(speed=5)
                 except Exception as exc:
                     s.debug_log_warning(
-                        f"Failed to load {SCENE_JSON.name}: {exc}. Using fallback player."
+                        f"Failed to load {SCENE_JSON.name}: {exc}"
                     )
             else:
                 s.debug_log_warning(
-                    f"{SCENE_JSON.name} not found. Using fallback player and empty level."
+                    f"{SCENE_JSON.name} not found."
                 )
-            self._spawn_fallback_player()
-
-        def _spawn_fallback_player(self):
-            self.player = s.Sprite("", (64, 64), (400, 300), speed=5, scene=self)
-            self.player.set_rect_shape((64, 64), (120, 200, 255))
 
         def on_enter(self, context):
             pass
