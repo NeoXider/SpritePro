@@ -4,6 +4,10 @@
 через s.events.send(..., route="all"), приём — ctx.poll() с пробросом
 в s.events, обработка — s.events.connect. Все места взаимодействия с
 событийным автобусом в примере помечены комментариями «EventBus:».
+
+**payload по событиям (все параметры, приходящие в обработчики):
+  "ready": id (str), value (bool), sender_id (int). id — "host"|"client", value — готовность, sender_id — от ctx.send().
+  "start": sender_id (int) — от ctx.send(); остальных полей нет.
 """
 
 import pygame
@@ -23,13 +27,15 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
     both_ready_timer = 0.0
 
     # EventBus: обработчики — функции, которые автобус вызовет при send(имя_события, ...).
-    # Аргументы приходят как **payload (id=..., value=... при "ready"; при "start" payload может быть пустым).
+    # **payload для каждого события — см. комментарии ниже.
     def on_ready(**payload):
+        # **payload: id (str), value (bool), sender_id (int) — все поля, приходящие при событии "ready".
         pid = payload.get("id")
         if pid in ready_map:
             ready_map[pid] = bool(payload.get("value", False))
 
     def on_start(**payload):
+        # **payload: sender_id (int) — от ctx.send(); других параметров нет.
         nonlocal game_started
         game_started = True
         state.set_text("State: game")
@@ -77,6 +83,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
         # include_local — см. подробный докстринг s.events.send в event_bus.py.
         # Повторно на отправителе не вызовется: при send(..., route="all") мы уже вызвали обработчик локально, а сервер
         # рассылает сообщение только другим (exclude=отправитель), поэтому в poll() своё сообщение не приходит.
+        # В data при приёме: для "ready" — id, value, sender_id; для "start" — sender_id.
         for msg in ctx.poll():
             ev = msg.get("event")
             data = msg.get("data", {})

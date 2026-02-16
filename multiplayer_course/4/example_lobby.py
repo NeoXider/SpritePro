@@ -1,33 +1,29 @@
 """Пример 4: простое лобби и список игроков.
 
-Каждый клиент при входе шлёт join с именем; хост собирает имена в список
-и рассылает roster; все обновляют отображаемый список игроков.
+При входе клиент шлёт join (sender_id в сообщение подставляется из ctx.client_id).
+Хост собирает id игроков и рассылает roster; все обновляют список по id.
 """
-
-import os
 
 import spritePro as s
 
 
+def _display_name(pid: int) -> str:
+    return "Host" if pid == 0 else f"Player {pid}"
+
+
 def multiplayer_main(net: s.NetClient, role: str) -> None:
-    client_index = int(os.environ.get("SPRITEPRO_NET_INDEX", "0"))
-    window_tag = "HOST" if role == "host" else f"CLIENT {client_index + 1}"
-    s.get_screen((800, 600), f"Lesson 4 - Lobby [{window_tag}]")
+    s.get_screen((800, 600), f"Lesson 4 - Lobby [{role}]")
     ctx = s.multiplayer.init_context(net, role)
 
-    # Отображаемое имя этого участника (не «получение сервера»).
-    # «Это наш компьютер» = этот процесс; кто мы — задаётся ctx.is_host и ctx.client_id.
-    # Имя задаём сами, чтобы в roster были видны host, client_1, client_2.
-    name = "host" if ctx.is_host else f"client_{client_index + 1}"
-    players = set()
-    roster = []
+    player_ids: set[int] = set()
+    roster: list[int] = []
     joined = False
 
     title = s.TextSprite("Lobby", 34, (240, 240, 240), (20, 20), anchor=s.Anchor.TOP_LEFT)
     me_text = s.TextSprite("", 20, (170, 220, 255), (20, 58), anchor=s.Anchor.TOP_LEFT)
     roster_text = s.TextSprite("", 24, (240, 240, 240), (20, 80), anchor=s.Anchor.TOP_LEFT)
     hint = s.TextSprite(
-        "Host + 2 clients: client_2 появляется через 6 сек.",
+        "Host + 2 clients: второй клиент появляется через 6 сек.",
         20,
         (180, 180, 180),
         (20, 520),
@@ -36,31 +32,28 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
 
     while True:
         s.update(fill_color=(18, 18, 24))
-        me_text.set_text(f"Я: {name} | role={ctx.role} | id={ctx.client_id} | window={window_tag}")
+        me_text.set_text(f"id={ctx.client_id} | role={ctx.role}")
 
-        # Один раз при входе шлём join. Реле не отдаёт сообщение обратно отправителю,
-        # поэтому добавляем себя в players локально — иначе хост не увидит себя в roster.
-        if not joined:
+        # Шлём join один раз после назначения id (у хоста id_assigned сразу, у клиентов — после assign_id).
+        if ctx.id_assigned and not joined:
             joined = True
-            ctx.send("join", {"name": name})
-            players.add(name)
+            ctx.send("join")
+            player_ids.add(ctx.client_id)
 
         for msg in ctx.poll():
             event = msg.get("event")
             data = msg.get("data", {})
             if event == "join":
-                player_name = data.get("name")
-                if not player_name:
-                    continue
-                players.add(player_name)
+                pid = data.get("sender_id")
+                if pid is not None:
+                    player_ids.add(pid)
                 if ctx.is_host:
-                    roster = sorted(players)
+                    roster = sorted(player_ids)
                     ctx.send("roster", {"players": roster})
             elif event == "roster":
-                # Все клиенты (и хост при получении своего же roster) обновляют список.
                 roster = list(data.get("players", []))
 
-        roster_text.set_text("Players:\n" + "\n".join(roster))
+        roster_text.set_text("Players:\n" + "\n".join(_display_name(pid) for pid in roster))
 
 
 if __name__ == "__main__":
