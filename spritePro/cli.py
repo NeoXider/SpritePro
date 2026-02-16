@@ -39,24 +39,48 @@ MAIN_TEMPLATE = dedent(
 MAIN_SCENE_TEMPLATE = dedent(
     """\
     import pygame
+    from pathlib import Path
     import spritePro as s
+    from spritePro.editor.runtime import spawn_scene
 
-    ASSETS_DIR = "assets"
-    IMAGES_DIR = f"{ASSETS_DIR}/images"
-    AUDIO_DIR = f"{ASSETS_DIR}/audio"
+    SCENE_JSON = Path(__file__).resolve().parent / "level.json"
+    PLAYER_NAME = "player"
 
 
     class MainScene(s.Scene):
         def __init__(self):
             super().__init__()
+            self.runtime_scene = None
+            self.player = None
+            self._load_level()
 
-            self.player = s.Sprite(
-                f"{IMAGES_DIR}/player.png",
-                (64, 64),
-                (400, 300),
-                speed=5,
-                scene=self,
-            )
+        def _load_level(self):
+            if SCENE_JSON.exists():
+                try:
+                    self.runtime_scene = spawn_scene(SCENE_JSON, scene=self, apply_camera=True)
+                    player_obj = self.runtime_scene.first(
+                        PLAYER_NAME
+                    )
+                    if player_obj is None:
+                        s.debug_log_warning(
+                            f"Player '{PLAYER_NAME}' not found in {SCENE_JSON.name}. Using fallback."
+                        )
+                        self._spawn_fallback_player()
+                    
+                    self.player = player_obj.Sprite(speed=5)
+                except Exception as exc:
+                    s.debug_log_warning(
+                        f"Failed to load {SCENE_JSON.name}: {exc}. Using fallback player."
+                    )
+            else:
+                s.debug_log_warning(
+                    f"{SCENE_JSON.name} not found. Using fallback player and empty level."
+                )
+            self._spawn_fallback_player()
+
+        def _spawn_fallback_player(self):
+            self.player = s.Sprite("", (64, 64), (400, 300), speed=5, scene=self)
+            self.player.set_rect_shape((64, 64), (120, 200, 255))
 
         def on_enter(self, context):
             pass
@@ -65,7 +89,8 @@ MAIN_SCENE_TEMPLATE = dedent(
             pass
 
         def update(self, dt):
-            self.player.handle_keyboard_input()
+            if self.player is not None:
+                self.player.handle_keyboard_input()
             if s.input.was_pressed(pygame.K_SPACE):
                 s.debug_log_info("Space pressed")
     """
@@ -75,6 +100,51 @@ CONFIG_TEMPLATE = dedent(
     """\
     WINDOW_SIZE = (800, 600)
     FPS = 60
+    """
+)
+
+LEVEL_TEMPLATE = dedent(
+    """\
+    {
+        "version": "1.0",
+        "name": "main_level",
+        "camera": {
+            "scene_x": 0.0,
+            "scene_y": 0.0,
+            "scene_zoom": 1.0,
+            "game_x": 0.0,
+            "game_y": 0.0,
+            "game_zoom": 1.0
+        },
+        "objects": [
+            {
+                "id": "player01",
+                "name": "player",
+                "sprite_path": "",
+                "sprite_shape": "rectangle",
+                "sprite_color": [120, 200, 255],
+                "transform": {
+                    "x": 400.0,
+                    "y": 300.0,
+                    "rotation": 0.0,
+                    "scale_x": 1.0,
+                    "scale_y": 1.0
+                },
+                "z_index": 10,
+                "screen_space": false,
+                "visible": true,
+                "locked": false,
+                "custom_data": {
+                    "width": 64,
+                    "height": 64
+                }
+            }
+        ],
+        "grid_size": 10,
+        "grid_visible": true,
+        "grid_labels_visible": true,
+        "snap_to_grid": true
+    }
     """
 )
 
@@ -91,6 +161,7 @@ def create_project(target: Path) -> Path:
     scenes_root = project_root / "scenes"
     scenes_init = scenes_root / "__init__.py"
     main_scene_file = scenes_root / "main_scene.py"
+    level_file = scenes_root / "level.json"
 
     project_root.mkdir(parents=True, exist_ok=True)
     assets_root = project_root / "assets"
@@ -107,6 +178,8 @@ def create_project(target: Path) -> Path:
         scenes_init.write_text("", encoding="utf-8")
     if not main_scene_file.exists():
         main_scene_file.write_text(MAIN_SCENE_TEMPLATE, encoding="utf-8")
+    if not level_file.exists():
+        level_file.write_text(LEVEL_TEMPLATE, encoding="utf-8")
 
     return project_root
 

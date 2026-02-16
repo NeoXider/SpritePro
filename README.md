@@ -199,6 +199,7 @@ python -m spritePro.cli --create
 ```
 
 Создаст `main.py` в текущей папке и структуру `assets/audio`, `assets/images`, `scenes`.
+Также создаст `scenes/level.json` (формат Sprite Editor): сцена по умолчанию загрузит уровень из JSON и возьмёт `player` по имени.
 
 Если хотите создать проект в отдельной папке, укажите путь:
 ```bash
