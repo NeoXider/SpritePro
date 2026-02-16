@@ -32,6 +32,13 @@
 
 ---
 
+## [2.0.3]
+
+### Fixed
+- **Редактор: числовые поля в Inspector** — при вводе цифр символы больше не дублируются (11, 00, 22). Ввод обрабатывается только через TEXTINPUT; в KEYDOWN оставлены Enter/Escape/Backspace и fallback для keypad.
+
+---
+
 ## [Unreleased]
 
 ### Added

@@ -55,11 +55,9 @@ def handle_text_input_keydown(editor, event: pygame.event.Event) -> bool:
 
     if name == "prop_input_name":
         return True
-    ch = event.unicode
-    if ch and is_allowed_char_for_input(editor, ch):
-        editor._text_input_buffers[name] += ch
-        return True
-    if event.key in KEYPAD_MAP:
+    # Для числовых полей ввод символов идёт через TEXTINPUT.
+    # В KEYDOWN оставляем только fallback для keypad, когда unicode пустой.
+    if event.key in KEYPAD_MAP and not (event.unicode or ""):
         editor._text_input_buffers[name] += KEYPAD_MAP[event.key]
         return True
     return True
