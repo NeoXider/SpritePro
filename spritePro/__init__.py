@@ -258,7 +258,7 @@ events: EventBus = _context.event_bus
 globalEvents = GlobalEvents()
 scene = _context.scene_manager
 audio_manager = AudioManager()
-multiplayer_ctx = None
+multiplayer_ctx: multiplayer.MultiplayerContext = None  # type: ignore[assignment]
 
 
 def _sync_globals() -> None:
