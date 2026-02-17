@@ -176,6 +176,7 @@
 #### [docs/events.md](docs/events.md)
 **События (EventBus)**
 - EventBus: connect, send, disconnect, get_event
+- EventSignal: get_event(name).send(route="all", net=ctx, **payload) — тот же роутинг, что у events.send
 - GlobalEvents: QUIT, KEY_DOWN, KEY_UP, MOUSE_DOWN, MOUSE_UP, TICK
 - LocalEvent, роутинг и сеть (route, net)
 

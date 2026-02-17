@@ -52,16 +52,46 @@ class _SignalBase:
 
 
 class EventSignal(_SignalBase):
-    """Именованный сигнал, управляемый EventBus."""
+    """Именованный сигнал, управляемый EventBus. Поддерживает route/net для мультиплеера."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, bus: EventBus) -> None:
         super().__init__()
         self._name = name
+        self._bus = bus
 
     @property
     def name(self) -> str:
         """Имя события, на которое подписываются обработчики."""
         return self._name
+
+    def send(
+        self,
+        route: str = "local",
+        net: Any | None = None,
+        include_local: bool | None = None,
+        **payload: Any,
+    ) -> None:
+        """Вызывает подписчиков и опционально отправляет событие в сеть.
+
+        Если route != "local" или передан net — делегирует в EventBus.send()
+        (локальные подписчики + сеть). Иначе только локальные подписчики.
+
+        Args:
+            route: "local" | "all" | "server" | "clients" | "net" — куда доставить.
+            net: MultiplayerContext или None (берётся из set_network_sender).
+            include_local: Вызвать ли локальных подписчиков.
+            **payload: Параметры для обработчиков и для отправки в сеть.
+        """
+        if route != "local" or net is not None:
+            self._bus.send(
+                self._name,
+                route=route,
+                net=net,
+                include_local=include_local,
+                **payload,
+            )
+        else:
+            super().send(**payload)
 
 
 class GlobalEvents:
@@ -104,7 +134,7 @@ class EventBus:
             EventSignal: Объект сигнала для подписки и отправки.
         """
         if event_name not in self._signals:
-            self._signals[event_name] = EventSignal(event_name)
+            self._signals[event_name] = EventSignal(event_name, self)
         return self._signals[event_name]
 
     def connect(self, event_name: str, handler: Callable[..., Any]) -> None:
@@ -191,7 +221,7 @@ class EventBus:
         if include_local:
             signal = self._signals.get(event_name)
             if signal is not None:
-                signal.send(**payload)
+                signal.send(route="local", **payload)
 
         if route in ("server", "clients", "all", "net"):
             sender = net or self._net_sender

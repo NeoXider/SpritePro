@@ -56,7 +56,7 @@ s.events.connect(s.globalEvents.TICK, on_tick)
 
 - **connect(event_name, handler)** — подписать функцию на событие. Обработчик вызывается с `**payload` при `send(event_name, **payload)`.
 - **disconnect(event_name, handler=None)** — отписать один обработчик или, при `handler=None`, все подписчики этого события.
-- **get_event(event_name)** — получить объект `EventSignal` по имени (для прямых вызовов `connect`/`disconnect`/`send` на сигнале).
+- **get_event(event_name)** — получить объект `EventSignal` по имени. У сигнала те же методы: `connect(handler)`, `disconnect(handler=None)`, **send(route="local", net=None, include_local=None, **payload)** — в том числе с роутингом в сеть (см. ниже).
 - **clear(event_name=None)** / **disconnect_all(event_name=None)** — очистить подписки: для одного события или для всех (`event_name=None`).
 
 ### Отправка
@@ -106,18 +106,21 @@ damage_event(amount=15)
 - **net** — объект с методом `send(event: str, data: dict)` (например, `MultiplayerContext`). Если не передан, используется объект, заданный через **set_network_sender(net)**.
 - **include_local** — вызвать ли локальных подписчиков (по умолчанию для `"local"` и `"all"` — True, для остальных — False).
 
-Пример:
+Примеры:
 
 ```python
-# Только локально
+# Через шину
 s.events.send("player_ready")
-
-# Локально + в сеть (все видят)
 s.events.send("shoot", route="all", net=ctx, x=100, y=200)
-
-# Только на сервер
 s.events.send("hit", route="server", net=ctx, damage=5)
+
+# Через get_event — тот же роутинг (удобно держать ссылку на событие)
+start_game = s.events.get_event("start_game")
+start_game.send(route="all", net=ctx)
+start_game.send(route="all", net=ctx, level=1)  # с payload
 ```
+
+Если задан **set_network_sender(ctx)** при инициализации мультиплеера, параметр `net` можно не передавать: `start_game.send(route="all")`.
 
 При получении сообщений из сети их обычно пробрасывают в EventBus без `route` и `net`, чтобы сработали только локальные подписчики:
 

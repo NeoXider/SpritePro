@@ -78,7 +78,7 @@ damage_event(amount=10)
 - `disconnect(event_name, handler=None)`
 - `send(event_name, **payload)`
 - `disconnect_all(event_name=None)` / `clear(event_name=None)`
-- `get_event(event_name)`
+- `get_event(event_name)` — возвращает `EventSignal`; у него тоже есть `send(route="all", net=ctx, **payload)` для мультиплеера.
 
 Доступные события:
 
@@ -97,11 +97,13 @@ damage_event(amount=10)
 _ = s.multiplayer.init_context(net, role)
 ctx = s.multiplayer_ctx
 
-# Локально + в сеть:
+# Через шину:
 s.events.send("shoot", route="all", net=ctx, x=10, y=20)
-
-# Только на сервер (relay):
 s.events.send("hit", route="server", net=ctx, damage=5)
+
+# Или через get_event (удобно хранить ссылку на событие):
+shoot_ev = s.events.get_event("shoot")
+shoot_ev.send(route="all", net=ctx, x=10, y=20)
 ```
 
 Получение сетевых событий в EventBus:
