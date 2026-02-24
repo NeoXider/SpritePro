@@ -140,18 +140,24 @@ text.set_color(red)
 
 ## Advanced Features
 
-### Multi-line Text
+### Multi-line Text (переносы строк)
+
+TextSprite поддерживает символ переноса строки `\n`: текст разбивается по строкам, каждая строка рендерится отдельно и собирается в одно изображение с отступом между строками. Удобно для списков игроков, подсказок, логов.
+
 ```python
-# Multi-line text support
+# Многострочный текст
 multiline_text = s.TextSprite(
     text="Line 1\nLine 2\nLine 3",
     font_size=20,
     pos=(400, 300)
 )
 
-# Dynamic multi-line text
+# Динамический многострочный текст
 lines = ["Player Stats:", f"Health: {health}", f"Score: {score}"]
 text.set_text("\n".join(lines))
+
+# Список игроков (например, в лобби)
+roster_text.set_text("Игроки:\n" + "\n".join(["Host", "Player 1", "Player 2"]))
 ```
 
 ### Text Positioning

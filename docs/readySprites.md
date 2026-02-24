@@ -14,6 +14,27 @@ Ready Sprites are pre-configured sprite classes that solve common game developme
 
 ## Available Ready Sprites
 
+### Лобби мультиплеера (readyScenes)
+
+Готовый экран настройки мультиплеера: имя, выбор «Хост»/«Клиент», порт и IP, подключение, список игроков (roster), кнопки «В игру» (хост) и «Готов» (клиент). При нажатии «В игру» игра запускается у обоих игроков.
+
+**Использование:**
+
+```python
+# Через run() — одно окно с лобби, затем ваша игра
+s.networking.run(use_lobby=True)
+```
+
+```python
+# Вручную: после get_screen() вызвать лобби с колбэком
+from spritePro.readyScenes import run_multiplayer_lobby
+
+s.get_screen((480, 540), "Лобби")
+run_multiplayer_lobby(lambda net, role: your_multiplayer_main(net, role))
+```
+
+**Экспорт:** `run_multiplayer_lobby`, `MultiplayerLobbyScene`, `EVENT_START_GAME` из `spritePro.readyScenes`. Подробнее: [Networking — лобби](networking.md#подробная-инструкция-лобби-use_lobbytrue).
+
 ### [Text_fps](text_fps.md)
 Автоматический счетчик FPS (кадров в секунду) с скользящим средним и статистикой производительности.
 

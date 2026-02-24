@@ -4,12 +4,13 @@
 1) Сервер:
    python spritePro/demoGames/local_multiplayer_demo.py --server --host 0.0.0.0 --port 5050
    (или хост-режим: сервер + клиент в одном окне)
-   python spritePro/demoGames/local_multiplayer_demo.py --host_mode --host 0.0.0.0 --port 5050 --color red
+   python spritePro/demoGames/local_multiplayer_demo.py --host_mode --host 0.0.0.0 --port 5050
    (или быстрый запуск: хост + второй клиент)
    python spritePro/demoGames/local_multiplayer_demo.py --quick --host 127.0.0.1 --port 5050
 2) Клиенты (на каждом ПК):
-   python spritePro/demoGames/local_multiplayer_demo.py --host IP_СЕРВЕРА --port 5050 --color red
-   python spritePro/demoGames/local_multiplayer_demo.py --host IP_СЕРВЕРА --port 5050 --color blue
+   python spritePro/demoGames/local_multiplayer_demo.py --host IP_СЕРВЕРА --port 5050
+3) Лобби (одно окно, выбор хоста/клиента, ввод IP и порта):
+   python spritePro/demoGames/local_multiplayer_demo.py --lobby
 
 Управление: WASD
 
@@ -19,7 +20,8 @@
 
 Из кода:
     import spritePro as s
-    s.networking.run()
+    s.networking.run()              # по умолчанию — два окна (разработка)
+    s.networking.run(use_lobby=True)  # одно окно с лобби (хост/клиент, IP, порт), затем игра
 """
 
 import sys
@@ -56,8 +58,8 @@ def main(net: s.NetClient, role: str) -> None:
     tick_rate = 60
     other_id: int | None = None
 
-    me_id_text = s.TextSprite("ID: ?", 18, (255, 255, 255), (0, 0))
-    other_id_text = s.TextSprite("ID: ?", 18, (255, 255, 255), (0, 0))
+    me_label = s.TextSprite("?", 18, (255, 255, 255), (0, 0))
+    other_label = s.TextSprite("?", 18, (255, 255, 255), (0, 0))
 
     while True:
         s.update(fps=tick_rate, fill_color=(20, 20, 25))
@@ -79,15 +81,18 @@ def main(net: s.NetClient, role: str) -> None:
                 other_id = data.get("sender_id")
         other.set_position(remote_pos)
 
-        me_id_text.set_text(f"ID: {ctx.client_id}")
+        me_label.set_text(f"{ctx.role} (ID: {ctx.client_id})")
         me_pos = me.get_world_position()
-        me_id_text.set_position((me_pos.x, me_pos.y - 40))
+        me_label.set_position((me_pos.x, me_pos.y - 40))
 
-        other_id_label = "?" if other_id is None else str(other_id)
-        other_id_text.set_text(f"ID: {other_id_label}")
+        other_label_str = f"other (ID: {other_id})" if other_id is not None else "other (ID: ?)"
+        other_label.set_text(other_label_str)
         other_pos = other.get_world_position()
-        other_id_text.set_position((other_pos.x, other_pos.y - 40))
+        other_label.set_position((other_pos.x, other_pos.y - 40))
 
 
 if __name__ == "__main__":
-    s.networking.run()
+    # if "--lobby" in sys.argv:
+        s.networking.run(use_lobby=True)
+    # else:
+    #     s.networking.run()

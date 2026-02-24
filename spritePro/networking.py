@@ -367,12 +367,14 @@ def run(
     server_tick_rate: int = 30,
     net_debug: bool = False,
     client_spawn_delay: float = 0.0,
+    use_lobby: bool = False,
 ) -> None:
     """Запускает мультиплеер для вашей игры.
 
     Ожидается функция `multiplayer_main(net, role)` в вашем скрипте.
-    Если аргументы не переданы, запускается быстрый режим
-    (host + второй клиент) на localhost:5050.
+    По умолчанию (use_lobby=False): без аргументов — быстрый режим (host + клиент),
+    два окна. Для готового приложения: run(use_lobby=True) — одно окно с лобби
+    (имя, хост/клиент, порт, IP), затем «В игру».
     """
     import argparse
     import inspect
@@ -549,6 +551,15 @@ def run(
                 time.sleep(delay * max(0, index + 1))
         entry = env_entry
         _run_worker(env_role, bind_host, connect_host, color, debug_enabled)
+        return
+
+    if use_lobby:
+        def _on_lobby_start(net_client: NetClient, role_str: str) -> None:
+            func = _find_entry(entry)
+            _call_entry(func, net_client, role_str, "red")
+
+        from spritePro.readyScenes.multiplayer_lobby import run_multiplayer_lobby
+        run_multiplayer_lobby(_on_lobby_start)
         return
 
     if argv is None:

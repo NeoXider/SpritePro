@@ -106,7 +106,7 @@
 **Система текста**
 - Рендеринг текста
 - Шрифты и стили
-- Многострочный текст
+- **Многострочный текст** — поддержка `\n` в TextSprite (рендер по строкам, отступ между строками)
 
 #### [docs/mouse_interactor.md](docs/mouse_interactor.md)
 **Взаимодействие с мышью**
@@ -154,6 +154,7 @@
 #### [docs/networking.md](docs/networking.md)
 **Networking**
 - Минимальные TCP-хелперы, run(), MultiplayerContext
+- **Лобби (use_lobby=True):** подробная инструкция — запуск, сценарий для игрока (хост/клиент, «В игру», «Готов»), для разработчика (события start_game/ready, MultiplayerLobbyScene, очистка UI)
 - Файловые логи в spritepro_logs, net_log_to_overlay
 - Примеры мультиплеера
 
@@ -243,7 +244,8 @@
 
 #### [docs/readySprites.md](docs/readySprites.md)
 **Обзор готовых компонентов**
-- Предварительно настроенные спрайты
+- **Лобби мультиплеера** — run_multiplayer_lobby, MultiplayerLobbyScene, EVENT_START_GAME; использование через run(use_lobby=True) или вручную
+- Предварительно настроенные спрайты (Text_fps и др.)
 - Готовые к использованию элементы
 - Примеры интеграции
 
@@ -356,6 +358,7 @@
 ## 🔄 Обновления документации
 
 ### Последние обновления
+- **2026-02 (v2.0.6)**: Лобби мультиплеера — сцена с полной очисткой UI при переходе в игру; хост рассылает `start_game`, игра запускается у обоих; кнопка «Готов» для клиента (подсветка, событие `ready`). TextSprite: поддержка переносов строк (`\n`). Документация: [networking.md](docs/networking.md) (подробная инструкция по лобби), [text.md](docs/text.md) (многострочный текст), [readySprites.md](docs/readySprites.md) (лобби).
 - **2026-02**: Редактор сцен: экспорт из кода в JSON (`Scene.export_from_runtime`), координаты по центру объекта; runtime: `placement()` возвращает центр, `to_button`/`to_text_sprite`/`to_toggle`, `.Sprite(**kwargs)`, `exact(name)`. Демо [scenes_demo editor.py](spritePro/demoGames/scenes_demo editor.py) — загрузка сцены из JSON, логика в коде. Документация: sprite_editor.md (разделы «Координаты в редакторе», «Экспорт сцены из кода в JSON», обновлённая интеграция).
 - **2026-02**: Общий модуль `grid_renderer` для сетки и подписей (игра + редактор); зум-адаптивная плотность подписей. Редактор: переключатель Labels (статусбар и Settings → Scene). Button и TextSprite по умолчанию `screen_space=True`. Документация: debug.md, sprite_editor.md, button.md, text.md.
 - **2026-02**: Slider(Sprite), TextInput(Button), auto_register у Sprite; документация slider.md, text_input.md, events.md

@@ -170,6 +170,8 @@ class TextSprite(Sprite):
     def set_font(self, font_name: Optional[Union[str, Path]], font_size: int) -> "TextSprite":
         """Устанавливает шрифт и размер, затем отрисовывает текст на новой поверхности.
 
+        Поддерживает переносы строк (\\n): каждая строка рендерится отдельно и собирается в одно изображение.
+
         Args:
             font_name (Optional[Union[str, Path]]): Путь к файлу .ttf или None для системного шрифта.
             font_size (int): Размер шрифта в пунктах.
@@ -187,9 +189,24 @@ class TextSprite(Sprite):
             self.font = pygame.font.SysFont("arial", font_size)
 
         display_str = self._text if self._text else ("|" if self._input_active else "")
-        surf = self.font.render(display_str, True, self.color)
+        surf = self._render_text_multiline(display_str)
         self.set_image(surf)
         return self
+
+    def _render_text_multiline(self, text: str, line_spacing: int = 2) -> pygame.Surface:
+        """Рендерит текст с поддержкой \\n: несколько строк в одном изображении."""
+        lines = text.split("\n") if text else (["|"] if self._input_active else [""])
+        if not lines:
+            lines = [""]
+        line_surfs = [self.font.render(line or " ", True, self.color) for line in lines]
+        max_w = max(s.get_width() for s in line_surfs)
+        total_h = sum(s.get_height() for s in line_surfs) + max(0, len(line_surfs) - 1) * line_spacing
+        surf = pygame.Surface((max_w, total_h), pygame.SRCALPHA)
+        y = 0
+        for srf in line_surfs:
+            surf.blit(srf, (0, y))
+            y += srf.get_height() + line_spacing
+        return surf
 
 
 if __name__ == "__main__":
