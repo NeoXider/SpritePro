@@ -33,6 +33,13 @@ from .save_load import (
     exists,
     delete,
 )
+from .pool import (
+    ObjectPool,
+    PooledSpritePool,
+    PoolManager,
+    pool_acquire,
+    pool_release,
+)
 from ..angle_utils import angle_to_point
 
 __all__ = [
@@ -68,4 +75,10 @@ __all__ = [
     "exists",
     "delete",
     "angle_to_point",
+    # Object pooling
+    "ObjectPool",
+    "PooledSpritePool",
+    "PoolManager",
+    "pool_acquire",
+    "pool_release",
 ]

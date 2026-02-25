@@ -38,6 +38,28 @@ def next_shape(current: str) -> str:
     return SHAPES_ORDER[(idx + 1) % len(SHAPES_ORDER)]
 
 
+PHYSICS_NONE = "none"
+PHYSICS_STATIC = "static"
+PHYSICS_KINEMATIC = "kinematic"
+PHYSICS_DYNAMIC = "dynamic"
+
+PHYSICS_ORDER: List[str] = [PHYSICS_NONE, PHYSICS_STATIC, PHYSICS_KINEMATIC, PHYSICS_DYNAMIC]
+
+PHYSICS_LABELS: dict[str, str] = {
+    PHYSICS_NONE: "None",
+    PHYSICS_STATIC: "Static",
+    PHYSICS_KINEMATIC: "Kinematic",
+    PHYSICS_DYNAMIC: "Dynamic",
+}
+
+
+def next_physics_type(current: str) -> str:
+    if current not in PHYSICS_ORDER:
+        return PHYSICS_NONE
+    idx = PHYSICS_ORDER.index(current)
+    return PHYSICS_ORDER[(idx + 1) % len(PHYSICS_ORDER)]
+
+
 def render_primitive_surface(
     shape: str,
     width: int,

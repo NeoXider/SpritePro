@@ -164,6 +164,15 @@
 - Планирование событий
 - Игровое время
 
+#### [docs/physics.md](docs/physics.md)
+**Система физики**
+- Глобальный мир: `sp.physics`, `sp.get_physics_world()` — физика всегда включена, мир один и уже зарегистрирован
+- Гравитация: `sp.physics.set_gravity(...)`; ограничения: `add_constraint`/`remove_constraint` (объект с `update(dt)`)
+- Типы тел: DYNAMIC, STATIC, KINEMATIC; PhysicsConfig, PhysicsBody
+- add_physics, add_static_physics, add_kinematic_physics
+- Коллизии AABB, колбэк on_collision, границы мира (set_bounds)
+- Демо: physics_demo, hoop_bounce_demo, ping_pong (физический мяч, направление от ракетки)
+
 #### [docs/game_loop.md](docs/game_loop.md)
 **Игровой цикл и сцены**
 - Базовый цикл
@@ -240,6 +249,13 @@
 - Автоматические резервные копии
 - Сериализация пользовательских классов
 
+#### [docs/builder.md](docs/builder.md)
+**Builder (Fluent API)**
+- SpriteBuilder: sp.sprite(path).position().scale().color().crop().border_radius().mask().build()
+- Обрезка (crop/clip), скругление (border_radius), маска коллизий (mask)
+- ParticleBuilder: sp.particles().amount().lifetime().speed().gravity().position().build()
+- Полная таблица методов и примеры
+
 ### Готовые компоненты
 
 #### [docs/readySprites.md](docs/readySprites.md)
@@ -277,6 +293,11 @@
 - [Resource Cache Demo](spritePro/demoGames/resource_cache_demo.py) - Кэш ресурсов
 - [Drag & Drop Demo](spritePro/demoGames/drag_drop_demo.py) - Перетаскивание
 - [Debug Overlay Demo](spritePro/demoGames/debug_overlay_demo.py) - Отладочная сетка и логи
+- [Physics Demo](spritePro/demoGames/physics_demo.py) - Физика: гравитация, отскок, платформы, статика и кинематика
+- [Hoop Bounce Demo](spritePro/demoGames/hoop_bounce_demo.py) - Шарик в обруче: отскок без потери силы, смена цвета
+- [Object Pool Demo](spritePro/demoGames/object_pool_demo.py) - Пул объектов для переиспользования спрайтов
+- [Particle Pool Demo](spritePro/demoGames/particle_pool_demo.py) - Пул частиц (ParticleEmitter с use_pool=True)
+- [Builder Demo](spritePro/demoGames/builder_demo.py) - Fluent API: спрайты и частицы через sp.sprite() и sp.particles()
 
 ## 🔍 Навигация по типам документации
 
@@ -358,6 +379,8 @@
 ## 🔄 Обновления документации
 
 ### Последние обновления
+- **2026-02**: Физика: глобальный мир `sp.physics` (один мир с игрой), `set_gravity`, `add_constraint`; демо physics_demo, hoop_bounce_demo переведены на него. Ping Pong: мяч на физике, направление от ракетки (offset), подача с минимальной вертикалью. Hoop Bounce: одно кольцо (без двойного контура). Документация [physics.md](docs/physics.md) — раздел «Глобальный мир физики», примеры без создания мира.
+- **2026-02**: Обновлена документация: подробные [builder.md](docs/builder.md) (crop, clip, border_radius, mask, полная таблица методов SpriteBuilder и ParticleBuilder) и [physics.md](docs/physics.md) (PhysicsWorld, on_collision, set_bounds, демо). В пакет spritePro добавлен модульный docstring с обзором подсистем. В индекс добавлены разделы Physics, Builder и демо (physics_demo, hoop_bounce_demo, object_pool_demo, particle_pool_demo, builder_demo).
 - **2026-02 (v2.0.6)**: Лобби мультиплеера — сцена с полной очисткой UI при переходе в игру; хост рассылает `start_game`, игра запускается у обоих; кнопка «Готов» для клиента (подсветка, событие `ready`). TextSprite: поддержка переносов строк (`\n`). Документация: [networking.md](docs/networking.md) (подробная инструкция по лобби), [text.md](docs/text.md) (многострочный текст), [readySprites.md](docs/readySprites.md) (лобби).
 - **2026-02**: Редактор сцен: экспорт из кода в JSON (`Scene.export_from_runtime`), координаты по центру объекта; runtime: `placement()` возвращает центр, `to_button`/`to_text_sprite`/`to_toggle`, `.Sprite(**kwargs)`, `exact(name)`. Демо [scenes_demo editor.py](spritePro/demoGames/scenes_demo editor.py) — загрузка сцены из JSON, логика в коде. Документация: sprite_editor.md (разделы «Координаты в редакторе», «Экспорт сцены из кода в JSON», обновлённая интеграция).
 - **2026-02**: Общий модуль `grid_renderer` для сетки и подписей (игра + редактор); зум-адаптивная плотность подписей. Редактор: переключатель Labels (статусбар и Settings → Scene). Button и TextSprite по умолчанию `screen_space=True`. Документация: debug.md, sprite_editor.md, button.md, text.md.

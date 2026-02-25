@@ -181,7 +181,7 @@ class Particle(spritePro.Sprite):
             screen (Optional[pygame.Surface], optional): Поверхность для отрисовки. Если None, используется глобальный экран.
         """
         dt = spritePro.dt
-        self.velocity += self.gravity * dt
+        self.velocity += Vector2(self.gravity) * dt
         self.rect.centerx += self.velocity.x * dt
         self.rect.centery += self.velocity.y * dt
         # Apply continuous rotation if set
@@ -209,9 +209,30 @@ class Particle(spritePro.Sprite):
         if self.screen_space:
             screen.blit(self.image, self.rect)
         else:
-            camera = spritePro.get_camera_position()
-            draw_rect = self.rect.move(-int(camera.x), -int(camera.y))
-            screen.blit(self.image, draw_rect)
+            game = spritePro.get_game()
+            camera = getattr(game, "camera", Vector2())
+            zoom = getattr(game, "camera_zoom", 1.0)
+            if zoom == 1.0:
+                draw_rect = self.rect.copy()
+                draw_rect.x -= int(camera.x)
+                draw_rect.y -= int(camera.y)
+                screen.blit(self.image, draw_rect)
+            else:
+                cx = screen.get_width() / 2
+                cy = screen.get_height() / 2
+                screen_x = (self.rect.x - camera.x) * zoom + cx * (1 - zoom)
+                screen_y = (self.rect.y - camera.y) * zoom + cy * (1 - zoom)
+                w, h = self.image.get_size()
+                if w < 1 or h < 1:
+                    draw_rect = self.rect.copy()
+                    draw_rect.x = int(screen_x)
+                    draw_rect.y = int(screen_y)
+                    screen.blit(self.image, draw_rect)
+                else:
+                    scaled_w = max(1, int(w * zoom))
+                    scaled_h = max(1, int(h * zoom))
+                    scaled = pygame.transform.smoothscale(self.image, (scaled_w, scaled_h))
+                    screen.blit(scaled, (int(screen_x), int(screen_y)))
 
 
 class ParticleEmitter:
@@ -230,9 +251,9 @@ class ParticleEmitter:
         emit_interval: float | Tuple[float, float] = 0.1,
         emit_step: float = 0.0,
         use_dt: bool = True,
-        auto_register: bool = False,
+        auto_register: bool = True,
         use_pool: bool = False,
-        max_pool_size: int = 0,
+        max_pool_size: int = 100,
     ) -> None:
         """Инициализирует новый эмиттер частиц.
 
@@ -242,7 +263,9 @@ class ParticleEmitter:
             emit_interval (float | Tuple[float, float], optional): Интервал авто-эмиссии (сек) или диапазон. По умолчанию 0.1.
             emit_step (float, optional): Дистанция для эмиссии (каждый шаг). По умолчанию 0.0.
             use_dt (bool, optional): Использовать dt из update(). По умолчанию True.
-            auto_register (bool, optional): Автоматически регистрировать в spritePro.update(). По умолчанию False.
+            auto_register (bool, optional): Автоматически регистрировать в spritePro.update(). По умолчанию True.
+            use_pool (bool, optional): Использовать пул частиц. По умолчанию False.
+            max_pool_size (int, optional): Макс. размер пула при use_pool=True. По умолчанию 100. 0 — без ограничения.
         """
         self.config = config or ParticleConfig()
         self._resolve_config_image()
@@ -629,6 +652,11 @@ class ParticleEmitter:
         particle.active = False
         self._pool.append(particle)
         return True
+
+    @property
+    def pool_size(self) -> int:
+        """Количество частиц в пуле (доступно при use_pool=True)."""
+        return len(self._pool) if self.use_pool else 0
 
 
 # ------------------------------

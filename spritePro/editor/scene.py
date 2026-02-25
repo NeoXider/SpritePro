@@ -46,6 +46,7 @@ class SceneObject:
     screen_space: bool = False
     visible: bool = True
     locked: bool = False
+    physics_type: str = "none"
     custom_data: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -60,6 +61,7 @@ class SceneObject:
             "screen_space": self.screen_space,
             "visible": self.visible,
             "locked": self.locked,
+            "physics_type": self.physics_type,
             "custom_data": self.custom_data,
         }
 
@@ -81,6 +83,7 @@ class SceneObject:
             screen_space=data.get("screen_space", False),
             visible=data.get("visible", True),
             locked=data.get("locked", False),
+            physics_type=data.get("physics_type", "none"),
             custom_data=data.get("custom_data", {}),
         )
 
@@ -95,6 +98,7 @@ class SceneObject:
             screen_space=self.screen_space,
             visible=self.visible,
             locked=self.locked,
+            physics_type=self.physics_type,
             custom_data=self.custom_data.copy(),
         )
 

@@ -140,13 +140,17 @@ def _render_toggle_property_row(
     return y + theme.INSPECTOR_ROW_HEIGHT
 
 
-def _render_dropdown_row(editor, x: int, y: int, label: str, current_key: str, prop: str) -> int:
+def _render_dropdown_row(
+    editor, x: int, y: int, label: str, current_key: str, prop: str, labels: dict | None = None
+) -> int:
+    if labels is None:
+        labels = sprite_types.SHAPE_LABELS
     right_w = theme.UI_RIGHT_WIDTH
     editor.screen.blit(
         editor.font.render(label, True, editor.colors["ui_text"]),
         (x + 10, y),
     )
-    display = sprite_types.SHAPE_LABELS.get(current_key, current_key)
+    display = labels.get(current_key, current_key)
     btn_rect = pygame.Rect(x + right_w - 120, y + 1, 110, 18)
     pygame.draw.rect(editor.screen, (50, 50, 56), btn_rect, border_radius=3)
     pygame.draw.rect(editor.screen, theme.COLORS["ui_input_border"], btn_rect, 1, border_radius=3)
@@ -265,6 +269,11 @@ def render(editor) -> None:
     y += 8
     y = _render_numeric_property_row(editor, x, y, "Sorting Order", float(obj.z_index), -1.0, 1.0, "z_index", "{:.0f}")
     y = _render_toggle_property_row(editor, x, y, "Screen Space", obj.screen_space, "screen_space")
+    y += 8
+    physics_type = getattr(obj, "physics_type", "none")
+    y = _render_dropdown_row(
+        editor, x, y, "Physics", physics_type, "physics_type", labels=sprite_types.PHYSICS_LABELS
+    )
     y += 8
     y = _render_toggle_property_row(editor, x, y, "Visible", obj.visible, "visible")
     y = _render_toggle_property_row(editor, x, y, "Locked", obj.locked, "locked")

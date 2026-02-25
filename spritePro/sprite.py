@@ -1333,6 +1333,61 @@ class Sprite(pygame.sprite.Sprite):
         """
         return self.active
 
+    def is_visible_on_screen(
+        self,
+        screen: Optional[pygame.Surface] = None,
+        margin: int = 0,
+    ) -> bool:
+        """Проверяет, виден ли спрайт на экране (culling).
+
+        Учитывает позицию камеры и зум для точного определения видимости.
+
+        Args:
+            screen (Optional[pygame.Surface], optional): Поверхность экрана. Если None, используется текущий экран.
+            margin (int, optional): Дополнительный отступ в пикселях. По умолчанию 0.
+
+        Returns:
+            bool: True, если спрайт виден на экране (полностью или частично).
+        """
+        if not self.active:
+            return False
+
+        screen = screen or spritePro.screen
+        if screen is None:
+            return True
+
+        camera = Vector2()
+        zoom = 1.0
+
+        try:
+            game = spritePro.get_game()
+            camera = getattr(game, "camera", Vector2())
+            zoom = getattr(game, "camera_zoom", 1.0)
+        except Exception:
+            pass
+
+        screen_rect = screen.get_rect()
+        expanded_screen = screen_rect.inflate(margin * 2, margin * 2)
+
+        if self.screen_space:
+            sprite_rect = self.rect
+        else:
+            if zoom == 1.0:
+                draw_x = self.rect.x - int(camera.x)
+                draw_y = self.rect.y - int(camera.y)
+            else:
+                cx, cy = screen.get_width() / 2, screen.get_height() / 2
+                offset_x = cx * (1 - zoom)
+                offset_y = cy * (1 - zoom)
+                draw_x = (self.rect.x - camera.x) * zoom + offset_x
+                draw_y = (self.rect.y - camera.y) * zoom + offset_y
+
+            w = max(1, int(self.rect.width * zoom))
+            h = max(1, int(self.rect.height * zoom))
+            sprite_rect = pygame.Rect(int(draw_x), int(draw_y), w, h)
+
+        return expanded_screen.colliderect(sprite_rect)
+
     def set_active(self, value: bool) -> "Sprite":
         """Устанавливает состояние активности спрайта.
 
@@ -1698,24 +1753,6 @@ class Sprite(pygame.sprite.Sprite):
             bool: True, если спрайт находится в указанном состоянии.
         """
         return self.state == state
-
-    def is_visible_on_screen(self, screen: pygame.Surface) -> bool:
-        """Проверяет, виден ли спрайт в пределах экрана.
-
-        Args:
-            screen (pygame.Surface): Поверхность экрана для проверки.
-
-        Returns:
-            bool: True, если спрайт виден на экране.
-        """
-        # Получаем прямоугольник экрана
-        screen_rect = screen.get_rect()
-
-        # Получаем прямоугольник спрайта
-        sprite_rect = self.rect
-
-        # Проверяем пересечение прямоугольников
-        return screen_rect.colliderect(sprite_rect)
 
     def limit_movement(
         self,

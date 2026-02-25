@@ -774,6 +774,164 @@ class TweenManager:
             tween.reset(apply_end=apply_end)
 
 
+class FrameTween:
+    """Твин, работающий по кадрам (frame-based) вместо времени.
+
+    Использует фиксированное количество кадров вместо секунд,
+    что обеспечивает консистентную анимацию независимо от FPS.
+
+    Attributes:
+        start_value (Any): Начальное значение.
+        end_value (Any): Конечное значение.
+        total_frames (int): Общее количество кадров для анимации.
+        current_frame (int): Текущий кадр.
+        easing (Callable): Функция плавности.
+        on_update (Optional[Callable]): Колбэк обновления значения.
+        on_complete (Optional[Callable]): Колбэк завершения.
+        loop (bool): Зациклить анимацию.
+        yoyo (bool): Анимация туда-обратно.
+    """
+
+    def __init__(
+        self,
+        start_value: Any,
+        end_value: Any,
+        total_frames: int,
+        easing: Any = Ease.Linear,
+        on_update: Optional[Callable[[Any], None]] = None,
+        on_complete: Optional[Callable] = None,
+        loop: bool = False,
+        yoyo: bool = False,
+        auto_register: bool = True,
+    ):
+        """Инициализирует FrameTween.
+
+        Args:
+            start_value (Any): Начальное значение.
+            end_value (Any): Конечное значение.
+            total_frames (int): Количество кадров для анимации.
+            easing (Any, optional): Функция плавности. По умолчанию Ease.Linear.
+            on_update (Optional[Callable], optional): Колбэк на обновление. По умолчанию None.
+            on_complete (Optional[Callable], optional): Колбэк на завершение. По умолчанию None.
+            loop (bool, optional): Зациклить. По умолчанию False.
+            yoyo (bool, optional): Анимация туда-обратно. По умолчанию False.
+            auto_register (bool, optional): Авторегистрация в update. По умолчанию True.
+        """
+        self.start_value = start_value
+        self.end_value = end_value
+        self.total_frames = max(1, total_frames)
+        self.current_frame = 0
+        self.easing = Tween._get_easing_func(easing)
+        self.on_update = on_update
+        self.on_complete = on_complete
+        self.loop = loop
+        self.yoyo = yoyo
+        self._direction = 1
+        self._loops_done = 0
+        self.is_playing = True
+
+        if auto_register:
+            try:
+                spritePro.register_update_object(self)
+            except (ImportError, AttributeError):
+                pass
+
+    def update(self, dt: Optional[float] = None) -> Optional[Any]:
+        """Обновляет твин на один кадр.
+
+        Args:
+            dt (Optional[float], optional): Delta time (не используется в frame-based).
+        """
+        if not self.is_playing:
+            return None
+
+        self.current_frame += 1
+
+        if self.current_frame >= self.total_frames:
+            if self.loop:
+                if self.yoyo:
+                    self._direction *= -1
+                    if self._direction == -1:
+                        self._loops_done += 1
+                    self.start_value, self.end_value = self.end_value, self.start_value
+                self.current_frame = 0
+            else:
+                self.is_playing = False
+                if self.on_complete:
+                    self.on_complete()
+                try:
+                    spritePro.unregister_update_object(self)
+                except (ImportError, AttributeError):
+                    pass
+                return self.end_value
+
+        progress = self.current_frame / self.total_frames
+        eased = self.easing(progress)
+
+        current_value = self._lerp_value(self.start_value, self.end_value, eased)
+
+        if self.on_update:
+            self.on_update(current_value)
+
+        return current_value
+
+    def _lerp_value(self, start: Any, end: Any, t: float) -> Any:
+        """Интерполирует значение."""
+        if isinstance(start, Vector2) or isinstance(end, Vector2):
+            return Vector2(start).lerp(Vector2(end), t)
+
+        if isinstance(start, (list, tuple)) and isinstance(end, (list, tuple)):
+            return tuple(s + (e - s) * t for s, e in zip(start, end))
+
+        try:
+            return start + (end - start) * t
+        except Exception:
+            return end if t >= 1.0 else start
+
+    def stop(self, apply_end: bool = True) -> None:
+        """Останавливает твин."""
+        self.is_playing = False
+        if apply_end and self.on_update:
+            self.on_update(self.end_value)
+
+    def restart(self) -> None:
+        """Перезапускает твин."""
+        self.current_frame = 0
+        self._direction = 1
+        self._loops_done = 0
+        self.is_playing = True
+
+
+class FrameTweenHandle:
+    """Fluent-обёртка для FrameTween."""
+
+    def __init__(self, tween: FrameTween):
+        self._tween = tween
+
+    @property
+    def tween(self) -> FrameTween:
+        return self._tween
+
+    def OnComplete(self, callback: Optional[Callable] = None) -> "FrameTweenHandle":
+        self._tween.on_complete = callback
+        return self
+
+    def SetLoops(self, count: int) -> "FrameTweenHandle":
+        self._tween.loop = count < 0 or count > 0
+        return self
+
+    def SetYoyo(self, yoyo: bool = True) -> "FrameTweenHandle":
+        self._tween.yoyo = yoyo
+        return self
+
+    def Kill(self) -> None:
+        self._tween.stop()
+        try:
+            spritePro.unregister_update_object(self._tween)
+        except (ImportError, AttributeError):
+            pass
+
+
 if __name__ == "__main__":
     import pygame
     import sys
@@ -836,13 +994,15 @@ if __name__ == "__main__":
     texts = []
     y_pos = 50
     for easing_type in EasingType:
-        text = spritePro.TextSprite(easing_type.name, color = (255, 255, 255))
+        text = spritePro.TextSprite(easing_type.name, color=(255, 255, 255))
         texts.append((text, (20, y_pos + 15)))
-        text.position = (100, y_pos+ 15)
+        text.position = (100, y_pos + 15)
         y_pos += 60
 
     # Добавляем инструкции
-    instructions = spritePro.TextSprite("Press SPACE to pause/resume, ESC to exit", color= (255, 255, 255))
+    instructions = spritePro.TextSprite(
+        "Press SPACE to pause/resume, ESC to exit", color=(255, 255, 255)
+    )
     instructions_pos = (screen.get_width() // 2 - instructions.image.get_width() // 2, 10)
 
     paused = False

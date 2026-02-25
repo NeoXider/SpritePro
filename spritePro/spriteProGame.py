@@ -8,6 +8,7 @@ from pygame.math import Vector2
 
 from .camera_effects import CameraShake
 from . import grid_renderer
+from .physics import PhysicsWorld
 
 
 class SpriteProGame:
@@ -40,9 +41,11 @@ class SpriteProGame:
         self.camera_max_zoom = 5.0
         self.camera_target: pygame.sprite.Sprite | None = None
         self.camera_offset = Vector2()
-        self.update_objects: list = []  # Объекты для автоматического обновления
+        self.update_objects: list = []
         self.camera_shake = CameraShake(self)
         self.register_update_object(self.camera_shake)
+        self.physics_world = PhysicsWorld(gravity=980.0)
+        self.register_update_object(self.physics_world)
 
         # Debug overlay settings
         self.debug_enabled = False
@@ -99,6 +102,8 @@ class SpriteProGame:
         self._debug_grid_font: pygame.font.Font | None = None
         self._debug_camera_font: pygame.font.Font | None = None
         self._debug_hud_font: pygame.font.Font | None = None
+        self._debug_surface_cache: pygame.Surface | None = None
+        self._debug_needs_redraw: bool = True
 
         SpriteProGame._instance = self
 
@@ -308,10 +313,11 @@ class SpriteProGame:
     def draw(self, surface: pygame.Surface) -> None:
         """Отрисовывает все спрайты на указанной поверхности.
 
-        Args:
-            surface (pygame.Surface): Поверхность для отрисовки.
+        Спрайты рисуют себя сами в update(screen) с учётом камеры и screen_space.
+        Повторный вызов all_sprites.draw() не делаем — иначе мир дублируется
+        (один экземпляр в мире, второй «прикреплён» к экрану в мировых координатах).
         """
-        self.all_sprites.draw(surface)
+        # self.all_sprites.draw(surface)  # отключено: спрайты уже рисуются в update(screen)
 
     def register_update_object(self, obj) -> None:
         """Регистрирует объект для автоматического обновления.
@@ -636,6 +642,11 @@ class SpriteProGame:
         """Очищает очередь debug логов."""
         self._debug_logs.clear()
 
+    def invalidate_debug_cache(self) -> None:
+        """Инвалидирует кэш debug overlay, вызывая перерисовку."""
+        self._debug_needs_redraw = True
+        self._debug_surface_cache = None
+
     def draw_debug_grid(self, surface: pygame.Surface) -> None:
         """Рисует debug-сетку под сценой."""
         if not self.debug_enabled or not self.debug_grid_enabled or surface is None:
@@ -658,12 +669,19 @@ class SpriteProGame:
             return
         dt_value = 0.0 if dt is None else float(dt)
         self._update_debug_logs(dt_value)
-        self._ensure_debug_fonts()
 
-        self._draw_camera_marker(surface, wh_c)
+        logs_changed = bool(self._debug_logs)
+        if logs_changed:
+            self._debug_needs_redraw = True
 
-        if self.debug_logs_enabled:
-            self._draw_debug_logs(surface)
+        if self._debug_needs_redraw:
+            self._ensure_debug_fonts()
+            self._draw_camera_marker(surface, wh_c)
+
+            if self.debug_logs_enabled:
+                self._draw_debug_logs(surface)
+
+            self._debug_needs_redraw = False
 
     def draw_debug(self, surface: pygame.Surface, wh_c: Vector2, dt: float | None = None) -> None:
         """Рисует полный debug overlay (сетка + маркеры + логи)."""

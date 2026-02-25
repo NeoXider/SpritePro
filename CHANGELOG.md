@@ -58,6 +58,8 @@
 ## [Unreleased]
 
 ### Added
+- **Физика: глобальный мир** — один мир создаётся с игрой и доступен через `sp.physics` или `sp.get_physics_world()`. Гравитация: `sp.physics.set_gravity(980)`. Ограничения с методом `update(dt)`: `sp.physics.add_constraint(constraint)` — мир сам вызывает их после шага физики. Создавать `PhysicsWorld` и вызывать `register_update_object(world)` не нужно.
+- **Ping Pong (демо)** — мяч на физическом движке (динамическое тело), ракетки и стены — статика. При ударе о ракетку задаётся направление по месту касания (offset по вертикали), константа `PADDLE_AIM_STRENGTH`. Подача с минимальной вертикальной составляющей (мяч не летит строго по прямой).
 - **EventSignal и мультиплеер** — у объекта из `s.events.get_event(name)` метод `send(route="all", net=ctx, **payload)` рассылает событие локально и в сеть (как `s.events.send(...)`). Удобно хранить ссылку на событие: `start_game = s.events.get_event("start_game"); start_game.send(route="all", net=ctx)`.
 - **CLI `--create` (архитектура шаблона):** новый проект теперь включает `scenes/level.json` (уровень редактора) и сцену, которая загружает его через `spawn_scene(...)`. Игрок берётся по имени `player` из JSON (`rt.exact("player").Sprite(speed=5)`), при отсутствии/ошибке JSON включается безопасный fallback без падения.
 - **Экспорт сцены из кода в JSON** — `Scene.from_runtime(scene_instance)` и `Scene.export_from_runtime(scene_or_class, filepath)` в `spritePro.editor.scene`. Имена объектов = атрибуты сцены, позиция = центр спрайта; round-trip: код → JSON → правки в редакторе → загрузка в игре. Демо: `scenes_demo editor.py`.
@@ -67,6 +69,8 @@
 - **Редактор: подписи координат на сетке** — переключатель «Labels ON/OFF» в статусбаре и в Settings → Scene (Grid Labels). Подписи используют ту же зум-адаптивную логику, что и в игре.
 
 ### Changed
+- **Физика** — демо `physics_demo`, `hoop_bounce_demo` переведены на глобальный мир `sp.physics` (без своего `PhysicsWorld` и без `register_update_object`). Документация [docs/physics.md](docs/physics.md): раздел «Глобальный мир физики», `set_gravity`, `add_constraint`/`remove_constraint`, примеры без создания мира.
+- **Hoop Bounce (демо)** — обруч рисуется одним кольцом (заливка внешнего круга + вырез внутреннего), без двойного контура от `pygame.draw.circle(..., width=...)`.
 - **Редактор:** позиция объекта в JSON и в viewport — **центр** спрайта (transform.x, transform.y). Экспорт из runtime записывает rect.center.
 - **Sprite (примитивы):** при `set_rect_shape`/`set_circle_shape`/`set_ellipse_shape` сохраняются цвет и флаг `_shape_fill_color`, чтобы цвет не терялся при перезапуске сцены и не применялся двойной тинт.
 - **Button и TextSprite** — по умолчанию `screen_space=True`: позиция и размер не зависят от камеры и зума. Для кнопки/текста в мировых координатах (например над объектом) можно вызвать `.set_screen_space(False)`.

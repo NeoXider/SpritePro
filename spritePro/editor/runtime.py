@@ -4,13 +4,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, TYPE_CHECKING
 
 import pygame
 import spritePro as s
 
 from .scene import Scene, SceneObject
 from . import sprite_types as st
+
+if TYPE_CHECKING:
+    from spritePro.physics import PhysicsWorld
 
 
 @dataclass
@@ -105,6 +108,7 @@ class RuntimeScene:
     spawned: List[SpawnedObject]
     by_id: Dict[str, SpawnedObject]
     by_name: Dict[str, List[SpawnedObject]]
+    physics_world: Optional["PhysicsWorld"] = None
 
     def first(self, name: str) -> Optional[SpawnedObject]:
         """Первый объект с именем name (сравнение без учёта регистра). Для точного имени — то же, что exact()."""
@@ -262,8 +266,42 @@ def spawn_scene(
         key = obj.name.lower()
         by_name.setdefault(key, []).append(spawned_obj)
 
+    physics_world = None
+    if any(getattr(o, "physics_type", "none") != "none" for o in source.objects if o.visible):
+        from spritePro.physics import (
+            PhysicsWorld,
+            PhysicsConfig,
+            add_physics,
+            add_static_physics,
+            add_kinematic_physics,
+            BodyType,
+        )
+        physics_world = PhysicsWorld()
+        for so in spawned:
+            obj = so.data
+            ptype = getattr(obj, "physics_type", "none")
+            if ptype == "none":
+                continue
+            sprite = so.sprite
+            if ptype == st.PHYSICS_STATIC:
+                body = add_static_physics(sprite)
+                physics_world.add_static(body)
+            elif ptype == st.PHYSICS_KINEMATIC:
+                body = add_kinematic_physics(sprite)
+                physics_world.add_kinematic(body)
+            elif ptype == st.PHYSICS_DYNAMIC:
+                body = add_physics(sprite, PhysicsConfig(body_type=BodyType.DYNAMIC))
+                physics_world.add(body)
+        s.register_update_object(physics_world)
+
     if apply_camera:
         s.set_camera_position(source.camera.game_x, source.camera.game_y)
         s.set_camera_zoom(source.camera.game_zoom)
 
-    return RuntimeScene(source=source, spawned=spawned, by_id=by_id, by_name=by_name)
+    return RuntimeScene(
+        source=source,
+        spawned=spawned,
+        by_id=by_id,
+        by_name=by_name,
+        physics_world=physics_world,
+    )

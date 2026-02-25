@@ -4,7 +4,8 @@ from dataclasses import replace
 import pygame
 
 import spritePro as s
-from config import WIN_SCORE
+from spritePro.physics import add_static_physics
+from config import WIN_SCORE, BALL_SPEED, PADDLE_AIM_STRENGTH
 from objects import Paddle, Ball
 
 
@@ -22,6 +23,14 @@ class PingPongScene(s.Scene):
         self.center_line.set_color((40, 40, 55))
         self.center_line.alpha = 140
 
+        s.physics.set_gravity(0.0)
+        self._wall_top = s.Sprite("", (int(s.WH.x) + 20, 8), (s.WH_C.x, -4), scene=self)
+        self._wall_top.set_color((0, 0, 0))
+        self._wall_bottom = s.Sprite("", (int(s.WH.x) + 20, 8), (s.WH_C.x, int(s.WH.y) + 4), scene=self)
+        self._wall_bottom.set_color((0, 0, 0))
+        for wall in (self._wall_top, self._wall_bottom):
+            s.physics.add(add_static_physics(wall))
+
         self.left_paddle = Paddle(
             (40, s.WH_C.y), (255, 150, 150), pygame.K_w, pygame.K_s, scene=self
         )
@@ -37,6 +46,7 @@ class PingPongScene(s.Scene):
 
         self.ball = Ball((s.WH_C.x, s.WH_C.y), scene=self)
         self.ball.paddles = [self.left_paddle, self.right_paddle]
+        self.ball._body.on_collision = self._on_ball_collision
         self.ball.reset(serve_dir=random.choice([-1, 1]))
         self.ball.set_trail_config(self.trail_config)
         self.ball.stop_trail()
@@ -67,6 +77,20 @@ class PingPongScene(s.Scene):
         self.tweens = s.TweenManager()
 
         # Логи сцены отключены для тихого переключения/перезапуска
+
+    def _on_ball_collision(self, other_body):
+        self._emit_particles(self.hit_config, self.ball.rect.center)
+        if other_body.sprite in (self._wall_top, self._wall_bottom):
+            self.ball.bounced = True
+            return
+        paddle = other_body.sprite
+        if paddle not in (self.left_paddle, self.right_paddle):
+            return
+        offset = (self.ball.rect.centery - paddle.rect.centery) / max(1, paddle.rect.height * 0.5)
+        offset = max(-1.0, min(1.0, offset))
+        vx = BALL_SPEED if paddle is self.left_paddle else -BALL_SPEED
+        vy = offset * BALL_SPEED * PADDLE_AIM_STRENGTH
+        self.ball._body.set_velocity(vx, vy)
 
     def _setup_particles(self):
         self.trail_config = s.ParticleConfig(
@@ -196,22 +220,11 @@ class PingPongScene(s.Scene):
 
         if self.ball.bounced:
             s.debug_log_info("Ball wall bounce")
-            self._emit_particles(self.hit_config, self.ball.rect.center)
-
-        if self._ball_hits_paddle():
-            s.debug_log_info("Ball paddle bounce")
-            self._emit_particles(self.hit_config, self.ball.rect.center)
 
         if self.ball.rect.right < 0:
             self._score_point(left=False)
         elif self.ball.rect.left > s.WH.x:
             self._score_point(left=True)
-
-    def _ball_hits_paddle(self) -> bool:
-        for paddle in self.ball.paddles:
-            if self.ball.rect.colliderect(paddle.rect):
-                return True
-        return False
 
     def _score_point(self, left: bool):
         if left:

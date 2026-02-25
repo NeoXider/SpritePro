@@ -1,3 +1,24 @@
+"""
+SpritePro — высокоуровневый фреймворк для 2D-игр на Python (поверх Pygame).
+
+Основные подсистемы:
+- Спрайты и UI: Sprite, Button, ToggleButton, Slider, TextInput, TextSprite, Bar, Layout.
+- Анимация: Animation (покадровая), Tween и TweenManager (плавные переходы), Fluent API (DoMove, DoScale, ...).
+- Физика: PhysicsWorld, PhysicsBody, PhysicsConfig, add_physics, add_static_physics, add_kinematic_physics.
+- Частицы: ParticleEmitter, ParticleConfig, шаблоны (template_sparks, template_fire, ...).
+- Builder: sp.sprite(path).position(...).scale(...).crop(...).border_radius(...).mask(...).build(), sp.particles().
+- Игровой цикл: get_screen(), update(), сцены (Scene, SceneManager), таймеры (Timer).
+- Ввод и события: InputState, EventBus, GlobalEvents, pygame_events.
+- Камера: set_camera_position, set_camera_follow, zoom_camera, shake_camera.
+- Звук: AudioManager, Sound.
+- Сеть: NetServer, NetClient, networking.run(), multiplayer context.
+- Сохранение: PlayerPrefs, save_load.
+- Отладка: enable_debug(), debug_log_info(), сетка и логи.
+- Редактор сцен: editor (запуск: python -m spritePro.cli --editor).
+
+Документация: см. docs/ в корне репозитория и DOCUMENTATION_INDEX.md.
+"""
+
 from typing import List
 
 import pygame
@@ -78,6 +99,29 @@ from . import utils
 from . import readySprites
 from . import readyScenes
 from .utils import save_load
+from .exceptions import (
+    SpriteProError,
+    ResourceError,
+    SceneError,
+    TweenError,
+    ConfigurationError,
+    PhysicsError,
+    NetworkError,
+    AudioError,
+    ValidationError,
+    PoolError,
+)
+from .builder import SpriteBuilder, ParticleBuilder, sprite, particles
+from .asset_watcher import AssetWatcher, HotReloadManager, get_hot_reload_manager
+from .physics import (
+    PhysicsBody,
+    PhysicsWorld,
+    PhysicsConfig,
+    add_physics,
+    add_static_physics,
+    add_kinematic_physics,
+    get_physics,
+)
 
 __all__ = [
     # Core sprites / UI
@@ -166,9 +210,27 @@ __all__ = [
     "GlobalEvents",
     "ResourceCache",
     "resource_cache",
+    # Exceptions
+    "SpriteProError",
+    "ResourceError",
+    "SceneError",
+    "TweenError",
+    "ConfigurationError",
+    "PhysicsError",
+    "NetworkError",
+    "AudioError",
+    "ValidationError",
+    "PoolError",
+    # Builder
+    "SpriteBuilder",
+    "ParticleBuilder",
+    "sprite",
+    "particles",
     # Global facade
     "get_context",
     "get_game",
+    "get_physics_world",
+    "physics",
     "register_sprite",
     "unregister_sprite",
     "enable_sprite",
@@ -289,6 +351,21 @@ def get_game() -> SpriteProGame:
         SpriteProGame: Единственный экземпляр SpriteProGame.
     """
     return _context.game
+
+
+def get_physics_world():
+    """Возвращает глобальный мир физики (создаётся с игрой, уже зарегистрирован в update)."""
+    return get_game().physics_world
+
+
+class _PhysicsProxy:
+    """Прокси к глобальному PhysicsWorld: sp.physics.set_gravity(980), sp.physics.add(body)."""
+
+    def __getattr__(self, name):
+        return getattr(get_physics_world(), name)
+
+
+physics = _PhysicsProxy()
 
 
 def register_sprite(sprite: pygame.sprite.Sprite) -> None:

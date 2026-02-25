@@ -294,6 +294,7 @@ class GameContext:
 
         self.scene_manager.update(self.dt)
         self.game.update(self.screen, dt=self.dt, wh_c=self.WH_C)
+        self.game.draw(self.screen)
         self.scene_manager.draw(self.screen)
         if self.game.debug_enabled:
             if self.game.debug_grid_on_top:

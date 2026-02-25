@@ -724,21 +724,24 @@ class SpriteEditor:
             self._update_active_slider(self.mouse_pos.x)
         
         keys = pygame.key.get_pressed()
-        
-        # Перемещение камеры клавишами WASD или стрелками
-        speed = 10 / self.zoom
-        if keys[pygame.K_w] or keys[pygame.K_UP]:
-            self.camera.y -= speed
-        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            self.camera.y += speed
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            self.camera.x -= speed
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.camera.x += speed
-        
-        # Панорамирование камеры средней кнопкой или ПКМ
+        mods = pygame.key.get_mods()
+        mods_block_camera = mods & (pygame.KMOD_CTRL | pygame.KMOD_ALT | pygame.KMOD_SHIFT)
+
+        # Перемещение камеры клавишами WASD или стрелками (не при зажатых Ctrl/Alt/Shift, чтобы Ctrl+S не двигал камеру)
+        if not mods_block_camera:
+            speed = 10 / self.zoom
+            if keys[pygame.K_w] or keys[pygame.K_UP]:
+                self.camera.y -= speed
+            if keys[pygame.K_s] or keys[pygame.K_DOWN]:
+                self.camera.y += speed
+            if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+                self.camera.x -= speed
+            if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+                self.camera.x += speed
+
+        # Панорамирование камеры средней кнопкой или ПКМ (не при зажатых Ctrl/Alt/Shift)
         mouse_buttons = pygame.mouse.get_pressed()
-        if self.mouse_pressed and (mouse_buttons[1] or mouse_buttons[2]):
+        if not mods_block_camera and self.mouse_pressed and (mouse_buttons[1] or mouse_buttons[2]):
             current_pos = Vector2(pygame.mouse.get_pos())
             dx = current_pos.x - self.camera_drag_start.x
             dy = current_pos.y - self.camera_drag_start.y
@@ -796,16 +799,17 @@ class SpriteEditor:
             obj.transform.rotation = new_angle
 
     def _update_scale(self) -> None:
-        """Обновление масштаба (или width/height у примитивов) при перетаскивании"""
+        """Обновление масштаба (или width/height у примитивов) при перетаскивании. Shift — пропорционально."""
         dx = (self.mouse_world_pos.x - self.drag_start.x) / 100.0
         dy = (self.mouse_world_pos.y - self.drag_start.y) / 100.0
         keys = pygame.key.get_pressed()
         uniform = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
         pixel_delta = 80.0
         if uniform:
-            delta = (dx + dy) * 0.5 * pixel_delta
-            dw = dh = delta
+            delta = (dx + dy) * 0.5
+            dw = dh = None
         else:
+            delta = None
             dw = dx * pixel_delta
             dh = dy * pixel_delta
 
@@ -816,8 +820,13 @@ class SpriteEditor:
             if start is None:
                 continue
             if editor_sprite_types.is_primitive(getattr(obj, "sprite_shape", "image")):
-                new_w = max(4, start["width"] + dw)
-                new_h = max(4, start["height"] + dh)
+                if uniform:
+                    scale = max(0.04, 1.0 + delta)
+                    new_w = max(4, int(round(start["width"] * scale)))
+                    new_h = max(4, int(round(start["height"] * scale)))
+                else:
+                    new_w = max(4, start["width"] + dw)
+                    new_h = max(4, start["height"] + dh)
                 if abs(new_w - obj.custom_data.get("width", 100)) > 1e-6 or abs(new_h - obj.custom_data.get("height", 100)) > 1e-6:
                     self._transform_changed_during_drag = True
                 obj.custom_data["width"] = int(round(new_w))
@@ -970,18 +979,27 @@ class SpriteEditor:
             self._save_state()
 
     def _cycle_inspector_dropdown(self, prop: str) -> None:
-        if prop != "sprite_shape" or not self.selected_objects:
+        if not self.selected_objects:
             return
-        for obj in self.selected_objects:
-            if getattr(obj, "locked", False):
-                continue
-            current = getattr(obj, "sprite_shape", "image")
-            obj.sprite_shape = editor_sprite_types.next_shape(current)
-            if editor_sprite_types.is_primitive(obj.sprite_shape):
-                if "width" not in obj.custom_data:
-                    obj.custom_data["width"] = 100
-                if "height" not in obj.custom_data:
-                    obj.custom_data["height"] = 100
+        if prop == "sprite_shape":
+            for obj in self.selected_objects:
+                if getattr(obj, "locked", False):
+                    continue
+                current = getattr(obj, "sprite_shape", "image")
+                obj.sprite_shape = editor_sprite_types.next_shape(current)
+                if editor_sprite_types.is_primitive(obj.sprite_shape):
+                    if "width" not in obj.custom_data:
+                        obj.custom_data["width"] = 100
+                    if "height" not in obj.custom_data:
+                        obj.custom_data["height"] = 100
+        elif prop == "physics_type":
+            for obj in self.selected_objects:
+                if getattr(obj, "locked", False):
+                    continue
+                current = getattr(obj, "physics_type", "none")
+                obj.physics_type = editor_sprite_types.next_physics_type(current)
+        else:
+            return
         self._save_state()
 
     def _click_in_status_input(self, pos: tuple[int, int]) -> bool:

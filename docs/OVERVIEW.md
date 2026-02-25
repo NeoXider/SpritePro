@@ -55,6 +55,30 @@ from spritePro.layout import (
 
 ---
 
+## Физика
+
+Модуль **spritePro.physics**: мир тел (PhysicsWorld), динамические/статические/кинематические тела, гравитация, трение, отскок, коллизии AABB.
+
+- **add_physics**, **add_static_physics**, **add_kinematic_physics** — создание тел.
+- **PhysicsConfig** — mass, gravity, friction, bounce.
+- **on_collision** — колбэк при столкновении.
+- **world.set_bounds(rect)** — границы экрана с отскоком.
+
+Демо: `physics_demo.py`, `hoop_bounce_demo.py`, `ping_pong.py`. Подробнее: [physics.md](physics.md).
+
+---
+
+## Builder (Fluent API)
+
+**sp.sprite(path)** и **sp.particles()** — цепочки вызовов для создания спрайтов и эмиттеров частиц.
+
+- Спрайт: `.position()`, `.scale()`, `.color()`, `.crop()`, `.border_radius()`, `.mask()`, `.build()`.
+- Частицы: `.amount()`, `.lifetime()`, `.speed()`, `.gravity()`, `.position()`, `.auto_emit()`, `.build()`.
+
+Демо: `builder_demo.py`. Подробнее: [builder.md](builder.md).
+
+---
+
 ## Мультиплеер
 
 TCP + JSON‑сообщения формата `{"event": "...", "data": {...}}`.
@@ -157,6 +181,9 @@ def main(net, role):
 | Демо Fluent Tween | `spritePro/demoGames/fluent_tween_demo.py` |
 | Демо меню/инвентарь | `spritePro/demoGames/menu_shop_demo.py` |
 | Демо мультиплеер | `spritePro/demoGames/local_multiplayer_demo.py` |
+| Демо физики | `spritePro/demoGames/physics_demo.py` |
+| Демо Builder | `spritePro/demoGames/builder_demo.py` |
+| Демо обруч/отскок | `spritePro/demoGames/hoop_bounce_demo.py` |
 | Крестики-нолики | `multiplayer_course/tictactoe_example/` |
 
 ---
