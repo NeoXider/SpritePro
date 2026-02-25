@@ -1,8 +1,9 @@
 """Готовая сцена/экран лобби для мультиплеера.
 
 Экран 1 — настройка: имя, хост/клиент, порт (и IP для клиента), «Запустить сервер» / «Подключиться».
-Экран 2 — в лобби: список игроков (roster), для хоста кнопка «В игру».
-По нажатию «В игру» хост рассылает start_game, у обоих вызывается on_start_game.
+Экран 2 — в лобби: список игроков (roster). У обоих: кнопки «Назад» и «В игру».
+По нажатию «В игру» хост рассылает start_game остальным; любой участник (хост или клиент) может нажать «В игру» и войти в игру (в т.ч. клиент — после того как хост уже запустил игру).
+«Назад» — отключение и возврат к экрану настройки.
 
 Использование через run():
     s.networking.run(use_lobby=True)
@@ -12,6 +13,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Callable, List, Optional
 
@@ -77,6 +79,8 @@ def run_multiplayer_lobby(
     title: str = "Лобби",
 ) -> None:
     """Запускает цикл лобби до нажатия «В игру»; затем вызывает on_start_game(net, role)."""
+    if "SPRITEPRO_LOG_DIR" not in os.environ:
+        os.environ["SPRITEPRO_LOG_DIR"] = os.path.join(os.getcwd(), "spritepro_logs")
     s.get_screen(window_size, title)
     W, H = int(s.WH.x), int(s.WH.y)
     cx = W // 2
@@ -93,7 +97,6 @@ def run_multiplayer_lobby(
     player_ids: set[int] = set()
     roster: list[int] = []
     joined = False
-    client_ready = False
     error_msg = ""
     status_msg = ""
 
@@ -251,30 +254,32 @@ def run_multiplayer_lobby(
             error_text.set_text(error_msg)
             error_text.set_active(True)
 
-    def _update_ready_style() -> None:
-        if client_ready:
-            btn_ready.set_all_colors(
-                COLOR_ACTIVE,
-                (50, 110, 170),
-                (90, 150, 210),
-            )
-            btn_ready.text_sprite.set_color((255, 255, 255))
-            btn_ready.text_sprite.set_text("Готов ✓")
-        else:
-            btn_ready.set_all_colors(
-                COLOR_INACTIVE,
-                (50, 50, 58),
-                (80, 80, 90),
-            )
-            btn_ready.text_sprite.set_color((180, 180, 180))
-            btn_ready.text_sprite.set_text("Готов")
-
-    def _toggle_ready() -> None:
-        nonlocal client_ready
-        client_ready = not client_ready
-        _update_ready_style()
-        if s.multiplayer_ctx is not None:
-            s.multiplayer_ctx.send("ready", {"value": client_ready})
+    def _go_back() -> None:
+        nonlocal connected, joined, roster, server, net
+        try:
+            if server is not None:
+                server.stop()
+                server = None
+        except Exception:
+            pass
+        try:
+            if net is not None:
+                net.close()
+                net = None
+        except Exception:
+            pass
+        connected = False
+        joined = False
+        player_ids.clear()
+        roster = []
+        layout_setup.set_active(True)
+        for sp in setup_children:
+            sp.set_active(True)
+        lobby_title.set_active(False)
+        me_label.set_active(False)
+        roster_text.set_active(False)
+        btn_start_game.set_active(False)
+        btn_back.set_active(False)
 
     def _show_lobby() -> None:
         for sp in setup_children:
@@ -283,19 +288,24 @@ def run_multiplayer_lobby(
         lobby_title.set_active(True)
         me_label.set_active(True)
         roster_text.set_active(True)
-        btn_start_game.set_active(role == "host")
-        btn_ready.set_active(role != "host")
-        if role != "host":
-            btn_ready.on_click(_toggle_ready)
-            _update_ready_style()
+        btn_back.set_active(True)
+        btn_start_game.set_active(True)
 
         def _go_game() -> None:
+            log_dir = os.environ.get("SPRITEPRO_LOG_DIR", "spritepro_logs")
+            try:
+                os.makedirs(log_dir, exist_ok=True)
+            except OSError:
+                pass
+            tag = "host" if role == "host" else "client"
+            s.set_debug_log_file(path=os.path.join(log_dir, f"debug_{tag}.log"), enabled=True)
             if s.multiplayer_ctx is not None and s.multiplayer_ctx.is_host:
                 s.multiplayer_ctx.send(EVENT_START_GAME)
             scene.on_exit()
             on_start_game(net, role)
 
         btn_start_game.on_click(_go_game)
+        btn_back.on_click(_go_back)
 
     _set_host(True)
     btn_start_server.on_click(_do_connect_host)
@@ -344,15 +354,15 @@ def run_multiplayer_lobby(
     me_label = s.TextSprite("", 18, (170, 220, 255), (20, 54), anchor=s.Anchor.TOP_LEFT)
     roster_text = s.TextSprite("Игроки:", 20, (220, 220, 220), (20, 84), anchor=s.Anchor.TOP_LEFT)
     btn_start_game = s.Button(
-        size=(200, 46),
-        pos=(cx, H - 70),
+        size=(160, 46),
+        pos=(cx + 100, H - 70),
         text="В игру",
         text_size=20,
     )
-    btn_ready = s.Button(
-        size=(200, 46),
-        pos=(cx, H - 70),
-        text="Готов",
+    btn_back = s.Button(
+        size=(160, 46),
+        pos=(cx - 100, H - 70),
+        text="Назад",
         text_size=20,
         base_color=COLOR_INACTIVE,
         hover_color=(80, 80, 90),
@@ -363,7 +373,7 @@ def run_multiplayer_lobby(
     me_label.set_active(False)
     roster_text.set_active(False)
     btn_start_game.set_active(False)
-    btn_ready.set_active(False)
+    btn_back.set_active(False)
 
     buttons_and_inputs = [
         btn_host,
@@ -371,7 +381,7 @@ def run_multiplayer_lobby(
         btn_start_server,
         btn_connect,
         btn_start_game,
-        btn_ready,
+        btn_back,
         name_input,
         port_input,
         ip_input,
@@ -438,9 +448,5 @@ def run_multiplayer_lobby(
 
         roster_text.set_text("Игроки:\n" + "\n".join(_display_name(pid) for pid in roster))
 
-        if ctx_ref.is_host:
-            btn_start_game.set_active(True)
-            btn_ready.set_active(False)
-        else:
-            btn_start_game.set_active(False)
-            btn_ready.set_active(True)
+        btn_back.set_active(True)
+        btn_start_game.set_active(True)

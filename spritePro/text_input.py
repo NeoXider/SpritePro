@@ -88,6 +88,30 @@ class TextInput(Button):
         self.is_active = False
         self._apply_text()
 
+    def _paste_from_clipboard(self) -> None:
+        try:
+            if not pygame.scrap.get_init():
+                pygame.scrap.init()
+        except Exception:
+            return
+        try:
+            data = pygame.scrap.get(pygame.SCRAP_TEXT)
+            if not data:
+                return
+            text = data.decode("utf-8", errors="replace")
+            paste = "".join(c for c in text if c.isprintable() or c in " \t")
+            if not paste:
+                return
+            remain = self.max_length - len(self.value)
+            if remain <= 0:
+                return
+            self.value = (self.value + paste)[: self.max_length]
+            self._apply_text()
+            if self.on_change:
+                self.on_change(self.value)
+        except Exception:
+            pass
+
     def set_value(self, value: str) -> None:
         self.value = value[: self.max_length]
         self._apply_text()
@@ -119,17 +143,8 @@ class TextInput(Button):
                 if self.on_change:
                     self.on_change(self.value)
                 return True
-            keypad = {
-                pygame.K_KP0: "0", pygame.K_KP1: "1", pygame.K_KP2: "2",
-                pygame.K_KP3: "3", pygame.K_KP4: "4", pygame.K_KP5: "5",
-                pygame.K_KP6: "6", pygame.K_KP7: "7", pygame.K_KP8: "8",
-                pygame.K_KP9: "9", pygame.K_KP_PERIOD: ".", pygame.K_KP_MINUS: "-",
-            }
-            if event.key in keypad and len(self.value) < self.max_length:
-                self.value += keypad[event.key]
-                self._apply_text()
-                if self.on_change:
-                    self.on_change(self.value)
+            if event.key == pygame.K_v and (event.mod & pygame.KMOD_CTRL):
+                self._paste_from_clipboard()
                 return True
             return False
         if event.type == pygame.TEXTINPUT:

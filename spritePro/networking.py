@@ -167,7 +167,10 @@ class NetServer:
         peer = _safe_peer(conn)
         try:
             while self._running:
-                data = conn.recv(1024)
+                try:
+                    data = conn.recv(1024)
+                except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError, OSError):
+                    break
                 if not data:
                     break
                 buffer += data.decode("utf-8", errors="ignore")
@@ -301,7 +304,10 @@ class NetClient:
         assert self._sock is not None
         try:
             while self._running:
-                data = self._sock.recv(1024)
+                try:
+                    data = self._sock.recv(1024)
+                except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError, OSError):
+                    break
                 if not data:
                     break
                 buffer += data.decode("utf-8", errors="ignore")
