@@ -20,7 +20,7 @@ MAIN_TEMPLATE = dedent(
 
 
     def main():
-        s.get_screen(config.WINDOW_SIZE, "My SpritePro Game")
+        s.get_screen(config.WINDOW_SIZE, config.TITLE)
         s.enable_debug(True)
         s.set_debug_hud_enabled(show_camera=False)
         s.set_debug_camera_input(3)
@@ -28,7 +28,7 @@ MAIN_TEMPLATE = dedent(
         s.set_scene(MainScene())
 
         while True:
-            s.update(config.FPS, fill_color=(20, 20, 30))
+            s.update(config.FPS, fill_color=config.FILL_COLOR)
 
 
     if __name__ == "__main__":
@@ -91,6 +91,8 @@ MAIN_SCENE_TEMPLATE = dedent(
 CONFIG_TEMPLATE = dedent(
     """\
     WINDOW_SIZE = (800, 600)
+    TITLE = "My SpritePro Game"
+    FILL_COLOR = (20, 20, 30)
     FPS = 60
     """
 )
@@ -191,12 +193,59 @@ def main() -> None:
         action="store_true",
         help="Launch the Sprite Editor",
     )
+    parser.add_argument(
+        "--webgl",
+        metavar="PATH",
+        nargs="?",
+        const=".",
+        help="Prepare web build (Pygbag): --webgl [path to project dir or main.py]",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        metavar="DIR",
+        default=None,
+        help="Output directory for --webgl (default: <project>/web_build)",
+    )
+    parser.add_argument(
+        "--archive",
+        action="store_true",
+        help="With --webgl: also run pygbag --build --archive and show path to ZIP (for Yandex Games, itch.io)",
+    )
     args = parser.parse_args()
 
     if args.editor:
         import spritePro as s
 
         s.editor.launch_editor()
+        return
+
+    if args.webgl is not None:
+        from spritePro.web_build import build_web, build_web_archive
+
+        path = Path(args.webgl).resolve()
+        if path.is_file() and path.suffix == ".py":
+            project_dir = path.parent
+        else:
+            project_dir = path
+        if not project_dir.is_dir():
+            sys.stderr.write(f"Ошибка: папка не найдена: {project_dir}\n")
+            sys.exit(1)
+        out = Path(args.output).resolve() if args.output else None
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
+        if args.archive:
+            try:
+                zip_path = build_web_archive(project_dir, output_dir=out)
+                build_dir = out or (project_dir / "web_build")
+                logging.info("Готово. Папка сборки: %s", build_dir)
+                logging.info("Архив для загрузки (Яндекс Игры, itch.io): %s", zip_path)
+            except (FileNotFoundError, RuntimeError) as e:
+                sys.stderr.write(f"Ошибка сборки архива: {e}\n")
+                sys.exit(1)
+        else:
+            result = build_web(project_dir, output_dir=out)
+            logging.info("Готово: %s", result)
+            logging.info("Запуск: python -m pygbag %s", result)
         return
 
     if not args.create:

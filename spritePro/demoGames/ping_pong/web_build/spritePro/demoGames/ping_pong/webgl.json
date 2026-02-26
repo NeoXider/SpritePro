@@ -1,0 +1,6 @@
+{
+  "scene_import": "from scene import PingPongScene",
+  "scene_var": "PingPongScene",
+  "py_files": ["scene.py", "objects.py", "config.py"],
+  "extra_setup": ""
+}

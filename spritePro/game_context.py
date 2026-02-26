@@ -12,6 +12,7 @@ from .input import InputState
 from .event_bus import EventBus, GlobalEvents
 from .resources import resource_cache
 from .scenes import SceneManager
+from .plugins import get_plugin_manager
 
 
 DEFAULT_CAMERA_KEYS = {
@@ -196,6 +197,11 @@ class GameContext:
 
         self.WH = Vector2(size)
         self.WH_C = Vector2(self.screen_rect.center)
+        get_plugin_manager().emit("game_init")
+        pm = get_plugin_manager()
+        enabled_plugins = [n for n in pm.list_plugins() if pm.get_plugin(n) and pm.get_plugin(n).enabled]
+        if enabled_plugins:
+            self.game.debug_log_info(f"Плагины: {', '.join(enabled_plugins)}")
         if not self._startup_log_done:
             self._startup_log_done = True
             self.game.debug_log_custom(
@@ -292,6 +298,7 @@ class GameContext:
         for obj in update_objects:
             self.game.register_update_object(obj)
 
+        get_plugin_manager().emit("game_update", dt=self.dt)
         self.scene_manager.update(self.dt)
         self.game.update(self.screen, dt=self.dt, wh_c=self.WH_C)
         self.game.draw(self.screen)
@@ -308,7 +315,8 @@ class GameContext:
 
         if self._quit_requested:
             import sys
-            sys.exit(0)
+            if sys.platform != "emscripten":
+                sys.exit(0)
 
     def quit_requested(self) -> bool:
         """Возвращает True, если было событие выхода (закрытие окна)."""
@@ -317,6 +325,7 @@ class GameContext:
     def register_sprite(self, sprite: pygame.sprite.Sprite) -> None:
         """Регистрирует спрайт в игровом контексте."""
         self.game.register_sprite(sprite)
+        get_plugin_manager().emit("sprite_created", sprite=sprite)
 
     def unregister_sprite(self, sprite: pygame.sprite.Sprite) -> None:
         """Удаляет спрайт из игрового контекста."""

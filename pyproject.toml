@@ -4,12 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spritepro"
-version = "2.0.8"
+version = "2.0.9"
 authors = [
   { name="NeoXider", email="neoxider@gmail.com" },
 ]
 description = "A high-level 2D game framework for Python, built on Pygame, designed to simplify and speed up game development."
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.7"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -22,12 +23,17 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Games/Entertainment",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
     "pygame>=2.0.0",
 ]
+
+[project.optional-dependencies]
+web = ["pygbag>=0.9.0"]
 
 [project.urls]
 Homepage = "https://github.com/NeoXider/SpritePro"

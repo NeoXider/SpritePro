@@ -1,0 +1,226 @@
+{
+    "version": "1.0",
+    "name": "SceneA",
+    "camera": {
+        "scene_x": 0.0,
+        "scene_y": 0.0,
+        "scene_zoom": 1.0,
+        "game_x": 0.0,
+        "game_y": 0.0,
+        "game_zoom": 1.0
+    },
+    "objects": [
+        {
+            "id": "50139a78",
+            "name": "anim_sprite",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                255,
+                255,
+                255
+            ],
+            "transform": {
+                "x": 650.0,
+                "y": 300.0,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 0,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 40,
+                "height": 40
+            }
+        },
+        {
+            "id": "1c0ae387",
+            "name": "mover",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                160,
+                210,
+                255
+            ],
+            "transform": {
+                "x": 150.0,
+                "y": 300.0,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 0,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 60,
+                "height": 60
+            }
+        },
+        {
+            "id": "30412828",
+            "name": "toggle_obj",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                255,
+                165,
+                255
+            ],
+            "transform": {
+                "x": 650.0,
+                "y": 120.0,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 0,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 100,
+                "height": 40
+            }
+        },
+        {
+            "id": "393d16cf",
+            "name": "button",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                210,
+                210,
+                210
+            ],
+            "transform": {
+                "x": 140.0,
+                "y": 120.0,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 1000,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 170,
+                "height": 50
+            }
+        },
+        {
+            "id": "f19e0e16",
+            "name": "hint",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                200,
+                200,
+                200
+            ],
+            "transform": {
+                "x": 400.0,
+                "y": 540.0,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 1000,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 525,
+                "height": 16
+            }
+        },
+        {
+            "id": "911fa758",
+            "name": "label",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                255,
+                255,
+                255
+            ],
+            "transform": {
+                "x": 400.0,
+                "y": 300.0,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 1000,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 232,
+                "height": 22
+            }
+        },
+        {
+            "id": "7927be28",
+            "name": "timer_label",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                220,
+                220,
+                220
+            ],
+            "transform": {
+                "x": 165.0,
+                "y": 246.0,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 1000,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 51,
+                "height": 13
+            }
+        },
+        {
+            "id": "e617d2ed",
+            "name": "toggle",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                80,
+                180,
+                120
+            ],
+            "transform": {
+                "x": 140.0,
+                "y": 180.0,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 1000,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "custom_data": {
+                "width": 170,
+                "height": 50
+            }
+        }
+    ],
+    "grid_size": 10,
+    "grid_visible": true,
+    "grid_labels_visible": true,
+    "snap_to_grid": true
+}
