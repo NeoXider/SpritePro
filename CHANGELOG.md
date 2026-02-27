@@ -65,10 +65,25 @@
 
 ---
 
+## [2.1.0] — 2025-02-27
+
+### Added
+- **Физика: подсказки и докстринги для `s.physics`** — у прокси глобального мира явно объявлены методы `add`, `add_static`, `add_kinematic`, `remove`, `set_gravity`, `set_bounds`, `add_constraint`, `remove_constraint` с типами и докстрингами для IDE.
+- **Физика: авто-добавление тел в мир** — у `add_physics`, `add_static_physics`, `add_kinematic_physics` параметр `auto_add=True` по умолчанию: тело сразу попадает в глобальный мир, вызывать `s.physics.add(body)` вручную не нужно. Для ручного контроля можно передать `auto_add=False`.
+- **Редактор сцен: физика из сцены** — при загрузке сцены через `spawn_scene()` объекты с выставленным в редакторе типом физики (Static / Kinematic / Dynamic) автоматически получают тело и добавляются в глобальный мир `s.physics`; отдельный мир для сцены больше не создаётся.
+- **Builder: типизированный возврат `build()`** — `s.sprite(path).build()` возвращает `Sprite` (явная типизация в коде и публичном API для корректных подсказок в IDE).
+
+### Changed
+- **Физика** — демо `physics_demo`, `hoop_bounce_demo`, ping_pong переведены на `auto_add=True` и импорт `import spritePro as s`; ручные вызовы `s.physics.add(...)` убраны. Остальные демо (visibility_culling, hot_reload, frame_tween, builder, particle_pool) и их копии в web_build переведены на `s`; в web_build синхронизированы physics_demo, hoop_bounce_demo, object_pool_demo и ping_pong (убраны лишние `physics.add`).
+- **Документация** — [docs/physics.md](docs/physics.md): добавление тел через `s.add_physics`, `s.PhysicsConfig` и т.д., запуск демо из корня репозитория. [docs/sprite.md](docs/sprite.md): раздел «Столкновения по маске» (ensure_mask, collide_mask, collides_with). [docs/builder.md](docs/builder.md): ссылка на проверку столкновений по маске. [docs/OVERVIEW.md](docs/OVERVIEW.md), [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md): физика через `s.`, Sprite mask collision.
+
+---
+
 ## [Unreleased]
 
 ### Added
-- **Физика: глобальный мир** — один мир создаётся с игрой и доступен через `sp.physics` или `sp.get_physics_world()`. Гравитация: `sp.physics.set_gravity(980)`. Ограничения с методом `update(dt)`: `sp.physics.add_constraint(constraint)` — мир сам вызывает их после шага физики. Создавать `PhysicsWorld` и вызывать `register_update_object(world)` не нужно.
+- **Sprite: столкновения по маске** — методы `ensure_mask()`, `collide_mask(other)`, `collides_with(other, use_mask=True)` для пиксельно-точных столкновений при включённом `update_mask` (в Builder: `.mask(True)`). Документация: [docs/sprite.md](docs/sprite.md#столкновения-по-маске-пиксельная-точность).
+- **Физика: глобальный мир** — один мир создаётся с игрой и доступен через `s.physics` или `s.get_physics_world()`. Гравитация: `s.physics.set_gravity(980)`. Ограничения с методом `update(dt)`: `s.physics.add_constraint(constraint)` — мир сам вызывает их после шага физики. Создавать `PhysicsWorld` и вызывать `register_update_object(world)` не нужно.
 - **Ping Pong (демо)** — мяч на физическом движке (динамическое тело), ракетки и стены — статика. При ударе о ракетку задаётся направление по месту касания (offset по вертикали), константа `PADDLE_AIM_STRENGTH`. Подача с минимальной вертикальной составляющей (мяч не летит строго по прямой).
 - **EventSignal и мультиплеер** — у объекта из `s.events.get_event(name)` метод `send(route="all", net=ctx, **payload)` рассылает событие локально и в сеть (как `s.events.send(...)`). Удобно хранить ссылку на событие: `start_game = s.events.get_event("start_game"); start_game.send(route="all", net=ctx)`.
 - **CLI `--create` (архитектура шаблона):** новый проект теперь включает `scenes/level.json` (уровень редактора) и сцену, которая загружает его через `spawn_scene(...)`. Игрок берётся по имени `player` из JSON (`rt.exact("player").Sprite(speed=5)`), при отсутствии/ошибке JSON включается безопасный fallback без падения.
@@ -79,7 +94,7 @@
 - **Редактор: подписи координат на сетке** — переключатель «Labels ON/OFF» в статусбаре и в Settings → Scene (Grid Labels). Подписи используют ту же зум-адаптивную логику, что и в игре.
 
 ### Changed
-- **Физика** — демо `physics_demo`, `hoop_bounce_demo` переведены на глобальный мир `sp.physics` (без своего `PhysicsWorld` и без `register_update_object`). Документация [docs/physics.md](docs/physics.md): раздел «Глобальный мир физики», `set_gravity`, `add_constraint`/`remove_constraint`, примеры без создания мира.
+- **Физика** — демо `physics_demo`, `hoop_bounce_demo` переведены на глобальный мир `s.physics` (без своего `PhysicsWorld` и без `register_update_object`). Документация [docs/physics.md](docs/physics.md): раздел «Глобальный мир физики», `set_gravity`, `add_constraint`/`remove_constraint`, примеры без создания мира.
 - **Hoop Bounce (демо)** — обруч рисуется одним кольцом (заливка внешнего круга + вырез внутреннего), без двойного контура от `pygame.draw.circle(..., width=...)`.
 - **Редактор:** позиция объекта в JSON и в viewport — **центр** спрайта (transform.x, transform.y). Экспорт из runtime записывает rect.center.
 - **Sprite (примитивы):** при `set_rect_shape`/`set_circle_shape`/`set_ellipse_shape` сохраняются цвет и флаг `_shape_fill_color`, чтобы цвет не терялся при перезапуске сцены и не применялся двойной тинт.

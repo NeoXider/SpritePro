@@ -1,12 +1,12 @@
 """Demo: пул партиклов — ParticleEmitter с use_pool=True."""
 import pygame
-import spritePro as sp
+import spritePro as s
 from spritePro.particles import ParticleEmitter, ParticleConfig
 
 
 def run_demo():
-    sp.get_screen((800, 600), "Particle Pool Demo")
-    sp.enable_debug()
+    s.get_screen((800, 600), "Particle Pool Demo")
+    s.enable_debug()
 
     cfg = ParticleConfig(
         amount=40,
@@ -20,23 +20,19 @@ def run_demo():
     )
     emitter = ParticleEmitter(cfg, use_pool=True, auto_emit=True)
 
-    pool_text = sp.TextSprite("Pool: 0", color=(255, 255, 100), pos=(20, 30))
+    pool_text = s.TextSprite("Pool: 0", color=(255, 255, 100), pos=(20, 30))
     pool_text.set_position((20, 30), anchor="topleft")
-    hint_text = sp.TextSprite("SPACE: burst at cursor", color=(200, 200, 200), pos=(20, 55))
+    hint_text = s.TextSprite("SPACE: burst at cursor", color=(200, 200, 200), pos=(20, 55))
     hint_text.set_position((20, 55), anchor="topleft")
 
-    sp.debug_log_info("Particle Pool Demo — particles are reused from pool")
+    s.debug_log_info("Particle Pool Demo — particles are reused from pool")
 
     while True:
-        sp.update(fill_color=(20, 20, 35))
-        for event in sp.pygame_events:
-            if event.type == pygame.QUIT:
-                return
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return
-                if event.key == pygame.K_SPACE:
-                    emitter.emit(sp.input.mouse_pos)
+        s.update(fill_color=(20, 20, 35))
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            return
+        if s.input.was_pressed(pygame.K_SPACE):
+            emitter.emit(s.input.mouse_pos)
 
         pool_text.set_text(f"Pool size: {emitter.pool_size} (max {emitter.max_pool_size})")
 

@@ -59,20 +59,20 @@ from spritePro.layout import (
 
 Модуль **spritePro.physics**: мир тел (PhysicsWorld), динамические/статические/кинематические тела, гравитация, трение, отскок, коллизии AABB.
 
-- **add_physics**, **add_static_physics**, **add_kinematic_physics** — создание тел.
+- **s.physics** — прокси к глобальному миру. **s.add_physics**, **s.add_static_physics**, **s.add_kinematic_physics**, **s.PhysicsConfig** — создание тел через главный модуль; по умолчанию тело автоматически добавляется в мир (`auto_add=True`). Использование через `s.` гарантирует работу с тем же миром, что обновляется в `s.update()`.
 - **PhysicsConfig** — mass, gravity, friction, bounce.
 - **on_collision** — колбэк при столкновении.
-- **world.set_bounds(rect)** — границы экрана с отскоком.
+- **s.physics.set_bounds(rect)** — границы экрана с отскоком. При загрузке сцены через `spawn_scene` типы физики из редактора применяются к глобальному миру.
 
-Демо: `physics_demo.py`, `hoop_bounce_demo.py`, `ping_pong.py`. Подробнее: [physics.md](physics.md).
+Демо: `physics_demo.py`, `hoop_bounce_demo.py`, `ping_pong`. Подробнее: [physics.md](physics.md).
 
 ---
 
 ## Builder (Fluent API)
 
-**sp.sprite(path)** и **sp.particles()** — цепочки вызовов для создания спрайтов и эмиттеров частиц.
+**s.sprite(path)** и **s.particles()** — цепочки вызовов для создания спрайтов и эмиттеров частиц.
 
-- Спрайт: `.position()`, `.scale()`, `.color()`, `.crop()`, `.border_radius()`, `.mask()`, `.build()`.
+- Спрайт: `.position()`, `.scale()`, `.color()`, `.crop()`, `.border_radius()`, `.mask()`, `.build()` — **build()** возвращает типизированный **Sprite**.
 - Частицы: `.amount()`, `.lifetime()`, `.speed()`, `.gravity()`, `.position()`, `.auto_emit()`, `.build()`.
 
 Демо: `builder_demo.py`. Подробнее: [builder.md](builder.md).
@@ -138,7 +138,7 @@ def main(net, role):
 
 ### Спрайты и UI
 
-- **Sprite** — базовый спрайт (позиция, физика, столкновения)
+- **Sprite** — базовый спрайт (позиция, физика, столкновения по rect и по маске: `collides_with`, `collide_mask`)
 - **Button**, **ToggleButton**
 - **TextSprite** — текст с якорями
 - **Bar** — полосы прогресса (HP, опыт)

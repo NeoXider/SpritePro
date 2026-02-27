@@ -30,57 +30,53 @@
 
 ## Глобальный мир физики
 
-Физика в SpritePro **всегда включена**. Один мир создаётся вместе с игрой и автоматически обновляется каждый кадр. Создавать `PhysicsWorld` или вызывать `sp.register_update_object(world)` не нужно.
+Физика в SpritePro **всегда включена**. Один мир создаётся вместе с игрой и автоматически обновляется каждый кадр. Создавать `PhysicsWorld` или вызывать `s.register_update_object(world)` не нужно.
 
 Доступ к миру:
-- **`sp.physics`** — прокси к глобальному миру (рекомендуется): `sp.physics.set_gravity(980)`, `sp.physics.add(body)`.
-- **`sp.get_physics_world()`** — возвращает тот же экземпляр `PhysicsWorld`.
+- **`s.physics`** — прокси к глобальному миру (рекомендуется): `s.physics.set_gravity(980)`, `s.physics.add(body)`. У прокси есть подсказки типов и докстринги для всех методов.
+- **`s.get_physics_world()`** — возвращает тот же экземпляр `PhysicsWorld`.
 
-Гравитацию можно менять в любой момент: `sp.physics.set_gravity(400)`.
+Гравитацию можно менять в любой момент: `s.physics.set_gravity(400)`.
 
 ---
 
 ## Добавление тел в мир
 
-Тело создаётся через хелперы `add_physics`, `add_static_physics`, `add_kinematic_physics` и добавляется в глобальный мир через `sp.physics`.
+Тело создаётся через **`s.add_physics`**, **`s.add_static_physics`**, **`s.add_kinematic_physics`** и **`s.PhysicsConfig`**. По умолчанию тело автоматически добавляется в глобальный мир (`auto_add=True`), поэтому вызывать `s.physics.add(body)` вручную не нужно. Если нужен ручной контроль (например, свой экземпляр мира), передайте `auto_add=False`. Использование API через `s.` гарантирует регистрацию в том же мире, который обновляется в `s.update()`.
 
 ```python
-import spritePro as sp
-from spritePro.physics import (
-    PhysicsConfig,
-    add_physics,
-    add_static_physics,
-    add_kinematic_physics,
-)
+import spritePro as s
 
-sp.get_screen((800, 600), "Physics Demo")
-# Гравитация по умолчанию 980; при необходимости: sp.physics.set_gravity(400)
+s.get_screen((800, 600), "Physics Demo")
+# Гравитация по умолчанию 980; при необходимости: s.physics.set_gravity(400)
 
-# Динамическое тело (игрок, мяч)
-player = sp.Sprite("player.png", pos=(100, 100), size=(40, 40))
-player_body = add_physics(player, PhysicsConfig(mass=1.0, bounce=0.5, friction=0.95))
-sp.physics.add(player_body)
+# Динамическое тело (игрок, мяч) — автоматически в мире
+player = s.Sprite("player.png", pos=(100, 100), size=(40, 40))
+player_body = s.add_physics(player, s.PhysicsConfig(mass=1.0, bounce=0.5, friction=0.95))
 
 # Статика (пол, стены)
-floor = sp.Sprite("", pos=(400, 570), size=(800, 40))
+floor = s.Sprite("", pos=(400, 570), size=(800, 40))
 floor.set_rect_shape(size=(800, 40), color=(80, 80, 80))
-sp.physics.add(add_static_physics(floor))
+s.add_static_physics(floor)
 
 # Кинематика (движущаяся платформа)
-platform = sp.Sprite("", pos=(300, 400), size=(120, 20))
+platform = s.Sprite("", pos=(300, 400), size=(120, 20))
 platform.set_rect_shape(size=(120, 20), color=(255, 200, 0))
-plat_body = add_kinematic_physics(platform)
+plat_body = s.add_kinematic_physics(platform)
 plat_body.velocity.x = 150
-sp.physics.add_kinematic(plat_body)
 ```
 
-В игровом цикле достаточно вызывать `sp.update(...)` — обновление мира и разрешение коллизий происходят автоматически. Для кинематических тел можно вручную менять `body.velocity` (например, разворачивать у границ экрана).
+В игровом цикле достаточно вызывать `s.update(...)` — обновление мира и разрешение коллизий происходят автоматически. Для кинематических тел можно вручную менять `body.velocity` (например, разворачивать у границ экрана).
+
+### Редактор сцен и физика
+
+При загрузке сцены через `spawn_scene("level.json", scene=...)` объекты, у которых в редакторе выставлен тип физики (Static / Kinematic / Dynamic), автоматически получают соответствующее тело и добавляются в **глобальный** мир `s.physics`. Отдельно создавать мир или вызывать `s.physics.add()` для таких объектов не нужно.
 
 ---
 
 ## PhysicsWorld (глобальный мир)
 
-Единственный мир физики создаётся при инициализации игры и доступен через `sp.physics` или `sp.get_physics_world()`. Регистрировать его в update не нужно.
+Единственный мир физики создаётся при инициализации игры и доступен через `s.physics` или `s.get_physics_world()`. Регистрировать его в update не нужно.
 
 ### Гравитация
 
@@ -113,7 +109,7 @@ sp.physics.add_kinematic(plat_body)
 | `mass` | Масса тела (влияет на импульсы и обмен скоростями при столкновениях). | 1.0 |
 | `gravity` | Гравитация, применяемая к этому телу (обычно переопределяется миром). | 980.0 |
 | `friction` | Множитель скорости каждый кадр (0–1). Чем ближе к 1, тем меньше трение. | 0.98 |
-| `bounce` | Коэффициент отскока (0–1). 1 — идеально упругий отскок. | 0.5 |
+| `bounce` | Коэффициент отскока (>= 0). 1 — упругий отскок, > 1 — усиление скорости при отскоке. | 0.5 |
 | `body_type` | BodyType.DYNAMIC / STATIC / KINEMATIC. | DYNAMIC |
 
 ---
@@ -153,34 +149,34 @@ sp.physics.add_kinematic(plat_body)
 Пример: смена цвета мяча при ударе о стену.
 
 ```python
-ball_body = add_physics(ball, PhysicsConfig(mass=0.5, bounce=0.8))
+ball_body = s.add_physics(ball, s.PhysicsConfig(mass=0.5, bounce=0.8))
 ball_body.on_collision = lambda other: ball.set_circle_shape(radius=15, color=(255, 100, 255))
-sp.physics.add(ball_body)
 ```
 
 ---
 
 ## Границы мира (set_bounds)
 
-Если заданы границы через `sp.physics.set_bounds(pygame.Rect(x, y, w, h))`, то при выходе динамического тела за пределы прямоугольника его позиция корректируется, а скорость по соответствующей оси отражается с учётом `bounce`. Это удобно для «аркадного» экрана без явных стен.
+Если заданы границы через `s.physics.set_bounds(pygame.Rect(x, y, w, h))`, то при выходе динамического тела за пределы прямоугольника его позиция корректируется, а скорость по соответствующей оси отражается с учётом `bounce`. Это удобно для «аркадного» экрана без явных стен.
 
 ```python
-sp.physics.set_bounds(pygame.Rect(0, 0, 800, 600))
+s.physics.set_bounds(pygame.Rect(0, 0, 800, 600))
 ```
 
 ---
 
 ## Демо и примеры
 
-- **physics_demo.py** — полный пример: игрок (WASD, прыжок), мячи, платформы статические и кинематические, стены и потолок. Использует глобальный мир `sp.physics`, без создания и регистрации мира.
-- **hoop_bounce_demo.py** — шарик внутри круглого обруча: отскок от внутренней границы круга без потери энергии, смена цвета при отскоке. Гравитация задаётся через `sp.physics.set_gravity(400)`; ограничение `HoopConstraint` добавляется через `sp.physics.add_constraint(constraint)` — мир сам вызывает его `update(dt)` после шага физики.
-- **ping_pong.py** — игра с ракетками и мячом, физика и коллизии.
+- **physics_demo.py** — полный пример: игрок (WASD, прыжок), мячи, платформы статические и кинематические, стены и потолок. Использует глобальный мир `s.physics`, тела добавляются через `s.add_physics` / `s.add_static_physics` / `s.add_kinematic_physics` с `auto_add=True` (по умолчанию).
+- **hoop_bounce_demo.py** — шарик внутри круглого обруча: отскок от внутренней границы круга без потери энергии, смена цвета при отскоке. Гравитация задаётся через `s.physics.set_gravity(400)`; ограничение `HoopConstraint` добавляется через `s.physics.add_constraint(constraint)` — мир сам вызывает его `update(dt)` после шага физики.
+- **ping_pong** — игра с ракетками и мячом (сцена и объекты используют `s.add_physics`, `s.add_static_physics`, `s.PhysicsConfig`).
 
-Запуск:
+Запуск (из корня репозитория, чтобы использовался локальный пакет):
 
 ```bash
 python -m spritePro.demoGames.physics_demo
 python -m spritePro.demoGames.hoop_bounce_demo
+python -m spritePro.demoGames.ping_pong.main
 ```
 
 ---

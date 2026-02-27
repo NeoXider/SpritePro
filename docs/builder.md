@@ -17,21 +17,22 @@
 
 ## SpriteBuilder
 
-Создаётся через `sp.sprite(path)` (или `sp.sprite("")` для спрайта без текстуры). Все методы, кроме `build()`, возвращают `self` — можно вызывать цепочкой.
+Создаётся через `s.sprite(path)` (или `s.sprite("")` для спрайта без текстуры). Все методы, кроме `build()`, возвращают `self` — можно вызывать цепочкой. **`build()`** создаёт и возвращает экземпляр **`Sprite`** (тип явно задан — в IDE есть подсказки).
 
 ### Минимальный пример
 
 ```python
-import spritePro as sp
+import spritePro as s
 
 sprite = (
-    sp.sprite("player.png")
+    s.sprite("player.png")
     .position(100, 200)
     .scale(1.5)
     .color(255, 0, 0)
     .sorting_order(10)
     .build()
 )
+# sprite имеет тип Sprite
 ```
 
 ### Порядок применения при `build()`
@@ -48,7 +49,7 @@ sprite = (
 
 | Метод | Описание |
 |-------|----------|
-| `image(path)` | Путь к изображению (переопределяет путь, переданный в `sp.sprite(path)`). |
+| `image(path)` | Путь к изображению (переопределяет путь, переданный в `s.sprite(path)`). |
 | `size(w, h)` | Размер спрайта в пикселях. По умолчанию (50, 50). |
 | `position(x, y)` | Позиция в мире (по умолчанию (0, 0)). |
 | `speed(speed)` | Начальная скорость (число). |
@@ -70,7 +71,7 @@ sprite = (
 | `screen_space(enabled=True)` | Режим экранного пространства (не двигается с камерой). |
 | `state(state)` | Начальное состояние (строка). |
 | `states(iterable)` | Множество доступных состояний. |
-| `build()` | Создаёт и возвращает экземпляр `Sprite`. |
+| `build()` | Создаёт и возвращает экземпляр `Sprite` (типизированный возврат для IDE). |
 
 ---
 
@@ -82,7 +83,7 @@ sprite = (
 
 ```python
 enemy = (
-    sp.sprite("enemy.png")
+    s.sprite("enemy.png")
     .position(400, 300)
     .crop(0, 0, 48, 48)
     .build()
@@ -95,7 +96,7 @@ enemy = (
 
 ```python
 card = (
-    sp.sprite("card.png")
+    s.sprite("card.png")
     .position(200, 200)
     .border_radius(16)
     .build()
@@ -104,15 +105,18 @@ card = (
 
 ### mask
 
-Включает у спрайта обновление коллизионной маски (`update_mask = True`) по альфа-каналу изображения. Полезно для точных столкновений по форме спрайта.
+Включает у спрайта обновление коллизионной маски (`update_mask = True`) по альфа-каналу изображения. После `build()` можно использовать проверку столкновений по маске: `sprite.collides_with(other)`, `sprite.collide_mask(other)` — см. [Sprite: столкновения по маске](sprite.md#столкновения-по-маске-пиксельная-точность).
 
 ```python
 sprite = (
-    sp.sprite("character.png")
+    s.sprite("character.png")
     .position(100, 100)
     .mask(True)
     .build()
 )
+# Проверка столкновения с другим спрайтом по форме (не только по rect)
+if sprite.collides_with(enemy):
+    ...
 ```
 
 ### Совместное использование
@@ -121,7 +125,7 @@ sprite = (
 
 ```python
 enemy = (
-    sp.sprite("examples/images/enemy.png")
+    s.sprite("examples/images/enemy.png")
     .position(400, 300)
     .scale(1.5)
     .color(255, 100, 100)
@@ -136,13 +140,15 @@ enemy = (
 
 ## ParticleBuilder
 
-Создаётся через `sp.particles()` (опционально можно передать готовый `ParticleConfig`). Настраивает эмиттер частиц.
+Создаётся через `s.particles()` (опционально можно передать готовый `ParticleConfig`). Настраивает эмиттер частиц.
+
+**По умолчанию** эмиттер автоматически регистрируется в игровом цикле (`auto_register=True`), вызывать `s.register_update_object(emitter)` после `build()` не нужно. Если объект создаётся для сцены (через `.scene(some_scene)` в будущем или ручное добавление в сцену), можно задать `.auto_register(False)` — тогда обновление/регистрацию управляет сцена.
 
 ### Пример
 
 ```python
 emitter = (
-    sp.particles()
+    s.particles()
     .amount(50)
     .lifetime(1.0)
     .speed(100, 300)
@@ -154,7 +160,7 @@ emitter = (
     .auto_emit(True)
     .build()
 )
-sp.register_update_object(emitter)
+# эмиттер уже в update; s.register_update_object(emitter) не нужен
 ```
 
 ---
@@ -191,9 +197,9 @@ sp.register_update_object(emitter)
 ### Только частицы
 
 ```python
-sp.get_screen((800, 600), "Particles")
+s.get_screen((800, 600), "Particles")
 emitter = (
-    sp.particles()
+    s.particles()
     .amount(30)
     .lifetime_range(0.8, 1.5)
     .speed(80, 200)
@@ -204,7 +210,7 @@ emitter = (
     .auto_emit(True)
     .build()
 )
-sp.register_update_object(emitter)
+# по умолчанию эмиттер уже зарегистрирован в s.update()
 ```
 
 ### Запуск демо Builder

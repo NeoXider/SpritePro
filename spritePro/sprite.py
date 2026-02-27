@@ -1833,6 +1833,67 @@ class Sprite(pygame.sprite.Sprite):
                 if hasattr(self, "collide"):
                     collider_rect.center = self.rect.center
 
+    def ensure_mask(self) -> "Sprite":
+        """Строит маску из текущего изображения, если включено update_mask и маска устарела.
+
+        Вызывать перед проверкой столкновений по маске, если спрайт не обновлялся через update().
+
+        Returns:
+            Sprite: self для цепочек вызовов.
+        """
+        if self._mask_dirty and (self.update_mask or self.mask is None):
+            self.mask = pygame.mask.from_surface(self.image)
+            self._mask_dirty = False
+        return self
+
+    def collide_mask(
+        self, other: pygame.sprite.Sprite
+    ) -> Optional[Tuple[int, int]]:
+        """Проверяет столкновение по пиксельным маскам с другим спрайтом.
+
+        Оба спрайта должны иметь атрибуты rect и mask (маска строится из image
+        при update_mask=True и после update() или после ensure_mask()).
+
+        Args:
+            other: Другой спрайт с rect и опционально mask.
+
+        Returns:
+            Optional[Tuple[int, int]]: Координаты (x, y) первого пересечения в локальных
+            координатах маски self, либо None при отсутствии пересечения или отсутствии масок.
+        """
+        self.ensure_mask()
+        if self.mask is None:
+            return None
+        other_mask = getattr(other, "mask", None)
+        if other_mask is None:
+            if hasattr(other, "image"):
+                other_mask = pygame.mask.from_surface(other.image)
+            else:
+                return None
+        offset = (other.rect.left - self.rect.left, other.rect.top - self.rect.top)
+        return self.mask.overlap(other_mask, offset)
+
+    def collides_with(
+        self, other: pygame.sprite.Sprite, use_mask: bool = True
+    ) -> bool:
+        """Проверяет столкновение с другим спрайтом (rect; при use_mask — по маскам).
+
+        Сначала проверяется пересечение rect. Если use_mask=True и у обоих спрайтов
+        есть маски, дополнительно проверяется пересечение масок.
+
+        Args:
+            other: Другой спрайт (должен иметь rect).
+            use_mask: Учитывать маски при наличии у обоих спрайтов.
+
+        Returns:
+            bool: True при столкновении.
+        """
+        if not hasattr(other, "rect") or not self.rect.colliderect(other.rect):
+            return False
+        if not use_mask:
+            return True
+        return self.collide_mask(other) is not None
+
     def set_collision_targets(self, obstacles: list) -> "Sprite":
         """Устанавливает или перезаписывает список спрайтов для коллизий.
 

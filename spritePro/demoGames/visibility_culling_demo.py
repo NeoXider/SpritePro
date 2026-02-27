@@ -5,7 +5,7 @@
 Двигайте камеру WASD — числа меняются. Спрайты не исчезают, они всегда в области и периодически заходят в кадр.
 """
 import pygame
-import spritePro as sp
+import spritePro as s
 
 WORLD_LEFT = -80
 WORLD_RIGHT = 880
@@ -14,10 +14,10 @@ WORLD_BOTTOM = 680
 
 
 def run_demo():
-    sp.init()
-    sp.get_screen((800, 600), "Visibility Culling Demo")
-    sp.enable_debug()
-    sp.debug_log_info("Visibility Culling: WASD — камера, спрайты отскакивают в области")
+    s.init()
+    s.get_screen((800, 600), "Visibility Culling Demo")
+    s.enable_debug()
+    s.debug_log_info("Visibility Culling: WASD — камера, спрайты отскакивают в области")
 
     sprites = []
     num_sprites = 60
@@ -25,7 +25,7 @@ def run_demo():
     for i in range(num_sprites):
         x = 100 + (i % 10) * 70
         y = 100 + (i // 10) * 80
-        sprite = sp.Sprite("", pos=(x, y), size=(36, 36))
+        sprite = s.Sprite("", pos=(x, y), size=(36, 36))
         colors = [(255, 100, 100), (100, 255, 100), (100, 100, 255), (255, 255, 100)]
         sprite.set_circle_shape(radius=18, color=colors[i % 4])
         angle_deg = i * 37
@@ -33,33 +33,30 @@ def run_demo():
         sprite.velocity = pygame.math.Vector2(v.x, v.y)
         sprites.append(sprite)
 
-    visible_text = sp.TextSprite("Visible: 0", color=(0, 255, 0), pos=(20, 30))
+    visible_text = s.TextSprite("Visible: 0", color=(0, 255, 0), pos=(20, 30))
     visible_text.set_position((20, 30), anchor="topleft")
     visible_text.set_screen_space(True)
-    offscreen_text = sp.TextSprite("Offscreen: 0", color=(255, 150, 150), pos=(20, 52))
+    offscreen_text = s.TextSprite("Offscreen: 0", color=(255, 150, 150), pos=(20, 52))
     offscreen_text.set_position((20, 52), anchor="topleft")
     offscreen_text.set_screen_space(True)
-    hint = sp.TextSprite("WASD: move camera — visible count changes", color=(200, 200, 200), pos=(20, 78))
+    hint = s.TextSprite("WASD: move camera — visible count changes", color=(200, 200, 200), pos=(20, 78))
     hint.set_position((20, 78), anchor="topleft")
     hint.set_screen_space(True)
 
     while True:
-        sp.update(fill_color=(20, 20, 35))
+        s.update(fill_color=(20, 20, 35))
 
-        for event in sp.pygame_events:
-            if event.type == pygame.QUIT:
-                return
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                return
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            return
 
-        if sp.input.is_pressed(pygame.K_a):
-            sp.move_camera(-280 * sp.dt, 0)
-        if sp.input.is_pressed(pygame.K_d):
-            sp.move_camera(280 * sp.dt, 0)
-        if sp.input.is_pressed(pygame.K_w):
-            sp.move_camera(0, -280 * sp.dt)
-        if sp.input.is_pressed(pygame.K_s):
-            sp.move_camera(0, 280 * sp.dt)
+        if s.input.is_pressed(pygame.K_a):
+            s.move_camera(-280 * s.dt, 0)
+        if s.input.is_pressed(pygame.K_d):
+            s.move_camera(280 * s.dt, 0)
+        if s.input.is_pressed(pygame.K_w):
+            s.move_camera(0, -280 * s.dt)
+        if s.input.is_pressed(pygame.K_s):
+            s.move_camera(0, 280 * s.dt)
 
         visible_count = 0
         for sprite in sprites:

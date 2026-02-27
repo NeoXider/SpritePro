@@ -133,17 +133,79 @@ from .plugins import (
     HOOKS_SCENE,
     HOOKS_INPUT
 )
-from .builder import SpriteBuilder, ParticleBuilder, sprite, particles
+from .builder import SpriteBuilder, ParticleBuilder, particles
 from .asset_watcher import AssetWatcher, HotReloadManager, get_hot_reload_manager
 from .physics import (
     PhysicsBody,
     PhysicsWorld,
     PhysicsConfig,
-    add_physics,
-    add_static_physics,
-    add_kinematic_physics,
+    add_physics as _add_physics,
+    add_static_physics as _add_static_physics,
+    add_kinematic_physics as _add_kinematic_physics,
     get_physics,
 )
+
+
+def add_physics(sprite, config=None, *, auto_add: bool = True):
+    """Добавляет физическое тело к спрайту.
+
+    Args:
+        sprite: Спрайт для физики.
+        config: Конфигурация тела (PhysicsConfig, optional).
+        auto_add: Если True, тело автоматически добавляется в глобальный мир физики.
+
+    Returns:
+        PhysicsBody: Созданное физическое тело.
+    """
+    body = _add_physics(sprite, config, auto_add=False)
+    if auto_add:
+        get_physics_world().add(body)
+    return body
+
+
+def add_static_physics(sprite, *, auto_add: bool = True):
+    """Добавляет статическое физическое тело.
+
+    Args:
+        sprite: Спрайт стены/пола.
+        auto_add: Если True, тело автоматически добавляется в глобальный мир физики.
+
+    Returns:
+        PhysicsBody: Созданное статическое тело.
+    """
+    body = _add_static_physics(sprite, auto_add=False)
+    if auto_add:
+        get_physics_world().add_static(body)
+    return body
+
+
+def add_kinematic_physics(sprite, *, auto_add: bool = True):
+    """Добавляет кинематическое физическое тело.
+
+    Args:
+        sprite: Спрайт движущейся платформы.
+        auto_add: Если True, тело автоматически добавляется в глобальный мир физики.
+
+    Returns:
+        PhysicsBody: Созданное кинематическое тело.
+    """
+    body = _add_kinematic_physics(sprite, auto_add=False)
+    if auto_add:
+        get_physics_world().add_kinematic(body)
+    return body
+
+
+def sprite(path: str = "") -> SpriteBuilder:
+    """Создаёт строитель спрайта. Цепочка: s.sprite(path).position(...).build() возвращает Sprite.
+
+    Args:
+        path: Путь к изображению. По умолчанию "" (str).
+
+    Returns:
+        SpriteBuilder: Новый строитель спрайта.
+    """
+    return SpriteBuilder(path)
+
 
 __all__ = [
     # Core sprites / UI
@@ -364,7 +426,11 @@ def _sync_globals() -> None:
 
 
 def get_context() -> GameContext:
-    """Возвращает глобальный контекст игры."""
+    """Возвращает глобальный контекст игры.
+
+    Returns:
+        GameContext: Глобальный контекст игры.
+    """
     return _context
 
 
@@ -377,15 +443,110 @@ def get_game() -> SpriteProGame:
     return _context.game
 
 
-def get_physics_world():
-    """Возвращает глобальный мир физики (создаётся с игрой, уже зарегистрирован в update)."""
+def get_physics_world() -> PhysicsWorld:
+    """Возвращает глобальный мир физики (создаётся с игрой, уже зарегистрирован в update).
+
+    Returns:
+        PhysicsWorld: Глобальный мир физики.
+    """
     return get_game().physics_world
 
 
 class _PhysicsProxy:
-    """Прокси к глобальному PhysicsWorld: sp.physics.set_gravity(980), sp.physics.add(body)."""
+    """Прокси к глобальному PhysicsWorld. Использование: s.physics.add(body), s.physics.set_gravity(980)."""
 
-    def __getattr__(self, name):
+    def _world(self) -> PhysicsWorld:
+        return get_physics_world()
+
+    def add(self, body: PhysicsBody) -> PhysicsWorld:
+        """Добавляет динамическое тело в мир (гравитация, коллизии).
+
+        Args:
+            body: Тело для добавления (PhysicsBody).
+
+        Returns:
+            PhysicsWorld: Глобальный мир физики (для цепочки вызовов).
+        """
+        return self._world().add(body)
+
+    def add_static(self, body: PhysicsBody) -> PhysicsWorld:
+        """Добавляет статическое тело (стена, пол).
+
+        Args:
+            body: Статическое тело (PhysicsBody).
+
+        Returns:
+            PhysicsWorld: Глобальный мир физики (для цепочки вызовов).
+        """
+        return self._world().add_static(body)
+
+    def add_kinematic(self, body: PhysicsBody) -> PhysicsWorld:
+        """Добавляет кинематическое тело (движущаяся платформа).
+
+        Args:
+            body: Кинематическое тело (PhysicsBody).
+
+        Returns:
+            PhysicsWorld: Глобальный мир физики (для цепочки вызовов).
+        """
+        return self._world().add_kinematic(body)
+
+    def remove(self, body: PhysicsBody) -> PhysicsWorld:
+        """Удаляет тело из мира.
+
+        Args:
+            body: Тело для удаления (PhysicsBody).
+
+        Returns:
+            PhysicsWorld: Глобальный мир физики (для цепочки вызовов).
+        """
+        return self._world().remove(body)
+
+    def set_gravity(self, gravity: float) -> PhysicsWorld:
+        """Устанавливает гравитацию мира (пиксели/с²).
+
+        Args:
+            gravity: Ускорение по оси Y (float).
+
+        Returns:
+            PhysicsWorld: Глобальный мир физики (для цепочки вызовов).
+        """
+        return self._world().set_gravity(gravity)
+
+    def set_bounds(self, rect: pygame.Rect) -> PhysicsWorld:
+        """Устанавливает границы мира для коллизий.
+
+        Args:
+            rect: Границы мира (pygame.Rect).
+
+        Returns:
+            PhysicsWorld: Глобальный мир физики (для цепочки вызовов).
+        """
+        return self._world().set_bounds(rect)
+
+    def add_constraint(self, constraint: object) -> PhysicsWorld:
+        """Добавляет ограничение (объект с методом update(dt)), вызывается после шага физики.
+
+        Args:
+            constraint: Объект с методом update(dt).
+
+        Returns:
+            PhysicsWorld: Глобальный мир физики (для цепочки вызовов).
+        """
+        return self._world().add_constraint(constraint)
+
+    def remove_constraint(self, constraint: object) -> PhysicsWorld:
+        """Удаляет ограничение из мира.
+
+        Args:
+            constraint: Ограничение для удаления.
+
+        Returns:
+            PhysicsWorld: Глобальный мир физики (для цепочки вызовов).
+        """
+        return self._world().remove_constraint(constraint)
+
+    def __getattr__(self, name: str):
         return getattr(get_physics_world(), name)
 
 
@@ -396,7 +557,7 @@ def register_sprite(sprite: pygame.sprite.Sprite) -> None:
     """Регистрирует спрайт в игровом контексте.
 
     Args:
-        sprite (pygame.sprite.Sprite): Спрайт для регистрации.
+        sprite: Спрайт для регистрации (pygame.sprite.Sprite).
     """
     _context.register_sprite(sprite)
 
@@ -405,7 +566,7 @@ def unregister_sprite(sprite: pygame.sprite.Sprite) -> None:
     """Отменяет регистрацию спрайта в игровом контексте.
 
     Args:
-        sprite (pygame.sprite.Sprite): Спрайт для отмены регистрации.
+        sprite: Спрайт для отмены регистрации (pygame.sprite.Sprite).
     """
     _context.unregister_sprite(sprite)
 
@@ -414,7 +575,7 @@ def enable_sprite(sprite: pygame.sprite.Sprite) -> None:
     """Включает спрайт (устанавливает active=True и регистрирует).
 
     Args:
-        sprite (pygame.sprite.Sprite): Спрайт для включения.
+        sprite: Спрайт для включения (pygame.sprite.Sprite).
     """
     if hasattr(sprite, "active"):
         sprite.active = True
@@ -425,7 +586,7 @@ def disable_sprite(sprite: pygame.sprite.Sprite) -> None:
     """Отключает спрайт (устанавливает active=False и отменяет регистрацию).
 
     Args:
-        sprite (pygame.sprite.Sprite): Спрайт для отключения.
+        sprite: Спрайт для отключения (pygame.sprite.Sprite).
     """
     if hasattr(sprite, "active"):
         sprite.active = False
@@ -436,8 +597,8 @@ def set_camera_position(x: float, y: float) -> None:
     """Устанавливает позицию камеры.
 
     Args:
-        x (float): Позиция по оси X.
-        y (float): Позиция по оси Y.
+        x: Позиция по оси X (float).
+        y: Позиция по оси Y (float).
     """
     _context.camera.set_position(x, y)
 
@@ -446,8 +607,8 @@ def move_camera(dx: float, dy: float) -> None:
     """Перемещает камеру на указанное смещение.
 
     Args:
-        dx (float): Смещение по оси X.
-        dy (float): Смещение по оси Y.
+        dx: Смещение по оси X (float).
+        dy: Смещение по оси Y (float).
     """
     _context.camera.move(dx, dy)
 
@@ -474,7 +635,7 @@ def set_camera_zoom(zoom: float) -> None:
     """Устанавливает зум камеры.
 
     Args:
-        zoom (float): Значение зума (от 0.1 до 5.0).
+        zoom: Значение зума от 0.1 до 5.0 (float).
     """
     _context.game.set_camera_zoom(zoom)
 
@@ -483,7 +644,7 @@ def zoom_camera(factor: float) -> None:
     """Увеличивает/уменьшает зум камеры.
 
     Args:
-        factor (float): Множитель зума (например, 1.1 для увеличения, 0.9 для уменьшения).
+        factor: Множитель зума, например 1.1 для увеличения, 0.9 для уменьшения (float).
     """
     _context.game.zoom_camera(factor)
 
@@ -495,8 +656,8 @@ def set_camera_follow(
     """Устанавливает цель для следования камеры.
 
     Args:
-        target (pygame.sprite.Sprite | None): Целевой спрайт для следования или None для отмены.
-        offset (Vector2 | tuple[float, float], optional): Смещение камеры относительно цели. По умолчанию (0.0, 0.0).
+        target: Целевой спрайт для следования или None для отмены (pygame.sprite.Sprite | None).
+        offset: Смещение камеры относительно цели. По умолчанию (0.0, 0.0) (Vector2 | tuple[float, float]).
     """
     _context.camera.follow(target, offset)
 
@@ -512,7 +673,7 @@ def register_update_object(obj) -> None:
     Объект должен иметь метод update(), который будет вызываться каждый кадр с dt.
 
     Args:
-        obj: Объект для обновления (TweenManager, Animation, Timer и т.д.).
+        obj: Объект с методом update() для обновления каждый кадр (TweenManager, Animation, Timer и т.д.).
     """
     _context.register_update_object(obj)
 
@@ -521,7 +682,7 @@ def unregister_update_object(obj) -> None:
     """Отменяет регистрацию объекта для автоматического обновления.
 
     Args:
-        obj: Объект для отмены регистрации.
+        obj: Объект, ранее переданный в register_update_object.
     """
     _context.unregister_update_object(obj)
 
@@ -530,8 +691,8 @@ def get_sprites_by_class(sprite_class: type, active_only: bool = True) -> List:
     """Получает список всех спрайтов указанного класса.
 
     Args:
-        sprite_class (type): Класс спрайтов для поиска.
-        active_only (bool, optional): Если True, возвращает только активные спрайты. По умолчанию True.
+        sprite_class: Класс спрайтов для поиска (type).
+        active_only: Если True, возвращает только активные спрайты. По умолчанию True (bool).
 
     Returns:
         List: Список спрайтов указанного класса.
@@ -556,12 +717,10 @@ def process_camera_input(
     и перетаскивание мышью.
 
     Args:
-        speed (float, optional): Скорость перемещения камеры в пикселях в секунду. По умолчанию 250.0.
-        keys (dict | None, optional): Словарь с настройками клавиш для управления камерой.
-            Ключи: "left", "right", "up", "down". Значения: кортежи кодов клавиш pygame.
-            По умолчанию None (используются стрелки).
-        mouse_drag (bool, optional): Включить ли управление камерой перетаскиванием мыши. По умолчанию True.
-        mouse_button (int, optional): Номер кнопки мыши для перетаскивания (1=левая, 2=средняя, 3=правая). По умолчанию 1.
+        speed: Скорость перемещения камеры в пикселях в секунду. По умолчанию 250.0 (float).
+        keys: Словарь с настройками клавиш ("left", "right", "up", "down"). По умолчанию None (dict | None).
+        mouse_drag: Включить управление камерой перетаскиванием мыши (bool).
+        mouse_button: Номер кнопки мыши для перетаскивания (1=левая, 2=средняя, 3=правая) (int).
 
     Returns:
         Vector2: Новая позиция камеры после обработки ввода.
@@ -577,12 +736,21 @@ def process_camera_input(
 
 
 def shake_camera(strength: tuple[float, float] = (12, 12), duration: float = 0.35) -> None:
-    """Запускает дрожание камеры с перезапуском."""
+    """Запускает дрожание камеры с перезапуском.
+
+    Args:
+        strength: Амплитуда дрожания (dx, dy). По умолчанию (12, 12) (tuple[float, float]).
+        duration: Длительность в секундах. По умолчанию 0.35 (float).
+    """
     _context.game.shake_camera(strength=strength, duration=duration)
 
 
 def enable_debug(enabled: bool = True) -> None:
-    """Включает или выключает debug overlay."""
+    """Включает или выключает debug overlay.
+
+    Args:
+        enabled: Включить overlay. По умолчанию True (bool).
+    """
     _context.game.enable_debug(enabled)
 
 

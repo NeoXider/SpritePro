@@ -146,6 +146,7 @@ sprite.set_world_position((10, 10), anchor=s.Anchor.TOP_LEFT)
 
 **Sprite** — возвращают `self`:
 - Установка: `set_position`, `set_scale`, `set_angle`, `rotate_to`, `set_alpha`, `set_color`, `set_sorting_order`, `look_at`, `set_screen_space`, `set_parent`, `set_world_position`, `set_image`, `set_size`, `set_rect_shape`, `set_circle_shape`, `set_ellipse_shape`, `set_polygon_shape`, `set_polyline`, `set_native_size`, `set_flip`, `set_active`, `set_scene`, `set_velocity`, `set_state`, `set_collision_targets`, `add_collision_target`, `add_collision_targets`, `remove_collision_target`, `remove_collision_targets`, `clear_collision_targets`, `limit_movement`.
+- Маска и столкновения: `ensure_mask`, `collide_mask(other)`, `collides_with(other, use_mask=True)`.
 - Движение и действие: `reset_sprite`, `move`, `move_towards`, `move_up`, `move_down`, `move_left`, `move_right`, `stop`, `rotate_by`, `fade_by`, `scale_by`, `handle_keyboard_input`.
 
 **TextSprite**: `set_text`, `set_color`, `set_font`. **Button**: `set_base_color`, `set_all_colors`, `set_all_scales`, `set_scale`, `set_sorting_order`, `on_click`, `on_hover`. **ToggleButton**: `set_state`, `set_colors`, `set_texts`, `toggle`. **Bar**: `set_fill_amount`, `set_fill_direction`, `set_image`, `set_fill_color` и др.
@@ -445,7 +446,35 @@ sprite.remove_collision_targets([wall2, wall3])
 sprite.clear_collision_targets()
 ```
 
-**Важно:** Столкновения разрешаются автоматически в методе `update()`, если установлены `collision_targets`
+**Важно:** Столкновения разрешаются автоматически в методе `update()`, если установлены `collision_targets`.
+
+### Столкновения по маске (пиксельная точность)
+
+Для спрайтов с непрямоугольной формой (альфа-канал) доступна проверка столкновений по маске. Сначала включите построение маски: `sprite.update_mask = True` (в Builder: `.mask(True)` перед `build()`). Маска обновляется в `update()` или по запросу через `ensure_mask()`.
+
+| Метод | Описание |
+|-------|----------|
+| `ensure_mask()` | Строит маску из текущего `image`, если `update_mask` включён и маска устарела. Вызывать перед проверками, если спрайт не проходил через `update()`. Возвращает `self`. |
+| `collide_mask(other)` | Проверяет пересечение пиксельных масок с другим спрайтом (у него должны быть `rect` и при необходимости `mask` или `image`). Возвращает координаты `(x, y)` первого пересечения в локальных координатах маски `self`, либо `None`. |
+| `collides_with(other, use_mask=True)` | Проверка столкновения: сначала по `rect`, при `use_mask=True` и наличии масок у обоих — по маскам. Возвращает `True` при столкновении. |
+
+**Пример:**
+
+```python
+# Включить маску (например, при создании через Builder)
+sprite = s.sprite("character.png").position(100, 100).mask(True).build()
+sprite.ensure_mask()  # при необходимости построить маску до первого update()
+
+# Проверка по rect + маска
+if sprite.collides_with(enemy):
+    hit_sound.play()
+
+# Точка пересечения масок (для эффектов, нормали)
+point = sprite.collide_mask(enemy)
+if point is not None:
+    # point — (x, y) в координатах маски sprite
+    spawn_spark(sprite.rect.x + point[0], sprite.rect.y + point[1])
+```
 
 **Примечание:** Для работы со звуком используйте `spritePro.audio_manager` (см. документацию по AudioManager)
 

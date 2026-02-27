@@ -4,7 +4,6 @@ from dataclasses import replace
 import pygame
 
 import spritePro as s
-from spritePro.physics import add_static_physics
 from config import WIN_SCORE, BALL_SPEED, PADDLE_AIM_STRENGTH
 from objects import Paddle, Ball
 
@@ -29,7 +28,7 @@ class PingPongScene(s.Scene):
         self._wall_bottom = s.Sprite("", (int(s.WH.x) + 20, 8), (s.WH_C.x, int(s.WH.y) + 4), scene=self)
         self._wall_bottom.set_color((0, 0, 0))
         for wall in (self._wall_top, self._wall_bottom):
-            s.physics.add(add_static_physics(wall))
+            s.add_static_physics(wall)
 
         self.left_paddle = Paddle(
             (40, s.WH_C.y), (255, 150, 150), pygame.K_w, pygame.K_s, scene=self

@@ -1,7 +1,6 @@
 import random
 
 import spritePro as s
-from spritePro.physics import add_physics, add_static_physics, PhysicsConfig
 from config import BALL_SPEED, PADDLE_SPEED
 
 
@@ -12,8 +11,7 @@ class Paddle(s.Sprite):
         self.set_image(s.utils.round_corners(self.image, 18))
         self.up_key = up_key
         self.down_key = down_key
-        self._body = add_static_physics(self)
-        s.physics.add(self._body)
+        self._body = s.add_static_physics(self)
 
     def update(self, screen=None):
         axis = s.input.get_axis(self.up_key, self.down_key)
@@ -34,9 +32,8 @@ class Ball(s.Sprite):
         self.direction = s.Vector2(1, 0)
         self.bounced = False
         self.paddles = []
-        config = PhysicsConfig(mass=1.0, gravity=0.0, bounce=1.0, friction=1.0)
-        self._body = add_physics(self, config)
-        s.physics.add(self._body)
+        config = s.PhysicsConfig(mass=1.0, gravity=0.0, bounce=1.0, friction=1.0)
+        self._body = s.add_physics(self, config)
         self._trail_config = s.template_trail()
         self._trail_emitter = s.ParticleEmitter(self._trail_config)
         self._trail_emitter.set_parent(self)

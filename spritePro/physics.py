@@ -16,6 +16,16 @@ from pygame.math import Vector2
 import spritePro
 
 
+def _get_physics_world() -> "PhysicsWorld":
+    """Возвращает глобальный мир физики (тот же, что обновляется в игровом цикле).
+
+    Returns:
+        PhysicsWorld: Глобальный мир физики игры.
+    """
+    from spritePro.game_context import get_context
+    return get_context().game.physics_world
+
+
 class BodyType(Enum):
     """Тип физического тела."""
     DYNAMIC = "dynamic"    # Полная физика (игроки, мячи)
@@ -25,7 +35,15 @@ class BodyType(Enum):
 
 @dataclass
 class PhysicsConfig:
-    """Конфигурация физики для спрайта."""
+    """Конфигурация физики для спрайта.
+
+    Attributes:
+        mass: Масса тела (float).
+        gravity: Гравитация для этого тела (float).
+        friction: Коэффициент трения 0–1 (float).
+        bounce: Коэффициент отскока (float, >= 0). 1 = упругий отскок, > 1 = усиление скорости при отскоке.
+        body_type: Тип тела: DYNAMIC, KINEMATIC, STATIC (BodyType).
+    """
     mass: float = 1.0
     gravity: float = 980.0
     friction: float = 0.98
@@ -52,8 +70,8 @@ class PhysicsBody:
         """Инициализирует физическое тело.
 
         Args:
-            sprite (pygame.sprite.Sprite): Спрайт для физики.
-            config (PhysicsConfig, optional): Конфигурация. По умолчанию создаётся новая.
+            sprite: Спрайт для физики (pygame.sprite.Sprite).
+            config: Конфигурация физики. По умолчанию создаётся новая (PhysicsConfig, optional).
         """
         self.sprite = sprite
         self.config = config or PhysicsConfig()
@@ -71,7 +89,7 @@ class PhysicsBody:
         """Прикладывает силу к телу.
 
         Args:
-            force (Vector2): Вектор силы.
+            force: Вектор силы (Vector2).
         """
         self._forces.append(force)
 
@@ -79,7 +97,7 @@ class PhysicsBody:
         """Прикладывает мгновенный импульс.
 
         Args:
-            impulse (Vector2): Вектор импульса.
+            impulse: Вектор импульса (Vector2).
         """
         self.velocity += impulse / self.config.mass
 
@@ -91,7 +109,7 @@ class PhysicsBody:
         STATIC: не обновляется.
 
         Args:
-            dt (float): Delta time в секундах.
+            dt: Delta time в секундах (float).
         """
         if not self.enabled:
             return
@@ -136,8 +154,12 @@ class PhysicsBody:
     def set_velocity(self, x: float, y: float) -> "PhysicsBody":
         """Устанавливает скорость.
 
+        Args:
+            x: Компонента скорости по X (float).
+            y: Компонента скорости по Y (float).
+
         Returns:
-            PhysicsBody: self для цепочки.
+            PhysicsBody: self для цепочки вызовов.
         """
         self.velocity.x = x
         self.velocity.y = y
@@ -147,31 +169,31 @@ class PhysicsBody:
         """Устанавливает коэффициент отскока.
 
         Args:
-            bounce (float): Коэффициент отскока (0-1).
+            bounce: Коэффициент отскока (>= 0). 1 = упругий, > 1 = усиление скорости при отскоке (float).
 
         Returns:
-            PhysicsBody: self для цепочки.
+            PhysicsBody: self для цепочки вызовов.
         """
-        self.config.bounce = max(0.0, min(1.0, bounce))
+        self.config.bounce = max(0.0, bounce)
         return self
 
     def set_friction(self, friction: float) -> "PhysicsBody":
         """Устанавливает коэффициент трения.
 
         Args:
-            friction (float): Коэффициент трения (0-1).
+            friction: Коэффициент трения 0–1 (float).
 
         Returns:
-            PhysicsBody: self для цепочки.
+            PhysicsBody: self для цепочки вызовов.
         """
         self.config.friction = max(0.0, min(1.0, friction))
         return self
 
     def stop(self) -> "PhysicsBody":
-        """Останавливает тело.
+        """Обнуляет скорость и очищает накопленные силы.
 
         Returns:
-            PhysicsBody: self для цепочки.
+            PhysicsBody: self для цепочки вызовов.
         """
         self.velocity = Vector2(0, 0)
         self._forces.clear()
@@ -196,8 +218,8 @@ class PhysicsWorld:
         """Инициализирует мир физики.
 
         Args:
-            gravity (float, optional): Гравитация по умолчанию. По умолчанию 980.
-            substeps (int, optional): Число подшагов за кадр для уменьшения туннелирования. По умолчанию 4.
+            gravity: Гравитация по умолчанию, пиксели/с². По умолчанию 980 (float).
+            substeps: Число подшагов за кадр для уменьшения туннелирования. По умолчанию 4 (int).
         """
         self.gravity = gravity
         self.substeps = max(1, substeps)
@@ -208,18 +230,39 @@ class PhysicsWorld:
         self.collision_enabled = True
 
     def set_gravity(self, gravity: float) -> "PhysicsWorld":
-        """Устанавливает гравитацию мира (пиксели/с²)."""
+        """Устанавливает гравитацию мира (пиксели/с²).
+
+        Args:
+            gravity: Ускорение свободного падения по оси Y (float).
+
+        Returns:
+            PhysicsWorld: self для цепочки вызовов.
+        """
         self.gravity = gravity
         return self
 
     def add_constraint(self, constraint: Any) -> "PhysicsWorld":
-        """Добавляет ограничение (объект с методом update(dt)), вызывается после шага физики."""
+        """Добавляет ограничение (объект с методом update(dt)), вызывается после шага физики.
+
+        Args:
+            constraint: Объект с методом update(dt).
+
+        Returns:
+            PhysicsWorld: self для цепочки вызовов.
+        """
         if constraint not in self.constraints and hasattr(constraint, "update"):
             self.constraints.append(constraint)
         return self
 
     def remove_constraint(self, constraint: Any) -> "PhysicsWorld":
-        """Удаляет ограничение из мира."""
+        """Удаляет ограничение из мира.
+
+        Args:
+            constraint: Ограничение для удаления.
+
+        Returns:
+            PhysicsWorld: self для цепочки вызовов.
+        """
         if constraint in self.constraints:
             self.constraints.remove(constraint)
         return self
@@ -228,10 +271,10 @@ class PhysicsWorld:
         """Добавляет тело в мир.
 
         Args:
-            body (PhysicsBody): Тело для добавления.
+            body: Тело для добавления (PhysicsBody).
 
         Returns:
-            PhysicsWorld: self для цепочки.
+            PhysicsWorld: self для цепочки вызовов.
         """
         if body not in self.bodies:
             if body.config.body_type in (BodyType.STATIC, BodyType.KINEMATIC):
@@ -245,10 +288,10 @@ class PhysicsWorld:
         """Добавляет статическое тело (стена, пол).
 
         Args:
-            body (PhysicsBody): Статическое тело.
+            body: Статическое тело (PhysicsBody).
 
         Returns:
-            PhysicsWorld: self для цепочки.
+            PhysicsWorld: self для цепочки вызовов.
         """
         body.config.body_type = BodyType.STATIC
         if body not in self.static_bodies:
@@ -259,10 +302,10 @@ class PhysicsWorld:
         """Добавляет кинематическое тело (движущаяся платформа).
 
         Args:
-            body (PhysicsBody): Кинематическое тело.
+            body: Кинематическое тело (PhysicsBody).
 
         Returns:
-            PhysicsWorld: self для цепочки.
+            PhysicsWorld: self для цепочки вызовов.
         """
         body.config.body_type = BodyType.KINEMATIC
         if body not in self.static_bodies:
@@ -273,10 +316,10 @@ class PhysicsWorld:
         """Удаляет тело из мира.
 
         Args:
-            body (PhysicsBody): Тело для удаления.
+            body: Тело для удаления (PhysicsBody).
 
         Returns:
-            PhysicsWorld: self для цепочки.
+            PhysicsWorld: self для цепочки вызовов.
         """
         if body in self.bodies:
             self.bodies.remove(body)
@@ -288,10 +331,10 @@ class PhysicsWorld:
         """Устанавливает границы мира для коллизий.
 
         Args:
-            rect (pygame.Rect): Границы мира.
+            rect: Границы мира (pygame.Rect).
 
         Returns:
-            PhysicsWorld: self для цепочки.
+            PhysicsWorld: self для цепочки вызовов.
         """
         self.bounds = rect
         return self
@@ -303,7 +346,7 @@ class PhysicsWorld:
         затем динамические с подшагами и разрешением коллизий.
 
         Args:
-            dt (Optional[float], optional): Delta time. Если None, берётся из spritePro.dt.
+            dt: Delta time в секундах. Если None, берётся из spritePro.dt (Optional[float]).
         """
         if dt is None:
             dt = getattr(spritePro, "dt", 1/60) or 1/60
@@ -523,55 +566,77 @@ class PhysicsWorld:
 def add_physics(
     sprite: pygame.sprite.Sprite,
     config: Optional[PhysicsConfig] = None,
+    *,
+    auto_add: bool = True,
 ) -> PhysicsBody:
     """Добавляет физическое тело к спрайту.
 
+    При auto_add=True (по умолчанию) тело автоматически добавляется в глобальный
+    мир (s.physics), вызывать s.physics.add(body) вручную не нужно.
+
     Args:
-        sprite (pygame.sprite.Sprite): Спрайт.
-        config (PhysicsConfig, optional): Конфигурация.
+        sprite: Спрайт (pygame.sprite.Sprite).
+        config: Конфигурация физики. По умолчанию DYNAMIC с массой 1 (PhysicsConfig, optional).
+        auto_add: Если True, добавить тело в глобальный мир физики (bool).
 
     Returns:
-        PhysicsBody: Созданное тело.
+        PhysicsBody: Созданное тело (уже в мире при auto_add=True).
     """
     body = PhysicsBody(sprite, config)
     if not hasattr(sprite, "_physics_bodies"):
         sprite._physics_bodies = []
     sprite._physics_bodies.append(body)
+    if auto_add:
+        _get_physics_world().add(body)
     return body
 
 
 def add_static_physics(
     sprite: pygame.sprite.Sprite,
+    *,
+    auto_add: bool = True,
 ) -> PhysicsBody:
     """Добавляет статическое физическое тело (стена, пол).
 
+    При auto_add=True тело автоматически добавляется в глобальный мир (s.physics).
+
     Args:
-        sprite (pygame.sprite.Sprite): Спрайт стены/пола.
+        sprite: Спрайт стены/пола (pygame.sprite.Sprite).
+        auto_add: Если True, добавить тело в глобальный мир физики (bool).
 
     Returns:
-        PhysicsBody: Созданное тело.
+        PhysicsBody: Созданное статическое тело.
     """
     config = PhysicsConfig(body_type=BodyType.STATIC)
-    body = add_physics(sprite, config)
+    body = add_physics(sprite, config, auto_add=False)
+    if auto_add:
+        _get_physics_world().add_static(body)
     return body
 
 
 def add_kinematic_physics(
     sprite: pygame.sprite.Sprite,
+    *,
+    auto_add: bool = True,
 ) -> PhysicsBody:
     """Добавляет кинематическое тело (движущаяся платформа).
 
     Позиция обновляется миром по velocity каждый кадр; гравитация не применяется.
     Управление: задавать body.velocity, world.update() сдвинет спрайт.
 
+    При auto_add=True тело автоматически добавляется в глобальный мир (s.physics).
+
     Args:
-        sprite (pygame.sprite.Sprite): Спрайт платформы.
+        sprite: Спрайт платформы (pygame.sprite.Sprite).
+        auto_add: Если True, добавить тело в глобальный мир физики (bool).
 
     Returns:
-        PhysicsBody: Созданное тело.
+        PhysicsBody: Созданное кинематическое тело.
     """
     config = PhysicsConfig(body_type=BodyType.KINEMATIC)
-    body = add_physics(sprite, config)
+    body = add_physics(sprite, config, auto_add=False)
+    if auto_add:
+        _get_physics_world().add_kinematic(body)
     return body
 
 
@@ -579,10 +644,10 @@ def get_physics(sprite: pygame.sprite.Sprite) -> Optional[PhysicsBody]:
     """Получает физическое тело спрайта.
 
     Args:
-        sprite (pygame.sprite.Sprite): Спрайт.
+        sprite: Спрайт (pygame.sprite.Sprite).
 
     Returns:
-        Optional[PhysicsBody]: Тело или None.
+        Optional[PhysicsBody]: Первое тело спрайта или None.
     """
     bodies = getattr(sprite, "_physics_bodies", None)
     if bodies:

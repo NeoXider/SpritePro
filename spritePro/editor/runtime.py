@@ -266,17 +266,20 @@ def spawn_scene(
         key = obj.name.lower()
         by_name.setdefault(key, []).append(spawned_obj)
 
-    physics_world = None
-    if any(getattr(o, "physics_type", "none") != "none" for o in source.objects if o.visible):
+    has_physics = any(
+        getattr(o, "physics_type", "none") != "none"
+        for o in source.objects
+        if getattr(o, "visible", True)
+    )
+    if has_physics:
         from spritePro.physics import (
-            PhysicsWorld,
             PhysicsConfig,
             add_physics,
             add_static_physics,
             add_kinematic_physics,
             BodyType,
         )
-        physics_world = PhysicsWorld()
+        world = s.get_physics_world()
         for so in spawned:
             obj = so.data
             ptype = getattr(obj, "physics_type", "none")
@@ -284,15 +287,14 @@ def spawn_scene(
                 continue
             sprite = so.sprite
             if ptype == st.PHYSICS_STATIC:
-                body = add_static_physics(sprite)
-                physics_world.add_static(body)
+                add_static_physics(sprite, auto_add=True)
             elif ptype == st.PHYSICS_KINEMATIC:
-                body = add_kinematic_physics(sprite)
-                physics_world.add_kinematic(body)
+                add_kinematic_physics(sprite, auto_add=True)
             elif ptype == st.PHYSICS_DYNAMIC:
-                body = add_physics(sprite, PhysicsConfig(body_type=BodyType.DYNAMIC))
-                physics_world.add(body)
-        s.register_update_object(physics_world)
+                add_physics(sprite, PhysicsConfig(body_type=BodyType.DYNAMIC), auto_add=True)
+        physics_world = world
+    else:
+        physics_world = None
 
     if apply_camera:
         s.set_camera_position(source.camera.game_x, source.camera.game_y)

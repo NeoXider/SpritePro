@@ -40,7 +40,7 @@ class SpriteBuilder:
         """Инициализирует строитель спрайта.
 
         Args:
-            image (str, optional): Путь к изображению. По умолчанию "".
+            image: Путь к изображению. По умолчанию "" (str).
         """
         self._image = image
         self._size: Optional[VectorInput] = (50, 50)
@@ -70,111 +70,276 @@ class SpriteBuilder:
         self._mask_enabled: bool = False
 
     def image(self, path: str) -> "SpriteBuilder":
-        """Устанавливает изображение спрайта."""
+        """Устанавливает изображение спрайта.
+
+        Args:
+            path: Путь к файлу изображения (str).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._image = path
         return self
 
     def size(self, width: float, height: float) -> "SpriteBuilder":
-        """Устанавливает размер спрайта."""
+        """Устанавливает размер спрайта.
+
+        Args:
+            width: Ширина (float).
+            height: Высота (float).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._size = (width, height)
         return self
 
     def position(self, x: float, y: float) -> "SpriteBuilder":
-        """Устанавливает позицию спрайта."""
+        """Устанавливает позицию спрайта.
+
+        Args:
+            x: Координата X (float).
+            y: Координата Y (float).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._position = (x, y)
         return self
 
     def speed(self, speed: float) -> "SpriteBuilder":
-        """Устанавливает скорость спрайта."""
+        """Устанавливает скорость спрайта.
+
+        Args:
+            speed: Скорость движения (float).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._speed = speed
         return self
 
     def sorting_order(self, order: int) -> "SpriteBuilder":
-        """Устанавливает порядок отрисовки (слой)."""
+        """Устанавливает порядок отрисовки (слой).
+
+        Args:
+            order: Значение слоя (int).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._sorting_order = order
         return self
 
     def layer(self, layer: int) -> "SpriteBuilder":
-        """Устанавливает слой отрисовки (alias для sorting_order)."""
+        """Устанавливает слой отрисовки (alias для sorting_order).
+
+        Args:
+            layer: Значение слоя (int).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         return self.sorting_order(layer)
 
     def anchor(self, anchor: str | Anchor) -> "SpriteBuilder":
-        """Устанавливает якорь позиционирования."""
+        """Устанавливает якорь позиционирования.
+
+        Args:
+            anchor: Якорь (str или Anchor).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._anchor = anchor
         return self
 
     def scene(self, scene: Any) -> "SpriteBuilder":
-        """Устанавливает привязку к сцене."""
+        """Устанавливает привязку к сцене.
+
+        Args:
+            scene: Объект сцены.
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._scene = scene
         return self
 
     def auto_register(self, register: bool) -> "SpriteBuilder":
-        """Устанавливает авторегистрацию в игре."""
+        """Устанавливает авторегистрацию в игре.
+
+        Args:
+            register: Включить авторегистрацию (bool).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._auto_register = register
         return self
 
     def color(self, r: int, g: int, b: int) -> "SpriteBuilder":
-        """Устанавливает цвет спрайта."""
+        """Устанавливает цвет спрайта.
+
+        Args:
+            r: Красный канал 0–255 (int).
+            g: Зелёный канал 0–255 (int).
+            b: Синий канал 0–255 (int).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._color = (r, g, b)
         return self
 
     def alpha(self, alpha: int) -> "SpriteBuilder":
-        """Устанавливает прозрачность спрайта."""
+        """Устанавливает прозрачность спрайта.
+
+        Args:
+            alpha: Альфа 0–255 (int).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._alpha = max(0, min(255, alpha))
         return self
 
     def angle(self, angle: float) -> "SpriteBuilder":
-        """Устанавливает угол поворота."""
+        """Устанавливает угол поворота.
+
+        Args:
+            angle: Угол в градусах (float).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._angle = angle
         return self
 
     def scale(self, scale: float) -> "SpriteBuilder":
-        """Устанавливает масштаб спрайта."""
+        """Устанавливает масштаб спрайта.
+
+        Args:
+            scale: Множитель масштаба (float).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._scale = scale
         return self
 
     def crop(self, x: int, y: int, width: int, height: int) -> "SpriteBuilder":
-        """Обрезка изображения по прямоугольнику (x, y, width, height)."""
+        """Обрезка изображения по прямоугольнику.
+
+        Args:
+            x: X левого верхнего угла (int).
+            y: Y левого верхнего угла (int).
+            width: Ширина области (int).
+            height: Высота области (int).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._crop_rect = (x, y, width, height)
         return self
 
     def clip(self, x: int, y: int, width: int, height: int) -> "SpriteBuilder":
-        """Алиас для crop — обрезка по прямоугольнику."""
+        """Алиас для crop — обрезка по прямоугольнику.
+
+        Args:
+            x: X левого верхнего угла (int).
+            y: Y левого верхнего угла (int).
+            width: Ширина области (int).
+            height: Высота области (int).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         return self.crop(x, y, width, height)
 
     def border_radius(self, radius: int) -> "SpriteBuilder":
-        """Скругление углов изображения (пиксели)."""
+        """Скругление углов изображения.
+
+        Args:
+            radius: Радиус в пикселях (int).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._border_radius = max(0, radius)
         return self
 
     def mask(self, enabled: bool = True) -> "SpriteBuilder":
-        """Включает маску коллизий (по альфе изображения)."""
+        """Включает маску коллизий (по альфе изображения).
+
+        Args:
+            enabled: Включить маску (bool).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._mask_enabled = enabled
         return self
 
     def flip(self, horizontal: bool = False, vertical: bool = False) -> "SpriteBuilder":
-        """Устанавливает отражение спрайта."""
+        """Устанавливает отражение спрайта.
+
+        Args:
+            horizontal: Отразить по горизонтали (bool).
+            vertical: Отразить по вертикали (bool).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._flip_h = horizontal
         self._flip_v = vertical
         return self
 
     def parent(self, sprite: Sprite) -> "SpriteBuilder":
-        """Устанавливает родительский спрайт."""
+        """Устанавливает родительский спрайт.
+
+        Args:
+            sprite: Родительский спрайт (Sprite).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._parent = sprite
         return self
 
     def screen_space(self, enabled: bool = True) -> "SpriteBuilder":
-        """Включает режим screen space (без смещения камерой)."""
+        """Включает режим screen space (без смещения камерой).
+
+        Args:
+            enabled: Включить режим (bool).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._screen_space = enabled
         return self
 
     def state(self, state: str) -> "SpriteBuilder":
-        """Устанавливает начальное состояние."""
+        """Устанавливает начальное состояние.
+
+        Args:
+            state: Имя состояния (str).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._state = state
         return self
 
     def states(self, states: Sequence[str]) -> "SpriteBuilder":
-        """Устанавливает доступные состояния."""
+        """Устанавливает доступные состояния.
+
+        Args:
+            states: Список имён состояний (Sequence[str]).
+
+        Returns:
+            SpriteBuilder: self для цепочки вызовов.
+        """
         self._states = set(states)
         return self
 
@@ -184,7 +349,7 @@ class SpriteBuilder:
         Returns:
             Sprite: Созданный спрайт.
         """
-        sprite = Sprite(
+        sprite: Sprite = Sprite(
             sprite=self._image,
             size=self._size,
             pos=self._position,
@@ -251,7 +416,11 @@ class ParticleBuilder:
     """Строитель для создания ParticleEmitter с Fluent API."""
 
     def __init__(self, config: Optional[ParticleConfig] = None):
-        """Инициализирует строитель эмиттера."""
+        """Инициализирует строитель эмиттера.
+
+        Args:
+            config: Базовая конфигурация частиц. По умолчанию создаётся новая (ParticleConfig, optional).
+        """
         self._config = config or ParticleConfig()
         self._position: Optional[VectorInput] = None
         self._anchor: str | Anchor = Anchor.CENTER
@@ -260,82 +429,196 @@ class ParticleBuilder:
         self._auto_register: bool = True
 
     def amount(self, amount: int) -> "ParticleBuilder":
-        """Устанавливает количество частиц."""
+        """Устанавливает количество частиц.
+
+        Args:
+            amount: Максимальное число частиц (int).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._config.amount = max(1, amount)
         return self
 
     def lifetime(self, seconds: float) -> "ParticleBuilder":
-        """Устанавливает время жизни частиц."""
+        """Устанавливает время жизни частиц.
+
+        Args:
+            seconds: Время жизни в секундах (float).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._config.lifetime = seconds
         return self
 
     def lifetime_range(self, min_seconds: float, max_seconds: float) -> "ParticleBuilder":
-        """Устанавливает диапазон времени жизни."""
+        """Устанавливает диапазон времени жизни.
+
+        Args:
+            min_seconds: Минимальное время жизни, с (float).
+            max_seconds: Максимальное время жизни, с (float).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._config.lifetime_range = (min_seconds, max_seconds)
         return self
 
     def speed(self, min_speed: float, max_speed: float) -> "ParticleBuilder":
-        """Устанавливает диапазон скорости."""
+        """Устанавливает диапазон скорости.
+
+        Args:
+            min_speed: Минимальная скорость (float).
+            max_speed: Максимальная скорость (float).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._config.speed_range = (min_speed, max_speed)
         return self
 
     def angle(self, min_angle: float, max_angle: float) -> "ParticleBuilder":
-        """Устанавливает диапазон угла эмиссии."""
+        """Устанавливает диапазон угла эмиссии.
+
+        Args:
+            min_angle: Минимальный угол, градусы (float).
+            max_angle: Максимальный угол, градусы (float).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._config.angle_range = (min_angle, max_angle)
         return self
 
     def colors(self, colors: Sequence[Tuple[int, int, int]]) -> "ParticleBuilder":
-        """Устанавливает палитру цветов."""
+        """Устанавливает палитру цветов.
+
+        Args:
+            colors: Список RGB-кортежей (Sequence[Tuple[int, int, int]]).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._config.colors = colors
         return self
 
     def fade_speed(self, speed: float) -> "ParticleBuilder":
-        """Устанавливает скорость затухания."""
+        """Устанавливает скорость затухания.
+
+        Args:
+            speed: Скорость затухания (float).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._config.fade_speed = speed
         return self
 
     def gravity(self, x: float, y: float) -> "ParticleBuilder":
-        """Устанавливает гравитацию."""
+        """Устанавливает гравитацию для частиц.
+
+        Args:
+            x: Компонента по X (float).
+            y: Компонента по Y (float).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._config.gravity = Vector2(x, y)
         return self
 
     def image(self, path: str) -> "ParticleBuilder":
-        """Устанавливает изображение частицы."""
+        """Устанавливает изображение частицы.
+
+        Args:
+            path: Путь к файлу изображения (str).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._config.image = path
         return self
 
     def screen_space(self, enabled: bool = True) -> "ParticleBuilder":
-        """Включает режим screen space."""
+        """Включает режим screen space.
+
+        Args:
+            enabled: Включить режим (bool).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._config.screen_space = enabled
         return self
 
     def position(self, x: float, y: float) -> "ParticleBuilder":
-        """Устанавливает позицию эмиттера."""
+        """Устанавливает позицию эмиттера.
+
+        Args:
+            x: Координата X (float).
+            y: Координата Y (float).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._position = (x, y)
         return self
 
     def anchor(self, anchor: str | Anchor) -> "ParticleBuilder":
-        """Устанавливает якорь."""
+        """Устанавливает якорь позиции эмиттера.
+
+        Args:
+            anchor: Якорь (str или Anchor).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._anchor = anchor
         return self
 
     def auto_emit(self, enabled: bool = True) -> "ParticleBuilder":
-        """Включает автоэмиссию."""
+        """Включает автоэмиссию частиц по интервалу.
+
+        Args:
+            enabled: Включить автоэмиссию (bool).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._auto_emit = enabled
         return self
 
     def emit_interval(self, interval: float) -> "ParticleBuilder":
-        """Устанавливает интервал автоэмиссии."""
+        """Устанавливает интервал автоэмиссии.
+
+        Args:
+            interval: Интервал в секундах (float).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._emit_interval = interval
         return self
 
     def auto_register(self, enabled: bool = True) -> "ParticleBuilder":
-        """Включает авторегистрацию."""
+        """Включает авторегистрацию эмиттера в игре.
+
+        Args:
+            enabled: Включить авторегистрацию (bool).
+
+        Returns:
+            ParticleBuilder: self для цепочки вызовов.
+        """
         self._auto_register = enabled
         return self
 
     def build(self) -> ParticleEmitter:
-        """Создаёт и возвращает эмиттер частиц."""
+        """Создаёт и возвращает эмиттер частиц.
+
+        Returns:
+            ParticleEmitter: Созданный эмиттер.
+        """
         emitter = ParticleEmitter(
             config=self._config,
             auto_emit=self._auto_emit,
@@ -351,7 +634,7 @@ def sprite(path: str = "") -> SpriteBuilder:
     """Создаёт строитель спрайта.
 
     Args:
-        path (str, optional): Путь к изображению.
+        path: Путь к изображению. По умолчанию "" (str).
 
     Returns:
         SpriteBuilder: Новый строитель спрайта.
@@ -363,7 +646,7 @@ def particles(config: Optional[ParticleConfig] = None) -> ParticleBuilder:
     """Создаёт строитель эмиттера частиц.
 
     Args:
-        config (Optional[ParticleConfig], optional): Базовая конфигурация.
+        config: Базовая конфигурация частиц. По умолчанию None (Optional[ParticleConfig]).
 
     Returns:
         ParticleBuilder: Новый строитель эмиттера.

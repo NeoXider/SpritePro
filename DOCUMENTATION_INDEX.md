@@ -67,6 +67,7 @@
 - Позиционирование и трансформации
 - Цепочки вызовов (set_position, set_scale, set_alpha и др. возвращают self)
 - Базовые методы отрисовки
+- Столкновения по маске: ensure_mask(), collide_mask(other), collides_with(other, use_mask=True)
 
 #### [docs/sprite_editor.md](docs/sprite_editor.md)
 **Редактор спрайтов (Sprite Editor)** — один документ покрывает и редактор, и использование сцен в своём проекте.
@@ -166,10 +167,12 @@
 
 #### [docs/physics.md](docs/physics.md)
 **Система физики**
-- Глобальный мир: `sp.physics`, `sp.get_physics_world()` — физика всегда включена, мир один и уже зарегистрирован
-- Гравитация: `sp.physics.set_gravity(...)`; ограничения: `add_constraint`/`remove_constraint` (объект с `update(dt)`)
+- Глобальный мир: `s.physics`, `s.get_physics_world()` — физика всегда включена, мир один и уже зарегистрирован
+- Добавление тел: `s.add_physics`, `s.add_static_physics`, `s.add_kinematic_physics`, `s.PhysicsConfig` (по умолчанию тело автоматически в мире)
+- Гравитация: `s.physics.set_gravity(...)`; ограничения: `add_constraint`/`remove_constraint` (объект с `update(dt)`)
+- Демо: запуск из корня репозитория (`python -m spritePro.demoGames.physics_demo` и т.д.)
 - Типы тел: DYNAMIC, STATIC, KINEMATIC; PhysicsConfig, PhysicsBody
-- add_physics, add_static_physics, add_kinematic_physics
+- add_physics, add_static_physics, add_kinematic_physics — по умолчанию тело автоматически в мире (`auto_add=True`); при загрузке сцены через spawn_scene типы физики из редактора применяются к глобальному миру
 - Коллизии AABB, колбэк on_collision, границы мира (set_bounds)
 - Демо: physics_demo, hoop_bounce_demo, ping_pong (физический мяч, направление от ракетки)
 
@@ -251,9 +254,9 @@
 
 #### [docs/builder.md](docs/builder.md)
 **Builder (Fluent API)**
-- SpriteBuilder: sp.sprite(path).position().scale().color().crop().border_radius().mask().build()
+- SpriteBuilder: s.sprite(path).position().scale().color().crop().border_radius().mask().build() — build() возвращает Sprite (типизировано)
 - Обрезка (crop/clip), скругление (border_radius), маска коллизий (mask)
-- ParticleBuilder: sp.particles().amount().lifetime().speed().gravity().position().build()
+- ParticleBuilder: s.particles().amount().lifetime().speed().gravity().position().build()
 - Полная таблица методов и примеры
 
 ### Готовые компоненты
@@ -297,7 +300,7 @@
 - [Hoop Bounce Demo](spritePro/demoGames/hoop_bounce_demo.py) - Шарик в обруче: отскок без потери силы, смена цвета
 - [Object Pool Demo](spritePro/demoGames/object_pool_demo.py) - Пул объектов для переиспользования спрайтов
 - [Particle Pool Demo](spritePro/demoGames/particle_pool_demo.py) - Пул частиц (ParticleEmitter с use_pool=True)
-- [Builder Demo](spritePro/demoGames/builder_demo.py) - Fluent API: спрайты и частицы через sp.sprite() и sp.particles()
+- [Builder Demo](spritePro/demoGames/builder_demo.py) - Fluent API: спрайты и частицы через s.sprite() и s.particles()
 
 ## 🔍 Навигация по типам документации
 
@@ -379,8 +382,9 @@
 ## 🔄 Обновления документации
 
 ### Последние обновления
+- **2025-02 (v2.1.0)**: Физика: подсказки и докстринги для `s.physics`; авто-добавление тел в мир (`auto_add=True` у add_physics/add_static_physics/add_kinematic_physics); при загрузке сцены через spawn_scene типы физики из редактора применяются к глобальному миру. Builder: `s.sprite(...).build()` возвращает типизированный Sprite. Демо переведены на `import spritePro as s`. Документация: [physics.md](docs/physics.md) (auto_add, редактор), [builder.md](docs/builder.md) (s., тип build()), [sprite_editor.md](docs/sprite_editor.md) (физика из сцены), OVERVIEW, CHANGELOG.
 - **2026-02 (v2.0.8)**: Лобби мультиплеера: убрана кнопка «Готов»; у хоста кнопки «Назад» и «В игру», у клиента «Назад». «Назад» отключает соединение и возвращает к настройке. Исправлена запись лога хоста при входе в игру из лобби (`debug_host.log` / `debug_client.log`). Документация [networking.md](docs/networking.md) обновлена.
-- **2026-02**: Физика: глобальный мир `sp.physics` (один мир с игрой), `set_gravity`, `add_constraint`; демо physics_demo, hoop_bounce_demo переведены на него. Ping Pong: мяч на физике, направление от ракетки (offset), подача с минимальной вертикалью. Hoop Bounce: одно кольцо (без двойного контура). Документация [physics.md](docs/physics.md) — раздел «Глобальный мир физики», примеры без создания мира.
+- **2026-02**: Физика: глобальный мир `s.physics` (один мир с игрой), `set_gravity`, `add_constraint`; демо physics_demo, hoop_bounce_demo переведены на него. Ping Pong: мяч на физике, направление от ракетки (offset), подача с минимальной вертикалью. Hoop Bounce: одно кольцо (без двойного контура). Документация [physics.md](docs/physics.md) — раздел «Глобальный мир физики», примеры без создания мира.
 - **2026-02**: Обновлена документация: подробные [builder.md](docs/builder.md) (crop, clip, border_radius, mask, полная таблица методов SpriteBuilder и ParticleBuilder) и [physics.md](docs/physics.md) (PhysicsWorld, on_collision, set_bounds, демо). В пакет spritePro добавлен модульный docstring с обзором подсистем. В индекс добавлены разделы Physics, Builder и демо (physics_demo, hoop_bounce_demo, object_pool_demo, particle_pool_demo, builder_demo).
 - **2026-02 (v2.0.6)**: Лобби мультиплеера — сцена с полной очисткой UI при переходе в игру; хост рассылает `start_game`, игра запускается у обоих; кнопка «Готов» для клиента (подсветка, событие `ready`). TextSprite: поддержка переносов строк (`\n`). Документация: [networking.md](docs/networking.md) (подробная инструкция по лобби), [text.md](docs/text.md) (многострочный текст), [readySprites.md](docs/readySprites.md) (лобби).
 - **2026-02**: Редактор сцен: экспорт из кода в JSON (`Scene.export_from_runtime`), координаты по центру объекта; runtime: `placement()` возвращает центр, `to_button`/`to_text_sprite`/`to_toggle`, `.Sprite(**kwargs)`, `exact(name)`. Демо [scenes_demo editor.py](spritePro/demoGames/scenes_demo editor.py) — загрузка сцены из JSON, логика в коде. Документация: sprite_editor.md (разделы «Координаты в редакторе», «Экспорт сцены из кода в JSON», обновлённая интеграция).

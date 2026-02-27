@@ -1,8 +1,15 @@
 """Демо: шарик внутри нарисованного обруча — отскок без потери силы, смена цвета при отскоке."""
+from pathlib import Path
+import sys
+
 import pygame
 from pygame.math import Vector2
-import spritePro as sp
-from spritePro.physics import PhysicsConfig, add_physics
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import spritePro as s
 
 
 BOUNCE_COLORS = [
@@ -14,7 +21,7 @@ BOUNCE_COLORS = [
     (100, 255, 255),
 ]
 
-MAX_SPEED = 450.0
+MAX_SPEED = 1500.0
 
 
 class HoopConstraint:
@@ -66,8 +73,8 @@ class HoopConstraint:
 
 
 def run_demo():
-    sp.get_screen((800, 600), "Hoop Bounce — ball inside ring")
-    sp.enable_debug()
+    s.get_screen((800, 600), "Hoop Bounce — ball inside ring")
+    s.enable_debug()
 
     center = (400, 300)
     hoop_radius = 220
@@ -79,46 +86,41 @@ def run_demo():
     ring_surf = pygame.Surface((size, size), pygame.SRCALPHA)
     pygame.draw.circle(ring_surf, (60, 60, 80), (cx, cy), hoop_radius)
     pygame.draw.circle(ring_surf, (25, 25, 35), (cx, cy), hoop_radius - ring_width)
-    hoop = sp.Sprite("", pos=center, size=(size, size))
+    hoop = s.Sprite("", pos=center, size=(size, size))
     hoop.set_image(ring_surf)
     hoop.rect.center = center
 
-    ball = sp.Sprite("", pos=center, size=(ball_radius * 2,) * 2)
+    ball = s.Sprite("", pos=center, size=(ball_radius * 2,) * 2)
     ball.set_circle_shape(radius=ball_radius, color=BOUNCE_COLORS[0])
     ball.rect.center = center
 
-    sp.physics.set_gravity(400.0)
-    config = PhysicsConfig(mass=1.0, friction=1.0, bounce=1.0)
-    ball_body = add_physics(ball, config)
-    ball_body.set_velocity(200, -80)
-    sp.physics.add(ball_body)
+    s.physics.set_gravity(400.0)
+    config = s.PhysicsConfig(mass=1.0, friction=1.0, bounce=3.0)
+    ball_body = s.add_physics(ball, config)
+    ball_body.set_velocity(50, -80)
 
     inner_radius = hoop_radius - ring_width
     constraint = HoopConstraint(
         ball_body, center, inner_radius, ball_radius, BOUNCE_COLORS
     )
-    sp.physics.add_constraint(constraint)
+    s.physics.add_constraint(constraint)
 
-    hint = sp.TextSprite(
+    hint = s.TextSprite(
         "Ball in hoop — elastic bounce, color change on hit. R: reset",
         color=(200, 200, 200), pos=(20, 20),
     )
     hint.set_position((20, 20), anchor="topleft")
 
     while True:
-        sp.update(fill_color=(25, 25, 35))
+        s.update(fill_color=(25, 25, 35))
 
-        for event in sp.pygame_events:
-            if event.type == pygame.QUIT:
-                return
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return
-                if event.key == pygame.K_r:
-                    ball.rect.center = center
-                    ball_body.set_velocity(200, -80)
-                    constraint.color_index = 0
-                    ball.set_circle_shape(radius=ball_radius, color=BOUNCE_COLORS[0])
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            return
+        if s.input.was_pressed(pygame.K_r):
+            ball.rect.center = center
+            ball_body.set_velocity(200, -80)
+            constraint.color_index = 0
+            ball.set_circle_shape(radius=ball_radius, color=BOUNCE_COLORS[0])
 
 
 if __name__ == "__main__":

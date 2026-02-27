@@ -1,26 +1,26 @@
 """Demo: Builder Pattern - Fluent API для создания спрайтов."""
 import pygame
-import spritePro as sp
+import spritePro as s
 
 
 def run_demo():
-    sp.init()
-    screen = sp.get_screen((800, 600), "Builder Demo - Fluent API")
+    s.init()
+    screen = s.get_screen((800, 600), "Builder Demo - Fluent API")
 
-    sp.enable_debug()
+    s.enable_debug()
 
     player = (
-        sp.sprite("examples/images/player.png")
+        s.sprite("examples/images/player.png")
         .position(100, 300)
         .scale(2.0)
         .color(255, 255, 255)
         .sorting_order(10)
         .build()
     )
-    sp.debug_log_info("Sprite created via Builder")
+    s.debug_log_info("Sprite created via Builder")
 
     enemy = (
-        sp.sprite("examples/images/enemy.png")
+        s.sprite("examples/images/enemy.png")
         .position(400, 300)
         .scale(1.5)
         .color(255, 100, 100)
@@ -31,7 +31,7 @@ def run_demo():
     )
 
     coin = (
-        sp.sprite("")
+        s.sprite("")
         .position(600, 300)
         .size(32, 32)
         .color(255, 215, 0)
@@ -40,7 +40,7 @@ def run_demo():
     coin.set_circle_shape(radius=16, color=(255, 215, 0))
 
     emitter = (
-        sp.particles()
+        s.particles()
         .amount(30)
         .lifetime(1.0)
         .speed(100, 300)
@@ -53,22 +53,18 @@ def run_demo():
         .build()
     )
 
-    sp.debug_log_info("All builders demo complete!")
+    s.debug_log_info("All builders demo complete!")
 
     while True:
-        sp.update(fill_color=(20, 20, 30))
+        s.update(fill_color=(20, 20, 30))
 
-        for event in sp.pygame_events:
-            if event.type == pygame.QUIT:
-                return
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return
-                if event.key == pygame.K_SPACE:
-                    particles = emitter.emit()
-                    for p in particles:
-                        p.position = (400, 300)
-                    sp.debug_log_info(f"Emitted {len(particles)} particles")
+        if s.input.was_pressed(pygame.K_ESCAPE):
+            return
+        if s.input.was_pressed(pygame.K_SPACE):
+            particles = emitter.emit()
+            for p in particles:
+                p.position = (400, 300)
+            s.debug_log_info(f"Emitted {len(particles)} particles")
 
 
 if __name__ == "__main__":
