@@ -44,7 +44,7 @@ class SpriteProGame:
         self.update_objects: list = []
         self.camera_shake = CameraShake(self)
         self.register_update_object(self.camera_shake)
-        self.physics_world = PhysicsWorld(gravity=980.0)
+        self.physics_world = PhysicsWorld(gravity=980.0, substeps=8)
         self.register_update_object(self.physics_world)
 
         # Debug overlay settings

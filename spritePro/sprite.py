@@ -911,6 +911,15 @@ class Sprite(pygame.sprite.Sprite):
         self.rect.center = (int(position.x), int(position.y))
         self.start_pos_vector = Vector2(self.rect.center)
         self.start_pos = (self.rect.centerx, self.rect.centery)
+        self._sync_physics_position()
+
+    def _sync_physics_position(self) -> None:
+        """Синхронизирует позицию привязанных физических тел (телепорт при перемещении спрайта)."""
+        bodies = getattr(self, "_physics_bodies", None)
+        if bodies:
+            for body in bodies:
+                if hasattr(body, "sync_position_from_sprite"):
+                    body.sync_position_from_sprite(self)
 
     def _apply_parent_transform(self) -> None:
         """Применяет трансформацию родителя к дочернему спрайту."""
@@ -1033,6 +1042,7 @@ class Sprite(pygame.sprite.Sprite):
         self.set_image(surface)
         self.color = fill
         self._shape_fill_color = fill
+        self.sprite_shape = "rectangle"
         return self
 
     def set_circle_shape(
@@ -1059,6 +1069,7 @@ class Sprite(pygame.sprite.Sprite):
         self.set_image(surface)
         self.color = fill
         self._shape_fill_color = fill
+        self.sprite_shape = "circle"
         return self
 
     def set_ellipse_shape(
@@ -1082,6 +1093,7 @@ class Sprite(pygame.sprite.Sprite):
         self.set_image(surface)
         self.color = fill
         self._shape_fill_color = fill
+        self.sprite_shape = "ellipse"
         return self
 
     def set_polygon_shape(
@@ -1144,6 +1156,7 @@ class Sprite(pygame.sprite.Sprite):
         shifted = [(p[0] - min_x + padding, p[1] - min_y + padding) for p in points]
         pygame.draw.lines(surface, fill, closed, shifted, width=width)
         self.set_image(surface)
+        self.sprite_shape = "line"
         if world_points:
             self.position = ((min_x + max_x) * 0.5, (min_y + max_y) * 0.5)
         return self

@@ -17,19 +17,31 @@ def run_demo():
 
     player = s.Sprite("", pos=(100, 200), size=(40, 40))
     player.set_circle_shape(radius=20, color=(100, 200, 255))
-    player_body = s.add_physics(player, s.PhysicsConfig(mass=1.0, bounce=0.3, friction=0.95))
+    player_body = s.add_physics(
+        player,
+        s.PhysicsConfig(mass=1.0, bounce=0.3, friction=0.95),
+        shape=s.PhysicsShape.CIRCLE,
+    )
 
     ball = s.Sprite("", pos=(350, 100), size=(30, 30))
     ball.set_circle_shape(radius=15, color=(255, 100, 100))
-    ball_body = s.add_physics(ball, s.PhysicsConfig(mass=0.5, bounce=0.8, friction=0.98))
+    ball_body = s.add_physics(
+        ball,
+        s.PhysicsConfig(mass=0.5, bounce=0.8, friction=0.98),
+        shape=s.PhysicsShape.CIRCLE,
+    )
 
     box = s.Sprite("", pos=(500, 80), size=(36, 36))
     box.set_rect_shape(size=(36, 36), color=(255, 180, 60), border_radius=4)
-    box_body = s.add_physics(box, s.PhysicsConfig(mass=1.2, bounce=0.5, friction=0.92))
+    box_body = s.add_physics(box, s.PhysicsConfig(mass=1.2, bounce=0.5, friction=0.92), shape=s.PhysicsShape.BOX)
 
     ball2 = s.Sprite("", pos=(250, 150), size=(24, 24))
     ball2.set_circle_shape(radius=12, color=(100, 255, 150))
-    ball2_body = s.add_physics(ball2, s.PhysicsConfig(mass=0.3, bounce=0.9, friction=0.99))
+    ball2_body = s.add_physics(
+        ball2,
+        s.PhysicsConfig(mass=0.3, bounce=0.9, friction=0.99),
+        shape=s.PhysicsShape.CIRCLE,
+    )
 
     floor = s.Sprite("", pos=(400, 570), size=(800, 40))
     floor.set_rect_shape(size=(800, 40), color=(80, 80, 80))
@@ -46,6 +58,8 @@ def run_demo():
     ceiling = s.Sprite("", pos=(400, 10), size=(800, 20))
     ceiling.set_rect_shape(size=(800, 20), color=(80, 80, 80))
     s.add_static_physics(ceiling)
+
+    s.physics.set_bounds(s.pygame.Rect(0, 0, 800, 600))
 
     platform1 = s.Sprite("", pos=(200, 400), size=(200, 20))
     platform1.set_rect_shape(size=(200, 20), color=(100, 200, 100), border_radius=5)
@@ -93,13 +107,13 @@ def run_demo():
             player_body.velocity.y = -550
             s.debug_log_info("Jump!")
         if s.input.was_pressed(pygame.K_r):
-            player.rect.center = (100, 200)
+            player.position = (100, 200)
             player_body.velocity = pygame.math.Vector2(0, 0)
-            ball.rect.center = (350, 100)
+            ball.position = (350, 100)
             ball_body.velocity = pygame.math.Vector2(0, 0)
-            box.rect.center = (500, 80)
+            box.position = (500, 80)
             box_body.velocity = pygame.math.Vector2(0, 0)
-            ball2.rect.center = (250, 150)
+            ball2.position = (250, 150)
             ball2_body.velocity = pygame.math.Vector2(0, 0)
 
         if s.input.is_pressed(pygame.K_LEFT):

@@ -1,13 +1,14 @@
-"""Physics system for SpritePro.
+"""Physics system for SpritePro (pymunk backend).
 
-Типы тел: DYNAMIC, STATIC, KINEMATIC. PhysicsWorld управляет шагом физики,
-коллизиями AABB и границами. Колбэк on_collision при столкновениях.
+Типы тел: DYNAMIC, STATIC, KINEMATIC. PhysicsWorld управляет pymunk.Space,
+синхронизацией спрайт ↔ тело и коллизиями. Колбэк on_collision при столкновениях.
 Документация: docs/physics.md.
 """
 
 from __future__ import annotations
 
-from typing import Optional, List, Callable, Any
+import math
+from typing import Optional, List, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
 import pygame
@@ -15,22 +16,43 @@ from pygame.math import Vector2
 
 import spritePro
 
+try:
+    import pymunk
+except ImportError as e:
+    raise ImportError(
+        "SpritePro physics requires pymunk. Install with: pip install pymunk>=6.0.0"
+    ) from e
+
 
 def _get_physics_world() -> "PhysicsWorld":
-    """Возвращает глобальный мир физики (тот же, что обновляется в игровом цикле).
-
-    Returns:
-        PhysicsWorld: Глобальный мир физики игры.
-    """
+    """Возвращает глобальный мир физики (тот же, что обновляется в игровом цикле)."""
     from spritePro.game_context import get_context
     return get_context().game.physics_world
 
 
 class BodyType(Enum):
     """Тип физического тела."""
-    DYNAMIC = "dynamic"    # Полная физика (игроки, мячи)
-    STATIC = "static"     # Неподвижные (стены, пол)
-    KINEMATIC = "kinematic"  # Управляемые движение (движущиеся платформы)
+    DYNAMIC = "dynamic"
+    STATIC = "static"
+    KINEMATIC = "kinematic"
+
+
+class PhysicsShape(Enum):
+    """Форма коллайдера физического тела."""
+    AUTO = "auto"
+    BOX = "box"
+    CIRCLE = "circle"
+    LINE = "line"
+    SEGMENT = "segment"
+
+
+def _shape_to_str(shape: Any) -> str:
+    """Нормализует shape (PhysicsShape или str) в строку для внутреннего использования."""
+    if isinstance(shape, PhysicsShape):
+        return shape.value
+    if isinstance(shape, str):
+        return shape.lower()
+    return "auto"
 
 
 @dataclass
@@ -41,548 +63,486 @@ class PhysicsConfig:
         mass: Масса тела (float).
         gravity: Гравитация для этого тела (float).
         friction: Коэффициент трения 0–1 (float).
-        bounce: Коэффициент отскока (float, >= 0). 1 = упругий отскок, > 1 = усиление скорости при отскоке.
+        bounce: Коэффициент отскока (float, >= 0). 1 = упругий, > 1 = усиление при отскоке.
         body_type: Тип тела: DYNAMIC, KINEMATIC, STATIC (BodyType).
+        collision_category: Битовые категории для фильтра коллизий (опционально).
+        collision_mask: С какими категориями сталкиваться (опционально).
     """
     mass: float = 1.0
     gravity: float = 980.0
     friction: float = 0.98
     bounce: float = 0.5
     body_type: BodyType = BodyType.DYNAMIC
+    collision_category: Optional[int] = None
+    collision_mask: Optional[int] = None
+
+
+def _body_type_to_pymunk(bt: BodyType) -> int:
+    if bt == BodyType.STATIC:
+        return pymunk.Body.STATIC
+    if bt == BodyType.KINEMATIC:
+        return pymunk.Body.KINEMATIC
+    return pymunk.Body.DYNAMIC
+
+
+class _VelocityProxy:
+    """Прокси для body.velocity: изменение .x/.y записывается в pymunk body."""
+
+    def __init__(self, body_ref: "PhysicsBody") -> None:
+        self._body_ref = body_ref
+
+    @property
+    def x(self) -> float:
+        if self._body_ref._body is None:
+            return 0.0
+        return self._body_ref._body.velocity.x
+
+    @x.setter
+    def x(self, value: float) -> None:
+        if self._body_ref._body is not None:
+            v = self._body_ref._body.velocity
+            self._body_ref._body.velocity = (float(value), v.y)
+
+    @property
+    def y(self) -> float:
+        if self._body_ref._body is None:
+            return 0.0
+        return self._body_ref._body.velocity.y
+
+    @y.setter
+    def y(self, value: float) -> None:
+        if self._body_ref._body is not None:
+            v = self._body_ref._body.velocity
+            self._body_ref._body.velocity = (v.x, float(value))
 
 
 class PhysicsBody:
-    """Компонент физического тела для спрайта.
-
-    Добавляет спрайту физические свойства: гравитацию, трение, отскок.
-
-    Attributes:
-        config (PhysicsConfig): Конфигурация физики.
-        velocity (Vector2): Текущая скорость.
-        acceleration (Vector2): Текущее ускорение.
-    """
+    """Обёртка над pymunk Body для спрайта. Позиция/скорость синхронизируются со спрайтом."""
 
     def __init__(
         self,
         sprite: pygame.sprite.Sprite,
         config: Optional[PhysicsConfig] = None,
+        *,
+        shape_kind: Any = "auto",
     ):
-        """Инициализирует физическое тело.
-
-        Args:
-            sprite: Спрайт для физики (pygame.sprite.Sprite).
-            config: Конфигурация физики. По умолчанию создаётся новая (PhysicsConfig, optional).
-        """
         self.sprite = sprite
         self.config = config or PhysicsConfig()
-        self.velocity = Vector2(0, 0)
-        self.acceleration = Vector2(0, 0)
-        self._forces: List[Vector2] = []
-        self._remainder_x = 0.0
-        self._remainder_y = 0.0
         self.enabled = True
-        self.on_collision: Optional[callable] = None
+        self.on_collision: Optional[Any] = None
         self.grounded = False
-        self._grounded_cooldown = 0.0
+        self._shape_kind = _shape_to_str(shape_kind)
+        self._body: Optional[pymunk.Body] = None
+        self._shapes: List[pymunk.Shape] = []
+        self._space: Optional[pymunk.Space] = None
+        self._last_rect_size: Optional[Tuple[int, int]] = None
+        self.acceleration = Vector2(0, 0)
+        self._last_scale: float = getattr(sprite, "scale", 1.0)
+        self._last_shape_kind: Optional[str] = None
 
-    def apply_force(self, force: Vector2) -> None:
-        """Прикладывает силу к телу.
+        self._build_body_and_shapes()
 
-        Args:
-            force: Вектор силы (Vector2).
-        """
-        self._forces.append(force)
+    def _effective_size(self) -> Tuple[float, float]:
+        r = self.sprite.rect
+        scale = getattr(self.sprite, "scale", 1.0)
+        return (max(1, r.width * scale), max(1, r.height * scale))
 
-    def apply_impulse(self, impulse: Vector2) -> None:
-        """Прикладывает мгновенный импульс.
+    def _effective_radius(self) -> float:
+        w, h = self._effective_size()
+        return min(w, h) / 2.0
 
-        Args:
-            impulse: Вектор импульса (Vector2).
-        """
-        self.velocity += impulse / self.config.mass
+    def _resolve_shape_kind(self) -> str:
+        shape_kind = self._shape_kind
+        if shape_kind == "auto":
+            sprite_shape = getattr(self.sprite, "sprite_shape", "rectangle")
+            if sprite_shape in ("circle", "ellipse"):
+                return "circle"
+            if sprite_shape == "line":
+                return "line"
+            return "box"
+        if shape_kind in ("circle", "ellipse"):
+            return "circle"
+        if shape_kind in ("line", "segment"):
+            return "line"
+        return "box"
 
-    def update(self, dt: float) -> None:
-        """Обновляет физику тела.
+    def _build_body_and_shapes(self) -> None:
+        space = getattr(self, "_space", None)
+        if self._body is not None and space is not None:
+            for sh in self._shapes:
+                try:
+                    space.remove(sh)
+                except Exception:
+                    pass
+            try:
+                space.remove(self._body)
+            except Exception:
+                pass
 
-        DYNAMIC: гравитация, силы, трение, интеграция скорости.
-        KINEMATIC: только интеграция позиции по velocity (без гравитации).
-        STATIC: не обновляется.
+        r = self.sprite.rect
+        cx, cy = r.centerx, r.centery
+        pt = _body_type_to_pymunk(self.config.body_type)
+        mass = self.config.mass if pt == pymunk.Body.DYNAMIC else 0
+        moment = 0
 
-        Args:
-            dt: Delta time в секундах (float).
-        """
-        if not self.enabled:
+        shape_kind = self._resolve_shape_kind()
+
+        w, h = self._effective_size()
+        hw, hh = w / 2.0, h / 2.0
+
+        if pt == pymunk.Body.DYNAMIC:
+            if shape_kind == "circle":
+                rad = self._effective_radius()
+                moment = pymunk.moment_for_circle(mass, 0, rad)
+            elif shape_kind == "line":
+                if w >= h:
+                    a, b = (-hw, 0), (hw, 0)
+                    radius = max(0.5, hh)
+                else:
+                    a, b = (0, -hh), (0, hh)
+                    radius = max(0.5, hw)
+                moment = pymunk.moment_for_segment(mass, a, b, radius)
+            else:
+                moment = pymunk.moment_for_box(mass, (w, h))
+
+        self._body = pymunk.Body(mass, moment, body_type=pt)
+        self._body.position = (float(cx), float(cy))
+        self._body._physics_body = self
+
+        if shape_kind == "circle":
+            rad = self._effective_radius()
+            shape = pymunk.Circle(self._body, rad)
+        elif shape_kind == "line":
+            if w >= h:
+                a, b = (-hw, 0), (hw, 0)
+                radius = max(0.5, hh)
+            else:
+                a, b = (0, -hh), (0, hh)
+                radius = max(0.5, hw)
+            shape = pymunk.Segment(self._body, a, b, radius)
+        else:
+            shape = pymunk.Poly.create_box(self._body, (w, h))
+
+        shape.friction = self.config.friction
+        shape.elasticity = self.config.bounce
+        if self.config.collision_category is not None and self.config.collision_mask is not None:
+            shape.filter = pymunk.ShapeFilter(
+                categories=self.config.collision_category,
+                mask=self.config.collision_mask,
+            )
+
+        self._shapes = [shape]
+        self._last_rect_size = (r.width, r.height)
+        self._last_scale = getattr(self.sprite, "scale", 1.0)
+        self._last_shape_kind = shape_kind
+
+    @property
+    def velocity(self) -> _VelocityProxy:
+        """Скорость: чтение/запись .x, .y или целиком (Vector2)."""
+        return _VelocityProxy(self)
+
+    @velocity.setter
+    def velocity(self, value: Vector2) -> None:
+        if self._body is not None:
+            self._body.velocity = (float(value.x), float(value.y))
+
+    @property
+    def position(self) -> Tuple[float, float]:
+        if self._body is None:
+            return (0.0, 0.0)
+        p = self._body.position
+        return (p.x, p.y)
+
+    @position.setter
+    def position(self, value: Tuple[float, float]) -> None:
+        if self._body is not None:
+            self._body.position = (float(value[0]), float(value[1]))
+
+    def sync_position_from_sprite(self, sprite: pygame.sprite.Sprite) -> None:
+        """Обновляет только позицию тела из спрайта (мгновенный телепорт)."""
+        if self._body is not None and hasattr(sprite, "rect"):
+            r = sprite.rect
+            self._body.position = (float(r.centerx), float(r.centery))
+
+    def refresh_from_sprite(self, sync_angle: bool = False) -> "PhysicsBody":
+        """Ручное обновление хитбокса из спрайта: позиция, размер, тип формы (при изменении — пересборка коллайдера).
+        Если sync_angle=True, угол тела задаётся из sprite.angle (коллайдер повернётся). Обратно угол в спрайт не пишется."""
+        self.sync_from_sprite(self.sprite)
+        if sync_angle and self._body is not None and hasattr(self.sprite, "angle"):
+            self._body.angle = math.radians(self.sprite.angle)
+        return self
+
+    def sync_from_sprite(self, sprite: pygame.sprite.Sprite) -> None:
+        """Полная синхронизация: для static — позиция из спрайта; size/scale, enabled. Поворот с физикой не синхронизируется.
+        Вызывается автоматически каждый кадр из мира; можно вызвать вручную для принудительного обновления хитбокса (см. refresh_from_sprite)."""
+        if self._body is None:
             return
+        r = sprite.rect
         if self.config.body_type == BodyType.STATIC:
-            return
-        if self.config.body_type == BodyType.KINEMATIC:
-            self.sprite.rect.centerx += int(self.velocity.x * dt)
-            self.sprite.rect.centery += int(self.velocity.y * dt)
-            return
+            self._body.position = (float(r.centerx), float(r.centery))
 
-        was_grounded = self.grounded
-        self.grounded = False
+        self.enabled = getattr(sprite, "visible", getattr(sprite, "active", True))
 
-        total_force = self.acceleration.copy()
-        for force in self._forces:
-            total_force += force
-        self._forces.clear()
+        scale = getattr(sprite, "scale", 1.0)
+        current_size = (r.width, r.height)
+        size_changed = self._last_rect_size != current_size or self._last_scale != scale
+        shape_changed = self._last_shape_kind != self._resolve_shape_kind()
 
-        self.velocity += total_force * dt
-
-        self.velocity.y += self.config.gravity * dt
-
-        friction_factor = self.config.friction ** dt
-        self.velocity *= friction_factor
-
-        self._remainder_x += self.velocity.x * dt
-        self._remainder_y += self.velocity.y * dt
-        move_x = int(self._remainder_x)
-        move_y = int(self._remainder_y)
-        self._remainder_x -= move_x
-        self._remainder_y -= move_y
-        self.sprite.rect.centerx += move_x
-        self.sprite.rect.centery += move_y
-
-        if was_grounded and self.velocity.y < 0 and self._grounded_cooldown <= 0:
-            self.grounded = True
-            self._grounded_cooldown = 0.1
-
-        if self._grounded_cooldown > 0:
-            self._grounded_cooldown -= dt
+        if size_changed or shape_changed:
+            self._last_rect_size = current_size
+            self._last_scale = scale
+            if self._space is not None:
+                for sh in self._shapes:
+                    try:
+                        self._space.remove(sh)
+                    except Exception:
+                        pass
+                try:
+                    self._space.remove(self._body)
+                except Exception:
+                    pass
+            self._build_body_and_shapes()
+            if self._space is not None:
+                self._space.add(self._body, *self._shapes)
 
     def set_velocity(self, x: float, y: float) -> "PhysicsBody":
-        """Устанавливает скорость.
-
-        Args:
-            x: Компонента скорости по X (float).
-            y: Компонента скорости по Y (float).
-
-        Returns:
-            PhysicsBody: self для цепочки вызовов.
-        """
-        self.velocity.x = x
-        self.velocity.y = y
+        if self._body is not None:
+            self._body.velocity = (float(x), float(y))
         return self
 
     def set_bounce(self, bounce: float) -> "PhysicsBody":
-        """Устанавливает коэффициент отскока.
-
-        Args:
-            bounce: Коэффициент отскока (>= 0). 1 = упругий, > 1 = усиление скорости при отскоке (float).
-
-        Returns:
-            PhysicsBody: self для цепочки вызовов.
-        """
         self.config.bounce = max(0.0, bounce)
+        for sh in self._shapes:
+            sh.elasticity = self.config.bounce
         return self
 
     def set_friction(self, friction: float) -> "PhysicsBody":
-        """Устанавливает коэффициент трения.
-
-        Args:
-            friction: Коэффициент трения 0–1 (float).
-
-        Returns:
-            PhysicsBody: self для цепочки вызовов.
-        """
         self.config.friction = max(0.0, min(1.0, friction))
+        for sh in self._shapes:
+            sh.friction = self.config.friction
         return self
+
+    def apply_force(self, force: Vector2) -> None:
+        if self._body is not None and self.config.body_type == BodyType.DYNAMIC:
+            self._body.apply_force_at_world_point((force.x, force.y), self._body.position)
+
+    def apply_impulse(self, impulse: Vector2) -> None:
+        if self._body is not None and self.config.body_type == BodyType.DYNAMIC:
+            self._body.apply_impulse_at_world_point((impulse.x, impulse.y), self._body.position)
 
     def stop(self) -> "PhysicsBody":
-        """Обнуляет скорость и очищает накопленные силы.
-
-        Returns:
-            PhysicsBody: self для цепочки вызовов.
-        """
-        self.velocity = Vector2(0, 0)
-        self._forces.clear()
+        if self._body is not None:
+            self._body.velocity = (0, 0)
         return self
 
 
-NEAR_GROUND_PX = 3
-"""Порог в пикселях: если низ спрайта в этом диапазоне над верхом статики — считаем grounded (устраняет джиттер)."""
+NEAR_GROUND_PX = 8
 
 
 class PhysicsWorld:
-    """Мир физики для управления всеми телами.
+    """Мир физики на pymunk. Управляет space, синхронизацией спрайт↔тело и ограничениями."""
 
-    Example:
-        >>> world = PhysicsWorld()
-        >>> world.add(body1)
-        >>> world.add(body2)
-        >>> spritePro.register_update_object(world)
-    """
-
-    def __init__(self, gravity: float = 980.0, substeps: int = 4):
-        """Инициализирует мир физики.
-
-        Args:
-            gravity: Гравитация по умолчанию, пиксели/с². По умолчанию 980 (float).
-            substeps: Число подшагов за кадр для уменьшения туннелирования. По умолчанию 4 (int).
-        """
+    def __init__(self, gravity: float = 980.0, substeps: int = 8):
+        self._space = pymunk.Space()
+        self._space.gravity = (0, gravity)
         self.gravity = gravity
         self.substeps = max(1, substeps)
+        self._space.iterations = 40
+        self._space.collision_slop = 0.001
+        self._space.collision_bias = 0.002
         self.bodies: List[PhysicsBody] = []
         self.static_bodies: List[PhysicsBody] = []
+        self._all_bodies: List[PhysicsBody] = []
         self.constraints: List[Any] = []
         self.bounds: Optional[pygame.Rect] = None
         self.collision_enabled = True
 
+        self._setup_collision_handler()
+
+    def _setup_collision_handler(self) -> None:
+        def post_solve(arbiter: pymunk.Arbiter, space: pymunk.Space, data: Any) -> None:
+            a, b = arbiter.shapes[0].body, arbiter.shapes[1].body
+            pa = getattr(a, "_physics_body", None)
+            pb = getattr(b, "_physics_body", None)
+            if pa is not None and pa.on_collision is not None and pb is not None:
+                pa.on_collision(pb)
+            if pb is not None and pb.on_collision is not None and pa is not None:
+                pb.on_collision(pa)
+
+        try:
+            h = self._space.add_default_collision_handler()
+            h.post_solve = post_solve
+        except AttributeError:
+            self._space.on_collision(None, None, post_solve=post_solve)
+
     def set_gravity(self, gravity: float) -> "PhysicsWorld":
-        """Устанавливает гравитацию мира (пиксели/с²).
-
-        Args:
-            gravity: Ускорение свободного падения по оси Y (float).
-
-        Returns:
-            PhysicsWorld: self для цепочки вызовов.
-        """
         self.gravity = gravity
+        self._space.gravity = (0, gravity)
         return self
 
     def add_constraint(self, constraint: Any) -> "PhysicsWorld":
-        """Добавляет ограничение (объект с методом update(dt)), вызывается после шага физики.
-
-        Args:
-            constraint: Объект с методом update(dt).
-
-        Returns:
-            PhysicsWorld: self для цепочки вызовов.
-        """
         if constraint not in self.constraints and hasattr(constraint, "update"):
             self.constraints.append(constraint)
         return self
 
     def remove_constraint(self, constraint: Any) -> "PhysicsWorld":
-        """Удаляет ограничение из мира.
-
-        Args:
-            constraint: Ограничение для удаления.
-
-        Returns:
-            PhysicsWorld: self для цепочки вызовов.
-        """
         if constraint in self.constraints:
             self.constraints.remove(constraint)
         return self
 
     def add(self, body: PhysicsBody) -> "PhysicsWorld":
-        """Добавляет тело в мир.
-
-        Args:
-            body: Тело для добавления (PhysicsBody).
-
-        Returns:
-            PhysicsWorld: self для цепочки вызовов.
-        """
-        if body not in self.bodies:
-            if body.config.body_type in (BodyType.STATIC, BodyType.KINEMATIC):
-                if body not in self.static_bodies:
-                    self.static_bodies.append(body)
-            else:
+        if body in self._all_bodies:
+            return self
+        body._space = self._space
+        if body.config.body_type in (BodyType.STATIC, BodyType.KINEMATIC):
+            if body not in self.static_bodies:
+                self.static_bodies.append(body)
+        else:
+            if body not in self.bodies:
                 self.bodies.append(body)
+        self._all_bodies.append(body)
+        if body._body is not None:
+            self._space.add(body._body, *body._shapes)
         return self
 
     def add_static(self, body: PhysicsBody) -> "PhysicsWorld":
-        """Добавляет статическое тело (стена, пол).
-
-        Args:
-            body: Статическое тело (PhysicsBody).
-
-        Returns:
-            PhysicsWorld: self для цепочки вызовов.
-        """
         body.config.body_type = BodyType.STATIC
-        if body not in self.static_bodies:
-            self.static_bodies.append(body)
-        return self
+        return self.add(body)
 
     def add_kinematic(self, body: PhysicsBody) -> "PhysicsWorld":
-        """Добавляет кинематическое тело (движущаяся платформа).
-
-        Args:
-            body: Кинематическое тело (PhysicsBody).
-
-        Returns:
-            PhysicsWorld: self для цепочки вызовов.
-        """
         body.config.body_type = BodyType.KINEMATIC
-        if body not in self.static_bodies:
-            self.static_bodies.append(body)
-        return self
+        return self.add(body)
 
     def remove(self, body: PhysicsBody) -> "PhysicsWorld":
-        """Удаляет тело из мира.
-
-        Args:
-            body: Тело для удаления (PhysicsBody).
-
-        Returns:
-            PhysicsWorld: self для цепочки вызовов.
-        """
+        if body not in self._all_bodies:
+            return self
+        if body._body is not None:
+            for sh in body._shapes:
+                try:
+                    self._space.remove(sh)
+                except Exception:
+                    pass
+            try:
+                self._space.remove(body._body)
+            except Exception:
+                pass
+        body._space = None
         if body in self.bodies:
             self.bodies.remove(body)
         if body in self.static_bodies:
             self.static_bodies.remove(body)
+        self._all_bodies.remove(body)
         return self
 
     def set_bounds(self, rect: pygame.Rect) -> "PhysicsWorld":
-        """Устанавливает границы мира для коллизий.
-
-        Args:
-            rect: Границы мира (pygame.Rect).
-
-        Returns:
-            PhysicsWorld: self для цепочки вызовов.
-        """
         self.bounds = rect
         return self
 
+    def _update_grounded(self, body: PhysicsBody) -> None:
+        if body.config.body_type != BodyType.DYNAMIC or body._body is None:
+            return
+        body.grounded = False
+        pos = body._body.position
+        r = body.sprite.rect
+        half_h = r.height / 2.0
+        start = (pos.x, pos.y + half_h)
+        end = (pos.x, pos.y + half_h + NEAR_GROUND_PX)
+        query = self._space.segment_query(start, end, 1, pymunk.ShapeFilter())
+        for hit in query:
+            if hit.shape.body is not body._body:
+                body.grounded = True
+                break
+
     def update(self, dt: Optional[float] = None) -> None:
-        """Обновляет все тела (с подшагами для снижения туннелирования).
-
-        Сначала обновляются кинематические тела (движущиеся платформы),
-        затем динамические с подшагами и разрешением коллизий.
-
-        Args:
-            dt: Delta time в секундах. Если None, берётся из spritePro.dt (Optional[float]).
-        """
         if dt is None:
-            dt = getattr(spritePro, "dt", 1/60) or 1/60
+            dt = getattr(spritePro, "dt", 1 / 60) or 1 / 60
+
+        for body in self._all_bodies:
+            if not body.enabled:
+                continue
+            body.sync_from_sprite(body.sprite)
+
+        step_dt = dt / self.substeps
+        for _ in range(self.substeps):
+            self._space.step(step_dt)
+
+        for body in self.bodies:
+            if not body.enabled or body._body is None:
+                continue
+            b = body._body
+            body.sprite.rect.center = (int(b.position.x), int(b.position.y))
+            self._update_grounded(body)
 
         for body in self.static_bodies:
-            if body.enabled and body.config.body_type == BodyType.KINEMATIC:
-                body.update(dt)
+            if not body.enabled or body.config.body_type != BodyType.KINEMATIC:
+                continue
+            if body._body is None:
+                continue
+            b = body._body
+            body.sprite.rect.center = (int(b.position.x), int(b.position.y))
 
-        step = dt / self.substeps
-        for body in self.bodies:
-            body.config.gravity = self.gravity
-            for _ in range(self.substeps):
-                body.update(step)
-                if self.collision_enabled:
-                    self._resolve_collisions(body)
-                if self.bounds:
-                    self._resolve_bounds(body)
+        if self.bounds is not None:
+            for body in self.bodies:
+                if not body.enabled:
+                    continue
+                self._resolve_bounds(body)
+
         for constraint in self.constraints:
             if hasattr(constraint, "update"):
                 constraint.update(dt)
 
-    def _resolve_collisions(self, body: PhysicsBody) -> None:
-        """Разрешает одну коллизию с наибольшим проникновением (устраняет залипание и дёргание)."""
-        sprite = body.sprite
-        sprite_rect = sprite.rect
-
-        best_static = None
-        best_min_overlap = -1
-
-        for static in self.static_bodies:
-            static_rect = static.sprite.rect
-            if not sprite_rect.colliderect(static_rect):
-                continue
-            overlap_left = sprite_rect.right - static_rect.left
-            overlap_right = static_rect.right - sprite_rect.left
-            overlap_top = sprite_rect.bottom - static_rect.top
-            overlap_bottom = static_rect.bottom - sprite_rect.top
-            min_overlap_x = min(overlap_left, overlap_right)
-            min_overlap_y = min(overlap_top, overlap_bottom)
-            min_overlap = min(min_overlap_x, min_overlap_y)
-            if min_overlap > best_min_overlap:
-                best_min_overlap = min_overlap
-                best_static = (static, overlap_left, overlap_right, overlap_top, overlap_bottom)
-
-        if best_static is not None:
-            static, overlap_left, overlap_right, overlap_top, overlap_bottom = best_static
-            self._resolve_one_static(body, static, overlap_left, overlap_right, overlap_top, overlap_bottom)
-            self._apply_near_ground(body)
-            return
-
-        self._resolve_dynamic_collision(body)
-        self._apply_near_ground(body)
-
-    def _resolve_one_static(
-        self,
-        body: PhysicsBody,
-        static: PhysicsBody,
-        overlap_left: int,
-        overlap_right: int,
-        overlap_top: int,
-        overlap_bottom: int,
-    ) -> None:
-        """Разрешает коллизию тела с одним статическим объектом."""
-        sprite_rect = body.sprite.rect
-        static_rect = static.sprite.rect
-        min_overlap_x = min(overlap_left, overlap_right)
-        min_overlap_y = min(overlap_top, overlap_bottom)
-
-        if min_overlap_x < min_overlap_y:
-            if overlap_left < overlap_right:
-                sprite_rect.right = static_rect.left
-            else:
-                sprite_rect.left = static_rect.right
-            body.velocity.x = -body.velocity.x * body.config.bounce
-        else:
-            if overlap_top < overlap_bottom:
-                sprite_rect.bottom = static_rect.top
-                if body.velocity.y > 0:
-                    body.velocity.y = -body.velocity.y * body.config.bounce
-                body.grounded = True
-            else:
-                sprite_rect.top = static_rect.bottom
-                body.velocity.y = -body.velocity.y * body.config.bounce
-
-        if body.on_collision:
-            body.on_collision(static)
-
-    def _resolve_dynamic_collision(self, body: PhysicsBody) -> None:
-        """Разрешает одну коллизию с другим динамическим телом (толкание, отскок)."""
-        sprite_rect = body.sprite.rect
-        best_other = None
-        best_min_overlap = -1
-        best_overlaps = None
-
-        for other in self.bodies:
-            if other is body or not other.enabled:
-                continue
-            other_rect = other.sprite.rect
-            if not sprite_rect.colliderect(other_rect):
-                continue
-            overlap_left = sprite_rect.right - other_rect.left
-            overlap_right = other_rect.right - sprite_rect.left
-            overlap_top = sprite_rect.bottom - other_rect.top
-            overlap_bottom = other_rect.bottom - sprite_rect.top
-            min_overlap_x = min(overlap_left, overlap_right)
-            min_overlap_y = min(overlap_top, overlap_bottom)
-            min_overlap = min(min_overlap_x, min_overlap_y)
-            if min_overlap > best_min_overlap:
-                best_min_overlap = min_overlap
-                best_other = other
-                best_overlaps = (overlap_left, overlap_right, overlap_top, overlap_bottom)
-
-        if best_other is None or best_overlaps is None:
-            return
-
-        other = best_other
-        overlap_left, overlap_right, overlap_top, overlap_bottom = best_overlaps
-        other_rect = other.sprite.rect
-        min_overlap_x = min(overlap_left, overlap_right)
-        min_overlap_y = min(overlap_top, overlap_bottom)
-
-        mA = body.config.mass
-        mB = other.config.mass
-        total_mass = mA + mB
-        bounce_avg = (body.config.bounce + other.config.bounce) * 0.5
-
-        if min_overlap_x < min_overlap_y:
-            sep_body = min_overlap_x * (mB / total_mass)
-            sep_other = min_overlap_x * (mA / total_mass)
-            move_body = max(1, int(round(sep_body)))
-            move_other = min_overlap_x - move_body
-            if move_other < 1:
-                move_other = 1
-                move_body = min_overlap_x - 1
-            if overlap_left < overlap_right:
-                body.sprite.rect.x -= move_body
-                other.sprite.rect.x += move_other
-                nx, ny = 1.0, 0.0
-            else:
-                body.sprite.rect.x += move_body
-                other.sprite.rect.x -= move_other
-                nx, ny = -1.0, 0.0
-        else:
-            sep_body = min_overlap_y * (mB / total_mass)
-            sep_other = min_overlap_y * (mA / total_mass)
-            move_body = max(1, int(round(sep_body)))
-            move_other = min_overlap_y - move_body
-            if move_other < 1:
-                move_other = 1
-                move_body = min_overlap_y - 1
-            if overlap_top < overlap_bottom:
-                body.sprite.rect.y -= move_body
-                other.sprite.rect.y += move_other
-                nx, ny = 0.0, 1.0
-            else:
-                body.sprite.rect.y += move_body
-                other.sprite.rect.y -= move_other
-                nx, ny = 0.0, -1.0
-
-        vA = body.velocity
-        vB = other.velocity
-        v_rel = (vA.x - vB.x) * nx + (vA.y - vB.y) * ny
-        if v_rel >= 0:
-            return
-        j = -(1.0 + bounce_avg) * v_rel / (1.0 / mA + 1.0 / mB)
-        body.velocity.x = vA.x + j / mA * nx
-        body.velocity.y = vA.y + j / mA * ny
-        other.velocity.x = vB.x - j / mB * nx
-        other.velocity.y = vB.y - j / mB * ny
-
-        if body.on_collision:
-            body.on_collision(other)
-        self._apply_near_ground(body)
-
-    def _apply_near_ground(self, body: PhysicsBody) -> None:
-        """Если низ тела близко к верху статики по горизонтали — считаем grounded (устраняет джиттер)."""
-        if body.config.body_type != BodyType.DYNAMIC:
-            return
-        sprite_rect = body.sprite.rect
-        for static in self.static_bodies:
-            static_rect = static.sprite.rect
-            if sprite_rect.right <= static_rect.left or sprite_rect.left >= static_rect.right:
-                continue
-            gap = sprite_rect.bottom - static_rect.top
-            if 0 <= gap <= NEAR_GROUND_PX and body.velocity.y >= 0:
-                body.grounded = True
-                sprite_rect.bottom = static_rect.top
-                break
-
     def _resolve_bounds(self, body: PhysicsBody) -> None:
-        """Разрешает коллизию с границами мира."""
         sprite = body.sprite
         bounds = self.bounds
-
-        if not hasattr(sprite, "rect"):
+        if not hasattr(sprite, "rect") or body._body is None:
             return
-
-        if sprite.rect.left < bounds.left:
-            sprite.rect.left = bounds.left
-            body.velocity.x = -body.velocity.x * body.config.bounce
-
-        if sprite.rect.right > bounds.right:
-            sprite.rect.right = bounds.right
-            body.velocity.x = -body.velocity.x * body.config.bounce
-
-        if sprite.rect.top < bounds.top:
-            sprite.rect.top = bounds.top
-            body.velocity.y = -body.velocity.y * body.config.bounce
+        r = sprite.rect
+        b = body._body
+        vx, vy = b.velocity.x, b.velocity.y
+        px, py = b.position.x, b.position.y
+        changed = False
+        if r.left < bounds.left:
+            px = bounds.left + r.width / 2.0
+            vx = -vx * body.config.bounce
+            changed = True
+        if r.right > bounds.right:
+            px = bounds.right - r.width / 2.0
+            vx = -vx * body.config.bounce
+            changed = True
+        if r.top < bounds.top:
+            py = bounds.top + r.height / 2.0
+            vy = -vy * body.config.bounce
+            changed = True
+        if r.bottom > bounds.bottom:
+            py = bounds.bottom - r.height / 2.0
+            vy = -vy * body.config.bounce
             body.grounded = True
-
-        if sprite.rect.bottom > bounds.bottom:
-            sprite.rect.bottom = bounds.bottom
-            body.velocity.y = -body.velocity.y * body.config.bounce
-            body.grounded = True
+            changed = True
+        if changed:
+            body._body.position = (px, py)
+            body._body.velocity = (vx, vy)
+            sprite.rect.center = (int(px), int(py))
 
 
 def add_physics(
     sprite: pygame.sprite.Sprite,
     config: Optional[PhysicsConfig] = None,
     *,
+    shape: Any = PhysicsShape.AUTO,
     auto_add: bool = True,
 ) -> PhysicsBody:
-    """Добавляет физическое тело к спрайту.
+    """Добавляет физическое тело к спрайту (pymunk).
 
-    При auto_add=True (по умолчанию) тело автоматически добавляется в глобальный
-    мир (s.physics), вызывать s.physics.add(body) вручную не нужно.
-
-    Args:
-        sprite: Спрайт (pygame.sprite.Sprite).
-        config: Конфигурация физики. По умолчанию DYNAMIC с массой 1 (PhysicsConfig, optional).
-        auto_add: Если True, добавить тело в глобальный мир физики (bool).
-
-    Returns:
-        PhysicsBody: Созданное тело (уже в мире при auto_add=True).
+    shape: PhysicsShape или строка: AUTO, BOX, CIRCLE, LINE/SEGMENT.
     """
-    body = PhysicsBody(sprite, config)
+    if getattr(sprite, "screen_space", False):
+        try:
+            spritePro.debug_log_warning(
+                "Physics on screen_space sprite may behave unexpectedly (world vs screen coords)."
+            )
+        except Exception:
+            pass
+    body = PhysicsBody(sprite, config, shape_kind=shape)
     if not hasattr(sprite, "_physics_bodies"):
         sprite._physics_bodies = []
     sprite._physics_bodies.append(body)
@@ -593,22 +553,15 @@ def add_physics(
 
 def add_static_physics(
     sprite: pygame.sprite.Sprite,
+    config: Optional[PhysicsConfig] = None,
     *,
+    shape: Any = PhysicsShape.AUTO,
     auto_add: bool = True,
 ) -> PhysicsBody:
-    """Добавляет статическое физическое тело (стена, пол).
-
-    При auto_add=True тело автоматически добавляется в глобальный мир (s.physics).
-
-    Args:
-        sprite: Спрайт стены/пола (pygame.sprite.Sprite).
-        auto_add: Если True, добавить тело в глобальный мир физики (bool).
-
-    Returns:
-        PhysicsBody: Созданное статическое тело.
-    """
-    config = PhysicsConfig(body_type=BodyType.STATIC)
-    body = add_physics(sprite, config, auto_add=False)
+    """Добавляет статическое физическое тело."""
+    config = config or PhysicsConfig()
+    config.body_type = BodyType.STATIC
+    body = add_physics(sprite, config, shape=shape, auto_add=False)
     if auto_add:
         _get_physics_world().add_static(body)
     return body
@@ -616,39 +569,22 @@ def add_static_physics(
 
 def add_kinematic_physics(
     sprite: pygame.sprite.Sprite,
+    config: Optional[PhysicsConfig] = None,
     *,
+    shape: Any = PhysicsShape.AUTO,
     auto_add: bool = True,
 ) -> PhysicsBody:
-    """Добавляет кинематическое тело (движущаяся платформа).
-
-    Позиция обновляется миром по velocity каждый кадр; гравитация не применяется.
-    Управление: задавать body.velocity, world.update() сдвинет спрайт.
-
-    При auto_add=True тело автоматически добавляется в глобальный мир (s.physics).
-
-    Args:
-        sprite: Спрайт платформы (pygame.sprite.Sprite).
-        auto_add: Если True, добавить тело в глобальный мир физики (bool).
-
-    Returns:
-        PhysicsBody: Созданное кинематическое тело.
-    """
-    config = PhysicsConfig(body_type=BodyType.KINEMATIC)
-    body = add_physics(sprite, config, auto_add=False)
+    """Добавляет кинематическое тело (движение по velocity)."""
+    config = config or PhysicsConfig()
+    config.body_type = BodyType.KINEMATIC
+    body = add_physics(sprite, config, shape=shape, auto_add=False)
     if auto_add:
         _get_physics_world().add_kinematic(body)
     return body
 
 
 def get_physics(sprite: pygame.sprite.Sprite) -> Optional[PhysicsBody]:
-    """Получает физическое тело спрайта.
-
-    Args:
-        sprite: Спрайт (pygame.sprite.Sprite).
-
-    Returns:
-        Optional[PhysicsBody]: Первое тело спрайта или None.
-    """
+    """Возвращает первое физическое тело спрайта или None."""
     bodies = getattr(sprite, "_physics_bodies", None)
     if bodies:
         return bodies[0]

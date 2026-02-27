@@ -4,7 +4,7 @@ SpritePro — высокоуровневый фреймворк для 2D-игр
 Основные подсистемы:
 - Спрайты и UI: Sprite, Button, ToggleButton, Slider, TextInput, TextSprite, Bar, Layout.
 - Анимация: Animation (покадровая), Tween и TweenManager (плавные переходы), Fluent API (DoMove, DoScale, ...).
-- Физика: PhysicsWorld, PhysicsBody, PhysicsConfig, add_physics, add_static_physics, add_kinematic_physics.
+- Физика: PhysicsWorld, PhysicsBody, PhysicsConfig, PhysicsShape, add_physics, add_static_physics, add_kinematic_physics.
 - Частицы: ParticleEmitter, ParticleConfig, шаблоны (template_sparks, template_fire, ...).
 - Builder: sp.sprite(path).position(...).scale(...).crop(...).border_radius(...).mask(...).build(), sp.particles().
 - Игровой цикл: get_screen(), update(), сцены (Scene, SceneManager), таймеры (Timer).
@@ -139,6 +139,7 @@ from .physics import (
     PhysicsBody,
     PhysicsWorld,
     PhysicsConfig,
+    PhysicsShape,
     add_physics as _add_physics,
     add_static_physics as _add_static_physics,
     add_kinematic_physics as _add_kinematic_physics,
@@ -146,50 +147,73 @@ from .physics import (
 )
 
 
-def add_physics(sprite, config=None, *, auto_add: bool = True):
+def add_physics(
+    sprite,
+    config=None,
+    *,
+    shape: PhysicsShape | str = PhysicsShape.AUTO,
+    auto_add: bool = True,
+):
     """Добавляет физическое тело к спрайту.
 
     Args:
         sprite: Спрайт для физики.
         config: Конфигурация тела (PhysicsConfig, optional).
+        shape: Форма коллайдера: PhysicsShape.AUTO, BOX, CIRCLE, LINE (или строка).
         auto_add: Если True, тело автоматически добавляется в глобальный мир физики.
 
     Returns:
         PhysicsBody: Созданное физическое тело.
     """
-    body = _add_physics(sprite, config, auto_add=False)
+    body = _add_physics(sprite, config, shape=shape, auto_add=False)
     if auto_add:
         get_physics_world().add(body)
     return body
 
 
-def add_static_physics(sprite, *, auto_add: bool = True):
+def add_static_physics(
+    sprite,
+    config: PhysicsConfig | None = None,
+    *,
+    shape: PhysicsShape | str = PhysicsShape.AUTO,
+    auto_add: bool = True,
+):
     """Добавляет статическое физическое тело.
 
     Args:
         sprite: Спрайт стены/пола.
+        config: Конфигурация тела (PhysicsConfig, optional).
+        shape: Форма коллайдера: PhysicsShape.AUTO, BOX, CIRCLE, LINE (или строка).
         auto_add: Если True, тело автоматически добавляется в глобальный мир физики.
 
     Returns:
         PhysicsBody: Созданное статическое тело.
     """
-    body = _add_static_physics(sprite, auto_add=False)
+    body = _add_static_physics(sprite, config=config, shape=shape, auto_add=False)
     if auto_add:
         get_physics_world().add_static(body)
     return body
 
 
-def add_kinematic_physics(sprite, *, auto_add: bool = True):
+def add_kinematic_physics(
+    sprite,
+    config: PhysicsConfig | None = None,
+    *,
+    shape: PhysicsShape | str = PhysicsShape.AUTO,
+    auto_add: bool = True,
+):
     """Добавляет кинематическое физическое тело.
 
     Args:
         sprite: Спрайт движущейся платформы.
+        config: Конфигурация тела (PhysicsConfig, optional).
+        shape: Форма коллайдера: PhysicsShape.AUTO, BOX, CIRCLE, LINE (или строка).
         auto_add: Если True, тело автоматически добавляется в глобальный мир физики.
 
     Returns:
         PhysicsBody: Созданное кинематическое тело.
     """
-    body = _add_kinematic_physics(sprite, auto_add=False)
+    body = _add_kinematic_physics(sprite, config=config, shape=shape, auto_add=False)
     if auto_add:
         get_physics_world().add_kinematic(body)
     return body
@@ -303,6 +327,7 @@ __all__ = [
     "TweenError",
     "ConfigurationError",
     "PhysicsError",
+    "PhysicsShape",
     "NetworkError",
     "AudioError",
     "ValidationError",

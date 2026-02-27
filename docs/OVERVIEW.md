@@ -57,12 +57,12 @@ from spritePro.layout import (
 
 ## Физика
 
-Модуль **spritePro.physics**: мир тел (PhysicsWorld), динамические/статические/кинематические тела, гравитация, трение, отскок, коллизии AABB.
+Модуль **spritePro.physics** построен на **pymunk**: мир тел (PhysicsWorld), динамические/статические/кинематические тела, гравитация, трение, отскок, коллизии. Формы коллайдеров задаются через **PhysicsShape** (AUTO, BOX, CIRCLE, LINE) или строки; поворот спрайта с физикой не синхронизируется (обновляется только позиция).
 
-- **s.physics** — прокси к глобальному миру. **s.add_physics**, **s.add_static_physics**, **s.add_kinematic_physics**, **s.PhysicsConfig** — создание тел через главный модуль; по умолчанию тело автоматически добавляется в мир (`auto_add=True`). Использование через `s.` гарантирует работу с тем же миром, что обновляется в `s.update()`.
-- **PhysicsConfig** — mass, gravity, friction, bounce.
+- **s.physics** — прокси к глобальному миру. **s.add_physics**, **s.add_static_physics**, **s.add_kinematic_physics**, **s.PhysicsConfig**, **s.PhysicsShape** — создание тел; по умолчанию тело автоматически добавляется в мир (`auto_add=True`). Использование через `s.` гарантирует работу с тем же миром, что обновляется в `s.update()`.
+- **PhysicsConfig** — mass, gravity, friction, bounce; опционально collision_category, collision_mask.
 - **on_collision** — колбэк при столкновении.
-- **s.physics.set_bounds(rect)** — границы экрана с отскоком. При загрузке сцены через `spawn_scene` типы физики из редактора применяются к глобальному миру.
+- **s.physics.set_bounds(rect)** — границы экрана с отскоком. При загрузке сцены через `spawn_scene` типы физики и настройки (mass, friction, bounce, маски) из редактора применяются к глобальному миру.
 
 Демо: `physics_demo.py`, `hoop_bounce_demo.py`, `ping_pong`. Подробнее: [physics.md](physics.md).
 

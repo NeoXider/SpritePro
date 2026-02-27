@@ -286,12 +286,29 @@ def spawn_scene(
             if ptype == "none":
                 continue
             sprite = so.sprite
+            mass = getattr(obj, "physics_mass", 1.0)
+            friction = getattr(obj, "physics_friction", 0.98)
+            bounce = getattr(obj, "physics_bounce", 0.5)
+            cat = getattr(obj, "physics_collision_category", None)
+            mask = getattr(obj, "physics_collision_mask", None)
+            config = PhysicsConfig(
+                mass=float(mass),
+                friction=float(friction),
+                bounce=float(bounce),
+                collision_category=cat,
+                collision_mask=mask,
+            )
             if ptype == st.PHYSICS_STATIC:
-                add_static_physics(sprite, auto_add=True)
+                config.body_type = BodyType.STATIC
+                body = add_physics(sprite, config, auto_add=False)
+                world.add_static(body)
             elif ptype == st.PHYSICS_KINEMATIC:
-                add_kinematic_physics(sprite, auto_add=True)
+                config.body_type = BodyType.KINEMATIC
+                body = add_physics(sprite, config, auto_add=False)
+                world.add_kinematic(body)
             elif ptype == st.PHYSICS_DYNAMIC:
-                add_physics(sprite, PhysicsConfig(body_type=BodyType.DYNAMIC), auto_add=True)
+                config.body_type = BodyType.DYNAMIC
+                add_physics(sprite, config, auto_add=True)
         physics_world = world
     else:
         physics_world = None

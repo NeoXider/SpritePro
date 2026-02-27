@@ -274,6 +274,13 @@ def render(editor) -> None:
     y = _render_dropdown_row(
         editor, x, y, "Physics", physics_type, "physics_type", labels=sprite_types.PHYSICS_LABELS
     )
+    if physics_type != "none":
+        mass = getattr(obj, "physics_mass", 1.0)
+        friction = getattr(obj, "physics_friction", 0.98)
+        bounce = getattr(obj, "physics_bounce", 0.5)
+        y = _render_numeric_property_row(editor, x, y, "Mass", float(mass), -0.5, 0.5, "physics_mass", "{:.2f}")
+        y = _render_numeric_property_row(editor, x, y, "Friction", float(friction), -0.05, 0.05, "physics_friction", "{:.2f}")
+        y = _render_numeric_property_row(editor, x, y, "Bounce", float(bounce), -0.1, 0.1, "physics_bounce", "{:.2f}")
     y += 8
     y = _render_toggle_property_row(editor, x, y, "Visible", obj.visible, "visible")
     y = _render_toggle_property_row(editor, x, y, "Locked", obj.locked, "locked")

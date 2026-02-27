@@ -5,6 +5,23 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0]
+
+### Added
+- **Физика на pymunk** — реализация модуля физики переведена на библиотеку pymunk (2D-движок Chipmunk). Формы коллайдеров: прямоугольник по `sprite.rect`, круг, линия (segment); задаются через **PhysicsShape** (AUTO, BOX, CIRCLE, LINE) или строки.
+- **PhysicsConfig**: опциональные поля `collision_category` и `collision_mask` для фильтра коллизий; по умолчанию тело сталкивается со всеми.
+- **Редактор сцен**: для объектов с типом физики (Static/Kinematic/Dynamic) в Inspector доступны Mass, Friction, Bounce и при необходимости Category/Mask; значения сохраняются в JSON и подставляются в PhysicsConfig при загрузке сцены.
+
+### Changed
+- Версия библиотеки 2.2.0. Обратная совместимость API сохранена: `add_physics`, `add_static_physics`, `add_kinematic_physics`, `PhysicsConfig`, `PhysicsBody` (velocity, position, grounded, apply_impulse, set_velocity, set_bounds, add_constraint и т.д.) работают как раньше.
+- Синхронизация спрайт↔тело: при любом изменении позиции спрайта привязанное тело сразу телепортируется; для static позиция берётся из спрайта каждый кадр, для dynamic/kinematic спрайт следует за телом после шага физики. **Поворот с физикой не синхронизируется** — в спрайт записывается только позиция (`rect.center`), угол из тела в спрайт не переносится (избегается рост rect при повороте).
+- Документация: [docs/physics.md](docs/physics.md) переписана под pymunk (PhysicsShape, формы, отсутствие синхронизации поворота); [docs/physics_issues.md](docs/physics_issues.md), [docs/sprite_editor.md](docs/sprite_editor.md) и [docs/OVERVIEW.md](docs/OVERVIEW.md) обновлены.
+
+### Dependencies
+- Добавлена зависимость `pymunk>=6.0.0` (поддерживаются pymunk 6 и 7).
+
+---
+
 ## [2.0.0]
 
 ### Added

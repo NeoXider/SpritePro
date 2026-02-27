@@ -57,9 +57,9 @@ class HoopConstraint:
             n = d / dist
             v = self.ball_body.velocity
             v_dot_n = v.x * n.x + v.y * n.y
-            self.ball_body.velocity.x = v.x - 2 * v_dot_n * n.x
-            self.ball_body.velocity.y = v.y - 2 * v_dot_n * n.y
+            self.ball_body.velocity = Vector2(v.x - 2 * v_dot_n * n.x, v.y - 2 * v_dot_n * n.y)
             new_center = self.hoop_center + n * max_dist
+            self.ball_body.position = (new_center.x, new_center.y)
             ball.rect.center = (int(new_center.x), int(new_center.y))
             self.color_index = (self.color_index + 1) % len(self.colors)
             ball.set_circle_shape(radius=int(self.ball_radius), color=self.colors[self.color_index])
@@ -68,8 +68,7 @@ class HoopConstraint:
         speed = (v.x * v.x + v.y * v.y) ** 0.5
         if speed > MAX_SPEED and speed > 0:
             scale = MAX_SPEED / speed
-            self.ball_body.velocity.x = v.x * scale
-            self.ball_body.velocity.y = v.y * scale
+            self.ball_body.velocity = Vector2(v.x * scale, v.y * scale)
 
 
 def run_demo():
@@ -96,7 +95,7 @@ def run_demo():
 
     s.physics.set_gravity(400.0)
     config = s.PhysicsConfig(mass=1.0, friction=1.0, bounce=3.0)
-    ball_body = s.add_physics(ball, config)
+    ball_body = s.add_physics(ball, config, shape=s.PhysicsShape.CIRCLE)
     ball_body.set_velocity(50, -80)
 
     inner_radius = hoop_radius - ring_width
@@ -115,7 +114,7 @@ def run_demo():
         s.update(fill_color=(25, 25, 35))
 
         if s.input.was_pressed(pygame.K_r):
-            ball.rect.center = center
+            ball.position = center
             ball_body.set_velocity(200, -80)
             constraint.color_index = 0
             ball.set_circle_shape(radius=ball_radius, color=BOUNCE_COLORS[0])

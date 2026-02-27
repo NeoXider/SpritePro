@@ -47,6 +47,11 @@ class SceneObject:
     visible: bool = True
     locked: bool = False
     physics_type: str = "none"
+    physics_mass: float = 1.0
+    physics_friction: float = 0.98
+    physics_bounce: float = 0.5
+    physics_collision_category: Optional[int] = None
+    physics_collision_mask: Optional[int] = None
     custom_data: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -62,6 +67,11 @@ class SceneObject:
             "visible": self.visible,
             "locked": self.locked,
             "physics_type": self.physics_type,
+            "physics_mass": self.physics_mass,
+            "physics_friction": self.physics_friction,
+            "physics_bounce": self.physics_bounce,
+            "physics_collision_category": self.physics_collision_category,
+            "physics_collision_mask": self.physics_collision_mask,
             "custom_data": self.custom_data,
         }
 
@@ -84,6 +94,11 @@ class SceneObject:
             visible=data.get("visible", True),
             locked=data.get("locked", False),
             physics_type=data.get("physics_type", "none"),
+            physics_mass=float(data.get("physics_mass", 1.0)),
+            physics_friction=float(data.get("physics_friction", 0.98)),
+            physics_bounce=float(data.get("physics_bounce", 0.5)),
+            physics_collision_category=data.get("physics_collision_category"),
+            physics_collision_mask=data.get("physics_collision_mask"),
             custom_data=data.get("custom_data", {}),
         )
 
@@ -99,6 +114,11 @@ class SceneObject:
             visible=self.visible,
             locked=self.locked,
             physics_type=self.physics_type,
+            physics_mass=self.physics_mass,
+            physics_friction=self.physics_friction,
+            physics_bounce=self.physics_bounce,
+            physics_collision_category=self.physics_collision_category,
+            physics_collision_mask=self.physics_collision_mask,
             custom_data=self.custom_data.copy(),
         )
 

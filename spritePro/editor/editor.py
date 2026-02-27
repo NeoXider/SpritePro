@@ -952,6 +952,15 @@ class SpriteEditor:
                 c = getattr(obj, "sprite_color", (255, 255, 255))
                 obj.sprite_color = (c[0], c[1], max(0, min(255, int(c[2] + delta))))
                 changed = True
+            elif prop == "physics_mass":
+                obj.physics_mass = max(0.01, obj.physics_mass + delta)
+                changed = True
+            elif prop == "physics_friction":
+                obj.physics_friction = max(0.0, min(1.0, obj.physics_friction + delta))
+                changed = True
+            elif prop == "physics_bounce":
+                obj.physics_bounce = max(0.0, obj.physics_bounce + delta)
+                changed = True
         if changed:
             self.scene._sort_by_z_index()
             self._save_state()

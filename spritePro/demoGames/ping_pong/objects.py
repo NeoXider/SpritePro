@@ -33,7 +33,7 @@ class Ball(s.Sprite):
         self.bounced = False
         self.paddles = []
         config = s.PhysicsConfig(mass=1.0, gravity=0.0, bounce=1.0, friction=1.0)
-        self._body = s.add_physics(self, config)
+        self._body = s.add_physics(self, config, shape=s.PhysicsShape.CIRCLE)
         self._trail_config = s.template_trail()
         self._trail_emitter = s.ParticleEmitter(self._trail_config)
         self._trail_emitter.set_parent(self)

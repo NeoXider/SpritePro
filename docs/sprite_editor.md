@@ -477,7 +477,7 @@ toggle = rt.exact("toggle").to_toggle(text_on="ON", text_off="OFF", on_toggle=my
 
 Алиасы: `to_button` = `Button()`, `to_text_sprite` = `TextSprite()`, `to_toggle` = `Toggle()`.
 
-**Физика:** если в Inspector у объекта выставлен тип физики (Physics: None / Static / Kinematic / Dynamic), при загрузке сцены через `spawn_scene` таким объектам автоматически создаётся тело и они добавляются в глобальный мир `s.physics`. Отдельно вызывать `s.physics.add(...)` не нужно. Подробнее: [physics.md](physics.md).
+**Физика:** если в Inspector у объекта выставлен тип физики (Physics: None / Static / Kinematic / Dynamic), при загрузке сцены через `spawn_scene` таким объектам автоматически создаётся тело и они добавляются в глобальный мир `s.physics`. Отдельно вызывать `s.physics.add(...)` не нужно. Для объектов с физикой в Inspector доступны поля: **Mass**, **Friction**, **Bounce**; опционально — **Collision Category** и **Collision Mask** (битовые маски; по умолчанию не заданы — тело сталкивается со всеми). Эти значения сохраняются в JSON сцены и передаются в `PhysicsConfig` при спавне. Угол поворота (Rotation) в редакторе задаёт только визуальный поворот спрайта при загрузке; с физикой поворот не синхронизируется (коллайдеры остаются без поворота). Подробнее: [physics.md](physics.md).
 
 Полные примеры: `spritePro/demoGames/editor_scene_runtime_demo.py`, **Scenes Demo (editor)** — `spritePro/demoGames/scenes_demo editor.py` (сцена загружается из JSON, логика вешается в коде).
 

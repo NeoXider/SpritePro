@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spritepro"
-version = "2.1.0"
+version = "2.2.0"
 authors = [
   { name="NeoXider", email="neoxider@gmail.com" },
 ]
@@ -30,6 +30,7 @@ classifiers = [
 ]
 dependencies = [
     "pygame>=2.0.0",
+    "pymunk>=6.0.0",
 ]
 
 [project.optional-dependencies]

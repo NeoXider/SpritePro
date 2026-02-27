@@ -166,15 +166,15 @@
 - Игровое время
 
 #### [docs/physics.md](docs/physics.md)
-**Система физики**
-- Глобальный мир: `s.physics`, `s.get_physics_world()` — физика всегда включена, мир один и уже зарегистрирован
-- Добавление тел: `s.add_physics`, `s.add_static_physics`, `s.add_kinematic_physics`, `s.PhysicsConfig` (по умолчанию тело автоматически в мире)
-- Гравитация: `s.physics.set_gravity(...)`; ограничения: `add_constraint`/`remove_constraint` (объект с `update(dt)`)
-- Демо: запуск из корня репозитория (`python -m spritePro.demoGames.physics_demo` и т.д.)
-- Типы тел: DYNAMIC, STATIC, KINEMATIC; PhysicsConfig, PhysicsBody
-- add_physics, add_static_physics, add_kinematic_physics — по умолчанию тело автоматически в мире (`auto_add=True`); при загрузке сцены через spawn_scene типы физики из редактора применяются к глобальному миру
-- Коллизии AABB, колбэк on_collision, границы мира (set_bounds)
-- Демо: physics_demo, hoop_bounce_demo, ping_pong (физический мяч, направление от ракетки)
+**Система физики (pymunk)**
+- Реализация на **pymunk**; формы коллайдеров задаются через **PhysicsShape** (AUTO, BOX, CIRCLE, LINE) или строки; поворот спрайта с физикой не синхронизируется (обновляется только позиция).
+- Глобальный мир: `s.physics`, `s.get_physics_world()` — физика всегда включена, мир один и уже зарегистрирован.
+- Добавление тел: `s.add_physics`, `s.add_static_physics`, `s.add_kinematic_physics`, `s.PhysicsConfig`, `s.PhysicsShape` (по умолчанию тело автоматически в мире).
+- Гравитация: `s.physics.set_gravity(...)`; ограничения: `add_constraint`/`remove_constraint` (объект с `update(dt)`).
+- Типы тел: DYNAMIC, STATIC, KINEMATIC; PhysicsConfig (mass, friction, bounce, опционально collision_category/collision_mask), PhysicsBody (velocity, position, grounded, on_collision).
+- При загрузке сцены через spawn_scene типы физики и настройки (mass, friction, bounce, маски) из редактора применяются к глобальному миру.
+- Коллизии через pymunk, колбэк on_collision, границы мира (set_bounds).
+- Демо: physics_demo, hoop_bounce_demo, ping_pong. Запуск: `python -m spritePro.demoGames.physics_demo`, `python -m spritePro.demoGames.hoop_bounce_demo`, `python -m spritePro.demoGames.ping_pong.main`.
 
 #### [docs/game_loop.md](docs/game_loop.md)
 **Игровой цикл и сцены**
