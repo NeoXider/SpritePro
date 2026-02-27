@@ -74,6 +74,36 @@ plat_body.velocity.x = 150
 
 При загрузке сцены через `spawn_scene("level.json", scene=...)` объекты, у которых в редакторе выставлен тип физики (Static / Kinematic / Dynamic), автоматически получают соответствующее тело и добавляются в **глобальный** мир `s.physics`. Отдельно создавать мир или вызывать `s.physics.add()` для таких объектов не нужно.
 
+### Получение и настройка физики из сцены редактора
+
+После `spawn_scene` тело объекта можно получить через **`s.get_physics(sprite)`** и донастроить в коде (скорость, отскок, трение и т.д.), не меняя JSON сцены.
+
+| Действие | Код |
+|----------|-----|
+| Получить тело спрайта | `body = s.get_physics(sprite)` — работает и для тел из сцены редактора, и для созданных вручную через `add_physics(sprite, ...)`. Вернёт `None`, если у спрайта нет привязанного тела. |
+| Задать скорость (например, игроку) | `body.velocity.x = 200`; для прыжка `body.velocity.y = -400`. |
+| Убрать отскок при приземлении | `body.set_bounce(0)` (удобно для платформеров в стиле Geometry Dash). |
+| Задать трение / отскок | `body.set_friction(0.98)`; `body.set_bounce(0.5)`. |
+| Удалить тело из мира и создать своё | `s.physics.remove(body)` (при необходимости очистить `sprite._physics_bodies`), затем `body = s.add_physics(sprite, s.PhysicsConfig(...))`. |
+| Границы экрана | `s.physics.set_bounds(s.get_game().screen.get_rect())`. |
+
+Пример: игрок из сцены (Dynamic в редакторе), в коде — скорость и прыжок без отскока при приземлении:
+
+```python
+from spritePro.editor.runtime import spawn_scene
+
+rt = spawn_scene("level.json", scene=self, apply_camera=True)
+player_obj = rt.first("player")
+if player_obj:
+    self.player = player_obj.Sprite(speed=5)
+    body = s.get_physics(self.player)
+    if body is not None:
+        body.set_bounce(0)
+    # в update(): body.velocity.x = SPEED; по Space — body.velocity.y = -JUMP
+```
+
+Полный пример сцены из редактора с физикой: `demoGames/` в корне репозитория (main.py + scenes/main_scene.py, level.json).
+
 ---
 
 ## PhysicsWorld (глобальный мир)
@@ -192,6 +222,7 @@ s.physics.set_bounds(pygame.Rect(0, 0, 800, 600))
 - **physics_demo.py** — полный пример: игрок (WASD, прыжок), мячи, платформы статические и кинематические, стены и потолок. Использует глобальный мир `s.physics`, тела добавляются через `s.add_physics` / `s.add_static_physics` / `s.add_kinematic_physics` с `auto_add=True` (по умолчанию).
 - **hoop_bounce_demo.py** — шарик внутри круглого обруча: отскок от внутренней границы круга без потери энергии, смена цвета при отскоке. Гравитация задаётся через `s.physics.set_gravity(400)`; ограничение `HoopConstraint` добавляется через `s.physics.add_constraint(constraint)` — мир сам вызывает его `update(dt)` после шага физики.
 - **ping_pong** — игра с ракетками и мячом (сцена и объекты используют `s.add_physics`, `s.add_static_physics`, `s.PhysicsConfig`).
+- **demoGames/** (в корне репозитория) — пример сцены из редактора (level.json): загрузка через `spawn_scene`, получение тела игрока через `s.get_physics(sprite)`, настройка отскока и скорости в коде (платформер в стиле Geometry Dash). Запуск: `python demoGames/main.py` из корня репозитория.
 
 Запуск (из корня репозитория, чтобы использовался локальный пакет):
 

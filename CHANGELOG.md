@@ -5,6 +5,17 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2]
+
+### Added
+- **Документация: физика из сцены редактора** — в [docs/physics.md](docs/physics.md) добавлен раздел «Получение и настройка физики из сцены редактора»: `s.get_physics(sprite)`, `set_bounce(0)`, задание скорости, удаление тела и создание своего, границы мира. Пример кода и ссылка на demoGames.
+- **demoGames/** в корне репозитория — пример сцены из редактора (level.json) с получением и настройкой физики в коде (платформер); README с инструкцией запуска и описанием.
+
+### Changed
+- Версия 2.2.2. В [docs/sprite_editor.md](docs/sprite_editor.md) и [docs/OVERVIEW.md](docs/OVERVIEW.md) добавлены упоминания `get_physics` и донастройки физики из кода. В разделе «Демо и примеры» [docs/physics.md](docs/physics.md) добавлен пункт про demoGames.
+
+---
+
 ## [2.2.0]
 
 ### Added

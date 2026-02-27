@@ -26,8 +26,8 @@ except ImportError as e:
 
 def _get_physics_world() -> "PhysicsWorld":
     """Возвращает глобальный мир физики (тот же, что обновляется в игровом цикле)."""
-    from spritePro.game_context import get_context
-    return get_context().game.physics_world
+    import spritePro as _s
+    return _s.get_physics_world()
 
 
 class BodyType(Enum):
@@ -432,6 +432,11 @@ class PhysicsWorld:
         if body in self.static_bodies:
             self.static_bodies.remove(body)
         self._all_bodies.remove(body)
+        if hasattr(body.sprite, "_physics_bodies") and body.sprite._physics_bodies:
+            try:
+                body.sprite._physics_bodies.remove(body)
+            except ValueError:
+                pass
         return self
 
     def set_bounds(self, rect: pygame.Rect) -> "PhysicsWorld":

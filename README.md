@@ -52,25 +52,13 @@ python -m spritePro.cli -e
 
 ## 📑 Содержание
 
-- [⚡ Почему SpritePro?](#-почему-spritepro)
-- [🌟 Что делает SpritePro особенным?](#-что-делает-spritepro-особенным)
-- [🚀 Быстрый старт](#-быстрый-старт-30-секунд)
-  - [Установка](#установка)
-  - [Ваша первая игра](#ваша-первая-игра-5-строк)
-- [💡 Примеры "Вау!" возможностей](#-примеры-вау-возможностей)
-- [🎮 Что можно создать?](#-что-можно-создать)
-- [📊 Сравнение с альтернативами](#-сравнение-с-альтернативами)
-- [🎯 Ключевые преимущества](#-ключевые-преимущества)
-- [🎬 Демо-игры](#-демо-игры)
-- [📦 Что внутри?](#-что-внутри)
-- [📖 Документация](#-документация)
-- [🎯 Примеры использования](#-примеры-использования)
-- [🆚 SpritePro vs Обычный pygame](#-spritepro-vs-обычный-pygame)
-- [🎁 Бонусы](#-бонусы)
-- [🚀 Начните прямо сейчас!](#-начните-прямо-сейчас)
-- [📊 Статистика](#-статистика)
-- [🤝 Сообщество](#-сообщество)
-- [📄 Лицензия](#-лицензия)
+- [⚡ Почему SpritePro?](#-почему-spritepro) · [🌟 Особенности](#-что-делает-spritepro-особенным)
+- [🚀 Быстрый старт](#-быстрый-старт-30-секунд) — установка, первая игра, шаблон `--create`
+- [💡 Примеры возможностей](#-примеры-вау-возможностей) · [🎮 Что можно создать?](#-что-можно-создать)
+- [📖 Документация](#-документация) — **главная карта** и ссылки по разделам
+- [🎬 Демо-игры](#-демо-игры) · [📦 Что внутри?](#-что-внутри)
+- [🎯 Ключевые преимущества](#-ключевые-преимущества) · [🆚 SpritePro vs pygame](#-spritepro-vs-обычный-pygame)
+- [🚀 Начните прямо сейчас!](#-начните-прямо-сейчас) · [🤝 Сообщество](#-сообщество) · [📄 Лицензия](#-лицензия)
 
 ---
 
@@ -467,20 +455,18 @@ pos = prefs.get_vector2("player_pos", (0, 0))
 
 ## 🎬 Демо-игры
 
-**Увидьте SpritePro в действии!** Все демо с открытым исходным кодом:
+Все с открытым исходным кодом. Полный список — [DOCUMENTATION_INDEX.md → Демо](DOCUMENTATION_INDEX.md#-демонстрационные-игры).
 
-- 🏓 **[Ping Pong](spritePro/demoGames/ping_pong.py)** - Полноценная игра с меню, звуком и UI
-- 🎆 **[Fireworks](spritePro/demoGames/fireworks_demo.py)** - Красивые эффекты частиц
-- 🎨 **[Tween Demo](spritePro/demoGames/tweenDemo.py)** - Плавные анимации
-- 🎮 **[Among Us Demo](spritePro/demoGames/amongus.py)** - Платформер с взаимодействиями
-- 💥 **[Particle Template Test](spritePro/demoGames/particle_template_test.py)** - Интерактивные частицы
-- 🌐 **Мультиплеер** - [local_multiplayer_demo](spritePro/demoGames/local_multiplayer_demo.py), [камень/ножницы/бумага](spritePro/demoGames/events_rps_demo.py); полный курс — [multiplayer_course](multiplayer_course/README.md)
+| Демо | Описание |
+|------|----------|
+| [Ping Pong](spritePro/demoGames/ping_pong.py) | Игра с меню, звуком, физикой |
+| [Physics Demo](spritePro/demoGames/physics_demo.py) | Гравитация, отскок, платформы, статика/кинематика |
+| [demoGames/](demoGames/README.md) | **Сцена из редактора**: level.json, spawn_scene, get_physics, платформер. `python demoGames/main.py` |
+| [Fireworks](spritePro/demoGames/fireworks_demo.py) | Частицы |
+| [Tween](spritePro/demoGames/tweenDemo.py) | Плавные анимации |
+| Мультиплеер | [local_multiplayer_demo](spritePro/demoGames/local_multiplayer_demo.py), курс [multiplayer_course](multiplayer_course/README.md) |
 
-**Запустите любую демо-игру и увидьте возможности!**
-
-```bash
-python spritePro/demoGames/ping_pong.py
-```
+Запуск из корня репозитория: `python -m spritePro.demoGames.physics_demo` или `python demoGames/main.py`.
 
 ---
 
@@ -494,11 +480,12 @@ python spritePro/demoGames/ping_pong.py
 - **Bar** - Полосы прогресса (HP, опыт и т.д.)
 
 ### 🎨 Игровые системы
-- **Animation** - Система анимаций
-- **Tween** - Плавные переходы (easing); **Fluent API**: `sprite.DoMove(...).SetEase(Ease.OutQuad)` — см. [Tween](docs/tween.md#fluent-api-do-твины) и [Fluent Tween Demo](spritePro/demoGames/fluent_tween_demo.py)
-- **Timer** - Таймеры для событий
-- **Health** - Система здоровья
-- **ParticleEmitter** - Генератор частиц
+- **Physics (pymunk)** — мир тел, DYNAMIC/STATIC/KINEMATIC, PhysicsShape, гравитация, коллизии, `s.get_physics(sprite)` из сцены. Подробно: [docs/physics.md](docs/physics.md).
+- **Animation** — система анимаций
+- **Tween** — плавные переходы; Fluent API: `sprite.DoMove(...).SetEase(Ease.OutQuad)`. [docs/tween.md](docs/tween.md)
+- **Timer** — таймеры для событий
+- **Health** — система здоровья
+- **ParticleEmitter** — генератор частиц
 
 ### 🛠️ Утилиты
 - **AudioManager** - Управление звуком и музыкой
@@ -520,25 +507,17 @@ python spritePro/demoGames/ping_pong.py
 
 ## 📖 Документация
 
-### 🚀 Быстрый старт
-- [Установка и настройка](#-быстрый-старт-30-секунд)
-- [Базовый пример](#ваша-первая-игра-5-строк)
-- [Быстрый старт 2.0](#-быстрый-старт-20-шаблон-проекта)
+**Главная карта** — [**DOCUMENTATION_INDEX.md**](DOCUMENTATION_INDEX.md): всё по полочкам (старт, основы, физика, редактор, UI, демо, порядок изучения).
 
-### 📚 Индексы
-- [📖 Индекс документации](DOCUMENTATION_INDEX.md) - Полный список модулей
-- [📘 Документация папки docs](docs/README.md) - Навигация по разделам
-- [🌐 Сетевой мультиплеер](docs/networking.md) — Запуск, лобби (подробная инструкция), базовые примеры
-- [🎓 Мини-курс по мультиплеерным играм](multiplayer_course/README.md) - 10 уроков: от обмена сообщениями до готовой сетевой мини-игры
-
-### 🧩 Полный список документации
-- Основы: [Game Loop](docs/game_loop.md) • [Input](docs/input.md) • [Debug](docs/debug.md) • [Camera & Particles](docs/camera_and_particles.md)
-- Спрайты и графика: [Sprite](docs/sprite.md) • [Surface](docs/surface.md) • [Text](docs/text.md) • [Text FPS](docs/text_fps.md) • [Color Effects](docs/color_effects.md) • [ReadySprites](docs/readySprites.md)
-- UI: [Button](docs/button.md) • [Toggle Button](docs/toggle_button.md) • [Bar](docs/bar.md) • [Bar Background](docs/bar_background.md) • [Pages](docs/pages.md) • [Layout](docs/layout.md) • ScrollView (в [layout.md](docs/layout.md)) • [Готовые сцены](docs/README.md#готовые-сцены-readyscenes) (ChatScene)
-- Компоненты: [Animation](docs/animation.md) • [Tween](docs/tween.md) • [Tween Presets](docs/tween_presets.md) • [Timer](docs/timer.md) • [Health](docs/health.md) • [Mouse Interactor](docs/mouse_interactor.md) • [Draggable Sprite](docs/draggable_sprite.md)
-- Эффекты и частицы: [Particles](docs/particles.md)
-- Аудио: [Audio](docs/audio.md)
-- Сохранения и утилиты: [Save/Load](docs/save_load.md)
+| Раздел | Куда смотреть |
+|--------|----------------|
+| **Старт** | [Установка](#установка), [Первая игра](#ваша-первая-игра-5-строк), [Шаблон проекта](#-быстрый-старт-20-шаблон-проекта) |
+| **Обзор** | [docs/OVERVIEW.md](docs/OVERVIEW.md) — Layout, физика, Builder, мультиплеер кратко |
+| **Физика** | [docs/physics.md](docs/physics.md) — pymunk, типы тел, PhysicsShape, сцена из редактора; [docs/physics_issues.md](docs/physics_issues.md) — нюансы |
+| **Редактор сцен** | [docs/sprite_editor.md](docs/sprite_editor.md) — редактор, spawn_scene, get_physics из сцены |
+| **Демо** | [DOCUMENTATION_INDEX.md → Демо](DOCUMENTATION_INDEX.md#-демонстрационные-игры); сцена из редактора: [demoGames/](demoGames/README.md) |
+| **Сеть** | [docs/networking.md](docs/networking.md); курс: [multiplayer_course/](multiplayer_course/README.md) |
+| **Вся документация** | [docs/README.md](docs/README.md) — навигация по docs |
 
 ---
 
@@ -645,27 +624,11 @@ while True:
 
 ## 🚀 Начните прямо сейчас!
 
-### 1. Установите
 ```bash
-pip install pygame
-git clone https://github.com/NeoXider/SpritePro.git
+pip install spritepro
 ```
 
-### 2. Скопируйте папку `spritePro` в ваш проект
-
-### 3. Создайте игру!
-```python
-import spritePro as s
-
-s.get_screen((800, 600), "My Game")
-player = s.Sprite("", (50, 50), s.WH_C, speed=5)
-
-while True:
-    s.update()
-    player.handle_keyboard_input()
-```
-
-**Готово!** У вас уже есть игра! 🎉
+Затем — [Ваша первая игра (5 строк)](#ваша-первая-игра-5-строк) выше или шаблон: `python -m spritePro.cli --create`.
 
 ---
 

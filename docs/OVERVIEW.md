@@ -62,9 +62,9 @@ from spritePro.layout import (
 - **s.physics** — прокси к глобальному миру. **s.add_physics**, **s.add_static_physics**, **s.add_kinematic_physics**, **s.PhysicsConfig**, **s.PhysicsShape** — создание тел; по умолчанию тело автоматически добавляется в мир (`auto_add=True`). Использование через `s.` гарантирует работу с тем же миром, что обновляется в `s.update()`.
 - **PhysicsConfig** — mass, gravity, friction, bounce; опционально collision_category, collision_mask.
 - **on_collision** — колбэк при столкновении.
-- **s.physics.set_bounds(rect)** — границы экрана с отскоком. При загрузке сцены через `spawn_scene` типы физики и настройки (mass, friction, bounce, маски) из редактора применяются к глобальному миру.
+- **s.physics.set_bounds(rect)** — границы экрана с отскоком. При загрузке сцены через `spawn_scene` типы физики и настройки (mass, friction, bounce, маски) из редактора применяются к глобальному миру. Тело из сцены: **s.get_physics(sprite)**; донастройка в коде: `body.set_bounce(0)`, `body.velocity.x/y`, см. [physics.md](physics.md).
 
-Демо: `physics_demo.py`, `hoop_bounce_demo.py`, `ping_pong`. Подробнее: [physics.md](physics.md).
+Демо: `physics_demo.py`, `hoop_bounce_demo.py`, `ping_pong`; сцена из редактора с физикой — `demoGames/` в корне репозитория. Подробнее: [physics.md](physics.md).
 
 ---
 

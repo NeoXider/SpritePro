@@ -2,6 +2,25 @@
 
 Полный указатель всей документации проекта SpritePro.
 
+---
+
+## 📚 Содержание
+
+| Полка | Что внутри |
+|-------|------------|
+| [📋 Основные документы](#-основные-документы-проекта) | README, OVERVIEW, ROADMAP, CONTRIBUTING, GAME_IDEAS |
+| [🎯 Старт и основы](#-основные-компоненты) | Sprite, игровой цикл, ввод, события, сцены, debug |
+| [⚙️ Физика](#-игровые-системы) | [physics.md](docs/physics.md) — типы тел, PhysicsShape, сцена из редактора; [physics_issues.md](docs/physics_issues.md) |
+| [🎨 Редактор сцен](#-основные-компоненты) | [sprite_editor.md](docs/sprite_editor.md) — редактор, spawn_scene, get_physics |
+| [🖼️ UI](#-ui-компоненты) | Button, Toggle, Slider, Text, TextInput, Layout, Pages, Bar |
+| [🎮 Игровые системы](#-игровые-системы) | Animation, Tween, Timer, Health, Particles, Builder, Networking |
+| [🔧 Утилиты](#-утилиты) | Save/Load, Surface, Color effects, ReadySprites |
+| [🎬 Демо-игры](#-демонстрационные-игры) | Список всех демо + [demoGames/](demoGames/README.md) (сцена из редактора) |
+| [🔍 Навигация](#-навигация-по-типам-документации) | По уровню, по категориям, порядок изучения |
+| [🔄 Обновления](#-обновления-документации) | Последние изменения в документации |
+
+---
+
 ## 📋 Основные документы проекта
 
 ### [README.md](README.md)
@@ -297,6 +316,7 @@
 - [Drag & Drop Demo](spritePro/demoGames/drag_drop_demo.py) - Перетаскивание
 - [Debug Overlay Demo](spritePro/demoGames/debug_overlay_demo.py) - Отладочная сетка и логи
 - [Physics Demo](spritePro/demoGames/physics_demo.py) - Физика: гравитация, отскок, платформы, статика и кинематика
+- [demoGames (сцена из редактора)](demoGames/) - Сцена из level.json: spawn_scene, s.get_physics(sprite), настройка отскока и скорости в коде (платформер). Запуск: `python demoGames/main.py` из корня репозитория. См. [demoGames/README.md](demoGames/README.md).
 - [Hoop Bounce Demo](spritePro/demoGames/hoop_bounce_demo.py) - Шарик в обруче: отскок без потери силы, смена цвета
 - [Object Pool Demo](spritePro/demoGames/object_pool_demo.py) - Пул объектов для переиспользования спрайтов
 - [Particle Pool Demo](spritePro/demoGames/particle_pool_demo.py) - Пул частиц (ParticleEmitter с use_pool=True)
@@ -361,12 +381,14 @@
 5. [Простые демо](spritePro/demoGames/) - Практические примеры
 
 ### Для разработки игр
-1. [docs/sprite.md](docs/sprite.md) - Спрайты и игровые объекты
-2. [docs/animation.md](docs/animation.md) - Анимации
-3. [docs/tween.md](docs/tween.md) - Плавные переходы (в т.ч. Fluent API)
-4. [docs/timer.md](docs/timer.md) - Игровое время
-5. [docs/health.md](docs/health.md) - Игровые системы
-6. [docs/save_load.md](docs/save_load.md) - Сохранения
+1. [docs/sprite.md](docs/sprite.md) — Спрайты и игровые объекты
+2. [docs/physics.md](docs/physics.md) — Физика (pymunk), типы тел, сцена из редактора
+3. [docs/sprite_editor.md](docs/sprite_editor.md) — Редактор сцен, spawn_scene, get_physics
+4. [docs/animation.md](docs/animation.md) — Анимации
+5. [docs/tween.md](docs/tween.md) — Плавные переходы (Fluent API)
+6. [docs/timer.md](docs/timer.md) — Игровое время
+7. [docs/health.md](docs/health.md) — Здоровье
+8. [docs/save_load.md](docs/save_load.md) — Сохранения
 
 ### Для продвинутых разработчиков
 1. [docs/layout.md](docs/layout.md) - Автолейауты
@@ -411,5 +433,5 @@
 
 ---
 
-**Совет**: Используйте поиск по файлам (Ctrl+F) для быстрого поиска нужной информации в документации! 🔍
+**Совет:** В начале документа — [содержание по полочкам](#-содержание-по-полочкам): все разделы сведены в одну таблицу для быстрого перехода. Используйте Ctrl+F для поиска по странице.
 

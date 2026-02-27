@@ -1,0 +1,114 @@
+{
+    "version": "1.0",
+    "name": "level",
+    "camera": {
+        "scene_x": 402.76379999999995,
+        "scene_y": 348.9926999999998,
+        "scene_zoom": 0.6830134553650705,
+        "game_x": 0.0,
+        "game_y": 0.0,
+        "game_zoom": 1.0
+    },
+    "objects": [
+        {
+            "id": "player01",
+            "name": "player",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                120,
+                200,
+                255
+            ],
+            "transform": {
+                "x": 50,
+                "y": 380,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 10,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "physics_type": "dynamic",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
+            "custom_data": {
+                "width": 64,
+                "height": 64
+            }
+        },
+        {
+            "id": "9544266e",
+            "name": "Rectangle",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                200,
+                200,
+                200
+            ],
+            "transform": {
+                "x": 400,
+                "y": 590,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 11,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "physics_type": "static",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
+            "custom_data": {
+                "width": 800,
+                "height": 50
+            }
+        },
+        {
+            "id": "bf1a00bb",
+            "name": "Rectangle (1)",
+            "sprite_path": "",
+            "sprite_shape": "rectangle",
+            "sprite_color": [
+                200,
+                200,
+                200
+            ],
+            "transform": {
+                "x": 960,
+                "y": 530,
+                "rotation": 0.0,
+                "scale_x": 1.0,
+                "scale_y": 1.0
+            },
+            "z_index": 11,
+            "screen_space": false,
+            "visible": true,
+            "locked": false,
+            "physics_type": "static",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
+            "custom_data": {
+                "width": 800,
+                "height": 50
+            }
+        }
+    ],
+    "grid_size": 10,
+    "grid_visible": true,
+    "grid_labels_visible": true,
+    "snap_to_grid": true
+}
