@@ -51,8 +51,6 @@ def run_demo():
     while True:
         s.update(fill_color=(20, 20, 30))
 
-        if s.input.was_pressed(pygame.K_ESCAPE):
-            return
         if s.input.was_pressed(pygame.K_SPACE):
             for sprite in sprites:
                 sprite.rect.x = 100

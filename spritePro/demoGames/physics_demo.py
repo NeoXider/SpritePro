@@ -89,8 +89,6 @@ def run_demo():
     while True:
         s.update(fill_color=(20, 20, 35))
 
-        if s.input.was_pressed(pygame.K_ESCAPE):
-            return
         if s.input.was_pressed(pygame.K_SPACE) and player_body.grounded:
             player_body.velocity.y = -550
             s.debug_log_info("Jump!")

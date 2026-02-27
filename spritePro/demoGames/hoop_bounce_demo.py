@@ -114,8 +114,6 @@ def run_demo():
     while True:
         s.update(fill_color=(25, 25, 35))
 
-        if s.input.was_pressed(pygame.K_ESCAPE):
-            return
         if s.input.was_pressed(pygame.K_r):
             ball.rect.center = center
             ball_body.set_velocity(200, -80)

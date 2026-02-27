@@ -76,8 +76,6 @@ def run_demo():
         emitter.released_this_frame.clear()
         s.update(fill_color=(20, 20, 35))
 
-        if s.input.was_pressed(pygame.K_ESCAPE):
-            return
         if s.input.was_pressed(pygame.K_SPACE):
             new_particles = emitter.emit_burst(current_amount)
             active_particles.extend(new_particles)

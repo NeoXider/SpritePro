@@ -104,7 +104,6 @@ def main() -> None:
 
         if s.input.was_pressed(pygame.K_ESCAPE):
             running = False
-
         for key in (
             pygame.K_1,
             pygame.K_2,

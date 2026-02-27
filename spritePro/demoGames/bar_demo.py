@@ -276,7 +276,6 @@ def main():
 
         if s.input.was_pressed(pygame.K_ESCAPE):
             running = False
-
         if s.input.was_pressed(pygame.K_0):
             # Set all bars to 0%
             for bar in bars:

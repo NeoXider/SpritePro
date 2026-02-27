@@ -37,7 +37,6 @@ while running:
     for event in events:
         if event.type == pygame.QUIT:
             running = False
-
     if s.input.was_pressed(pygame.K_ESCAPE):
         running = False
 

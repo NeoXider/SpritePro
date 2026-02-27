@@ -46,9 +46,6 @@ def run_demo():
     while True:
         s.update(fill_color=(20, 20, 35))
 
-        if s.input.was_pressed(pygame.K_ESCAPE):
-            return
-
         if s.input.is_pressed(pygame.K_a):
             s.move_camera(-280 * s.dt, 0)
         if s.input.is_pressed(pygame.K_d):

@@ -158,7 +158,6 @@ def main():
 
         if s.input.was_pressed(pygame.K_ESCAPE):
             running = False
-
         if s.input.was_pressed(pygame.K_a):
             # Уменьшить HP всех баров (используем удобное свойство amount)
             for bar in [hp_bar, hp_bar2, hp_bar3]:

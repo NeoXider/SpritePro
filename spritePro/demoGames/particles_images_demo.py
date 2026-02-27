@@ -107,7 +107,6 @@ def main():
 
         if s.input.was_pressed(pygame.K_ESCAPE):
             running = False
-
         if s.input.was_mouse_pressed(1):
             mx, my = s.input.mouse_pos
             star_emitter.emit((mx + s.get_camera_position().x, my + s.get_camera_position().y))

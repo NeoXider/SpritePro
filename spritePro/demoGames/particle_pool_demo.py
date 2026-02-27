@@ -29,8 +29,7 @@ def run_demo():
 
     while True:
         s.update(fill_color=(20, 20, 35))
-        if s.input.was_pressed(pygame.K_ESCAPE):
-            return
+
         if s.input.was_pressed(pygame.K_SPACE):
             emitter.emit(s.input.mouse_pos)
 

@@ -82,7 +82,6 @@ def run_animation_demo():
 
         if spritePro.input.was_pressed(pygame.K_ESCAPE):
             running = False
-
         if spritePro.input.was_pressed(pygame.K_SPACE):
             paused = not paused
             if paused:

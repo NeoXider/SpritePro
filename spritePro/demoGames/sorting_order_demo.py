@@ -95,7 +95,6 @@ def main():
 
         if s.input.was_pressed(pygame.K_ESCAPE):
             running = False
-
         if s.input.was_pressed(pygame.K_UP):
             # Increase sorting order for red → should draw above blue
             new_order = (red.sorting_order or 0) + 1
