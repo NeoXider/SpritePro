@@ -1,14 +1,17 @@
-"""Обработка ввода: текстовые поля с типами text / int / float."""
+"""Обработка ввода: текстовые поля с типами text / int / float (редактор)."""
 
-from typing import Any, Literal, Optional, Tuple
+from typing import Optional
 
 import pygame
 import string
 
-InputType = Literal["text", "int", "float"]
+from ...input_validation import (
+    InputType,
+    can_add_char as _can_add_char,
+    filter_chars_for_paste as _filter_chars_for_paste,
+    parse_input_value,
+)
 
-ALLOWED_INPUT_CHARS = set("0123456789.,-")
-ALLOWED_INT_CHARS = set("0123456789-")
 ALLOWED_NAME_CHARS = set(string.ascii_letters + string.digits + string.whitespace + "._-()")
 
 KEYPAD_MAP = {
@@ -30,77 +33,16 @@ KEYPAD_MAP = {
 }
 
 
-def can_add_char(input_type: InputType, current: str, ch: str) -> bool:
-    if not ch:
-        return False
-    if input_type == "text":
-        return ch in ALLOWED_NAME_CHARS or (ord(ch) >= 0x20 and ch not in "\x00\r\n")
-    if input_type == "int":
-        if ch == "-":
-            return not current or current == "-"
-        return ch in "0123456789"
-    if input_type == "float":
-        if ch == "-":
-            return not current or current == "-"
-        if ch in ".,":
-            return "." not in current.replace("-", "")
-        return ch in "0123456789"
-    return False
+def _allowed_for_editor_text(name: str) -> Optional[set]:
+    return ALLOWED_NAME_CHARS if name == "prop_input_name" else None
 
 
-def filter_chars_for_paste(input_type: InputType, text: str) -> str:
-    if input_type == "text":
-        return "".join(c for c in text if c in ALLOWED_NAME_CHARS or (ord(c) >= 0x20 and c not in "\x00\r\n"))
-    if input_type == "int":
-        out = []
-        for c in text:
-            if c in "0123456789":
-                out.append(c)
-            elif c == "-" and not out:
-                out.append(c)
-        return "".join(out)
-    if input_type == "float":
-        out = []
-        seen_dot = False
-        for c in text:
-            if c in "0123456789":
-                out.append(c)
-            elif c == "-" and not out:
-                out.append(c)
-            elif c in ".," and not seen_dot:
-                out.append(".")
-                seen_dot = True
-        return "".join(out)
-    return ""
+def can_add_char(input_type: InputType, current: str, ch: str, name: str = "") -> bool:
+    return _can_add_char(input_type, current, ch, _allowed_for_editor_text(name) if name else None)
 
 
-def parse_input_value(
-    input_type: InputType,
-    raw: str,
-    min_val: Optional[float] = None,
-    max_val: Optional[float] = None,
-) -> Tuple[bool, Any]:
-    raw = raw.strip().replace(",", ".")
-    if not raw or raw == "-":
-        return False, None
-    try:
-        if input_type == "int":
-            value = int(float(raw))
-            if min_val is not None:
-                value = max(int(min_val), value)
-            if max_val is not None:
-                value = min(int(max_val), value)
-            return True, value
-        if input_type == "float":
-            value = float(raw)
-            if min_val is not None:
-                value = max(min_val, value)
-            if max_val is not None:
-                value = min(max_val, value)
-            return True, value
-        return True, raw.strip()
-    except ValueError:
-        return False, None
+def filter_chars_for_paste(input_type: InputType, text: str, name: str = "") -> str:
+    return _filter_chars_for_paste(input_type, text, _allowed_for_editor_text(name) if name else None)
 
 
 def get_active_input_type(editor) -> InputType:
@@ -119,7 +61,7 @@ def _paste_into_editor_buffer(editor, name: str) -> None:
             return
         text = data.decode("utf-8", errors="replace")
         input_type = get_active_input_type(editor)
-        filtered = filter_chars_for_paste(input_type, text)
+        filtered = filter_chars_for_paste(input_type, text, name)
         if filtered:
             editor._text_input_buffers[name] = editor._text_input_buffers.get(name, "") + filtered
     except Exception:
@@ -171,13 +113,13 @@ def handle_text_input_keydown(editor, event: pygame.event.Event) -> bool:
         if event.key in keypad_no_dot and not (event.unicode or ""):
             ch = keypad_no_dot[event.key]
             buf = editor._text_input_buffers.get(name, "")
-            if can_add_char(input_type, buf, ch):
+            if can_add_char(input_type, buf, ch, name):
                 editor._text_input_buffers[name] = buf + ch
             return True
     elif event.key in KEYPAD_MAP and not (event.unicode or ""):
         ch = KEYPAD_MAP[event.key]
         buf = editor._text_input_buffers.get(name, "")
-        if can_add_char(input_type, buf, ch):
+        if can_add_char(input_type, buf, ch, name):
             editor._text_input_buffers[name] = buf + ch
         return True
     return True
@@ -192,7 +134,7 @@ def handle_text_input_text(editor, event: pygame.event.Event) -> bool:
     buf = editor._text_input_buffers.get(name, "")
     added = ""
     for c in (event.text or ""):
-        if can_add_char(input_type, buf + added, c):
+        if can_add_char(input_type, buf + added, c, name):
             added += c
     if added:
         editor._text_input_buffers[name] = buf + added

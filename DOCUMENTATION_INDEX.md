@@ -119,7 +119,9 @@
 #### [docs/text_input.md](docs/text_input.md)
 **Поле ввода текста**
 - TextInput(Button), placeholder, value, max_length
-- on_change, on_submit, Enter/Escape/TEXTINPUT
+- **Типы поля:** input_type ("text" | "int" | "float"), min_val, max_val; для int/float — валидация и фильтрация при вставке
+- on_change, on_submit, Enter/Escape, **Ctrl+V** (вставка), **Ctrl+C** (копирование поля)
+- Парсинг чисел: модуль **spritePro.input_validation** (parse_input_value, can_add_char, filter_chars_for_paste)
 - activate/deactivate, handle_event
 
 #### [docs/text.md](docs/text.md)

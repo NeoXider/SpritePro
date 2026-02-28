@@ -1,12 +1,13 @@
 # TextInput
 
-Поле ввода текста на базе Button. Наследует от Button, при клике переходит в режим ввода (focus); поддерживает `pygame.TEXTINPUT`, Enter (подтверждение) и Escape (сброс фокуса).
+Поле ввода текста на базе Button. Наследует от Button, при клике переходит в режим ввода (focus); поддерживает типы **text** / **int** / **float**, `pygame.TEXTINPUT`, Enter (подтверждение), Escape (сброс фокуса), **Ctrl+V** (вставка) и **Ctrl+C** (копирование содержимого поля).
 
 ## Обзор
 
 - **Наследование**: `TextInput(Button)` — кнопка без анимаций, при клике активирует ввод.
-- **События**: **on_change** — при каждом изменении текста (ввод/удаление символа); **on_submit** — при нажатии Enter (применение/подтверждение).
-- **Обработка в цикле**: обрабатывает клик (фокус/сброс), `KEYDOWN` (Enter, Escape, Backspace, цифровая клавиатура), `TEXTINPUT` (символы); события берутся из `spritePro.pygame_events` в `update()`.
+- **Тип поля**: `input_type`: **"text"** (любой печатный текст), **"int"** (целые числа), **"float"** (дробные). Для int/float некорректные символы не вводятся и отфильтровываются при вставке; при необходимости задают границы `min_val` / `max_val`.
+- **События**: **on_change** — при каждом изменении текста; **on_submit** — при нажатии Enter.
+- **Обработка в цикле**: обрабатывает клик, `KEYDOWN` (Enter, Escape, Backspace, Ctrl+V/Ctrl+C, цифровая клавиатура), `TEXTINPUT`; события из `spritePro.pygame_events` в `update()`.
 
 ## Параметры конструктора
 
@@ -17,8 +18,11 @@
 | `placeholder` | str | "" | Текст-подсказка при пустом значении |
 | `value` | str | "" | Начальное значение |
 | `max_length` | int | 128 | Максимальная длина |
-| `on_change` | Callable[[str], None] | None | Вызывается при каждом изменении текста (ввод/удаление символа) |
-| `on_submit` | Callable[[str], None] | None | Вызывается при нажатии Enter (применение/подтверждение) |
+| `input_type` | "text" \| "int" \| "float" | "text" | Тип поля: текст, целое или дробное число |
+| `min_val` | float \| None | None | Нижняя граница для int/float (при парсинге) |
+| `max_val` | float \| None | None | Верхняя граница для int/float (при парсинге) |
+| `on_change` | Callable[[str], None] | None | Вызывается при каждом изменении текста |
+| `on_submit` | Callable[[str], None] | None | Вызывается при нажатии Enter |
 | `text_color` | (int,int,int) | (200,200,200) | Цвет текста |
 | `bg_color` | (int,int,int) | (45,45,52) | Цвет фона |
 | `active_bg_color` | (int,int,int) | (55,55,62) | Цвет фона при фокусе |
@@ -26,10 +30,19 @@
 | `sorting_order` | int | 1000 | Слой отрисовки |
 | `scene` | Scene \| str \| None | None | Сцена |
 
+## Типы поля (input_type)
+
+- **text** — допускаются любые печатные символы, пробел и табуляция. Подходит для имён, сообщений.
+- **int** — только цифры и один минус в начале. Точка и запятая не вводятся; при вставке из буфера лишние символы отфильтровываются.
+- **float** — цифры, один минус в начале, одна десятичная точка (запятая при вставке заменяется на точку).
+
+Для числовых полей при применении (например в `on_submit`) удобно парсить значение через модуль **spritePro.input_validation**: `parse_input_value(input_type, raw, min_val, max_val)` возвращает `(ok, value)`.
+
 ## Пример
 
 ```python
 import spritePro as s
+from spritePro.input_validation import parse_input_value
 
 class FormScene(s.Scene):
     def __init__(self):
@@ -44,12 +57,26 @@ class FormScene(s.Scene):
             on_submit=self._on_submit,
             scene=self,
         )
+        self.num_input = s.TextInput(
+            pos=(s.WH_C.x, 260),
+            value="0",
+            input_type="int",
+            min_val=0,
+            max_val=100,
+            on_submit=self._on_number_submit,
+            scene=self,
+        )
 
     def _on_change(self, value: str) -> None:
         print("Текст:", value)
 
     def _on_submit(self, value: str) -> None:
         print("Отправлено:", value)
+
+    def _on_number_submit(self, value: str) -> None:
+        ok, num = parse_input_value("int", value, 0, 100)
+        if ok and num is not None:
+            print("Число:", num)
 ```
 
 ## События: изменение и применение
@@ -64,7 +91,9 @@ class FormScene(s.Scene):
 - **Enter** — сброс фокуса и вызов `on_submit(value)`.
 - **Escape** — сброс фокуса без вызова `on_submit`.
 - **Backspace** — удаление последнего символа.
-- **TEXTINPUT** и цифровая клавиатура — добавление символов (с учётом `max_length`).
+- **Ctrl+V** (Cmd+V на Mac) — вставка из буфера обмена; для int/float вставляются только допустимые символы.
+- **Ctrl+C** (Cmd+C на Mac) — копирование содержимого поля в буфер обмена.
+- **TEXTINPUT** и цифровая клавиатура — добавление символов (для int/float только допустимые, с учётом `max_length`).
 
 ## Методы
 
@@ -78,3 +107,4 @@ class FormScene(s.Scene):
 - [Button](button.md) — базовая кнопка.
 - [Slider](slider.md) — слайдер.
 - [Input](input.md) — состояние клавиш и мыши.
+- Модуль **spritePro.input_validation** — `InputType`, `can_add_char`, `filter_chars_for_paste`, `parse_input_value` для типизированного ввода и парсинга (используется TextInput и редактором сцен).

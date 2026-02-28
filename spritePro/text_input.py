@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Tuple, TYPE_CHECKING
+from typing import Callable, Literal, Optional, Tuple, TYPE_CHECKING, Union
 
 import pygame
 
 from .button import Button
+from .input_validation import (
+    InputType,
+    can_add_char,
+    filter_chars_for_paste,
+    parse_input_value,
+)
 
 if TYPE_CHECKING:
     from .sprite import SpriteSceneInput
@@ -15,7 +21,9 @@ if TYPE_CHECKING:
 class TextInput(Button):
     """Поле ввода текста на базе Button без анимаций.
 
-    При клике переходит в режим ввода (focus). Enter — подтверждение, Escape — отмена.
+    Поддерживает типы: text (любой печатный текст), int (целые), float (дробные).
+    Для int/float некорректные символы не вводятся и отфильтровываются при вставке.
+    Enter — подтверждение, Escape — отмена. Ctrl+V — вставка, Ctrl+C — копирование содержимого поля.
     """
 
     def __init__(
@@ -25,6 +33,9 @@ class TextInput(Button):
         placeholder: str = "",
         value: str = "",
         max_length: int = 128,
+        input_type: InputType = "text",
+        min_val: Optional[float] = None,
+        max_val: Optional[float] = None,
         on_change: Optional[Callable[[str], None]] = None,
         on_submit: Optional[Callable[[str], None]] = None,
         text_color: Tuple[int, int, int] = (200, 200, 200),
@@ -54,6 +65,9 @@ class TextInput(Button):
         self.placeholder = placeholder
         self.value = value
         self.max_length = max(1, int(max_length))
+        self.input_type: InputType = input_type
+        self.min_val = min_val
+        self.max_val = max_val
         self.on_change = on_change
         self.on_submit = on_submit
         self.is_active = False
@@ -102,7 +116,7 @@ class TextInput(Button):
             if not data:
                 return
             text = data.decode("utf-8", errors="replace")
-            paste = "".join(c for c in text if c.isprintable() or c in " \t")
+            paste = filter_chars_for_paste(self.input_type, text)
             if not paste:
                 return
             remain = self.max_length - len(self.value)
@@ -112,6 +126,16 @@ class TextInput(Button):
             self._apply_text()
             if self.on_change:
                 self.on_change(self.value)
+        except Exception:
+            pass
+
+    def _copy_to_clipboard(self) -> None:
+        if not self.value:
+            return
+        try:
+            if not pygame.scrap.get_init():
+                pygame.scrap.init()
+            pygame.scrap.put(pygame.SCRAP_TEXT, self.value.encode("utf-8"))
         except Exception:
             pass
 
@@ -149,18 +173,27 @@ class TextInput(Button):
                 self._backspace_repeat_acc = 0.0
                 self._backspace_cleared_all = False
                 return True
-            if event.key == pygame.K_v and (event.mod & pygame.KMOD_CTRL):
-                self._paste_from_clipboard()
-                return True
+            mod = event.mod & (pygame.KMOD_CTRL | pygame.KMOD_META)
+            if mod:
+                if event.key == pygame.K_v:
+                    self._paste_from_clipboard()
+                    return True
+                if event.key == pygame.K_c:
+                    self._copy_to_clipboard()
+                    return True
             return False
         if event.type == pygame.TEXTINPUT:
             text = event.text or ""
-            if text and len(self.value) < self.max_length:
-                self.value += "".join(c for c in text if c.isprintable() or c in " \t")
+            buf = self.value
+            for c in text:
+                if len(buf) < self.max_length and can_add_char(self.input_type, buf, c):
+                    buf += c
+            if buf != self.value:
+                self.value = buf
                 self._apply_text()
                 if self.on_change:
                     self.on_change(self.value)
-                return True
+            return True
         return False
 
     def update(self, screen: pygame.Surface = None):

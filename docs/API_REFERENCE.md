@@ -115,6 +115,32 @@ validate_dict(
 )
 ```
 
+## Поля ввода (input_validation)
+
+Модуль `spritePro.input_validation` — типизированный ввод и парсинг для текстовых полей (TextInput и редактор сцен). Типы: **text**, **int**, **float**.
+
+### `InputType`
+Тип-алиас: `Literal["text", "int", "float"]`.
+
+### `can_add_char(input_type, current, ch, allowed_text_chars=None)`
+Проверяет, можно ли добавить символ `ch` в строку `current` для данного типа поля. Для `"text"` при `allowed_text_chars=None` допускаются любые печатные символы; если передано множество символов — только они (например, для поля «имя» в редакторе).
+
+### `filter_chars_for_paste(input_type, text, allowed_text_chars=None)`
+Фильтрует строку `text` (например из буфера обмена), оставляя только допустимые для типа поля символы. Для int — цифры и один минус в начале; для float — цифры, минус, одна точка.
+
+### `parse_input_value(input_type, raw, min_val=None, max_val=None)`
+Парсит строку в значение. Возвращает `(ok: bool, value: Any)` — для int/float значение с учётом min_val/max_val, для text — `raw.strip()`. При ошибке парсинга — `(False, None)`.
+
+**Пример:**
+```python
+from spritePro.input_validation import parse_input_value, InputType
+
+ok, num = parse_input_value("int", "42", 0, 100)  # (True, 42)
+ok, x = parse_input_value("float", "3.14", 0.0, 10.0)  # (True, 3.14)
+```
+
+---
+
 ## Система плагинов
 
 ### `PluginManager`
