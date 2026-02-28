@@ -73,7 +73,7 @@ def _render_name_row(editor, x: int, y: int, name_value: str) -> int:
     editor._property_input_rects[input_name] = input_rect
     _draw_property_input_box(editor, input_name, input_rect, value_display)
     editor._inspector_actions.append(
-        (input_rect, lambda n=input_name, v=name_value or "": editor._activate_text_input(n, v)),
+        (input_rect, lambda n=input_name, v=name_value or "": editor._activate_text_input(n, v, "text")),
     )
     return y + theme.INSPECTOR_ROW_HEIGHT
 
@@ -91,6 +91,7 @@ def _render_numeric_property_row(
     *,
     target_camera: bool = False,
     is_percent: bool = False,
+    value_type: str = "float",
 ) -> int:
     right_w = theme.UI_RIGHT_WIDTH
     editor.screen.blit(
@@ -110,7 +111,7 @@ def _render_numeric_property_row(
     _draw_small_button(editor, minus_rect, "-")
     _draw_small_button(editor, plus_rect, "+")
     editor._inspector_actions.append(
-        (input_rect, lambda n=input_name, v=value_str: editor._activate_text_input(n, v)),
+        (input_rect, lambda n=input_name, v=value_str, t=value_type: editor._activate_text_input(n, v, t)),
     )
     editor._inspector_actions.append((minus_rect, lambda p=prop, d=dec_step: editor._adjust_selected_property(p, d)))
     editor._inspector_actions.append((plus_rect, lambda p=prop, d=inc_step: editor._adjust_selected_property(p, d)))
@@ -263,11 +264,11 @@ def render(editor) -> None:
         y += theme.INSPECTOR_ROW_HEIGHT
     else:
         color = getattr(obj, "sprite_color", (255, 255, 255))
-        y = _render_numeric_property_row(editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", "{:.0f}")
-        y = _render_numeric_property_row(editor, x, y, "Color G", float(color[1]), -10, 10, "color_g", "{:.0f}")
-        y = _render_numeric_property_row(editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", "{:.0f}")
+        y = _render_numeric_property_row(editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", "{:.0f}", value_type="int")
+        y = _render_numeric_property_row(editor, x, y, "Color G", float(color[1]), -10, 10, "color_g", "{:.0f}", value_type="int")
+        y = _render_numeric_property_row(editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", "{:.0f}", value_type="int")
     y += 8
-    y = _render_numeric_property_row(editor, x, y, "Sorting Order", float(obj.z_index), -1.0, 1.0, "z_index", "{:.0f}")
+    y = _render_numeric_property_row(editor, x, y, "Sorting Order", float(obj.z_index), -1.0, 1.0, "z_index", "{:.0f}", value_type="int")
     y = _render_toggle_property_row(editor, x, y, "Screen Space", obj.screen_space, "screen_space")
     y += 8
     physics_type = getattr(obj, "physics_type", "none")

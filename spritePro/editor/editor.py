@@ -145,6 +145,9 @@ class SpriteEditor:
         self._statusbar_controls: Dict[str, pygame.Rect] = {}
         self._active_slider: Optional[str] = None
         self._active_text_input: Optional[str] = None
+        self._active_text_input_type: str = "text"
+        self._active_text_input_min: Optional[float] = None
+        self._active_text_input_max: Optional[float] = None
         self._text_input_buffers: Dict[str, str] = {"zoom_input": "", "grid_input": ""}
         self._property_input_rects: Dict[str, pygame.Rect] = {}
 
@@ -1027,11 +1030,21 @@ class SpriteEditor:
     def _click_in_any_text_input(self, pos: tuple[int, int]) -> bool:
         return self._click_in_status_input(pos) or self._click_in_property_input(pos)
 
-    def _activate_text_input(self, name: str, initial_value: str = "") -> None:
+    def _activate_text_input(
+        self,
+        name: str,
+        initial_value: str = "",
+        input_type: str = "text",
+        min_val: Optional[float] = None,
+        max_val: Optional[float] = None,
+    ) -> None:
         if self._active_text_input is not None and self._active_text_input != name:
             self._deactivate_text_input(apply=True)
         self._text_input_buffers[name] = initial_value
         self._active_text_input = name
+        self._active_text_input_type = input_type
+        self._active_text_input_min = min_val
+        self._active_text_input_max = max_val
 
     def _deactivate_text_input(self, apply: bool) -> None:
         if self._active_text_input is None:
@@ -1039,37 +1052,47 @@ class SpriteEditor:
         if apply:
             self._apply_text_input_value(self._active_text_input)
         self._active_text_input = None
+        self._active_text_input_type = "text"
+        self._active_text_input_min = None
+        self._active_text_input_max = None
 
     def _apply_text_input_value(self, name: str) -> None:
+        input_type = getattr(self, "_active_text_input_type", "text")
+        min_val = getattr(self, "_active_text_input_min", None)
+        max_val = getattr(self, "_active_text_input_max", None)
+
         if name == "prop_input_name":
             raw = self._text_input_buffers.get(name, "").strip()
             if self.selected_objects:
                 self.selected_objects[0].name = raw or "New Object"
                 self._save_state()
             return
-        raw = self._text_input_buffers.get(name, "").strip().replace(",", ".")
-        if not raw:
-            return
-        try:
-            if name == "zoom_input":
-                percent = float(raw)
-                value = percent * 0.01
-                prev = self.zoom
-                self._set_zoom(value, Vector2(pygame.mouse.get_pos()))
-                if abs(self.zoom - prev) > 1e-9:
-                    self._save_state()
-            elif name == "grid_input":
-                value = int(float(raw))
-                value = max(self.min_grid_size, min(self.max_grid_size, value))
-                if value != self.scene.grid_size:
-                    self.scene.grid_size = value
-                    self._save_state()
-            elif name.startswith("prop_input_"):
-                prop = name.replace("prop_input_", "", 1)
-                value = float(raw)
-                self._set_selected_property_value(prop, value)
-        except ValueError:
+
+        raw = self._text_input_buffers.get(name, "")
+        ok, value = ui_input.parse_input_value(input_type, raw, min_val, max_val)
+        if not ok or value is None:
             self._set_status("Invalid input", ttl=2.0)
+            return
+
+        if name == "zoom_input":
+            if input_type == "float":
+                percent = float(value)
+                val = percent * 0.01
+            else:
+                val = float(value) * 0.01
+            prev = self.zoom
+            self._set_zoom(val, Vector2(pygame.mouse.get_pos()))
+            if abs(self.zoom - prev) > 1e-9:
+                self._save_state()
+        elif name == "grid_input":
+            val = int(value)
+            val = max(self.min_grid_size, min(self.max_grid_size, val))
+            if val != self.scene.grid_size:
+                self.scene.grid_size = val
+                self._save_state()
+        elif name.startswith("prop_input_"):
+            prop = name.replace("prop_input_", "", 1)
+            self._set_selected_property_value(prop, float(value))
 
     def _set_selected_property_value(self, prop: str, value: float) -> None:
         if self.camera_selected:
@@ -1165,6 +1188,21 @@ class SpriteEditor:
                 v = max(0, min(255, int(round(value))))
                 if c[2] != v:
                     obj.sprite_color = (c[0], c[1], v)
+                    changed = True
+            elif prop == "physics_mass":
+                v = max(0.01, float(value))
+                if getattr(obj, "physics_mass", 1.0) != v:
+                    obj.physics_mass = v
+                    changed = True
+            elif prop == "physics_friction":
+                v = max(0.0, min(1.0, float(value)))
+                if getattr(obj, "physics_friction", 0.98) != v:
+                    obj.physics_friction = v
+                    changed = True
+            elif prop == "physics_bounce":
+                v = max(0.0, float(value))
+                if getattr(obj, "physics_bounce", 0.5) != v:
+                    obj.physics_bounce = v
                     changed = True
         if changed:
             self.scene._sort_by_z_index()

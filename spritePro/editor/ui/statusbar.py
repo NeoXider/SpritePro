@@ -195,10 +195,16 @@ def handle_click(editor, pos) -> bool:
     grid_input_rect = controls.get("grid_input")
 
     if zoom_input_rect and zoom_input_rect.collidepoint(pos.x, pos.y):
-        editor._activate_text_input("zoom_input", f"{editor.zoom * 100:.0f}")
+        editor._activate_text_input("zoom_input", f"{editor.zoom * 100:.0f}", "float")
         return True
     if grid_input_rect and grid_input_rect.collidepoint(pos.x, pos.y):
-        editor._activate_text_input("grid_input", str(editor.scene.grid_size))
+        editor._activate_text_input(
+            "grid_input",
+            str(editor.scene.grid_size),
+            "int",
+            float(editor.min_grid_size),
+            float(editor.max_grid_size),
+        )
         return True
     if editor._active_text_input:
         editor._deactivate_text_input(apply=True)
