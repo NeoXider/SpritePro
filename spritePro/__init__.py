@@ -1,5 +1,8 @@
 """
-SpritePro — высокоуровневый фреймворк для 2D-игр на Python (поверх Pygame).
+SpritePro — высокоуровневый мультиплатформенный фреймворк для 2D-игр на Python.
+
+Основной runtime работает поверх Pygame, а библиотека даёт единый flow
+для desktop, web и mobile-сценариев.
 
 Основные подсистемы:
 - Спрайты и UI: Sprite, Button, ToggleButton, Slider, TextInput, TextSprite, Bar, Layout.

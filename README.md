@@ -2,13 +2,13 @@
 
 # 🎮 [SpritePro](https://github.com/NeoXider/SpritePro)
 
-### **Создавайте 2D игры на Python быстро: desktop, web и mobile**
+### **Создавайте 2D игры на Python быстро: мультиплатформенно для desktop, web и mobile**
 
 [![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/)
 [![Pygame](https://img.shields.io/badge/Pygame-2.0+-green.svg)](https://www.pygame.org/)
 [![License](https://img.shields.io/badge/License-Open%20Source-yellow.svg)](LICENSE)
 
-**Мощный игровой фреймворк, который превращает создание 2D игр из сложной задачи в удовольствие.**
+**Мощный мультиплатформенный игровой фреймворк, который превращает создание 2D игр из сложной задачи в удовольствие.**
 
 ![Demo](https://github.com/user-attachments/assets/db56e1fd-0db5-4353-945d-c4a31c6b9d7f)
 
@@ -46,7 +46,7 @@ python -m spritePro.cli -e
 
 ---
 
-**SpritePro** — высокоуровневая библиотека для 2D игр на Python: автоматическая отрисовка, камера, ввод, сцены, физика, UI, частицы, редактор уровней и мультиплеер. Базовый рантайм работает на `pygame`, а для мобильных игр теперь есть запуск через **Kivy host**, так что одну и ту же игру можно запускать как на desktop, так и в mobile-оболочке.
+**SpritePro** — высокоуровневая **мультиплатформенная** библиотека для 2D игр на Python: автоматическая отрисовка, камера, ввод, сцены, физика, UI, частицы, редактор уровней и мультиплеер. Базовый рантайм работает на `pygame`, для mobile есть запуск через **Kivy host**, а для web — отдельный build flow, так что одну и ту же игру можно разворачивать под `desktop`, `web` и `mobile`.
 
 ---
 
