@@ -1,5 +1,7 @@
 import argparse
 import logging
+import os
+import subprocess
 import sys
 from pathlib import Path
 from textwrap import dedent
@@ -241,11 +243,76 @@ LEVEL_TEMPLATE = dedent(
     """
 )
 
+SCREEN_PRESETS: dict[str, tuple[int, int]] = {
+    "phone-portrait": (360, 640),
+    "phone-tall": (412, 915),
+    "phone-landscape": (640, 360),
+    "tablet-landscape": (1280, 720),
+    "tablet-portrait": (800, 1280),
+}
+
 
 def _project_root_from_target(target: Path) -> tuple[Path, Path]:
     if target.suffix == ".py":
         return target.parent, target
     return target, target / "main.py"
+
+
+def _preview_target_from_path(target: Path) -> Path:
+    resolved = target.resolve()
+    if resolved.is_file() and resolved.suffix == ".py":
+        return resolved
+    if resolved.is_dir():
+        main_file = resolved / "main.py"
+        if main_file.is_file():
+            return main_file
+    raise FileNotFoundError(f"Не удалось найти main.py или указанный .py файл: {target}")
+
+
+def _parse_preview_size(value: str | None) -> tuple[int, int] | None:
+    if not value:
+        return None
+    normalized = value.lower().replace(" ", "")
+    separator = "x" if "x" in normalized else ","
+    if separator not in normalized:
+        raise ValueError("Размер должен быть в формате WIDTHxHEIGHT, например 360x640")
+    width_str, height_str = normalized.split(separator, 1)
+    width = max(1, int(width_str))
+    height = max(1, int(height_str))
+    return width, height
+
+
+def run_preview(
+    target: Path,
+    *,
+    platform: str,
+    preset: str | None,
+    size: str | None,
+    extra_args: list[str],
+) -> int:
+    main_file = _preview_target_from_path(target)
+    if preset and size:
+        raise ValueError("Используйте либо --screen, либо --size, но не оба сразу")
+
+    resolved_size = _parse_preview_size(size)
+    if preset:
+        resolved_size = SCREEN_PRESETS[preset]
+    if resolved_size is None:
+        resolved_size = SCREEN_PRESETS["phone-portrait"]
+
+    env = os.environ.copy()
+    env["SPRITEPRO_WINDOW_SIZE"] = f"{resolved_size[0]}x{resolved_size[1]}"
+    env["SPRITEPRO_PLATFORM"] = platform
+    env["SPRITEPRO_TITLE_SUFFIX"] = f"[{platform} {resolved_size[0]}x{resolved_size[1]}]"
+
+    logging.info("Preview target: %s", main_file)
+    logging.info("Platform: %s", platform)
+    logging.info("Window size: %sx%s", resolved_size[0], resolved_size[1])
+    if extra_args:
+        logging.info("Forward args: %s", " ".join(extra_args))
+
+    completed = subprocess.run([sys.executable, str(main_file), *extra_args], env=env)
+    return completed.returncode
 
 
 def create_project(target: Path) -> Path:
@@ -314,7 +381,42 @@ def main() -> None:
         action="store_true",
         help="With --webgl: also run pygbag --build --archive and show path to ZIP (for Yandex Games, itch.io)",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--preview",
+        metavar="PATH",
+        help="Quick preview for a project or main.py with screen/platform overrides",
+    )
+    parser.add_argument(
+        "--screen",
+        choices=sorted(SCREEN_PRESETS.keys()),
+        help="Screen preset for --preview",
+    )
+    parser.add_argument(
+        "--size",
+        metavar="WIDTHxHEIGHT",
+        help="Custom screen size for --preview, for example 360x640",
+    )
+    parser.add_argument(
+        "--platform",
+        choices=("pygame", "kivy"),
+        default="pygame",
+        help="Platform for --preview (default: pygame)",
+    )
+    parser.add_argument(
+        "--list-screen-presets",
+        action="store_true",
+        help="Show available screen presets for --preview",
+    )
+    args, extra_args = parser.parse_known_args()
+
+    if extra_args and not args.preview:
+        parser.error(f"Неизвестные аргументы: {' '.join(extra_args)}")
+
+    if args.list_screen_presets:
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
+        for name, (width, height) in SCREEN_PRESETS.items():
+            logging.info("%s = %sx%s", name, width, height)
+        return
 
     if args.editor:
         import spritePro as s
@@ -348,6 +450,23 @@ def main() -> None:
             result = build_web(project_dir, output_dir=out)
             logging.info("Готово: %s", result)
             logging.info("Запуск: python -m pygbag %s", result)
+        return
+
+    if args.preview is not None:
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
+        try:
+            exit_code = run_preview(
+                Path(args.preview),
+                platform=args.platform,
+                preset=args.screen,
+                size=args.size,
+                extra_args=extra_args,
+            )
+        except (FileNotFoundError, ValueError) as exc:
+            sys.stderr.write(f"Ошибка preview: {exc}\n")
+            sys.exit(1)
+        if exit_code != 0:
+            sys.exit(exit_code)
         return
 
     if not args.create:

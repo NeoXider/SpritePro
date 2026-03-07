@@ -51,6 +51,7 @@ class KivySpriteProWidget:
                 self._texture = None
                 self._active_touch_id: str | None = None
                 self._last_touch_pos: tuple[int, int] | None = None
+                self._bootstrap_wait_frames = 0
 
                 with self.canvas:
                     self._rect = Rectangle(pos=self.pos, size=self.size)
@@ -78,9 +79,10 @@ class KivySpriteProWidget:
                 self._update_rect()
 
                 if not self._bootstrapped:
-                    self._bootstrapped = True
-                    if self._bootstrap is not None:
-                        self._bootstrap()
+                    # Kivy может прислать несколько resize подряд во время initial layout.
+                    # Ждём пару кадров без смены размера, чтобы сцена создавалась уже
+                    # с финальными s.WH / s.WH_C, как в pygame-режиме.
+                    self._bootstrap_wait_frames = 2
 
             def _to_local_pos(self, touch) -> tuple[int, int]:
                 local_x = int(touch.x - self.x)
@@ -163,6 +165,14 @@ class KivySpriteProWidget:
                 if self._surface is None:
                     self._on_resize()
                 if self._surface is None or self._texture is None:
+                    return
+                if not self._bootstrapped:
+                    if self._bootstrap_wait_frames > 0:
+                        self._bootstrap_wait_frames -= 1
+                        return
+                    self._bootstrapped = True
+                    if self._bootstrap is not None:
+                        self._bootstrap()
                     return
 
                 events = self._event_queue

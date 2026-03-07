@@ -41,6 +41,22 @@ class ResourceCache:
         while max_size > 0 and len(cache) > max_size:
             cache.popitem(last=False)
 
+    def _prepare_loaded_surface(self, surface: pygame.Surface) -> pygame.Surface:
+        """Готовит загруженную surface для blit.
+
+        В embedded/Kivy-режиме у pygame может не быть display surface,
+        поэтому convert_alpha()/convert() использовать нельзя.
+        """
+        if pygame.display.get_init() and pygame.display.get_surface() is not None:
+            try:
+                return surface.convert_alpha()
+            except pygame.error:
+                try:
+                    return surface.convert()
+                except pygame.error:
+                    return surface.copy()
+        return surface.copy()
+
     def load_texture(self, path: str | Path) -> Optional[pygame.Surface]:
         """Загружает текстуру с кэшированием.
 
@@ -56,10 +72,7 @@ class ResourceCache:
             return self._textures[key]
         try:
             surface = pygame.image.load(key)
-            try:
-                surface = surface.convert_alpha()
-            except pygame.error:
-                surface = surface.convert()
+            surface = self._prepare_loaded_surface(surface)
             self._textures[key] = surface
             self._evict(self._textures, self.max_textures)
             return surface

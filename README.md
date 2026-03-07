@@ -148,7 +148,7 @@ pip install spritepro
 Для мобильного host-режима:
 
 ```bash
-pip install kivy
+pip install "spritepro[kivy]"
 ```
 
 #### Обновление
@@ -195,6 +195,19 @@ s.run(scene=MainScene, size=(800, 600), title="My Game", fill_color=(20, 20, 30)
 
 **Вот и всё!** У вас уже есть игра с управлением, отрисовкой и игровым циклом. Для mobile достаточно сменить `platform` на `"kivy"`. 🎮
 
+Для файлов ассетов задавайте путь явно от текущего файла, а не от рабочей папки:
+
+```python
+from pathlib import Path
+
+ASSETS_DIR = Path(__file__).resolve().parent / "assets" / "images"
+
+def asset_path(name: str) -> str:
+    return str((ASSETS_DIR / name).resolve())
+```
+
+Такой способ одинаково корректно работает и в `pygame`, и в `kivy`. Подробности: [docs/mobile.md](docs/mobile.md).
+
 ### ⚡ Быстрый старт 2.0 (шаблон проекта)
 
 ```bash
@@ -234,6 +247,14 @@ s.run(scene=MainScene, platform="kivy")
 - [Mobile guide](docs/mobile.md) — как устроен Kivy runtime и touch-ввод
 - [Hybrid Kivy UI guide](docs/kivy_hybrid.md) — Kivy menu/layout + встроенная игровая область SpritePro
 - [Build guide](docs/building.md) — как собирать library, web и mobile build
+
+Быстрый preview разных экранов через CLI:
+
+```bash
+python -m spritePro.cli --preview main.py --platform kivy --screen phone-portrait
+python -m spritePro.cli --preview main.py --platform kivy --screen tablet-landscape
+python -m spritePro.cli --list-screen-presets
+```
 
 ### Что уже работает
 

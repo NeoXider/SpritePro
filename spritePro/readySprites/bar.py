@@ -596,9 +596,8 @@ class BarWithBackground(Bar):
                 alpha = getattr(self, "_fill_alpha", 255)
                 fill_surface.fill((*self._fill_color, alpha))
         else:
-            try:
-                fill_surface = pygame.image.load(str(self._fill_image_source)).convert_alpha()
-            except Exception:
+            fill_surface = s.load_texture(str(self._fill_image_source))
+            if fill_surface is None:
                 s.debug_log_warning(
                     f"[BarWithBackground] не удалось загрузить изображение заполнения из '{self._fill_image_source}'"
                 )

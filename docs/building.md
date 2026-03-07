@@ -185,10 +185,10 @@ s.run(scene=MainScene, platform="kivy")
 
 ### Локальная проверка mobile-режима на ПК
 
-Установите `Kivy`:
+Установите mobile-зависимости:
 
 ```bash
-pip install kivy
+pip install "spritepro[kivy]"
 ```
 
 Запустите игру:
@@ -204,6 +204,72 @@ python -m spritePro.demoGames.mobile_orb_collector_demo --kivy
 python -m spritePro.demoGames.builder_demo --kivy
 ```
 
+Если вы работаете из исходников SpritePro, а не из опубликованного пакета:
+
+```bash
+pip install -e ".[kivy]"
+```
+
+### Тестирование на разных экранах до Android build
+
+Перед реальной сборкой полезно прогнать одну и ту же игру на нескольких размерах окна в desktop-preview через `platform="kivy"`.
+
+Самый быстрый способ теперь через CLI:
+
+```bash
+python -m spritePro.cli --preview main.py --platform kivy --screen phone-portrait
+python -m spritePro.cli --preview main.py --platform kivy --screen phone-tall
+python -m spritePro.cli --preview main.py --platform kivy --screen phone-landscape
+python -m spritePro.cli --preview main.py --platform kivy --screen tablet-landscape
+python -m spritePro.cli --preview main.py --platform pygame --size 412x915
+python -m spritePro.cli --list-screen-presets
+```
+
+Команда `--preview`:
+
+- принимает путь к `main.py` или к папке проекта
+- временно подменяет размер окна
+- для scene-based игр на `s.run(...)` может быстро переключать `pygame` / `kivy`
+- помогает быстро увидеть расхождения layout до Android build
+
+Пример:
+
+```python
+import spritePro as s
+
+
+class MainScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.player = s.Sprite("", (96, 96), s.WH_C, scene=self)
+        self.player.set_rect_shape((96, 96), (90, 210, 255), border_radius=24)
+
+
+s.run(
+    scene=MainScene,
+    size=(360, 640),
+    title="Phone Portrait Preview",
+    fill_color=(20, 20, 30),
+    platform="kivy",
+)
+```
+
+Что стоит проверить хотя бы в нескольких профилях:
+
+- `size=(360, 640)` — компактный phone portrait
+- `size=(412, 915)` — современный высокий phone portrait
+- `size=(640, 360)` — compact landscape
+- `size=(1280, 720)` — tablet / desktop-preview landscape
+
+На что смотреть:
+
+- не уезжает ли UI за края
+- хватает ли размеров hitbox и кнопок под touch
+- корректно ли выглядят `screen_space`-элементы
+- не завязана ли логика на один фиксированный `s.WH`
+- одинаково ли ведут себя `pygame` и `kivy`
+- помните, что в `Kivy` при resize `s.WH` и `s.WH_C` обновляются, но уже созданные объекты не relayout'ятся автоматически
+
 ### Android: рекомендуемый путь
 
 Для Android-сборки обычно используется `Buildozer`.
@@ -212,6 +278,7 @@ python -m spritePro.demoGames.builder_demo --kivy
 
 - `Buildozer` официально удобнее всего запускать на Linux
 - на Windows обычно используют `WSL` или отдельную Linux-машину
+- собирать проект лучше внутри Linux filesystem/WSL home, а не из Windows-диска
 - на Android нужно заранее продумать ассеты, ориентацию экрана и touch-управление
 
 ### Минимальный сценарий сборки Android
@@ -247,6 +314,8 @@ s.run(
 
 ### Buildozer
 
+`Buildozer` ставится и запускается внутри Linux/WSL-окружения.
+
 Установка:
 
 ```bash
@@ -270,6 +339,11 @@ requirements = python3,kivy,pygame,spritepro
 orientation = landscape
 fullscreen = 1
 ```
+
+Если вы тестируете не опубликованный `spritepro`, а локально модифицированную версию, заранее проверьте, как именно библиотека попадёт в Android build:
+
+- либо используйте опубликованный пакет `spritepro`
+- либо собирайте/подключайте свою локальную версию отдельно и проверяйте это до финальной сборки
 
 Если игра использует сеть по Wi-Fi:
 

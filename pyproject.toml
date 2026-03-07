@@ -34,6 +34,7 @@ dependencies = [
 
 [project.optional-dependencies]
 web = ["pygbag>=0.9.0"]
+kivy = ["kivy"]
 
 [project.urls]
 Homepage = "https://github.com/NeoXider/SpritePro"

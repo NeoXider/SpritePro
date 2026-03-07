@@ -13,10 +13,17 @@ import pygame
 import spritePro as s
 
 
+SPRITES_DIR = Path(__file__).resolve().parent / "Sprites"
+
+
+def sprite_asset(name: str) -> str:
+    return str((SPRITES_DIR / name).resolve())
+
+
 def create_bar():
     return s.readySprites.BarWithBackground(
-        path_sprites + "bar_bg.png",
-        path_sprites + "bar_fill.png",
+        sprite_asset("bar_bg.png"),
+        sprite_asset("bar_fill.png"),
         (150, 30),
     )
 
@@ -33,22 +40,19 @@ class Hero(s.Sprite):
         super().update(screen)
 
 
-path_sprites = "spritePro\\demoGames\\Sprites\\"
-
-
 class HeroVsEnemyScene(s.Scene):
     def __init__(self):
         super().__init__()
-        self.bg = s.Sprite(path_sprites + "background_game.png", s.WH, s.WH_C, scene=self)
+        self.bg = s.Sprite(sprite_asset("background_game.png"), s.WH, s.WH_C, scene=self)
         self.bg.set_color((150, 150, 150))
 
-        self.player = Hero(path_sprites + "hero.png", speed=5, scene=self)
+        self.player = Hero(sprite_asset("hero.png"), speed=5, scene=self)
         self.player.set_native_size()
         self.player.set_position((s.WH_C.x, 730))
         self.player.set_scale(0.5)
         self.player.set_bar(create_bar())
 
-        self.enemy = Hero(path_sprites + "enemy.png", speed=1, scene=self)
+        self.enemy = Hero(sprite_asset("enemy.png"), speed=1, scene=self)
         self.enemy.set_native_size()
         self.enemy.set_position((s.WH_C.x + 500, 730))
         self.enemy.set_scale(0.5)
