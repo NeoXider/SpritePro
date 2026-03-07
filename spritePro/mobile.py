@@ -20,7 +20,7 @@ def _require_kivy():
         from kivy.uix.widget import Widget
     except ImportError as exc:
         raise ImportError(
-            "Для мобильного режима нужен Kivy. Установите зависимость: pip install kivy"
+            'Для мобильного режима нужен Kivy. Установите зависимость: pip install "spritepro[kivy]"'
         ) from exc
     return App, Clock, Rectangle, Texture, Widget
 

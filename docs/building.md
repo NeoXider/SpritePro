@@ -281,6 +281,69 @@ s.run(
 - собирать проект лучше внутри Linux filesystem/WSL home, а не из Windows-диска
 - на Android нужно заранее продумать ассеты, ориентацию экрана и touch-управление
 
+### Быстрый путь через `spritePro.cli`
+
+Если проект уже имеет `main.py`, самый удобный путь теперь такой:
+
+```bash
+python -m spritePro.cli --android .
+```
+
+Что делает команда:
+
+- находит `main.py` в проекте
+- создаёт `buildozer.spec`, если его ещё нет
+- подставляет базовые настройки для Android build
+- включает типичные расширения файлов из проекта: код, `assets/images`, `assets/audio`, `scenes`, JSON, шрифты и другие файлы по расширению
+- на Linux/WSL сразу запускает `buildozer android debug`
+
+Если нужен только `buildozer.spec`, без запуска сборки:
+
+```bash
+python -m spritePro.cli --android . --android-mode spec
+```
+
+Если хотите перегенерировать `buildozer.spec` под значения SpritePro:
+
+```bash
+python -m spritePro.cli --android . --android-mode spec --android-refresh-spec
+```
+
+Release APK:
+
+```bash
+python -m spritePro.cli --android . --android-mode release
+```
+
+AAB для Google Play:
+
+```bash
+python -m spritePro.cli --android . --android-mode aab
+```
+
+Часто полезные override-параметры:
+
+```bash
+python -m spritePro.cli --android . --android-title "My Game" --android-package-name mygame --android-package-domain com.example --android-orientation landscape
+python -m spritePro.cli --android . --android-permission INTERNET
+```
+
+Что генерируется по умолчанию:
+
+- `requirements = python3,kivy,pygame,pymunk,spritepro`
+- `source.dir = .`
+- `source.include_exts` включает картинки, аудио, JSON, шрифты, `.kv`, `.atlas`
+- `source.exclude_dirs` убирает `.git`, `.venv`, `build`, `dist` и другие служебные папки
+
+Это удобно для проектов, созданных через `spritePro.cli --create`, потому что их структура уже соответствует ожидаемому шаблону:
+
+- `main.py`
+- `assets/images`
+- `assets/audio`
+- `scenes`
+
+Если у вас hybrid-режим через `s.run_kivy_hybrid(...)` или `s.create_kivy_widget(...)`, команда та же самая. Для упаковки Android это обычное `Kivy`-приложение с вашим `main.py`.
+
 ### Минимальный сценарий сборки Android
 
 1. Подготовьте проект игры с точкой входа `main.py`
@@ -312,7 +375,7 @@ s.run(
 )
 ```
 
-### Buildozer
+### Напрямую через Buildozer
 
 `Buildozer` ставится и запускается внутри Linux/WSL-окружения.
 
@@ -339,6 +402,12 @@ requirements = python3,kivy,pygame,spritepro
 orientation = landscape
 fullscreen = 1
 ```
+
+Эта ручная схема нужна, если:
+
+- вы не хотите использовать `spritePro.cli --android`
+- у вас уже есть свой настроенный `buildozer.spec`
+- вы хотите тонко контролировать Android-конфиг вручную
 
 Если вы тестируете не опубликованный `spritepro`, а локально модифицированную версию, заранее проверьте, как именно библиотека попадёт в Android build:
 
@@ -370,6 +439,7 @@ buildozer android release
 - проверяйте производительность на реальном устройстве
 - избегайте слишком тяжёлых текстур и большого количества частиц
 - для локального мультиплеера по Wi-Fi проверьте права сети и доступность IP хоста
+- если используете hybrid `Kivy` UI, проверьте отдельно и размеры внешнего layout, и размеры встроенной игровой области
 
 ### iOS
 

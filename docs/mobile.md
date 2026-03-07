@@ -284,3 +284,7 @@ python spritePro/demoGames/kivy_hybrid_demo.py
 Для отдельного hybrid-сценария с внешним `Kivy` UI смотрите:
 
 - `spritePro.demoGames.kivy_hybrid_demo`
+
+Для быстрой Android-сборки через CLI и ручного `Buildozer` смотрите:
+
+- [building.md](building.md)

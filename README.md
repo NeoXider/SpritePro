@@ -256,6 +256,14 @@ python -m spritePro.cli --preview main.py --platform kivy --screen tablet-landsc
 python -m spritePro.cli --list-screen-presets
 ```
 
+Быстрая Android/APK-сборка через CLI:
+
+```bash
+python -m spritePro.cli --android .
+python -m spritePro.cli --android . --android-mode release
+python -m spritePro.cli --android . --android-mode spec
+```
+
 ### Что уже работает
 
 - desktop runtime через `pygame`

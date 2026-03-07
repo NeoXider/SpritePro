@@ -274,6 +274,50 @@ HybridApp().run()
 
 ---
 
+## Сборка APK для hybrid-режима
+
+Для Android hybrid-режим собирается так же, как и обычный `Kivy` full-screen запуск. Отдельного special-case здесь нет: упаковщик смотрит только на ваш `main.py`.
+
+Если в `main.py` используется:
+
+- `s.run(..., platform="kivy")`
+- `s.run_kivy_hybrid(...)`
+- `s.create_kivy_widget(...)` внутри собственного `Kivy App`
+
+то общий Android flow остаётся тем же.
+
+### Быстро через CLI
+
+```bash
+python -m spritePro.cli --android .
+python -m spritePro.cli --android . --android-mode release
+python -m spritePro.cli --android . --android-permission INTERNET
+```
+
+### Напрямую через Buildozer
+
+```bash
+buildozer init
+buildozer android debug
+```
+
+Если hybrid-приложение использует сеть, не забудьте добавить:
+
+```ini
+android.permissions = INTERNET
+```
+
+Если у вас в интерфейсе есть внешние `Kivy`-экраны и встроенный игровой виджет, перед сборкой особенно полезно проверить:
+
+- что layout не ломается на portrait/landscape
+- что `game_widget` получает ожидаемый размер
+- что `s.WH` и `s.WH_C` внутри игровой области совпадают с ожиданиями
+- что внешние `Kivy`-кнопки и внутриигровой touch не конфликтуют
+
+Подробный общий гайд по Android-сборке: [building.md](building.md)
+
+---
+
 ## Готовый demo
 
 В репозитории есть пример:
