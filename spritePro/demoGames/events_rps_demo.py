@@ -47,9 +47,15 @@ class EventsRpsScene(s.Scene):
         super().__init__()
         s.multiplayer.init_context(net, role)
         self.ctx = s.multiplayer_ctx
-        self.title = s.TextSprite("Rock / Paper / Scissors", 30, (255, 255, 255), (400, 40), scene=self)
-        self.hint = s.TextSprite("1=Rock  2=Paper  3=Scissors", 20, (200, 200, 200), (400, 80), scene=self)
-        self.status = s.TextSprite("Make your choice...", 20, (220, 220, 220), (400, 120), scene=self)
+        self.title = s.TextSprite(
+            "Rock / Paper / Scissors", 30, (255, 255, 255), (400, 40), scene=self
+        )
+        self.hint = s.TextSprite(
+            "1=Rock  2=Paper  3=Scissors", 20, (200, 200, 200), (400, 80), scene=self
+        )
+        self.status = s.TextSprite(
+            "Make your choice...", 20, (220, 220, 220), (400, 120), scene=self
+        )
         self.my_info = s.TextSprite("You (ID: ?)", 20, (120, 200, 255), (200, 220), scene=self)
         self.other_info = s.TextSprite("Other (ID: ?)", 20, (255, 200, 120), (600, 220), scene=self)
         self.my_choice_text = s.TextSprite("?", 36, (120, 200, 255), (200, 270), scene=self)
@@ -107,7 +113,10 @@ class EventsRpsScene(s.Scene):
         other_id_label = "?" if self.other_id is None else str(self.other_id)
         self.other_info.set_text(f"Other (ID: {other_id_label})")
 
-        if self.last_result_at is not None and s.time_since_start - self.last_result_at >= self.result_delay:
+        if (
+            self.last_result_at is not None
+            and s.time_since_start - self.last_result_at >= self.result_delay
+        ):
             self.last_result_at = None
             self.my_choice = None
             self.other_choice = None

@@ -204,7 +204,9 @@ class GameContext:
 
         get_plugin_manager().emit("game_init")
         pm = get_plugin_manager()
-        enabled_plugins = [n for n in pm.list_plugins() if pm.get_plugin(n) and pm.get_plugin(n).enabled]
+        enabled_plugins = [
+            n for n in pm.list_plugins() if pm.get_plugin(n) and pm.get_plugin(n).enabled
+        ]
         if enabled_plugins:
             self.game.debug_log_info(f"Плагины: {', '.join(enabled_plugins)}")
         if not self._startup_log_done:

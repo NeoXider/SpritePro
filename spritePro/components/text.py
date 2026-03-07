@@ -200,7 +200,9 @@ class TextSprite(Sprite):
             lines = [""]
         line_surfs = [self.font.render(line or " ", True, self.color) for line in lines]
         max_w = max(s.get_width() for s in line_surfs)
-        total_h = sum(s.get_height() for s in line_surfs) + max(0, len(line_surfs) - 1) * line_spacing
+        total_h = (
+            sum(s.get_height() for s in line_surfs) + max(0, len(line_surfs) - 1) * line_spacing
+        )
         surf = pygame.Surface((max_w, total_h), pygame.SRCALPHA)
         y = 0
         for srf in line_surfs:

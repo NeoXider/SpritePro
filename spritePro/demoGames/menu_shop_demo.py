@@ -15,10 +15,6 @@ from spritePro.layout import (
     layout_flex_row,
     layout_flex_column,
     layout_grid,
-    layout_horizontal,
-    layout_vertical,
-    layout_circle,
-    layout_line,
 )
 from spritePro.constants import Anchor
 

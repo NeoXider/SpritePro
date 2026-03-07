@@ -308,8 +308,16 @@ class Scene:
             screen_space = getattr(obj, "screen_space", False)
 
             # Редактор хранит позицию как центр объекта; в runtime rect может быть с любым якорем — экспортируем центр.
-            cx = float(rect.centerx) if hasattr(rect, "centerx") else float(rect.x) + float(getattr(rect, "width", 0)) / 2
-            cy = float(rect.centery) if hasattr(rect, "centery") else float(rect.y) + float(getattr(rect, "height", 0)) / 2
+            cx = (
+                float(rect.centerx)
+                if hasattr(rect, "centerx")
+                else float(rect.x) + float(getattr(rect, "width", 0)) / 2
+            )
+            cy = (
+                float(rect.centery)
+                if hasattr(rect, "centery")
+                else float(rect.y) + float(getattr(rect, "height", 0)) / 2
+            )
 
             ed_scene.add_object(
                 SceneObject(

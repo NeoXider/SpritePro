@@ -1,4 +1,5 @@
 """Demo: пул партиклов — ParticleEmitter с use_pool=True."""
+
 import sys
 
 import pygame
@@ -25,7 +26,9 @@ class ParticlePoolDemoScene(s.Scene):
 
         self.pool_text = s.TextSprite("Pool: 0", color=(255, 255, 100), pos=(20, 30), scene=self)
         self.pool_text.set_position((20, 30), anchor="topleft")
-        self.hint_text = s.TextSprite("SPACE: burst at cursor", color=(200, 200, 200), pos=(20, 55), scene=self)
+        self.hint_text = s.TextSprite(
+            "SPACE: burst at cursor", color=(200, 200, 200), pos=(20, 55), scene=self
+        )
         self.hint_text.set_position((20, 55), anchor="topleft")
 
         s.debug_log_info("Particle Pool Demo — particles are reused from pool")

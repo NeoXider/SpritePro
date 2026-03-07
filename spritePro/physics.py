@@ -27,11 +27,13 @@ except ImportError as e:
 def _get_physics_world() -> "PhysicsWorld":
     """Возвращает глобальный мир физики (тот же, что обновляется в игровом цикле)."""
     import spritePro as _s
+
     return _s.get_physics_world()
 
 
 class BodyType(Enum):
     """Тип физического тела."""
+
     DYNAMIC = "dynamic"
     STATIC = "static"
     KINEMATIC = "kinematic"
@@ -39,6 +41,7 @@ class BodyType(Enum):
 
 class PhysicsShape(Enum):
     """Форма коллайдера физического тела."""
+
     AUTO = "auto"
     BOX = "box"
     CIRCLE = "circle"
@@ -68,6 +71,7 @@ class PhysicsConfig:
         collision_category: Битовые категории для фильтра коллизий (опционально).
         collision_mask: С какими категориями сталкиваться (опционально).
     """
+
     mass: float = 1.0
     gravity: float = 980.0
     friction: float = 0.98

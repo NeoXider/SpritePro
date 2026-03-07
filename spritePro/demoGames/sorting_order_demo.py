@@ -31,7 +31,9 @@ class SortingOrderDemoScene(s.Scene):
         red_img = make_box((180, 120), (220, 70, 70))
 
         background_order = -100
-        self.blue = s.Sprite(blue_img, size=(220, 160), pos=center, speed=0, sorting_order=0, scene=self)
+        self.blue = s.Sprite(
+            blue_img, size=(220, 160), pos=center, speed=0, sorting_order=0, scene=self
+        )
         self.red = s.Sprite(
             red_img,
             size=(180, 120),

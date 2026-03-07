@@ -17,6 +17,7 @@ from enum import Enum, auto
 TKINTER_AVAILABLE = importlib.util.find_spec("tkinter") is not None
 
 try:
+    from .path_utils import normalize_sprite_path, resolve_sprite_path
     from .scene import Scene, SceneObject, Camera
     from . import sprite_types as editor_sprite_types
     from .ui.windows import SettingsWindow, WindowManager
@@ -29,9 +30,11 @@ try:
     from .ui import input_handling as ui_input
 except ImportError:
     import sys
+
     _root = Path(__file__).resolve().parent.parent.parent
     if str(_root) not in sys.path:
         sys.path.insert(0, str(_root))
+    from spritePro.editor.path_utils import normalize_sprite_path, resolve_sprite_path
     from spritePro.editor.scene import Scene, SceneObject, Camera
     from spritePro.editor import sprite_types as editor_sprite_types
     from spritePro.editor.ui.windows import SettingsWindow, WindowManager
@@ -54,6 +57,7 @@ class ToolType(Enum):
 @dataclass
 class EditorState:
     """Состояние для Undo/Redo"""
+
     objects: List[Dict]
     camera: Dict
     grid_size: int
@@ -69,28 +73,29 @@ class SpriteEditor:
         pygame.init()
         self.screen = pygame.display.set_mode(size, pygame.RESIZABLE)
         pygame.display.set_caption("Sprite Editor")
-        
+
         self.width, self.height = size
         self.clock = pygame.time.Clock()
         self.running = True
-        
+
         self.colors = dict(ui_theme.COLORS)
-        
+
         # Сцена
         self.scene = Scene(name="New Scene")
         self.scene.grid_size = 10
         self.filepath: Optional[str] = None
         self.modified = False
-        
+
         # Папка с ассетами -_relative to project root
         editor_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(os.path.dirname(editor_dir))
+        self.project_root = project_root
         self.assets_folder = os.path.join(project_root, "assets")
         if not os.path.exists(self.assets_folder):
             self.assets_folder = os.path.join(editor_dir, "assets")
         if not os.path.exists(self.assets_folder):
             self.assets_folder = "assets"
-        
+
         # Камера
         self.camera = Vector2(0, 0)
         self.zoom = 1.0
@@ -101,11 +106,11 @@ class SpriteEditor:
         self.camera_preview_enabled = True
         self.camera_preview_size = Vector2(800, 600)
         self._camera_preview_copy_rect: Optional[pygame.Rect] = None
-        
+
         # Инструменты
         self.current_tool = ToolType.SELECT
         self.selected_objects: List[SceneObject] = []
-        
+
         self.ui_left_width = ui_theme.UI_LEFT_WIDTH
         self.ui_right_width = ui_theme.UI_RIGHT_WIDTH
         self.ui_top_height = ui_theme.UI_TOP_HEIGHT
@@ -116,7 +121,7 @@ class SpriteEditor:
             (ToolType.ROTATE, "R", "Rotate"),
             (ToolType.SCALE, "T", "Scale"),
         ]
-        
+
         # Состояние мыши
         self.mouse_pos = Vector2(0, 0)
         self.mouse_world_pos = Vector2(0, 0)
@@ -126,19 +131,19 @@ class SpriteEditor:
         self.camera_drag_start = Vector2(0, 0)
         self._drag_object_starts: Dict[str, Dict[str, float]] = {}
         self._transform_changed_during_drag = False
-        
+
         # Undo/Redo стек
         self.undo_stack: List[EditorState] = []
         self.redo_stack: List[EditorState] = []
         self.max_undo = 50
-        
+
         # Кэш загруженных изображений
         self.image_cache: Dict[str, pygame.Surface] = {}
-        
+
         # Шрифты
         self.font = pygame.font.Font(None, 18)
         self.font_bold = pygame.font.Font(None, 20)
-        
+
         # Кнопки тулбара (для кликов)
         self._toolbar_buttons: Dict[str, pygame.Rect] = {}
         self._inspector_actions: List[Tuple[pygame.Rect, Callable[[], None]]] = []
@@ -296,10 +301,16 @@ class SpriteEditor:
 
     def add_sprite(self, sprite_path: str, world_pos: Optional[Vector2] = None) -> SceneObject:
         """Добавляет новый спрайт на сцену (изображение)."""
-        full_path = os.path.abspath(sprite_path) if os.path.exists(sprite_path) else sprite_path
+        stored_path = normalize_sprite_path(
+            sprite_path,
+            source_scene_path=self.filepath,
+            target_scene_path=self.filepath,
+            project_root=self.project_root,
+            assets_folder=self.assets_folder,
+        )
         obj = SceneObject(
             name=os.path.splitext(os.path.basename(sprite_path))[0],
-            sprite_path=full_path,
+            sprite_path=stored_path,
             sprite_shape=editor_sprite_types.SHAPE_IMAGE,
         )
         if world_pos is not None:
@@ -411,42 +422,25 @@ class SpriteEditor:
             return editor_sprite_types.render_primitive_surface(shape, w, h, color)
         if not obj.sprite_path:
             return None
-        
-        # Проверяем кэш
-        if obj.sprite_path in self.image_cache:
-            return self.image_cache[obj.sprite_path]
-        
-        editor_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(os.path.dirname(editor_dir))
-        scene_dir = os.path.dirname(self.filepath) if self.filepath else None
 
-        search_paths = [
+        resolved_path = resolve_sprite_path(
             obj.sprite_path,
-            os.path.abspath(obj.sprite_path),
-        ]
-        if scene_dir:
-            search_paths.append(os.path.join(scene_dir, obj.sprite_path))
-            search_paths.append(os.path.join(scene_dir, os.path.basename(obj.sprite_path)))
-        search_paths.extend([
-            os.path.join(self.assets_folder, obj.sprite_path),
-            os.path.join(self.assets_folder, "images", obj.sprite_path),
-            os.path.join(editor_dir, "assets", obj.sprite_path),
-            os.path.join(editor_dir, "assets", "images", obj.sprite_path),
-            os.path.join(project_root, "assets", obj.sprite_path),
-            os.path.join(project_root, "assets", "images", obj.sprite_path),
-            os.path.join("assets", obj.sprite_path),
-            os.path.join("assets", "images", obj.sprite_path),
-            os.path.join(os.getcwd(), obj.sprite_path),
-        ])
-        
-        for path in search_paths:
+            scene_path=self.filepath,
+            project_root=self.project_root,
+            assets_folder=self.assets_folder,
+        )
+        cache_key = str(resolved_path) if resolved_path is not None else obj.sprite_path
+
+        if cache_key in self.image_cache:
+            return self.image_cache[cache_key]
+
+        if resolved_path is not None:
             try:
-                if os.path.exists(path):
-                    img = pygame.image.load(path).convert_alpha()
-                    self.image_cache[obj.sprite_path] = img
-                    return img
+                img = pygame.image.load(str(resolved_path)).convert_alpha()
+                self.image_cache[cache_key] = img
+                return img
             except Exception:
-                continue
+                pass
 
         cd = getattr(obj, "custom_data", None) or {}
         w = max(1, int(cd.get("width") or cd.get("w") or 64))
@@ -467,27 +461,27 @@ class SpriteEditor:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            
+
             elif event.type == pygame.VIDEORESIZE:
                 self.width, self.height = event.w, event.h
                 self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
                 self.settings_window.rect.center = (self.width // 2, self.height // 2)
-            
+
             elif event.type == pygame.KEYDOWN:
                 self._handle_keydown(event)
 
             elif event.type == pygame.TEXTINPUT:
                 ui_input.handle_text_input_text(self, event)
-            
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self._handle_mousedown(event)
-            
+
             elif event.type == pygame.MOUSEBUTTONUP:
                 self._handle_mouseup(event)
-            
+
             elif event.type == pygame.MOUSEWHEEL:
                 self._handle_mousewheel(event)
-            
+
             elif event.type == pygame.DROPFILE:
                 self._handle_dropfile(event)
 
@@ -497,7 +491,7 @@ class SpriteEditor:
             return
 
         keys = pygame.key.get_pressed()
-        
+
         # Инструменты
         if event.key == pygame.K_v:
             self.current_tool = ToolType.SELECT
@@ -509,7 +503,7 @@ class SpriteEditor:
             self.current_tool = ToolType.SCALE
         elif event.key == pygame.K_F1:
             self.window_manager.toggle("settings")
-        
+
         # Ctrl
         elif keys[pygame.K_LCTRL] or keys[pygame.K_RCTRL]:
             if event.key == pygame.K_z:
@@ -521,8 +515,11 @@ class SpriteEditor:
             elif event.key == pygame.K_v:
                 self.copy_selected()
             elif event.key == pygame.K_s:
-                self._save_scene()
-        
+                if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]:
+                    self._save_scene_as()
+                else:
+                    self._save_scene()
+
         # Delete
         elif event.key == pygame.K_DELETE or event.key == pygame.K_BACKSPACE:
             self.delete_selected()
@@ -530,7 +527,7 @@ class SpriteEditor:
         # F — фокус камеры на выбранном объекте
         elif event.key == pygame.K_f:
             self._frame_selection()
-        
+
         # Escape - deselect
         elif event.key == pygame.K_ESCAPE:
             self.deselect_all()
@@ -539,7 +536,7 @@ class SpriteEditor:
         """Обработка нажатия кнопки мыши"""
         self.mouse_pos = Vector2(event.pos)
         self.mouse_world_pos = self.screen_to_world(self.mouse_pos)
-        
+
         if event.button == 1:  # Левая кнопка
             self.mouse_pressed = True
             self._transform_changed_during_drag = False
@@ -547,22 +544,22 @@ class SpriteEditor:
             # Если активен текстовый ввод в статусбаре, клик вне поля подтверждает значение
             if self._active_text_input and not self._click_in_any_text_input(event.pos):
                 self._deactivate_text_input(apply=True)
-            
+
             # Модальные окна/страницы
             if self.window_manager.handle_click((int(self.mouse_pos.x), int(self.mouse_pos.y))):
                 return
-            
+
             if ui_statusbar.handle_click(self, self.mouse_pos):
                 return
-            
+
             if self.mouse_pos.y <= self.ui_top_height:
                 if ui_toolbar.handle_click(self, self.mouse_pos):
                     return
-            
+
             if self.mouse_pos.x >= self.width - self.ui_right_width:
                 if ui_inspector.handle_click(self, self.mouse_pos):
                     return
-            
+
             if self.mouse_pos.x <= self.ui_left_width:
                 obj = ui_hierarchy.handle_click(self, self.mouse_pos)
                 if obj is not None:
@@ -581,34 +578,40 @@ class SpriteEditor:
                         self.selected_objects.clear()
                     else:
                         keys = pygame.key.get_pressed()
-                        self.select_object(obj, add_to_selection=keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT])
+                        self.select_object(
+                            obj, add_to_selection=keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
+                        )
                     return
-            
+
             # Проверяем клик по объекту в viewport
             viewport = self._get_viewport_rect()
             if viewport.collidepoint(self.mouse_pos):
-                if self._camera_preview_copy_rect and self._camera_preview_copy_rect.collidepoint(self.mouse_pos.x, self.mouse_pos.y):
+                if self._camera_preview_copy_rect and self._camera_preview_copy_rect.collidepoint(
+                    self.mouse_pos.x, self.mouse_pos.y
+                ):
                     self._copy_scene_camera_to_game()
                     return
                 obj = self.get_object_at(self.mouse_world_pos)
                 if obj:
                     keys = pygame.key.get_pressed()
-                    self.select_object(obj, add_to_selection=keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT])
+                    self.select_object(
+                        obj, add_to_selection=keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
+                    )
                 else:
                     # Клик по пустому пространству
                     if self.current_tool == ToolType.SELECT:
                         self.deselect_all()
-                
+
                 # Сохраняем позиции для перетаскивания
                 self.drag_start = self.mouse_world_pos.copy()
                 self.camera_drag_start = Vector2(event.pos)  # Для pan
                 self._capture_drag_state()
                 self.mouse_dragging = True
-        
+
         elif event.button == 2:  # Средняя кнопка - панорамирование
             self.mouse_pressed = True
             self.camera_drag_start = Vector2(event.pos)
-        
+
         elif event.button == 3:  # ПКМ - панорамирование
             self.mouse_pressed = True
             self.camera_drag_start = Vector2(event.pos)
@@ -633,25 +636,22 @@ class SpriteEditor:
         if not TKINTER_AVAILABLE:
             self.add_sprite("placeholder", Vector2(400, 300))
             return
-        
+
         try:
             import tkinter as tk
             from tkinter import filedialog
-            
+
             root = tk.Tk()
             root.withdraw()
-            
+
             filepath = filedialog.askopenfilename(
                 title="Выберите изображение",
-                filetypes=[
-                    ("Images", "*.png *.jpg *.jpeg *.bmp *.gif"),
-                    ("All files", "*.*")
-                ],
-                initialdir=self.assets_folder
+                filetypes=[("Images", "*.png *.jpg *.jpeg *.bmp *.gif"), ("All files", "*.*")],
+                initialdir=self.assets_folder,
             )
-            
+
             root.destroy()
-            
+
             if filepath:
                 self.add_sprite(filepath, Vector2(400, 300))
         except Exception:
@@ -669,6 +669,7 @@ class SpriteEditor:
         try:
             import tkinter as tk
             from tkinter import filedialog
+
             root = tk.Tk()
             root.withdraw()
             filepath = filedialog.askopenfilename(
@@ -681,7 +682,13 @@ class SpriteEditor:
             )
             root.destroy()
             if filepath:
-                obj.sprite_path = filepath
+                obj.sprite_path = normalize_sprite_path(
+                    filepath,
+                    source_scene_path=self.filepath,
+                    target_scene_path=self.filepath,
+                    project_root=self.project_root,
+                    assets_folder=self.assets_folder,
+                )
                 self._save_state()
         except Exception:
             pass
@@ -694,7 +701,7 @@ class SpriteEditor:
                 self._save_state()
             elif self.mouse_dragging and self._transform_changed_during_drag:
                 self._save_state()
-        
+
         self.mouse_pressed = False
         self.mouse_dragging = False
         self._drag_object_starts.clear()
@@ -714,8 +721,8 @@ class SpriteEditor:
         """Обработка перетаскивания файлов"""
         filepath = event.file
         ext = os.path.splitext(filepath)[1].lower()
-        
-        if ext in ['.png', '.jpg', '.jpeg', '.bmp', '.gif']:
+
+        if ext in [".png", ".jpg", ".jpeg", ".bmp", ".gif"]:
             # Перетаскивание изображения - добавляем спрайт
             world_pos = self.screen_to_world(Vector2(pygame.mouse.get_pos()))
             self.add_sprite(filepath, world_pos)
@@ -725,13 +732,15 @@ class SpriteEditor:
         self.mouse_pos = Vector2(pygame.mouse.get_pos())
         self.mouse_world_pos = self.screen_to_world(self.mouse_pos)
         self._sync_scene_camera()
-        
+
         if self.status_message_timer > 0:
-            self.status_message_timer = max(0.0, self.status_message_timer - (self.clock.get_time() / 1000.0))
-        
+            self.status_message_timer = max(
+                0.0, self.status_message_timer - (self.clock.get_time() / 1000.0)
+            )
+
         if self._active_slider and pygame.mouse.get_pressed()[0]:
             self._update_active_slider(self.mouse_pos.x)
-        
+
         keys = pygame.key.get_pressed()
         mods = pygame.key.get_mods()
         mods_block_camera = mods & (pygame.KMOD_CTRL | pygame.KMOD_ALT | pygame.KMOD_SHIFT)
@@ -757,7 +766,7 @@ class SpriteEditor:
             self.camera.x -= dx / self.zoom
             self.camera.y -= dy / self.zoom
             self.camera_drag_start = current_pos
-        
+
         # Перемещение выделенных объектов
         elif self.mouse_dragging and self.selected_objects and self.mouse_pressed:
             if self.current_tool == ToolType.MOVE:
@@ -771,7 +780,7 @@ class SpriteEditor:
         """Обновление позиции при перетаскивании"""
         dx = self.mouse_world_pos.x - self.drag_start.x
         dy = self.mouse_world_pos.y - self.drag_start.y
-        
+
         for obj in self.selected_objects:
             if obj.locked:
                 continue
@@ -793,7 +802,7 @@ class SpriteEditor:
         angle_delta = mouse_dx * 0.5
         keys = pygame.key.get_pressed()
         snap_angle = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
-        
+
         for obj in self.selected_objects:
             if obj.locked:
                 continue
@@ -836,7 +845,10 @@ class SpriteEditor:
                 else:
                     new_w = max(4, start["width"] + dw)
                     new_h = max(4, start["height"] + dh)
-                if abs(new_w - obj.custom_data.get("width", 100)) > 1e-6 or abs(new_h - obj.custom_data.get("height", 100)) > 1e-6:
+                if (
+                    abs(new_w - obj.custom_data.get("width", 100)) > 1e-6
+                    or abs(new_h - obj.custom_data.get("height", 100)) > 1e-6
+                ):
                     self._transform_changed_during_drag = True
                 obj.custom_data["width"] = int(round(new_w))
                 obj.custom_data["height"] = int(round(new_h))
@@ -848,7 +860,10 @@ class SpriteEditor:
                 else:
                     new_sx = max(0.05, start["scale_x"] + dx)
                     new_sy = max(0.05, start["scale_y"] + dy)
-                if abs(new_sx - obj.transform.scale_x) > 1e-6 or abs(new_sy - obj.transform.scale_y) > 1e-6:
+                if (
+                    abs(new_sx - obj.transform.scale_x) > 1e-6
+                    or abs(new_sy - obj.transform.scale_y) > 1e-6
+                ):
                     self._transform_changed_during_drag = True
                 obj.transform.scale_x = new_sx
                 obj.transform.scale_y = new_sy
@@ -856,11 +871,11 @@ class SpriteEditor:
     def render(self) -> None:
         """Отрисовка"""
         self.screen.fill(self.colors["background"])
-        
+
         self._render_viewport()
         self._render_ui()
         self._render_windows()
-        
+
         pygame.display.flip()
 
     def _render_viewport(self) -> None:
@@ -898,7 +913,9 @@ class SpriteEditor:
                 cam.scene_y += delta
                 self.camera.y = cam.scene_y
             elif prop == "scene_zoom_pct":
-                cam.scene_zoom = max(self.min_zoom, min(self.max_zoom, cam.scene_zoom + delta / 100))
+                cam.scene_zoom = max(
+                    self.min_zoom, min(self.max_zoom, cam.scene_zoom + delta / 100)
+                )
                 self.zoom = cam.scene_zoom
             elif prop == "game_x":
                 cam.game_x += delta
@@ -1251,7 +1268,9 @@ class SpriteEditor:
             self._set_zoom(value, Vector2(pygame.mouse.get_pos()))
             return
         if self._active_slider == "grid":
-            value = int(round(self.min_grid_size + ratio * (self.max_grid_size - self.min_grid_size)))
+            value = int(
+                round(self.min_grid_size + ratio * (self.max_grid_size - self.min_grid_size))
+            )
             self._set_grid_size(value)
 
     def _capture_drag_state(self) -> None:
@@ -1316,7 +1335,7 @@ class SpriteEditor:
         """Сохранение сцены"""
         if filepath is None:
             filepath = self.filepath
-        
+
         if filepath is None:
             filepath = self._show_save_dialog()
             if not filepath:
@@ -1325,6 +1344,13 @@ class SpriteEditor:
         self._sync_scene_camera()
         for obj in self.scene.objects:
             if getattr(obj, "sprite_shape", "") == editor_sprite_types.SHAPE_IMAGE:
+                obj.sprite_path = normalize_sprite_path(
+                    obj.sprite_path,
+                    source_scene_path=self.filepath,
+                    target_scene_path=filepath,
+                    project_root=self.project_root,
+                    assets_folder=self.assets_folder,
+                )
                 img = self._get_sprite_image(obj)
                 if img is not None:
                     if obj.custom_data is None:
@@ -1341,6 +1367,12 @@ class SpriteEditor:
         self.modified = False
         self._save_last_scene_path(filepath)
         self._set_status(f"Saved: {os.path.basename(filepath)}")
+
+    def _save_scene_as(self) -> None:
+        """Сохраняет сцену в новый файл JSON."""
+        filepath = self._show_save_dialog()
+        if filepath:
+            self._save_scene(filepath)
 
     def _last_scene_config_path(self) -> Path:
         """Путь к файлу, в котором хранится путь к последней сцене"""
@@ -1394,14 +1426,14 @@ class SpriteEditor:
         """Показать диалог сохранения"""
         if not TKINTER_AVAILABLE:
             return f"{self.scene.name}.json"
-        
+
         try:
             import tkinter as tk
             from tkinter import filedialog
-            
+
             root = tk.Tk()
             root.withdraw()
-            
+
             filepath = filedialog.asksaveasfilename(
                 title="Сохранить сцену",
                 defaultextension=".json",
@@ -1409,7 +1441,7 @@ class SpriteEditor:
                 initialfile=self.scene.name,
                 initialdir=os.path.dirname(self.filepath) if self.filepath else ".",
             )
-            
+
             root.destroy()
             return filepath if filepath else None
         except Exception:
@@ -1419,20 +1451,20 @@ class SpriteEditor:
         """Показать диалог открытия"""
         if not TKINTER_AVAILABLE:
             return None
-        
+
         try:
             import tkinter as tk
             from tkinter import filedialog
-            
+
             root = tk.Tk()
             root.withdraw()
-            
+
             filepath = filedialog.askopenfilename(
                 title="Открыть сцену",
                 filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
-                initialdir=os.path.dirname(self.filepath) if self.filepath else "."
+                initialdir=os.path.dirname(self.filepath) if self.filepath else ".",
             )
-            
+
             root.destroy()
             return filepath if filepath else None
         except Exception:
@@ -1445,7 +1477,7 @@ class SpriteEditor:
             self.update()
             self.render()
             self.clock.tick(60)
-        
+
         pygame.quit()
 
 

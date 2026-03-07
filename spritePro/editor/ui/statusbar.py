@@ -115,14 +115,18 @@ def render(editor) -> None:
     screen.blit(snap_text, (snap_rect.centerx - snap_text.get_width() // 2, snap_rect.y + 2))
 
     labels_color = colors["ui_accent"] if editor.scene.grid_labels_visible else (55, 55, 62)
-    labels_fg = theme.COLORS["ui_selected_bg"] if editor.scene.grid_labels_visible else colors["ui_text"]
+    labels_fg = (
+        theme.COLORS["ui_selected_bg"] if editor.scene.grid_labels_visible else colors["ui_text"]
+    )
     pygame.draw.rect(screen, labels_color, labels_rect, border_radius=3)
     labels_text = font.render(
         "Labels ON" if editor.scene.grid_labels_visible else "Labels OFF",
         True,
         labels_fg,
     )
-    screen.blit(labels_text, (labels_rect.centerx - labels_text.get_width() // 2, labels_rect.y + 2))
+    screen.blit(
+        labels_text, (labels_rect.centerx - labels_text.get_width() // 2, labels_rect.y + 2)
+    )
 
     status_strip = layouts.pad(
         pygame.Rect(0, bar_top, w, bottom_h),

@@ -102,4 +102,4 @@ if __name__ == "__main__":
     # if "--lobby" in sys.argv:
     #    s.networking.run(use_lobby=True)
     # else:
-        s.networking.run()
+    s.networking.run()

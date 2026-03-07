@@ -1,6 +1,6 @@
 """Demo: Hot Reload — перезагрузка текстур при изменении файлов на диске."""
+
 from pathlib import Path
-import pygame
 import spritePro as s
 from spritePro.asset_watcher import get_hot_reload_manager
 

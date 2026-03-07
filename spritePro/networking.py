@@ -560,11 +560,13 @@ def run(
         return
 
     if use_lobby:
+
         def _on_lobby_start(net_client: NetClient, role_str: str) -> None:
             func = _find_entry(entry)
             _call_entry(func, net_client, role_str, "red")
 
         from spritePro.readyScenes.multiplayer_lobby import run_multiplayer_lobby
+
         run_multiplayer_lobby(_on_lobby_start)
         return
 

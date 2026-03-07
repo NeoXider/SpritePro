@@ -11,7 +11,9 @@ import spritePro as s  # noqa: E402
 class PrimitivesDemoScene(s.Scene):
     def __init__(self):
         super().__init__()
-        self.title = s.TextSprite("Primitives Demo", 28, (255, 255, 255), (s.WH_C.x, 30), scene=self)
+        self.title = s.TextSprite(
+            "Primitives Demo", 28, (255, 255, 255), (s.WH_C.x, 30), scene=self
+        )
         self.hints = s.TextSprite(
             "Rect, Circle, Ellipse, Polygon, Polyline",
             18,

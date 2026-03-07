@@ -4,6 +4,7 @@
 Проверка: в debug-логе (внизу окна и в консоли) — [fps_logger] FPS: ... раз в 2 сек.
 Запуск: python -m spritePro.demoGames.plugin_demo  или  python spritePro/demoGames/plugin_demo.py
 """
+
 import sys
 from pathlib import Path
 
@@ -30,7 +31,11 @@ class DemoScene(s.Scene):
         super().__init__()
         self.label = s.TextSprite(
             "Plugin demo: fps_logger + log_events. Close window to exit.",
-            20, (200, 200, 200), (400, 300), anchor=s.Anchor.CENTER, scene=self,
+            20,
+            (200, 200, 200),
+            (400, 300),
+            anchor=s.Anchor.CENTER,
+            scene=self,
         )
         self.sprite = s.Sprite("", (50, 50), (200, 250), scene=self)
         self.sprite.set_color((100, 150, 255))

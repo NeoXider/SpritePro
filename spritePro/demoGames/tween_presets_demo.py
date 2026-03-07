@@ -19,7 +19,9 @@ class TweenPresetsDemoScene(s.Scene):
             .set_rect_shape(border_radius=20)
         )
         self.target = s.Sprite("", (20, 20), (750, 120), scene=self).set_color((255, 200, 120))
-        self.title = s.TextSprite("Tween Presets Demo", 28, (255, 255, 255), (s.WH_C.x, 24), scene=self)
+        self.title = s.TextSprite(
+            "Tween Presets Demo", 28, (255, 255, 255), (s.WH_C.x, 24), scene=self
+        )
         hints = [
             "1: position  |  2: move_by  |  3: scale  |  4: scale_by",
             "5: rotate    |  6: rotate_by  |  7: color  |  8: alpha  |  9: size",

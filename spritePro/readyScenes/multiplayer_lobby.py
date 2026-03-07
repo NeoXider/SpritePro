@@ -422,7 +422,9 @@ def run_multiplayer_lobby(
             continue
 
         ctx_ref = s.multiplayer_ctx
-        me_label.set_text(f"Вы: {name_input.value or 'Игрок'} | {ctx_ref.role} (ID: {ctx_ref.client_id})")
+        me_label.set_text(
+            f"Вы: {name_input.value or 'Игрок'} | {ctx_ref.role} (ID: {ctx_ref.client_id})"
+        )
 
         if ctx_ref.id_assigned and not joined:
             joined = True

@@ -26,7 +26,9 @@ def render(editor) -> None:
         top=theme.TOOLBAR_PADDING_TOP,
         bottom=theme.TOOLBAR_PADDING_BOTTOM,
     )
-    tool_rects = layouts.row_rects(tools_strip, tool_widths, gap=theme.TOOLBAR_BUTTON_GAP, align="left")
+    tool_rects = layouts.row_rects(
+        tools_strip, tool_widths, gap=theme.TOOLBAR_BUTTON_GAP, align="left"
+    )
     mouse_pos = pygame.mouse.get_pos()
 
     for (tool_type, key, name), btn_rect in zip(tools, tool_rects):
@@ -66,11 +68,23 @@ def render(editor) -> None:
         cfg = theme.TOOLBAR_BUTTON_COLORS.get(key, theme.TOOLBAR_BUTTON_COLORS["default"])
         if key == "grid":
             base = colors["ui_accent"] if editor.scene.grid_visible else cfg["normal"]
-            color = base if not is_hovered else (cfg.get("active_hover", cfg["hover"]) if editor.scene.grid_visible else cfg["hover"])
+            color = (
+                base
+                if not is_hovered
+                else (
+                    cfg.get("active_hover", cfg["hover"])
+                    if editor.scene.grid_visible
+                    else cfg["hover"]
+                )
+            )
         else:
             color = cfg["hover"] if is_hovered else cfg["normal"]
         pygame.draw.rect(screen, color, rect, border_radius=4)
-        text_color = theme.COLORS["ui_selected_bg"] if key == "grid" and editor.scene.grid_visible else colors["ui_text"]
+        text_color = (
+            theme.COLORS["ui_selected_bg"]
+            if key == "grid" and editor.scene.grid_visible
+            else colors["ui_text"]
+        )
         label_surface = font.render(label, True, text_color)
         screen.blit(label_surface, (rect.centerx - label_surface.get_width() // 2, rect.y + 5))
         editor._toolbar_buttons[key] = rect
@@ -87,6 +101,9 @@ def handle_click(editor, pos) -> bool:
         return True
     if editor._toolbar_buttons.get("save", pygame.Rect(0, 0, 0, 0)).collidepoint(pos.x, pos.y):
         editor._save_scene()
+        return True
+    if editor._toolbar_buttons.get("save_as", pygame.Rect(0, 0, 0, 0)).collidepoint(pos.x, pos.y):
+        editor._save_scene_as()
         return True
     if editor._toolbar_buttons.get("new", pygame.Rect(0, 0, 0, 0)).collidepoint(pos.x, pos.y):
         editor._new_scene()
@@ -114,17 +131,16 @@ def handle_click(editor, pos) -> bool:
     tools = get_tools(editor)
     if not tools:
         return False
-    tool_widths = [
-        editor.font_bold.size(f"{name} ({key})")[0] + 20
-        for _, key, name in tools
-    ]
+    tool_widths = [editor.font_bold.size(f"{name} ({key})")[0] + 20 for _, key, name in tools]
     tools_strip = layouts.pad(
         pygame.Rect(0, 0, editor.width, theme.UI_TOP_HEIGHT),
         left=theme.TOOLBAR_PADDING_LEFT,
         top=theme.TOOLBAR_PADDING_TOP,
         bottom=theme.TOOLBAR_PADDING_BOTTOM,
     )
-    tool_rects = layouts.row_rects(tools_strip, tool_widths, gap=theme.TOOLBAR_BUTTON_GAP, align="left")
+    tool_rects = layouts.row_rects(
+        tools_strip, tool_widths, gap=theme.TOOLBAR_BUTTON_GAP, align="left"
+    )
     for tool_type, btn_rect in zip([t[0] for t in tools], tool_rects):
         if btn_rect.collidepoint(pos.x, pos.y):
             editor.current_tool = tool_type

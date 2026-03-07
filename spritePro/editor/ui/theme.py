@@ -23,8 +23,9 @@ TOOLBAR_RIGHT_BUTTONS = [
     ("settings", "Settings", 72),
     ("grid", "Grid", 52),
     ("new", "New", 45),
-    ("save", "Save", 45),
     ("load", "Load", 45),
+    ("save", "Save", 50),
+    ("save_as", "Save As...", 78),
     ("add", "Add", 45),
     ("rect", "Rect", 40),
     ("circle", "Circle", 45),
@@ -90,7 +91,14 @@ COLORS = {
 TOOLBAR_BUTTON_COLORS = {
     "add": {"normal": (40, 60, 40), "hover": (50, 100, 50)},
     "load": {"normal": (40, 40, 60), "hover": (50, 50, 80)},
-    "grid": {"normal": (40, 40, 45), "hover": (50, 50, 55), "active": (0, 150, 255), "active_hover": (70, 170, 255)},
+    "save": {"normal": (52, 72, 44), "hover": (70, 102, 58)},
+    "save_as": {"normal": (48, 56, 78), "hover": (64, 74, 102)},
+    "grid": {
+        "normal": (40, 40, 45),
+        "hover": (50, 50, 55),
+        "active": (0, 150, 255),
+        "active_hover": (70, 170, 255),
+    },
     "settings": {"normal": (48, 44, 66), "hover": (62, 58, 82)},
     "default": {"normal": (40, 40, 45), "hover": (50, 50, 55)},
 }

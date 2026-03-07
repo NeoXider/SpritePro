@@ -1,4 +1,5 @@
 """Demo: Physics System - гравитация, трение, отскок, платформы."""
+
 from pathlib import Path
 import sys
 
@@ -48,7 +49,12 @@ class PhysicsDemoScene(s.Scene):
             shape=s.PhysicsShape.CIRCLE,
         )
 
-        for pos, size in [((400, 570), (800, 40)), ((10, 300), (20, 600)), ((790, 300), (20, 600)), ((400, 10), (800, 20))]:
+        for pos, size in [
+            ((400, 570), (800, 40)),
+            ((10, 300), (20, 600)),
+            ((790, 300), (20, 600)),
+            ((400, 10), (800, 20)),
+        ]:
             wall = s.Sprite("", pos=pos, size=size, scene=self)
             wall.set_rect_shape(size=size, color=(80, 80, 80))
             s.add_static_physics(wall)
@@ -76,11 +82,17 @@ class PhysicsDemoScene(s.Scene):
 
         s.debug_log_info("Physics world with platforms initialized!")
 
-        self.velocity_text = s.TextSprite("Velocity: 0, 0", color=(255, 255, 255), pos=(20, 20), scene=self)
+        self.velocity_text = s.TextSprite(
+            "Velocity: 0, 0", color=(255, 255, 255), pos=(20, 20), scene=self
+        )
         self.velocity_text.set_position((20, 20), anchor="topleft")
-        self.grounded_text = s.TextSprite("Grounded: False", color=(0, 255, 0), pos=(20, 50), scene=self)
+        self.grounded_text = s.TextSprite(
+            "Grounded: False", color=(0, 255, 0), pos=(20, 50), scene=self
+        )
         self.grounded_text.set_position((20, 50), anchor="topleft")
-        self.ball_text = s.TextSprite("Ball grounded: False", color=(255, 150, 150), pos=(20, 80), scene=self)
+        self.ball_text = s.TextSprite(
+            "Ball grounded: False", color=(255, 150, 150), pos=(20, 80), scene=self
+        )
         self.ball_text.set_position((20, 80), anchor="topleft")
         self.platform_text = s.TextSprite(
             "Dynamic: player, ball, box, ball2 | Static: floor/platforms | Kinematic: 2 moving | R: reset",

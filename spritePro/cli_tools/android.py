@@ -79,7 +79,9 @@ def infer_android_version(project_root: Path) -> str:
 
 def infer_android_orientation(project_root: Path) -> str:
     config_text = read_text_if_exists(project_root / "config.py")
-    size_match = re.search(r"""^WINDOW_SIZE\s*=\s*\((\d+)\s*,\s*(\d+)\)\s*$""", config_text, re.MULTILINE)
+    size_match = re.search(
+        r"""^WINDOW_SIZE\s*=\s*\((\d+)\s*,\s*(\d+)\)\s*$""", config_text, re.MULTILINE
+    )
     if not size_match:
         return "all"
     width = int(size_match.group(1))
@@ -173,7 +175,9 @@ def run_android_build(
         logging.info("Using existing buildozer.spec: %s", spec_path)
 
     if mode == "spec":
-        logging.info("Spec generated only. Next step: run inside Linux/WSL -> buildozer android debug")
+        logging.info(
+            "Spec generated only. Next step: run inside Linux/WSL -> buildozer android debug"
+        )
         return 0
 
     if not sys.platform.startswith("linux"):
@@ -184,7 +188,7 @@ def run_android_build(
 
     buildozer_exe = shutil.which("buildozer")
     if buildozer_exe is None:
-        raise RuntimeError('Buildozer не найден в PATH. Установите его: pip install buildozer')
+        raise RuntimeError("Buildozer не найден в PATH. Установите его: pip install buildozer")
 
     if mode == "debug":
         command = [buildozer_exe, "android", "debug"]

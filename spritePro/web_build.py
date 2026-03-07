@@ -46,16 +46,20 @@ def _ignore_for_web(
     result = [
         n
         for n in names
-        if n == "__pycache__"
-        or n.endswith((".pyc", ".pyo", ".mp3", ".wav"))
-        or n.startswith(".")
+        if n == "__pycache__" or n.endswith((".pyc", ".pyo", ".mp3", ".wav")) or n.startswith(".")
     ]
-    if skip_dir_name and skip_dir_parent is not None and Path(directory).resolve() == skip_dir_parent.resolve():
+    if (
+        skip_dir_name
+        and skip_dir_parent is not None
+        and Path(directory).resolve() == skip_dir_parent.resolve()
+    ):
         result.append(skip_dir_name)
     return result
 
 
-def _infer_from_config_module(project_dir: Path, cfg: dict[str, Any], module_name: str = "config") -> None:
+def _infer_from_config_module(
+    project_dir: Path, cfg: dict[str, Any], module_name: str = "config"
+) -> None:
     """Подтягивает size, title, fill_color из модуля конфига игры, если они там заданы."""
     module_file = project_dir / f"{module_name}.py"
     if not module_file.is_file():
@@ -270,8 +274,6 @@ def build_web_archive(
     else:
         zips = list(build_dir.glob("*.zip"))
         if not zips:
-            raise FileNotFoundError(
-                f"Архив не найден в {build_dir}. Проверьте вывод pygbag."
-            )
+            raise FileNotFoundError(f"Архив не найден в {build_dir}. Проверьте вывод pygbag.")
         archive_file = zips[0]
     return archive_file

@@ -115,14 +115,26 @@ def _render_gizmo_move(editor, center: Vector2, w: float, h: float) -> None:
     base_size = 20 * editor.zoom
     end_x = (center.x + base_size, center.y)
     pygame.draw.line(editor.screen, (255, 80, 80), center, end_x, 3)
-    pygame.draw.polygon(editor.screen, (255, 80, 80), [
-        end_x, (end_x[0] - 6, end_x[1] - 3), (end_x[0] - 6, end_x[1] + 3),
-    ])
+    pygame.draw.polygon(
+        editor.screen,
+        (255, 80, 80),
+        [
+            end_x,
+            (end_x[0] - 6, end_x[1] - 3),
+            (end_x[0] - 6, end_x[1] + 3),
+        ],
+    )
     end_y = (center.x, center.y - base_size)
     pygame.draw.line(editor.screen, (80, 255, 80), center, end_y, 3)
-    pygame.draw.polygon(editor.screen, (80, 255, 80), [
-        end_y, (end_y[0] - 3, end_y[1] + 6), (end_y[0] + 3, end_y[1] + 6),
-    ])
+    pygame.draw.polygon(
+        editor.screen,
+        (80, 255, 80),
+        [
+            end_y,
+            (end_y[0] - 3, end_y[1] + 6),
+            (end_y[0] + 3, end_y[1] + 6),
+        ],
+    )
     rect = pygame.Rect(0, 0, w + 10, h + 10)
     rect.center = (int(center.x), int(center.y))
     pygame.draw.rect(editor.screen, (255, 80, 80), rect, 1)
@@ -170,21 +182,27 @@ def _render_camera_preview_frame(editor, viewport: pygame.Rect) -> None:
         pygame.draw.polygon(editor.screen, theme.COLORS["camera_frame"], pts, 1)
     info_x = viewport.x + 8
     info_y = viewport.bottom - 72
-    label = editor.font.render(f"Camera {preview_w}x{preview_h}", True, theme.COLORS["camera_frame"])
+    label = editor.font.render(
+        f"Camera {preview_w}x{preview_h}", True, theme.COLORS["camera_frame"]
+    )
     label_bg = pygame.Rect(info_x, info_y, label.get_width() + 8, label.get_height() + 4)
     pygame.draw.rect(editor.screen, theme.COLORS["camera_info_bg"], label_bg, border_radius=3)
-    pygame.draw.rect(editor.screen, theme.COLORS["camera_info_border"], label_bg, 1, border_radius=3)
+    pygame.draw.rect(
+        editor.screen, theme.COLORS["camera_info_border"], label_bg, 1, border_radius=3
+    )
     editor.screen.blit(label, (label_bg.x + 4, label_bg.y + 2))
     line_y = label_bg.bottom + 2
     scene_txt = editor.font.render(
         f"Scene: ({cam.scene_x:.0f}, {cam.scene_y:.0f}) {cam.scene_zoom * 100:.0f}%",
-        True, (200, 200, 200),
+        True,
+        (200, 200, 200),
     )
     editor.screen.blit(scene_txt, (info_x, line_y))
     line_y += scene_txt.get_height() + 2
     game_txt = editor.font.render(
         f"Game:  ({cam.game_x:.0f}, {cam.game_y:.0f}) {cam.game_zoom * 100:.0f}%",
-        True, (180, 220, 180),
+        True,
+        (180, 220, 180),
     )
     editor.screen.blit(game_txt, (info_x, line_y))
     line_y += game_txt.get_height() + 4
@@ -193,8 +211,16 @@ def _render_camera_preview_frame(editor, viewport: pygame.Rect) -> None:
     copy_h = copy_btn.get_height() + 4
     editor._camera_preview_copy_rect = pygame.Rect(info_x, line_y, copy_w, copy_h)
     pygame.draw.rect(editor.screen, (40, 45, 50), editor._camera_preview_copy_rect, border_radius=3)
-    pygame.draw.rect(editor.screen, theme.COLORS["camera_info_border"], editor._camera_preview_copy_rect, 1, border_radius=3)
-    editor.screen.blit(copy_btn, (editor._camera_preview_copy_rect.x + 4, editor._camera_preview_copy_rect.y + 2))
+    pygame.draw.rect(
+        editor.screen,
+        theme.COLORS["camera_info_border"],
+        editor._camera_preview_copy_rect,
+        1,
+        border_radius=3,
+    )
+    editor.screen.blit(
+        copy_btn, (editor._camera_preview_copy_rect.x + 4, editor._camera_preview_copy_rect.y + 2)
+    )
 
 
 def get_viewport_rect(editor) -> pygame.Rect:

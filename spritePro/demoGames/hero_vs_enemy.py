@@ -76,5 +76,5 @@ def run_demo(platform: str = "kivy") -> None:
 
 
 if __name__ == "__main__":
-    #run_demo("pygame")
+    # run_demo("pygame")
     run_demo()

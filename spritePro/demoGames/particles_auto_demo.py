@@ -13,7 +13,9 @@ import spritePro as s  # noqa: E402
 class ParticlesAutoEmitScene(s.Scene):
     def __init__(self):
         super().__init__()
-        self.title = s.TextSprite("Particles Auto Emit Demo", 28, (255, 255, 255), (s.WH_C.x, 30), scene=self)
+        self.title = s.TextSprite(
+            "Particles Auto Emit Demo", 28, (255, 255, 255), (s.WH_C.x, 30), scene=self
+        )
         self.hints = s.TextSprite(
             "Слева: по времени  |  Синий квадрат: по расстоянию (только при движении)",
             18,

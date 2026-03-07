@@ -9,7 +9,6 @@ from ...input_validation import (
     InputType,
     can_add_char as _can_add_char,
     filter_chars_for_paste as _filter_chars_for_paste,
-    parse_input_value,
 )
 
 ALLOWED_NAME_CHARS = set(string.ascii_letters + string.digits + string.whitespace + "._-()")
@@ -42,7 +41,9 @@ def can_add_char(input_type: InputType, current: str, ch: str, name: str = "") -
 
 
 def filter_chars_for_paste(input_type: InputType, text: str, name: str = "") -> str:
-    return _filter_chars_for_paste(input_type, text, _allowed_for_editor_text(name) if name else None)
+    return _filter_chars_for_paste(
+        input_type, text, _allowed_for_editor_text(name) if name else None
+    )
 
 
 def get_active_input_type(editor) -> InputType:
@@ -133,7 +134,7 @@ def handle_text_input_text(editor, event: pygame.event.Event) -> bool:
     input_type = get_active_input_type(editor)
     buf = editor._text_input_buffers.get(name, "")
     added = ""
-    for c in (event.text or ""):
+    for c in event.text or "":
         if can_add_char(input_type, buf + added, c, name):
             added += c
     if added:

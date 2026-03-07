@@ -53,7 +53,9 @@ class ThreeClientsMoveScene(s.Scene):
         super().__init__()
         s.multiplayer.init_context(net, role)
         self.ctx = s.multiplayer_ctx
-        self.hint = s.TextSprite("WASD — move | IDs above players", 20, (200, 200, 200), (450, 30), scene=self)
+        self.hint = s.TextSprite(
+            "WASD — move | IDs above players", 20, (200, 200, 200), (450, 30), scene=self
+        )
         self.wait_id = s.TextSprite("Waiting for ID...", 18, (200, 200, 200), (450, 60), scene=self)
         self.window_id = s.TextSprite(
             "Window ID: ?",
@@ -149,9 +151,13 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
     )
 
 
-def _extract_platform(argv: list[str], default_platform: str | None = None) -> tuple[str, list[str]]:
+def _extract_platform(
+    argv: list[str], default_platform: str | None = None
+) -> tuple[str, list[str]]:
     filtered: list[str] = []
-    platform = (default_platform or os.environ.get(PLATFORM_ENV_KEY, "pygame")).strip().lower() or "pygame"
+    platform = (
+        default_platform or os.environ.get(PLATFORM_ENV_KEY, "pygame")
+    ).strip().lower() or "pygame"
     for arg in argv:
         if arg == "--kivy":
             platform = "kivy"

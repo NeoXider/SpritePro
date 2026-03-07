@@ -1859,9 +1859,7 @@ class Sprite(pygame.sprite.Sprite):
             self._mask_dirty = False
         return self
 
-    def collide_mask(
-        self, other: pygame.sprite.Sprite
-    ) -> Optional[Tuple[int, int]]:
+    def collide_mask(self, other: pygame.sprite.Sprite) -> Optional[Tuple[int, int]]:
         """Проверяет столкновение по пиксельным маскам с другим спрайтом.
 
         Оба спрайта должны иметь атрибуты rect и mask (маска строится из image
@@ -1886,9 +1884,7 @@ class Sprite(pygame.sprite.Sprite):
         offset = (other.rect.left - self.rect.left, other.rect.top - self.rect.top)
         return self.mask.overlap(other_mask, offset)
 
-    def collides_with(
-        self, other: pygame.sprite.Sprite, use_mask: bool = True
-    ) -> bool:
+    def collides_with(self, other: pygame.sprite.Sprite, use_mask: bool = True) -> bool:
         """Проверяет столкновение с другим спрайтом (rect; при use_mask — по маскам).
 
         Сначала проверяется пересечение rect. Если use_mask=True и у обоих спрайтов

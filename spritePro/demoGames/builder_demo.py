@@ -1,4 +1,5 @@
 """Demo: Builder Pattern - Fluent API для создания спрайтов."""
+
 import sys
 
 import pygame
@@ -31,13 +32,7 @@ class BuilderDemoScene(s.Scene):
             .build()
         )
 
-        self.coin = (
-            s.sprite("")
-            .position(600, 300)
-            .size(32, 32)
-            .color(255, 215, 0)
-            .build()
-        )
+        self.coin = s.sprite("").position(600, 300).size(32, 32).color(255, 215, 0).build()
         self.coin.set_circle_shape(radius=16, color=(255, 215, 0))
 
         self.emitter = (

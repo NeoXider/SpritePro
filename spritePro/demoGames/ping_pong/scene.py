@@ -25,7 +25,9 @@ class PingPongScene(s.Scene):
         s.physics.set_gravity(0.0)
         self._wall_top = s.Sprite("", (int(s.WH.x) + 20, 8), (s.WH_C.x, -4), scene=self)
         self._wall_top.set_color((0, 0, 0))
-        self._wall_bottom = s.Sprite("", (int(s.WH.x) + 20, 8), (s.WH_C.x, int(s.WH.y) + 4), scene=self)
+        self._wall_bottom = s.Sprite(
+            "", (int(s.WH.x) + 20, 8), (s.WH_C.x, int(s.WH.y) + 4), scene=self
+        )
         self._wall_bottom.set_color((0, 0, 0))
         for wall in (self._wall_top, self._wall_bottom):
             s.add_static_physics(wall)

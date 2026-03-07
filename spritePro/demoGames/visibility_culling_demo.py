@@ -4,6 +4,7 @@
 сколько из них попадают в текущий вид камеры (Visible) и сколько вне (Offscreen).
 Двигайте камеру WASD — числа меняются. Спрайты не исчезают, они всегда в области и периодически заходят в кадр.
 """
+
 import pygame
 import spritePro as s
 
@@ -39,7 +40,9 @@ def run_demo():
     offscreen_text = s.TextSprite("Offscreen: 0", color=(255, 150, 150), pos=(20, 52))
     offscreen_text.set_position((20, 52), anchor="topleft")
     offscreen_text.set_screen_space(True)
-    hint = s.TextSprite("WASD: move camera — visible count changes", color=(200, 200, 200), pos=(20, 78))
+    hint = s.TextSprite(
+        "WASD: move camera — visible count changes", color=(200, 200, 200), pos=(20, 78)
+    )
     hint.set_position((20, 78), anchor="topleft")
     hint.set_screen_space(True)
 

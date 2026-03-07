@@ -80,6 +80,7 @@ class Game(BasePage):
         self.btn.set_position((20, 20), s.Anchor.TOP_LEFT)
         self.bg.color = (100, 200, 100)
 
+
 class PagesScene(s.Scene):
     def __init__(self):
         super().__init__()
@@ -90,6 +91,7 @@ class PagesScene(s.Scene):
 
     def update(self, dt):
         self.page_manager.update()
+
 
 def run_demo(platform: str = "pygame") -> None:
     s.run(

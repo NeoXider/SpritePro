@@ -9,6 +9,7 @@
 Чтобы принудительно запустить desktop-режим:
     python "spritePro/demoGames/scenes_demo editor.py" --pygame
 """
+
 import sys
 from pathlib import Path
 import random

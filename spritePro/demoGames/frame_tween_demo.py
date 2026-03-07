@@ -1,4 +1,5 @@
 """Demo: Frame-Based Tween - анимация по кадрам."""
+
 import pygame
 import spritePro as s
 from spritePro.components.tween import FrameTween, Ease
@@ -33,6 +34,7 @@ def run_demo():
         def make_callback(s):
             def cb(value):
                 s.rect.x = int(value)
+
             return cb
 
         tween = FrameTween(

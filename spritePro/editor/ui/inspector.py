@@ -40,7 +40,13 @@ def _draw_property_input_box(
 ) -> None:
     active = editor._active_text_input == name
     hovered = rect.collidepoint(pygame.mouse.get_pos())
-    bg = theme.COLORS["ui_input_bg_active"] if active else theme.COLORS["ui_input_bg_hover"] if hovered else theme.COLORS["ui_input_bg"]
+    bg = (
+        theme.COLORS["ui_input_bg_active"]
+        if active
+        else theme.COLORS["ui_input_bg_hover"]
+        if hovered
+        else theme.COLORS["ui_input_bg"]
+    )
     border = editor.colors["ui_accent"] if active else theme.COLORS["ui_input_border"]
     pygame.draw.rect(editor.screen, bg, rect, border_radius=3)
     pygame.draw.rect(editor.screen, border, rect, 1, border_radius=3)
@@ -75,7 +81,10 @@ def _render_name_row(editor, x: int, y: int, name_value: str) -> int:
     editor._property_input_rects[input_name] = input_rect
     _draw_property_input_box(editor, input_name, input_rect, value_display)
     editor._inspector_actions.append(
-        (input_rect, lambda n=input_name, v=name_value or "": editor._activate_text_input(n, v, "text")),
+        (
+            input_rect,
+            lambda n=input_name, v=name_value or "": editor._activate_text_input(n, v, "text"),
+        ),
     )
     return y + theme.INSPECTOR_ROW_HEIGHT
 
@@ -113,10 +122,17 @@ def _render_numeric_property_row(
     _draw_small_button(editor, minus_rect, "-")
     _draw_small_button(editor, plus_rect, "+")
     editor._inspector_actions.append(
-        (input_rect, lambda n=input_name, v=value_str, t=value_type: editor._activate_text_input(n, v, t)),
+        (
+            input_rect,
+            lambda n=input_name, v=value_str, t=value_type: editor._activate_text_input(n, v, t),
+        ),
     )
-    editor._inspector_actions.append((minus_rect, lambda p=prop, d=dec_step: editor._adjust_selected_property(p, d)))
-    editor._inspector_actions.append((plus_rect, lambda p=prop, d=inc_step: editor._adjust_selected_property(p, d)))
+    editor._inspector_actions.append(
+        (minus_rect, lambda p=prop, d=dec_step: editor._adjust_selected_property(p, d))
+    )
+    editor._inspector_actions.append(
+        (plus_rect, lambda p=prop, d=inc_step: editor._adjust_selected_property(p, d))
+    )
     return y + theme.INSPECTOR_ROW_HEIGHT
 
 
@@ -133,7 +149,9 @@ def _render_toggle_property_row(
         editor.font.render(label, True, editor.colors["ui_text"]),
         (x + 10, y),
     )
-    btn_rect = pygame.Rect(x + right_w - theme.INSPECTOR_TOGGLE_BTN_OFFSET, y + 1, theme.INSPECTOR_TOGGLE_BTN_WIDTH, 18)
+    btn_rect = pygame.Rect(
+        x + right_w - theme.INSPECTOR_TOGGLE_BTN_OFFSET, y + 1, theme.INSPECTOR_TOGGLE_BTN_WIDTH, 18
+    )
     color = editor.colors["ui_accent"] if value else (55, 55, 62)
     fg = theme.COLORS["ui_selected_bg"] if value else editor.colors["ui_text"]
     pygame.draw.rect(editor.screen, color, btn_rect, border_radius=3)
@@ -157,7 +175,7 @@ def _render_dropdown_row(
     btn_rect = pygame.Rect(x + right_w - 120, y + 1, 110, 18)
     pygame.draw.rect(editor.screen, (50, 50, 56), btn_rect, border_radius=3)
     pygame.draw.rect(editor.screen, theme.COLORS["ui_input_border"], btn_rect, 1, border_radius=3)
-    txt = editor.font.render(display + "  \u25BC", True, editor.colors["ui_text"])
+    txt = editor.font.render(display + "  \u25bc", True, editor.colors["ui_text"])
     editor.screen.blit(txt, (btn_rect.x + 4, btn_rect.y + 1))
     editor._inspector_actions.append((btn_rect, lambda p=prop: editor._cycle_inspector_dropdown(p)))
     return y + theme.INSPECTOR_ROW_HEIGHT
@@ -176,16 +194,41 @@ def _render_camera_inspector(editor, x: int) -> None:
     y = theme.UI_TOP_HEIGHT + 40
     # Игровая камера (прямоугольник в игре) — редактируемые поля
     y = _render_numeric_property_row(
-        editor, x, y, "Game X", cam.game_x, -50.0, 50.0, "game_x", "{:.1f}",
+        editor,
+        x,
+        y,
+        "Game X",
+        cam.game_x,
+        -50.0,
+        50.0,
+        "game_x",
+        "{:.1f}",
         target_camera=True,
     )
     y = _render_numeric_property_row(
-        editor, x, y, "Game Y", cam.game_y, -50.0, 50.0, "game_y", "{:.1f}",
+        editor,
+        x,
+        y,
+        "Game Y",
+        cam.game_y,
+        -50.0,
+        50.0,
+        "game_y",
+        "{:.1f}",
         target_camera=True,
     )
     y = _render_numeric_property_row(
-        editor, x, y, "Game Zoom", cam.game_zoom * 100, -10.0, 10.0, "game_zoom_pct", "{:.0f}%",
-        target_camera=True, is_percent=True,
+        editor,
+        x,
+        y,
+        "Game Zoom",
+        cam.game_zoom * 100,
+        -10.0,
+        10.0,
+        "game_zoom_pct",
+        "{:.0f}%",
+        target_camera=True,
+        is_percent=True,
     )
     y += 8
     copy_btn = editor.font.render("Copy scene → game", True, theme.COLORS["camera_frame"])
@@ -193,12 +236,28 @@ def _render_camera_inspector(editor, x: int) -> None:
     copy_h = copy_btn.get_height() + 6
     editor._camera_preview_copy_rect = pygame.Rect(x + 10, y, copy_w, copy_h)
     pygame.draw.rect(editor.screen, (40, 45, 50), editor._camera_preview_copy_rect, border_radius=3)
-    pygame.draw.rect(editor.screen, theme.COLORS["camera_info_border"], editor._camera_preview_copy_rect, 1, border_radius=3)
-    editor.screen.blit(copy_btn, (editor._camera_preview_copy_rect.x + 6, editor._camera_preview_copy_rect.y + 3))
-    editor._inspector_actions.append((editor._camera_preview_copy_rect, editor._copy_scene_camera_to_game))
+    pygame.draw.rect(
+        editor.screen,
+        theme.COLORS["camera_info_border"],
+        editor._camera_preview_copy_rect,
+        1,
+        border_radius=3,
+    )
+    editor.screen.blit(
+        copy_btn, (editor._camera_preview_copy_rect.x + 6, editor._camera_preview_copy_rect.y + 3)
+    )
+    editor._inspector_actions.append(
+        (editor._camera_preview_copy_rect, editor._copy_scene_camera_to_game)
+    )
     y = editor._camera_preview_copy_rect.bottom + 10
     # Вид редактора (только отображение, не меняет камеру редактора при правке объекта Camera)
-    y = _render_property_row(editor, x, y, "Scene (view)", f"({cam.scene_x:.0f}, {cam.scene_y:.0f}) {cam.scene_zoom * 100:.0f}%")
+    y = _render_property_row(
+        editor,
+        x,
+        y,
+        "Scene (view)",
+        f"({cam.scene_x:.0f}, {cam.scene_y:.0f}) {cam.scene_zoom * 100:.0f}%",
+    )
 
 
 def render(editor) -> None:
@@ -238,28 +297,56 @@ def render(editor) -> None:
     y = top + 40
     y = _render_name_row(editor, x, y, obj.name)
     y += 10
-    y = _render_numeric_property_row(editor, x, y, "Position X", obj.transform.x, -10.0, 10.0, "x", "{:.1f}")
-    y = _render_numeric_property_row(editor, x, y, "Position Y", obj.transform.y, -10.0, 10.0, "y", "{:.1f}")
-    y = _render_numeric_property_row(editor, x, y, "Rotation", obj.transform.rotation, -5.0, 5.0, "rotation", "{:.1f} deg")
+    y = _render_numeric_property_row(
+        editor, x, y, "Position X", obj.transform.x, -10.0, 10.0, "x", "{:.1f}"
+    )
+    y = _render_numeric_property_row(
+        editor, x, y, "Position Y", obj.transform.y, -10.0, 10.0, "y", "{:.1f}"
+    )
+    y = _render_numeric_property_row(
+        editor, x, y, "Rotation", obj.transform.rotation, -5.0, 5.0, "rotation", "{:.1f} deg"
+    )
     if is_image:
         y = _render_numeric_property_row(
-            editor, x, y, "Scale X %", obj.transform.scale_x * 100, -10.0, 10.0,
-            "scale_x_percent", "{:.0f}%", value_type="int"
+            editor,
+            x,
+            y,
+            "Scale X %",
+            obj.transform.scale_x * 100,
+            -10.0,
+            10.0,
+            "scale_x_percent",
+            "{:.0f}%",
+            value_type="int",
         )
         y = _render_numeric_property_row(
-            editor, x, y, "Scale Y %", obj.transform.scale_y * 100, -10.0, 10.0,
-            "scale_y_percent", "{:.0f}%", value_type="int"
+            editor,
+            x,
+            y,
+            "Scale Y %",
+            obj.transform.scale_y * 100,
+            -10.0,
+            10.0,
+            "scale_y_percent",
+            "{:.0f}%",
+            value_type="int",
         )
     else:
-        y = _render_numeric_property_row(editor, x, y, "Scale X", obj.transform.scale_x, -0.1, 0.1, "scale_x", "{:.2f}")
-        y = _render_numeric_property_row(editor, x, y, "Scale Y", obj.transform.scale_y, -0.1, 0.1, "scale_y", "{:.2f}")
+        y = _render_numeric_property_row(
+            editor, x, y, "Scale X", obj.transform.scale_x, -0.1, 0.1, "scale_x", "{:.2f}"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Scale Y", obj.transform.scale_y, -0.1, 0.1, "scale_y", "{:.2f}"
+        )
     native_w, native_h = editor._get_object_native_size(obj)
     size_x, size_y = editor._get_object_display_size(obj)
     y += 8
     if is_image:
         y = _render_property_row(editor, x, y, "Image Size (px)", f"{native_w} x {native_h}")
     y = _render_numeric_property_row(editor, x, y, "Size X", size_x, -8.0, 8.0, "width", "{:.1f}px")
-    y = _render_numeric_property_row(editor, x, y, "Size Y", size_y, -8.0, 8.0, "height", "{:.1f}px")
+    y = _render_numeric_property_row(
+        editor, x, y, "Size Y", size_y, -8.0, 8.0, "height", "{:.1f}px"
+    )
     y += 8
     y = _render_dropdown_row(editor, x, y, "Sprite Type", shape, "sprite_shape")
     if shape == "image":
@@ -278,11 +365,28 @@ def render(editor) -> None:
         y += theme.INSPECTOR_ROW_HEIGHT
     else:
         color = getattr(obj, "sprite_color", (255, 255, 255))
-        y = _render_numeric_property_row(editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", "{:.0f}", value_type="int")
-        y = _render_numeric_property_row(editor, x, y, "Color G", float(color[1]), -10, 10, "color_g", "{:.0f}", value_type="int")
-        y = _render_numeric_property_row(editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", "{:.0f}", value_type="int")
+        y = _render_numeric_property_row(
+            editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", "{:.0f}", value_type="int"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Color G", float(color[1]), -10, 10, "color_g", "{:.0f}", value_type="int"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", "{:.0f}", value_type="int"
+        )
     y += 8
-    y = _render_numeric_property_row(editor, x, y, "Sorting Order", float(obj.z_index), -1.0, 1.0, "z_index", "{:.0f}", value_type="int")
+    y = _render_numeric_property_row(
+        editor,
+        x,
+        y,
+        "Sorting Order",
+        float(obj.z_index),
+        -1.0,
+        1.0,
+        "z_index",
+        "{:.0f}",
+        value_type="int",
+    )
     y = _render_toggle_property_row(editor, x, y, "Screen Space", obj.screen_space, "screen_space")
     y += 8
     physics_type = getattr(obj, "physics_type", "none")
@@ -293,9 +397,15 @@ def render(editor) -> None:
         mass = getattr(obj, "physics_mass", 1.0)
         friction = getattr(obj, "physics_friction", 0.98)
         bounce = getattr(obj, "physics_bounce", 0.5)
-        y = _render_numeric_property_row(editor, x, y, "Mass", float(mass), -0.5, 0.5, "physics_mass", "{:.2f}")
-        y = _render_numeric_property_row(editor, x, y, "Friction", float(friction), -0.05, 0.05, "physics_friction", "{:.2f}")
-        y = _render_numeric_property_row(editor, x, y, "Bounce", float(bounce), -0.1, 0.1, "physics_bounce", "{:.2f}")
+        y = _render_numeric_property_row(
+            editor, x, y, "Mass", float(mass), -0.5, 0.5, "physics_mass", "{:.2f}"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Friction", float(friction), -0.05, 0.05, "physics_friction", "{:.2f}"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Bounce", float(bounce), -0.1, 0.1, "physics_bounce", "{:.2f}"
+        )
     y += 8
     y = _render_toggle_property_row(editor, x, y, "Visible", obj.visible, "visible")
     y = _render_toggle_property_row(editor, x, y, "Locked", obj.locked, "locked")

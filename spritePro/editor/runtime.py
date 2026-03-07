@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import pygame
 import spritePro as s
 
 from .scene import Scene, SceneObject
 from . import sprite_types as st
+from .path_utils import normalize_sprite_path, resolve_sprite_path
 
 if TYPE_CHECKING:
     from spritePro.physics import PhysicsWorld
@@ -109,6 +110,7 @@ class RuntimeScene:
     by_id: Dict[str, SpawnedObject]
     by_name: Dict[str, List[SpawnedObject]]
     physics_world: Optional["PhysicsWorld"] = None
+    source_path: Optional[Path] = None
 
     def first(self, name: str) -> Optional[SpawnedObject]:
         """Первый объект с именем name (сравнение без учёта регистра). Для точного имени — то же, что exact()."""
@@ -131,30 +133,18 @@ class RuntimeScene:
                 out.extend(items)
         return out
 
-    def save(self, path: str) -> None:
+    def save(self, path: str | Path) -> None:
         """Сохраняет сцену (источник, из которого спавнили) в JSON. Удобно для round-trip с редактором."""
-        self.source.save(path)
-
-
-def _resolve_sprite_path(scene_path: Path, raw_path: str) -> Optional[Path]:
-    if not raw_path or not raw_path.strip():
-        return None
-    path = Path(raw_path)
-    if path.is_absolute() and path.exists():
-        return path
-    basename = path.name
-    candidates = [
-        scene_path.parent / raw_path.strip(),
-        scene_path.parent / basename,
-        Path.cwd() / raw_path.strip(),
-        Path.cwd() / basename,
-        Path.cwd() / "assets" / basename,
-        Path.cwd() / "assets" / "images" / basename,
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return None
+        target_path = Path(path).expanduser().resolve()
+        for obj in self.source.objects:
+            if getattr(obj, "sprite_shape", "") != st.SHAPE_IMAGE or not obj.sprite_path:
+                continue
+            obj.sprite_path = normalize_sprite_path(
+                obj.sprite_path,
+                source_scene_path=self.source_path,
+                target_scene_path=target_path,
+            )
+        self.source.save(str(target_path))
 
 
 def _sprite_size_from_transform(image_path: Path, obj: SceneObject) -> tuple[int, int]:
@@ -176,7 +166,9 @@ def _fallback_size_for_image(obj: SceneObject) -> tuple[int, int]:
     return (64, 64)
 
 
-def _primitive_size_and_color(obj: SceneObject) -> Optional[tuple[tuple[int, int], tuple[int, int, int]]]:
+def _primitive_size_and_color(
+    obj: SceneObject,
+) -> Optional[tuple[tuple[int, int], tuple[int, int, int]]]:
     """Размер и цвет для примитива: из sprite_shape/sprite_color/custom_data или по имени (legacy)."""
     cd = obj.custom_data or {}
     w = cd.get("width") or cd.get("w")
@@ -227,7 +219,14 @@ def spawn_scene(
         pos = (obj.transform.x, obj.transform.y)
         shape = getattr(obj, "sprite_shape", "image")
         if shape == st.SHAPE_IMAGE:
-            resolved = _resolve_sprite_path(scene_file, obj.sprite_path) if obj.sprite_path else None
+            resolved = (
+                resolve_sprite_path(
+                    obj.sprite_path,
+                    scene_path=scene_file,
+                )
+                if obj.sprite_path
+                else None
+            )
             try:
                 if resolved is not None:
                     size = _sprite_size_from_transform(resolved, obj)
@@ -292,10 +291,9 @@ def spawn_scene(
         from spritePro.physics import (
             PhysicsConfig,
             add_physics,
-            add_static_physics,
-            add_kinematic_physics,
             BodyType,
         )
+
         world = s.get_physics_world()
         for so in spawned:
             obj = so.data
@@ -340,4 +338,5 @@ def spawn_scene(
         by_id=by_id,
         by_name=by_name,
         physics_world=physics_world,
+        source_path=scene_file,
     )

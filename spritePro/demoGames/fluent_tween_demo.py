@@ -22,7 +22,9 @@ class FluentTweenDemoScene(s.Scene):
         self.box_kill = s.Sprite("", (50, 50), (700, 200), scene=self)
         self.box_kill.set_color((150, 255, 150))
 
-        self.title = s.TextSprite("Fluent Tween API (Do*)", 28, (255, 255, 255), (s.WH_C.x, 24), scene=self)
+        self.title = s.TextSprite(
+            "Fluent Tween API (Do*)", 28, (255, 255, 255), (s.WH_C.x, 24), scene=self
+        )
         hints = [
             "1: DoMove  |  2: DoMoveBy  |  3: DoScale  |  4: DoRotateBy(180)  |  5: DoColor  |  6: DoFadeOut/In",
             "7: DoMove(...).SetEase(Ease.OutCubic).SetDelay(0.3).OnComplete(callback)",
@@ -52,11 +54,15 @@ class FluentTweenDemoScene(s.Scene):
         if self.active_kill_handle:
             self.active_kill_handle.Kill(complete=False)
             self.active_kill_handle = None
-        self.box.set_position(self.base_pos).set_scale(self.base_scale).rotate_to(self.base_angle).set_alpha(
-            self.base_alpha
-        ).set_color(self.base_color)
-        self.box_loop.set_position(self.base_pos_loop).set_scale(1.0).set_color((255, 180, 100)).set_alpha(255)
-        self.box_kill.set_position(self.base_pos_kill).set_scale(1.0).set_color((150, 255, 150)).set_alpha(255)
+        self.box.set_position(self.base_pos).set_scale(self.base_scale).rotate_to(
+            self.base_angle
+        ).set_alpha(self.base_alpha).set_color(self.base_color)
+        self.box_loop.set_position(self.base_pos_loop).set_scale(1.0).set_color(
+            (255, 180, 100)
+        ).set_alpha(255)
+        self.box_kill.set_position(self.base_pos_kill).set_scale(1.0).set_color(
+            (150, 255, 150)
+        ).set_alpha(255)
 
     def update(self, dt: float) -> None:
         if s.input.was_pressed(pygame.K_1):
@@ -96,7 +102,9 @@ class FluentTweenDemoScene(s.Scene):
                 self.active_loop_handle.Kill(complete=False)
             self.box_loop.set_position(self.base_pos_loop)
             self.box_loop.set_scale(1.0)
-            self.active_loop_handle = self.box_loop.DoMove((450, 450), 1.2).SetLoops(-1).SetYoyo(True)
+            self.active_loop_handle = (
+                self.box_loop.DoMove((450, 450), 1.2).SetLoops(-1).SetYoyo(True)
+            )
 
         if s.input.was_pressed(pygame.K_k):
             if self.active_kill_handle:

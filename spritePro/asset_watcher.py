@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import os
-import time
 from typing import Callable, Optional, Dict, List, Any
 from pathlib import Path
-from threading import Thread
-import pygame
 
 import spritePro
 

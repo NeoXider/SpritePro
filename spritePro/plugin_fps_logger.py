@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 
-from .plugins import register_plugin, hook, get_plugin_manager
+from .plugins import register_plugin, hook
 
 _INTERVAL = 2.0
 _last_log_time: float = time.monotonic()
@@ -19,6 +19,7 @@ _last_log_time: float = time.monotonic()
 @hook("game_update")
 def _on_game_update(dt: float) -> None:
     import spritePro as s
+
     global _last_log_time
     now = time.monotonic()
     if now - _last_log_time >= _INTERVAL:

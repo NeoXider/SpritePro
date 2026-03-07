@@ -21,7 +21,9 @@ class InputEventsDemoScene(s.Scene):
         self.player.set_color((120, 200, 255))
         self.player.angle = 0
 
-        self.title = s.TextSprite("Input + EventBus Demo", 28, (255, 255, 255), (400, 40), scene=self)
+        self.title = s.TextSprite(
+            "Input + EventBus Demo", 28, (255, 255, 255), (400, 40), scene=self
+        )
         self.hints = s.TextSprite(
             "R: color  |  Q: tween rotate 90  |  Space: scale",
             20,

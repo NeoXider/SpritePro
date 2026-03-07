@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Callable, Generic, Optional, TypeVar, Any
 from collections import deque
-import inspect
 
 T = TypeVar("T")
 

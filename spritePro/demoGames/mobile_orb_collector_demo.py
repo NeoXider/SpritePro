@@ -34,12 +34,12 @@ class MobileOrbCollectorScene(s.Scene):
         self._orb_sprites: list[s.Sprite] = []
         self._build_world()
         self._build_ui()
-        s.set_camera_follow(self.player, offset=(0,0))
+        s.set_camera_follow(self.player, offset=(0, 0))
 
     def _build_world(self) -> None:
         self.player = s.Sprite("", PLAYER_SIZE, (s.WH_C), scene=self)
         self.player.set_rect_shape(PLAYER_SIZE, (80, 220, 255), border_radius=24)
-        
+
         for _ in range(ORB_COUNT):
             self._orb_sprites.append(self._spawn_orb())
 
@@ -79,7 +79,9 @@ class MobileOrbCollectorScene(s.Scene):
         self.right_button = self._create_button("RIGHT", (240, s.WH.y - 110))
         self.up_button = self._create_button("UP", (175, s.WH.y - 240))
         self.down_button = self._create_button("DOWN", (175, s.WH.y - 110))
-        self.boost_button = self._create_button("BOOST", (s.WH.x - 130, s.WH.y - 130), size=(150, 150))
+        self.boost_button = self._create_button(
+            "BOOST", (s.WH.x - 130, s.WH.y - 130), size=(150, 150)
+        )
         self.boost_button.set_all_colors((255, 170, 80), (255, 120, 70), (255, 200, 110))
 
     def _create_button(
@@ -116,10 +118,26 @@ class MobileOrbCollectorScene(s.Scene):
         return orb
 
     def _axis_from_buttons(self) -> pygame.Vector2:
-        left = self._is_button_held(self.left_button) or s.input.is_pressed(pygame.K_a) or s.input.is_pressed(pygame.K_LEFT)
-        right = self._is_button_held(self.right_button) or s.input.is_pressed(pygame.K_d) or s.input.is_pressed(pygame.K_RIGHT)
-        up = self._is_button_held(self.up_button) or s.input.is_pressed(pygame.K_w) or s.input.is_pressed(pygame.K_UP)
-        down = self._is_button_held(self.down_button) or s.input.is_pressed(pygame.K_s) or s.input.is_pressed(pygame.K_DOWN)
+        left = (
+            self._is_button_held(self.left_button)
+            or s.input.is_pressed(pygame.K_a)
+            or s.input.is_pressed(pygame.K_LEFT)
+        )
+        right = (
+            self._is_button_held(self.right_button)
+            or s.input.is_pressed(pygame.K_d)
+            or s.input.is_pressed(pygame.K_RIGHT)
+        )
+        up = (
+            self._is_button_held(self.up_button)
+            or s.input.is_pressed(pygame.K_w)
+            or s.input.is_pressed(pygame.K_UP)
+        )
+        down = (
+            self._is_button_held(self.down_button)
+            or s.input.is_pressed(pygame.K_s)
+            or s.input.is_pressed(pygame.K_DOWN)
+        )
         return pygame.Vector2(int(right) - int(left), int(down) - int(up))
 
     def _is_button_held(self, button: s.Button) -> bool:
@@ -127,7 +145,11 @@ class MobileOrbCollectorScene(s.Scene):
 
     def update(self, dt: float) -> None:
         direction = self._axis_from_buttons()
-        speed = BOOST_SPEED if self._is_button_held(self.boost_button) or s.input.is_pressed(pygame.K_SPACE) else PLAYER_SPEED
+        speed = (
+            BOOST_SPEED
+            if self._is_button_held(self.boost_button) or s.input.is_pressed(pygame.K_SPACE)
+            else PLAYER_SPEED
+        )
         if direction.length_squared() > 0:
             direction = direction.normalize()
             self.player.rect.centerx += int(direction.x * speed * dt)

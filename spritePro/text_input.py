@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Literal, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Callable, Optional, Tuple, TYPE_CHECKING
 
 import pygame
 
@@ -11,7 +11,6 @@ from .input_validation import (
     InputType,
     can_add_char,
     filter_chars_for_paste,
-    parse_input_value,
 )
 
 if TYPE_CHECKING:

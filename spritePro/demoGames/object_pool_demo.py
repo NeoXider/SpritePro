@@ -1,4 +1,5 @@
 """Demo: Object Pool - пул объектов для оптимизации."""
+
 import pygame
 import spritePro as s
 from spritePro.utils.pool import ObjectPool
@@ -18,7 +19,9 @@ def run_demo():
     active_text.set_position((20, 75), anchor="topleft")
     active_text.set_screen_space(True)
 
-    info_text = s.TextSprite("SPACE: emit | UP/DOWN: adjust amount", color=(200, 200, 200), pos=(20, 100))
+    info_text = s.TextSprite(
+        "SPACE: emit | UP/DOWN: adjust amount", color=(200, 200, 200), pos=(20, 100)
+    )
     info_text.set_position((20, 100), anchor="topleft")
     info_text.set_screen_space(True)
 

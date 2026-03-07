@@ -135,7 +135,7 @@ from .plugins import (
     HOOKS_LIFECYCLE,
     HOOKS_SPRITE,
     HOOKS_SCENE,
-    HOOKS_INPUT
+    HOOKS_INPUT,
 )
 from .builder import SpriteBuilder, ParticleBuilder, particles
 from .asset_watcher import AssetWatcher, HotReloadManager, get_hot_reload_manager
@@ -314,6 +314,22 @@ __all__ = [
     "save_load",
     "validation",
     "plugins",
+    "validate_color",
+    "validate_vector2",
+    "validate_float",
+    "validate_string",
+    "validate_enum",
+    "validate_list",
+    "validate_dict",
+    "PluginManager",
+    "PluginInfo",
+    "get_plugin_manager",
+    "register_plugin",
+    "hook",
+    "HOOKS_LIFECYCLE",
+    "HOOKS_SPRITE",
+    "HOOKS_SCENE",
+    "HOOKS_INPUT",
     # Scenes
     "Scene",
     "SceneManager",
@@ -341,9 +357,13 @@ __all__ = [
     "ParticleBuilder",
     "sprite",
     "particles",
+    "AssetWatcher",
+    "HotReloadManager",
+    "get_hot_reload_manager",
     # Global facade
     "get_context",
     "get_game",
+    "get_physics",
     "get_physics_world",
     "physics",
     "register_sprite",

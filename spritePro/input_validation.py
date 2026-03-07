@@ -43,7 +43,8 @@ def filter_chars_for_paste(
     if input_type == "text":
         if allowed_text_chars is not None:
             return "".join(
-                c for c in text
+                c
+                for c in text
                 if c in allowed_text_chars or (ord(c) >= 0x20 and c not in "\x00\r\n")
             )
         return "".join(c for c in text if c.isprintable() or c in " \t")

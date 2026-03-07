@@ -104,7 +104,11 @@ class Slider(Sprite):
         self.set_value(self._value_from_x(x), emit=emit)
 
     def handle_event(self, event: pygame.event.Event) -> bool:
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.rect.collidepoint(event.pos):
+        if (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+            and self.rect.collidepoint(event.pos)
+        ):
             self.dragging = True
             self.set_from_mouse_x(event.pos[0], emit=True)
             return True
@@ -143,6 +147,7 @@ class Slider(Sprite):
             return
         try:
             import spritePro as s
+
             for ev in getattr(s, "pygame_events", []):
                 if self.handle_event(ev):
                     break

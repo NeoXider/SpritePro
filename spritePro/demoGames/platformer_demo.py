@@ -72,7 +72,11 @@ class Platformer(s.Scene):
             return
         player_sprite = self._player_so.sprite
 
-        if s.input.was_pressed(pygame.K_SPACE) or s.input.was_pressed(pygame.K_UP) or s.input.was_pressed(pygame.K_w):
+        if (
+            s.input.was_pressed(pygame.K_SPACE)
+            or s.input.was_pressed(pygame.K_UP)
+            or s.input.was_pressed(pygame.K_w)
+        ):
             self._jump_pressed = True
 
         keys = pygame.key.get_pressed()
@@ -111,7 +115,9 @@ def run_platformer(level_path: str | None = None) -> None:
     if not os.path.isfile(level_path):
         print("Сцена не найдена:", level_path)
         print("Создайте platformer_level.json в редакторе (см. докстринг в platformer_demo.py).")
-        print("Или передайте путь: python -m spritePro.demoGames.platformer_demo path/to/level.json")
+        print(
+            "Или передайте путь: python -m spritePro.demoGames.platformer_demo path/to/level.json"
+        )
         return
 
     scene = Platformer(level_path)

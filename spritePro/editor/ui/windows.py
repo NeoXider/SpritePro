@@ -89,7 +89,9 @@ class EditorWindow:
             self._add_action(tab_rect, lambda i=index: self._set_page(i))
             tab_x += tab_rect.width + 6
 
-        return pygame.Rect(self.rect.x + 10, tabs_top + 30, self.rect.width - 20, self.rect.height - 74)
+        return pygame.Rect(
+            self.rect.x + 10, tabs_top + 30, self.rect.width - 20, self.rect.height - 74
+        )
 
     def _set_page(self, index: int) -> None:
         self.page_index = max(0, min(index, len(self.page_titles) - 1))
@@ -225,7 +227,9 @@ class SettingsWindow(EditorWindow):
         pygame.draw.rect(screen, bg, toggle_rect, border_radius=4)
         caption = "ON" if value else "OFF"
         caption_text = font.render(caption, True, fg)
-        screen.blit(caption_text, (toggle_rect.centerx - caption_text.get_width() // 2, toggle_rect.y + 4))
+        screen.blit(
+            caption_text, (toggle_rect.centerx - caption_text.get_width() // 2, toggle_rect.y + 4)
+        )
         self._add_action(toggle_rect, callback)
 
 
