@@ -14,7 +14,7 @@ import spritePro as s
 def log_events_plugin():
     """
     Плагин для логирования событий.
-    
+
     Этот плагин автоматически логирует:
     - Создание и удаление спрайтов
     - Загрузку/выгрузку сцен
@@ -55,12 +55,12 @@ def on_scene_unloaded(scene_name):
 def on_key_pressed(key, event):
     """Логирование нажатия клавиш."""
     key_names = {
-        257: 'SPACE',
-        256: 'ENTER',
-        260: 'UP',
-        261: 'DOWN',
-        262: 'LEFT',
-        263: 'RIGHT',
+        257: "SPACE",
+        256: "ENTER",
+        260: "UP",
+        261: "DOWN",
+        262: "LEFT",
+        263: "RIGHT",
     }
     key_name = key_names.get(key, f"KEY_{key}")
     s.debug_log_info(f"[LOG_EVENTS] Key pressed: {key_name}")
@@ -69,11 +69,7 @@ def on_key_pressed(key, event):
 @hook("mouse_clicked")
 def on_mouse_clicked(button, pos, event):
     """Логирование кликов мыши."""
-    button_names = {
-        0: 'LEFT',
-        1: 'MIDDLE',
-        2: 'RIGHT'
-    }
+    button_names = {0: "LEFT", 1: "MIDDLE", 2: "RIGHT"}
     button_name = button_names.get(button, f"BUTTON_{button}")
     s.debug_log_info(f"[LOG_EVENTS] Mouse clicked: {button_name} at {pos}")
 
@@ -82,7 +78,7 @@ def on_mouse_clicked(button, pos, event):
 def init_plugin():
     """
     Инициализация плагина логирования.
-    
+
     Вызывается при старте игры для подключения всех хуков.
     """
     pm = get_plugin_manager()
@@ -93,7 +89,7 @@ def init_plugin():
 def shutdown_plugin():
     """
     Очистка плагина при завершении игры.
-    
+
     Удаляет все хуки и освобождает ресурсы.
     """
     pm = get_plugin_manager()
@@ -101,4 +97,4 @@ def shutdown_plugin():
 
 
 # Экспорт функций
-__all__ = ['log_events_plugin', 'init_plugin', 'shutdown_plugin']
+__all__ = ["log_events_plugin", "init_plugin", "shutdown_plugin"]

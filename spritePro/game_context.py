@@ -134,6 +134,9 @@ class GameContext:
         self.events: List[pygame.event.Event] = []
         self.screen: pygame.Surface | None = None
         self.screen_rect: pygame.Rect | None = None
+        self._output_surface: pygame.Surface | None = None
+        self._reference_size: Tuple[int, int] | None = None
+        self._viewport_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         self.WH: Vector2 = Vector2()
         self.WH_C: Vector2 = Vector2()
         self.clock = pygame.time.Clock()
@@ -156,8 +159,7 @@ class GameContext:
         """Инициализирует модули pygame."""
         try:
             is_android_runtime = bool(
-                os.environ.get("ANDROID_ARGUMENT")
-                or os.environ.get("P4A_BOOTSTRAP")
+                os.environ.get("ANDROID_ARGUMENT") or os.environ.get("P4A_BOOTSTRAP")
             )
 
             if is_android_runtime:
@@ -176,20 +178,163 @@ class GameContext:
 
             spritePro.debug_log_warning("Error init pygame")
 
-    def attach_surface(self, surface: pygame.Surface) -> pygame.Surface:
-        """Подключает внешнюю поверхность рендера вместо окна pygame."""
-        self.screen = surface
-        self.screen_rect = surface.get_rect()
-        self._quit_requested = False
+    @staticmethod
+    def _normalize_reference_size(
+        reference_size: Tuple[int, int] | None,
+    ) -> Tuple[int, int] | None:
+        if reference_size is None:
+            return None
+        width = max(1, int(reference_size[0]))
+        height = max(1, int(reference_size[1]))
+        return (width, height)
+
+    @staticmethod
+    def _calculate_viewport_rect(
+        output_size: Tuple[int, int],
+        reference_size: Tuple[int, int] | None,
+    ) -> pygame.Rect:
+        output_w = max(1, int(output_size[0]))
+        output_h = max(1, int(output_size[1]))
+        if reference_size is None:
+            return pygame.Rect(0, 0, output_w, output_h)
+
+        ref_w = max(1, int(reference_size[0]))
+        ref_h = max(1, int(reference_size[1]))
+        scale = min(output_w / ref_w, output_h / ref_h)
+        viewport_w = max(1, int(round(ref_w * scale)))
+        viewport_h = max(1, int(round(ref_h * scale)))
+        viewport_x = (output_w - viewport_w) // 2
+        viewport_y = (output_h - viewport_h) // 2
+        return pygame.Rect(viewport_x, viewport_y, viewport_w, viewport_h)
+
+    def _uses_reference_resolution(self) -> bool:
+        return (
+            self._reference_size is not None
+            and self._output_surface is not None
+            and self.screen is not None
+            and self.screen is not self._output_surface
+        )
+
+    def _rebuild_render_targets(self) -> None:
+        if self._output_surface is None:
+            self.screen = None
+            self.screen_rect = None
+            self.WH = Vector2()
+            self.WH_C = Vector2()
+            self._viewport_rect = pygame.Rect(0, 0, 0, 0)
+            return
+
+        self._viewport_rect = self._calculate_viewport_rect(
+            self._output_surface.get_size(),
+            self._reference_size,
+        )
+
+        if self._reference_size is None:
+            self.screen = self._output_surface
+            self.screen_rect = self.screen.get_rect()
+        else:
+            if self.screen is None or self.screen.get_size() != self._reference_size:
+                self.screen = pygame.Surface(self._reference_size, pygame.SRCALPHA, 32)
+            self.screen_rect = pygame.Rect((0, 0), self._reference_size)
+
         self.WH = Vector2(self.screen_rect.size)
         self.WH_C = Vector2(self.screen_rect.center)
-        return surface
+
+    def _map_output_pos_to_screen(self, pos: Tuple[int, int]) -> Tuple[int, int]:
+        if not self._uses_reference_resolution() or self.screen_rect is None:
+            return (int(pos[0]), int(pos[1]))
+
+        viewport = self._viewport_rect
+        if viewport.width <= 0 or viewport.height <= 0:
+            return (int(pos[0]), int(pos[1]))
+
+        mapped_x = (pos[0] - viewport.x) * self.screen_rect.width / viewport.width
+        mapped_y = (pos[1] - viewport.y) * self.screen_rect.height / viewport.height
+        return (int(round(mapped_x)), int(round(mapped_y)))
+
+    def _map_output_rel_to_screen(self, rel: Tuple[int, int]) -> Tuple[int, int]:
+        if not self._uses_reference_resolution() or self.screen_rect is None:
+            return (int(rel[0]), int(rel[1]))
+
+        viewport = self._viewport_rect
+        if viewport.width <= 0 or viewport.height <= 0:
+            return (int(rel[0]), int(rel[1]))
+
+        mapped_x = rel[0] * self.screen_rect.width / viewport.width
+        mapped_y = rel[1] * self.screen_rect.height / viewport.height
+        return (int(round(mapped_x)), int(round(mapped_y)))
+
+    def _remap_input_events(
+        self,
+        events: List[pygame.event.Event],
+    ) -> List[pygame.event.Event]:
+        if not self._uses_reference_resolution():
+            return list(events)
+
+        remapped_events: List[pygame.event.Event] = []
+        for event in events:
+            if event.type not in (
+                pygame.MOUSEBUTTONDOWN,
+                pygame.MOUSEBUTTONUP,
+                pygame.MOUSEMOTION,
+            ):
+                remapped_events.append(event)
+                continue
+
+            payload = dict(event.dict)
+            if "pos" in payload:
+                payload["pos"] = self._map_output_pos_to_screen(payload["pos"])
+            if "rel" in payload:
+                payload["rel"] = self._map_output_rel_to_screen(payload["rel"])
+            remapped_events.append(pygame.event.Event(event.type, payload))
+        return remapped_events
+
+    def _sync_reference_mouse_state(self) -> None:
+        if not self._uses_reference_resolution():
+            return
+        if self.screen_rect is None:
+            return
+        try:
+            current_mouse_pos = pygame.mouse.get_pos()
+        except pygame.error:
+            return
+
+        mapped = self._map_output_pos_to_screen(current_mouse_pos)
+        last = getattr(self.input, "_last_mouse_pos", mapped)
+        self.input.mouse_pos = mapped
+        self.input.mouse_rel = (mapped[0] - last[0], mapped[1] - last[1])
+
+    def _present_frame(self) -> None:
+        if self.screen is None or self._output_surface is None:
+            return
+        if self.screen is self._output_surface:
+            return
+
+        self._output_surface.fill((0, 0, 0))
+        viewport = self._viewport_rect
+        if viewport.width <= 0 or viewport.height <= 0:
+            return
+        scaled = pygame.transform.smoothscale(self.screen, viewport.size)
+        self._output_surface.blit(scaled, viewport.topleft)
+
+    def attach_surface(
+        self,
+        surface: pygame.Surface,
+        reference_size: Tuple[int, int] | None = None,
+    ) -> pygame.Surface:
+        """Подключает внешнюю поверхность рендера вместо окна pygame."""
+        self._output_surface = surface
+        self._reference_size = self._normalize_reference_size(reference_size)
+        self._rebuild_render_targets()
+        self._quit_requested = False
+        return self.screen
 
     def get_screen(
         self,
         size: Tuple[int, int] = (800, 600),
         title: str = "Игра",
         icon: str | None = None,
+        reference_size: Tuple[int, int] | None = None,
     ) -> pygame.Surface:
         """Создает окно и сохраняет параметры экрана."""
         net_tag = os.environ.get("SPRITEPRO_NET_LOG_TAG")
@@ -209,7 +354,10 @@ class GameContext:
                 os.environ["SDL_VIDEO_WINDOW_POS"] = f"{x},{y}"
             except ValueError:
                 pass
-        self.attach_surface(pygame.display.set_mode(size))
+        self.attach_surface(
+            pygame.display.set_mode(size),
+            reference_size=reference_size,
+        )
         pygame.display.set_caption(title)
         if icon:
             icon_surface = resource_cache.load_texture(icon)
@@ -250,7 +398,7 @@ class GameContext:
             if not self.game.debug_hud_on_top:
                 self.game.draw_debug_hud(self.screen)
 
-        self.events = list(events)
+        self.events = self._remap_input_events(list(events))
         try:
             import spritePro as _sp
 
@@ -258,6 +406,11 @@ class GameContext:
         except Exception:
             pass
         self.input.update(self.events)
+        if not any(
+            event.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION)
+            for event in self.events
+        ):
+            self._sync_reference_mouse_state()
         self.event_bus.send(GlobalEvents.TICK, dt=self.dt, frame_count=self.frame_count)
         if self.game.debug_enabled and self.game.debug_camera_drag_button is not None:
             if self.input.is_mouse_pressed(self.game.debug_camera_drag_button):
@@ -314,6 +467,7 @@ class GameContext:
                 self.game.draw_debug_hud(self.screen)
             self.game.draw_debug_overlay(self.screen, self.WH_C, dt=self.dt)
 
+        self._present_frame()
         if update_display and pygame.display.get_surface() is not None:
             pygame.display.update()
 

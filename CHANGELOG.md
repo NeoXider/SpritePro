@@ -5,6 +5,36 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0]
+
+### Added
+- **Reference resolution** — в `s.run(...)`, `s.get_screen(...)`, `s.attach_surface(...)`, `s.run_kivy(...)`, `s.run_kivy_hybrid(...)` и `s.create_kivy_widget(...)` добавлен параметр `reference_size`, который позволяет держать игровую логику, `s.WH`, `s.WH_C`, screen-space UI и camera math в виртуальном разрешении, независимо от реального размера окна или Kivy-host.
+
+### Changed
+- **Масштабирование кадра** — SpritePro теперь умеет рендерить сцену во внутреннюю виртуальную поверхность и затем масштабировать итоговый кадр в фактическое окно с сохранением пропорций.
+- **Input remap** — `input.mouse_pos`, `mouse_rel` и `event.pos`/`event.rel` автоматически пересчитываются из реального окна в координаты `reference_size`, чтобы клики, drag и hover оставались корректными.
+- **Документация по game loop** — в README и `docs/game_loop.md` добавлены примеры использования `reference_size` для desktop-preview и mobile-layout сценариев.
+- **Версия библиотеки** — релиз обновлён до `3.1.0`.
+
+---
+
+## [3.0.3]
+
+### Added
+- **Android orientation modes** — в `spritePro.cli --android` добавлены удобные режимы ориентации `landscape` (по умолчанию), `portrait` и `auto` для генерации `buildozer.spec`.
+
+### Changed
+- **Mobile preview docs** — README и mobile/building docs уточнены под реальный workflow тестирования на разных размерах окна без огромных fullscreen-preview на desktop.
+- **Документация по ориентации** — в docs добавлены примеры, как переключать `portrait`, `landscape` и `auto` для Android APK.
+- **Версия библиотеки** — релиз обновлён до `3.0.3`.
+
+### Fixed
+- **Android/Kivy fullscreen** — mobile host надёжнее растягивает игру на весь экран Android-устройства вместо маленькой игровой области.
+- **Физика после лаг-кадров** — шаг физики ограничен безопасным `dt`, чтобы уменьшить скачки скорости и провалы объектов при нестабильном FPS на mobile.
+- **Restart сцены с физикой** — runtime-сцены теперь корректно очищают заспавненные физические тела и спрайты при выходе/перезапуске сцены.
+
+---
+
 ## [3.0.2]
 
 ### Changed

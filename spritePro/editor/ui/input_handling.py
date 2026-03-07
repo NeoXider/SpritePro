@@ -9,6 +9,7 @@ from ...input_validation import (
     InputType,
     can_add_char as _can_add_char,
     filter_chars_for_paste as _filter_chars_for_paste,
+    parse_input_value as _parse_input_value,
 )
 
 ALLOWED_NAME_CHARS = set(string.ascii_letters + string.digits + string.whitespace + "._-()")
@@ -44,6 +45,15 @@ def filter_chars_for_paste(input_type: InputType, text: str, name: str = "") -> 
     return _filter_chars_for_paste(
         input_type, text, _allowed_for_editor_text(name) if name else None
     )
+
+
+def parse_input_value(
+    input_type: InputType,
+    raw: str,
+    min_val: Optional[float] = None,
+    max_val: Optional[float] = None,
+):
+    return _parse_input_value(input_type, raw, min_val, max_val)
 
 
 def get_active_input_type(editor) -> InputType:

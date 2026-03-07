@@ -790,7 +790,12 @@ class SpriteProGame:
             zoom = self.camera_zoom if self.camera_zoom != 0 else 1.0
             cx, cy = wh_c.x, wh_c.y
             center_world = (int(cam.x + cx), int(cam.y + cy))
-            mouse_pos = pygame.mouse.get_pos()
+            try:
+                import spritePro as _sp
+
+                mouse_pos = getattr(_sp.input, "mouse_pos", pygame.mouse.get_pos())
+            except Exception:
+                mouse_pos = pygame.mouse.get_pos()
             mouse_world = (
                 int(cam.x + (mouse_pos[0] - cx * (1 - zoom)) / zoom),
                 int(cam.y + (mouse_pos[1] - cy * (1 - zoom)) / zoom),

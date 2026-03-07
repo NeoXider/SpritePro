@@ -1087,7 +1087,10 @@ def _resolve_run_options(
 
 
 def get_screen(
-    size: tuple[int, int] = (800, 600), title: str = "Игра", icon: str = None
+    size: tuple[int, int] = (800, 600),
+    title: str = "Игра",
+    icon: str = None,
+    reference_size: tuple[int, int] | None = None,
 ) -> pygame.Surface:
     """Инициализирует экран игры.
 
@@ -1097,19 +1100,29 @@ def get_screen(
         size (tuple[int, int], optional): Размер экрана (ширина, высота). По умолчанию (800, 600).
         title (str, optional): Заголовок окна. По умолчанию "Игра".
         icon (str, optional): Путь к файлу иконки окна. По умолчанию None.
+        reference_size (tuple[int, int] | None, optional): Виртуальное разрешение,
+            в котором живут `s.WH`, `s.WH_C`, камера и координаты ввода.
 
     Returns:
         pygame.Surface: Поверхность экрана игры.
     """
     size, title = _resolve_screen_options(size, title)
-    result = _context.get_screen(size=size, title=title, icon=icon)
+    result = _context.get_screen(
+        size=size,
+        title=title,
+        icon=icon,
+        reference_size=reference_size,
+    )
     _sync_globals()
     return result
 
 
-def attach_surface(surface: pygame.Surface) -> pygame.Surface:
+def attach_surface(
+    surface: pygame.Surface,
+    reference_size: tuple[int, int] | None = None,
+) -> pygame.Surface:
     """Подключает внешнюю поверхность рендера вместо окна pygame."""
-    result = _context.attach_surface(surface)
+    result = _context.attach_surface(surface, reference_size=reference_size)
     _sync_globals()
     return result
 
@@ -1148,6 +1161,7 @@ def run(
     *,
     scene: Scene | type[Scene] | Callable[[], Scene | None] | None = None,
     size: tuple[int, int] = (800, 600),
+    reference_size: tuple[int, int] | None = None,
     title: str = "Игра",
     icon: str | None = None,
     fps: int = 60,
@@ -1161,6 +1175,9 @@ def run(
             или вернуть Scene для автоматического set_scene().
         scene: Scene, класс Scene или фабрика сцены. Удобно для типового запуска.
         size: Размер окна desktop-превью.
+        reference_size: Виртуальное разрешение рендера. Например `(1920, 1080)`,
+            если вы хотите маленькое окно превью, но игровую логику и layout как
+            для full HD.
         title: Заголовок окна.
         icon: Иконка desktop-окна.
         fps: Целевой FPS.
@@ -1170,7 +1187,7 @@ def run(
     size, title, platform = _resolve_run_options(size, title, platform)
     platform_normalized = platform.lower().strip()
     if platform_normalized in {"pygame", "desktop"}:
-        get_screen(size=size, title=title, icon=icon)
+        get_screen(size=size, title=title, icon=icon, reference_size=reference_size)
         _run_bootstrap(setup, scene)
         while True:
             update(fps=fps, fill_color=fill_color)
@@ -1186,6 +1203,7 @@ def run(
             fps=fps,
             fill_color=fill_color if fill_color is not None else (0, 0, 0),
             window_size=size,
+            reference_size=reference_size,
         )
     else:
         raise ValueError("platform must be 'pygame' or 'kivy'")
@@ -1196,6 +1214,7 @@ def run_kivy(
     *,
     scene: Scene | type[Scene] | Callable[[], Scene | None] | None = None,
     size: tuple[int, int] = (800, 600),
+    reference_size: tuple[int, int] | None = None,
     title: str = "Игра",
     fps: int = 60,
     fill_color: tuple[int, int, int] | None = None,
@@ -1205,6 +1224,7 @@ def run_kivy(
         setup,
         scene=scene,
         size=size,
+        reference_size=reference_size,
         title=title,
         fps=fps,
         fill_color=fill_color,
@@ -1216,6 +1236,7 @@ def create_kivy_widget(
     setup: Callable[[], object] | None = None,
     *,
     scene: Scene | type[Scene] | Callable[[], Scene | None] | None = None,
+    reference_size: tuple[int, int] | None = None,
     fps: int = 60,
     fill_color: tuple[int, int, int] | None = None,
     **widget_kwargs,
@@ -1232,6 +1253,7 @@ def create_kivy_widget(
 
     return _create_kivy_widget_impl(
         bootstrap,
+        reference_size=reference_size,
         fps=fps,
         fill_color=fill_color if fill_color is not None else (0, 0, 0),
         **widget_kwargs,
@@ -1244,6 +1266,7 @@ def run_kivy_hybrid(
     scene: Scene | type[Scene] | Callable[[], Scene | None] | None = None,
     root_builder: Callable[[object], object],
     size: tuple[int, int] = (800, 600),
+    reference_size: tuple[int, int] | None = None,
     title: str = "Игра",
     fps: int = 60,
     fill_color: tuple[int, int, int] | None = None,
@@ -1261,6 +1284,7 @@ def run_kivy_hybrid(
         fps=fps,
         fill_color=fill_color if fill_color is not None else (0, 0, 0),
         window_size=size,
+        reference_size=reference_size,
         root_builder=root_builder,
         widget_kwargs=widget_kwargs,
     )

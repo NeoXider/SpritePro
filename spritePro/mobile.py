@@ -60,6 +60,7 @@ class KivySpriteProWidget:
             def __init__(
                 self,
                 bootstrap: Callable[[], None] | None = None,
+                reference_size: tuple[int, int] | None = None,
                 fps: int = 60,
                 fill_color: tuple[int, int, int] = (20, 20, 30),
                 **kwargs,
@@ -71,6 +72,7 @@ class KivySpriteProWidget:
                 except Exception:
                     pass
                 self._bootstrap = bootstrap
+                self._reference_size = reference_size
                 self._bootstrapped = False
                 self._fps = fps
                 self._fill_color = fill_color
@@ -100,7 +102,7 @@ class KivySpriteProWidget:
                     return
 
                 self._surface = pygame.Surface((width, height), pygame.SRCALPHA, 32)
-                s.attach_surface(self._surface)
+                s.attach_surface(self._surface, reference_size=self._reference_size)
 
                 self._texture = Texture.create(size=(width, height), colorfmt="rgba")
                 self._texture.flip_vertical()
@@ -167,7 +169,9 @@ class KivySpriteProWidget:
                 self._surface.blit(title, (18, y))
                 y += 42
 
-                hint = text_font.render("Logs saved to debug.log / spritepro_mobile_crash.log", True, (220, 220, 220))
+                hint = text_font.render(
+                    "Logs saved to debug.log / spritepro_mobile_crash.log", True, (220, 220, 220)
+                )
                 self._surface.blit(hint, (18, y))
                 y += 32
 
@@ -269,18 +273,26 @@ class KivySpriteProWidget:
     def create_widget(
         *,
         bootstrap: Callable[[], None] | None = None,
+        reference_size: tuple[int, int] | None = None,
         fps: int = 60,
         fill_color: tuple[int, int, int] = (20, 20, 30),
         **widget_kwargs: Any,
     ):
         """Создаёт экземпляр Kivy-виджета со встроенной игрой SpritePro."""
         widget_cls, _ = KivySpriteProWidget.create_class()
-        return widget_cls(bootstrap=bootstrap, fps=fps, fill_color=fill_color, **widget_kwargs)
+        return widget_cls(
+            bootstrap=bootstrap,
+            reference_size=reference_size,
+            fps=fps,
+            fill_color=fill_color,
+            **widget_kwargs,
+        )
 
 
 def create_kivy_widget(
     bootstrap: Callable[[], None] | None = None,
     *,
+    reference_size: tuple[int, int] | None = None,
     fps: int = 60,
     fill_color: tuple[int, int, int] = (20, 20, 30),
     **widget_kwargs: Any,
@@ -288,6 +300,7 @@ def create_kivy_widget(
     """Публичный helper для создания SpritePro-виджета внутри Kivy layout."""
     return KivySpriteProWidget.create_widget(
         bootstrap=bootstrap,
+        reference_size=reference_size,
         fps=fps,
         fill_color=fill_color,
         **widget_kwargs,
@@ -298,6 +311,7 @@ def run_kivy_app(
     bootstrap: Callable[[], None],
     *,
     title: str = "SpritePro Mobile",
+    reference_size: tuple[int, int] | None = None,
     fps: int = 60,
     fill_color: tuple[int, int, int] = (20, 20, 30),
     window_size: tuple[int, int] | None = None,
@@ -328,6 +342,7 @@ def run_kivy_app(
             resolved_widget_kwargs.setdefault("size_hint", (1, 1))
             game_widget = create_kivy_widget(
                 bootstrap,
+                reference_size=reference_size,
                 fps=fps,
                 fill_color=fill_color,
                 **resolved_widget_kwargs,

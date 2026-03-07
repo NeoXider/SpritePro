@@ -1,11 +1,15 @@
 """Проверка физики: минимальная сцена + несколько кадров (без GUI-цикла демо)."""
+
 import sys
 import os
+
 # Без окна — только инициализация и шаги физики
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
+
 def main():
     import spritePro as s
+
     s.get_screen((800, 600), "Physics test")
     # Минимальная сцена как в physics_demo
     player = s.Sprite("", pos=(100, 200), size=(40, 40))
@@ -28,7 +32,8 @@ def main():
     ball.set_circle_shape(radius=15, color=(255, 100, 100))
     ball_body = s.add_physics(ball, s.PhysicsConfig(mass=0.5, bounce=0.8, friction=0.98))
     from spritePro.demoGames.hoop_bounce_demo import HoopConstraint
-    constraint = HoopConstraint(ball_body, (400, 300), 220, 15, [(255,100,100), (100,255,150)])
+
+    constraint = HoopConstraint(ball_body, (400, 300), 220, 15, [(255, 100, 100), (100, 255, 150)])
     s.physics.add_constraint(constraint)
     for _ in range(20):
         ctx.update(60, fill_color=(15, 15, 25), update_display=False)
@@ -36,11 +41,13 @@ def main():
 
     print("All physics demos (minimal): OK")
 
+
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         print(f"FAIL: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
