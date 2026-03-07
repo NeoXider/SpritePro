@@ -341,6 +341,7 @@ class PhysicsBody:
 
 
 NEAR_GROUND_PX = 8
+MAX_PHYSICS_DT = 1.0 / 30.0
 
 
 class PhysicsWorld:
@@ -465,6 +466,7 @@ class PhysicsWorld:
     def update(self, dt: Optional[float] = None) -> None:
         if dt is None:
             dt = getattr(spritePro, "dt", 1 / 60) or 1 / 60
+        dt = max(0.0, min(float(dt), MAX_PHYSICS_DT))
 
         for body in self._all_bodies:
             if not body.enabled:

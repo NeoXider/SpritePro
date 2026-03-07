@@ -280,7 +280,7 @@ class SpriteProGame:
             return
         self.camera_target = target
         if isinstance(offset, Vector2):
-            self.camera_offset = offset.copy()
+            self.camera_offset = Vector2(offset.x, offset.y)
         else:
             self.camera_offset = Vector2(offset[0], offset[1])
         # При установке цели WH_C может быть еще не инициализирован, используем значение по умолчанию

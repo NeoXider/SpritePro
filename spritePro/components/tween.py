@@ -418,6 +418,8 @@ class Tween:
 
     def _copy_value(self, value: Any) -> Any:
         """Копия значения для completion_value (Vector2, tuple, list, скаляр)."""
+        if isinstance(value, Vector2):
+            return Vector2(value.x, value.y)
         if hasattr(value, "copy"):
             return value.copy()
         if isinstance(value, (list, tuple)):

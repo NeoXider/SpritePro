@@ -40,7 +40,8 @@ class CameraController:
 
     def get_position(self) -> Vector2:
         """Возвращает текущую позицию камеры."""
-        return self._game.get_camera().copy()
+        camera = self._game.get_camera()
+        return Vector2(camera.x, camera.y)
 
     def follow(self, target, offset: Vector2 | Tuple[float, float] = (0.0, 0.0)) -> None:
         """Включает слежение камеры за целью."""
@@ -154,9 +155,22 @@ class GameContext:
     def init_pygame(self) -> None:
         """Инициализирует модули pygame."""
         try:
-            pygame.init()
-            pygame.font.init()
-            pygame.mixer.init()
+            is_android_runtime = bool(
+                os.environ.get("ANDROID_ARGUMENT")
+                or os.environ.get("P4A_BOOTSTRAP")
+            )
+
+            if is_android_runtime:
+                if not pygame.font.get_init():
+                    pygame.font.init()
+                return
+
+            if not pygame.get_init():
+                pygame.init()
+            if not pygame.font.get_init():
+                pygame.font.init()
+            if pygame.mixer.get_init() is None:
+                pygame.mixer.init()
         except Exception:
             import spritePro
 

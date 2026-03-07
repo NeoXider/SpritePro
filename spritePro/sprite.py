@@ -39,7 +39,7 @@ def _coerce_vector2(value: Optional[VectorInput], default: Tuple[float, float]) 
     if value is None:
         value = default
     if isinstance(value, Vector2):
-        return value.copy()
+        return Vector2(value.x, value.y)
     if isinstance(value, (str, bytes)):
         raise TypeError(f"Expected 2D coordinate, got {type(value)!r}")
     try:

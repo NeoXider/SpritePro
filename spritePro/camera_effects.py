@@ -36,7 +36,7 @@ class CameraShake:
         self._elapsed = 0.0
         self._active = self._duration > 0.0
         if self._game.camera_target is None:
-            self._base_position = self._game.camera.copy()
+            self._base_position = Vector2(self._game.camera.x, self._game.camera.y)
 
     def stop(self) -> None:
         """Останавливает дрожание камеры и возвращает исходную позицию."""
@@ -69,7 +69,7 @@ class CameraShake:
         if self._game.camera_target is None:
             base = self._base_position
         else:
-            base = self._game.camera.copy()
+            base = Vector2(self._game.camera.x, self._game.camera.y)
             if self._last_offset.length_squared() > 0:
                 base -= self._last_offset
 

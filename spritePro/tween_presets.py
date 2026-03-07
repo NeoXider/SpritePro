@@ -22,7 +22,7 @@ def _resolve_anchor(sprite, anchor: str | Anchor | None) -> str | Anchor:
 
 def _to_vector2(value: VectorInput) -> Vector2:
     if isinstance(value, Vector2):
-        return value.copy()
+        return Vector2(value.x, value.y)
     return Vector2(value)
 
 

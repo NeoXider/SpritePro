@@ -12,6 +12,7 @@ from textwrap import dedent
 ANDROID_ORIENTATIONS = (
     "landscape",
     "portrait",
+    "auto",
     "landscape-reverse",
     "portrait-reverse",
     "all",
@@ -77,16 +78,15 @@ def infer_android_version(project_root: Path) -> str:
     return "0.1.0"
 
 
-def infer_android_orientation(project_root: Path) -> str:
-    config_text = read_text_if_exists(project_root / "config.py")
-    size_match = re.search(
-        r"""^WINDOW_SIZE\s*=\s*\((\d+)\s*,\s*(\d+)\)\s*$""", config_text, re.MULTILINE
-    )
-    if not size_match:
+def normalize_android_orientation(value: str | None) -> str:
+    if value is None:
+        return "landscape"
+    normalized = value.strip().lower()
+    if normalized == "auto":
         return "all"
-    width = int(size_match.group(1))
-    height = int(size_match.group(2))
-    return "landscape" if width >= height else "portrait"
+    if normalized not in ANDROID_ORIENTATIONS:
+        raise ValueError(f"Неизвестная ориентация Android: {value}")
+    return normalized
 
 
 def sanitize_android_package_name(value: str) -> str:
@@ -155,7 +155,7 @@ def run_android_build(
     resolved_title = title or infer_android_title(project_root)
     resolved_package_name = sanitize_android_package_name(package_name or project_root.name)
     resolved_version = version or infer_android_version(project_root)
-    resolved_orientation = orientation or infer_android_orientation(project_root)
+    resolved_orientation = normalize_android_orientation(orientation)
     resolved_requirements = requirements or "python3,kivy,pygame,pymunk,spritepro"
 
     spec_path = project_root / "buildozer.spec"

@@ -34,7 +34,7 @@ class TweenPresetsDemoScene(s.Scene):
             for i, line in enumerate(hints)
         ]
         self.base_state = {
-            "pos": s.WH_C.copy(),
+            "pos": s.Vector2(s.WH_C.x, s.WH_C.y),
             "scale": 1.0,
             "angle": 0.0,
             "alpha": 255,

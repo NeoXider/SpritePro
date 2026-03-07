@@ -232,6 +232,13 @@ python -m spritePro.cli --list-screen-presets
 - для scene-based игр на `s.run(...)` может быстро переключать `pygame` / `kivy`
 - помогает быстро увидеть расхождения layout до Android build
 
+Практический смысл такого preview:
+
+- не нужно тестировать mobile-layout только через большое fullscreen-окно на ПК
+- на небольшом мониторе удобнее гонять логические профили `360x640`, `412x915`, `640x360`, `1280x720`
+- это позволяет быстро заметить, что UI или игровая сцена становятся визуально слишком мелкими на больших экранах
+- сначала удобно отладить поведение в компактных окнах, а потом уже сверить результат на реальном телефоне
+
 Пример:
 
 ```python
@@ -269,6 +276,7 @@ s.run(
 - не завязана ли логика на один фиксированный `s.WH`
 - одинаково ли ведут себя `pygame` и `kivy`
 - помните, что в `Kivy` при resize `s.WH` и `s.WH_C` обновляются, но уже созданные объекты не relayout'ятся автоматически
+- если fullscreen на телефоне визуально делает игру "слишком мелкой", проверьте сцену в нескольких portrait/landscape профилях, а не только в одном desktop-окне
 
 ### Android: рекомендуемый путь
 
@@ -280,6 +288,29 @@ s.run(
 - на Windows обычно используют `WSL` или отдельную Linux-машину
 - собирать проект лучше внутри Linux filesystem/WSL home, а не из Windows-диска
 - на Android нужно заранее продумать ассеты, ориентацию экрана и touch-управление
+- для `pygame`-приложений на `SpritePro` надёжнее использовать проверенную связку `python-for-android` с `Python 3.10.12`, а не `Python 3.11`
+
+### Проверенная конфигурация для `pygame`/`SpritePro`
+
+На практике рабочая Android-сборка для `SpritePro` + `pygame` сейчас выглядит так:
+
+```ini
+requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
+android.archs = arm64-v8a
+```
+
+Почему именно так:
+
+- старый `pygame` recipe в `python-for-android` конфликтует с `Python 3.11` и часто падает на C API ошибках
+- `Python 3.10.12` для этой связки заметно стабильнее
+- `arm64-v8a` упрощает сборку и убирает лишние ABI
+- если используете `Buildozer` локально, полезно зафиксировать `Cython 0.29.33`
+
+Что дополнительно было проверено на реальном устройстве:
+
+- APK не только собирается, но и запускается с этим стеком
+- для mobile-host на Android важно не использовать устаревший bundle `SpritePro`, если вы тестируете свежие локальные фиксы
+- при проблемах старта быстрее всего сразу смотреть `adb logcat`, а не гадать по splash screen
 
 ### Быстрый путь через `spritePro.cli`
 
@@ -296,6 +327,13 @@ python -m spritePro.cli --android .
 - подставляет базовые настройки для Android build
 - включает типичные расширения файлов из проекта: код, `assets/images`, `assets/audio`, `scenes`, JSON, шрифты и другие файлы по расширению
 - на Linux/WSL сразу запускает `buildozer android debug`
+
+После генерации `buildozer.spec` для `pygame`-игры на `SpritePro` обязательно проверьте и при необходимости замените `requirements` на проверенную конфигурацию:
+
+```ini
+requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
+android.archs = arm64-v8a
+```
 
 Если нужен только `buildozer.spec`, без запуска сборки:
 
@@ -325,15 +363,27 @@ python -m spritePro.cli --android . --android-mode aab
 
 ```bash
 python -m spritePro.cli --android . --android-title "My Game" --android-package-name mygame --android-package-domain com.example --android-orientation landscape
+python -m spritePro.cli --android . --android-orientation portrait
+python -m spritePro.cli --android . --android-orientation auto
 python -m spritePro.cli --android . --android-permission INTERNET
 ```
 
-Что генерируется по умолчанию:
+Ориентация APK:
+
+- `landscape` — режим по умолчанию
+- `portrait` — фиксированный portrait
+- `auto` — автоповорот устройства
+
+Для `auto` в итоговом Android-конфиге используется `orientation = all`.
+
+Что стоит проверить в `buildozer.spec` после генерации:
 
 - `requirements = python3,kivy,pygame,pymunk,spritepro`
+- для стабильной Android-сборки `pygame`-игры замените строку выше на `python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro`
 - `source.dir = .`
 - `source.include_exts` включает картинки, аудио, JSON, шрифты, `.kv`, `.atlas`
 - `source.exclude_dirs` убирает `.git`, `.venv`, `build`, `dist` и другие служебные папки
+- `android.archs = arm64-v8a` полезно задать явно
 
 Это удобно для проектов, созданных через `spritePro.cli --create`, потому что их структура уже соответствует ожидаемому шаблону:
 
@@ -382,7 +432,7 @@ s.run(
 Установка:
 
 ```bash
-pip install buildozer
+python3 -m pip install buildozer "cython==0.29.33"
 ```
 
 Инициализация:
@@ -398,9 +448,16 @@ title = My SpritePro Game
 package.name = myspriteprogame
 package.domain = org.example
 source.include_exts = py,png,jpg,jpeg,wav,mp3,json,ttf,atlas
-requirements = python3,kivy,pygame,spritepro
+requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
 orientation = landscape
 fullscreen = 1
+android.archs = arm64-v8a
+```
+
+Если нужен автоповорот, замените:
+
+```ini
+orientation = all
 ```
 
 Эта ручная схема нужна, если:
@@ -413,6 +470,7 @@ fullscreen = 1
 
 - либо используйте опубликованный пакет `spritepro`
 - либо собирайте/подключайте свою локальную версию отдельно и проверяйте это до финальной сборки
+- либо явно копируйте актуальную папку `spritePro/` в сам проект игры перед `buildozer android debug`, чтобы APK точно упаковал свежий код, а не старую зависимость из окружения
 
 Если игра использует сеть по Wi-Fi:
 
@@ -431,6 +489,47 @@ buildozer android debug
 ```bash
 buildozer android release
 ```
+
+### Проверенный сценарий для Windows + WSL
+
+Если вы собираете из Windows, самый надёжный flow такой:
+
+1. Установить `WSL2` и `Ubuntu`.
+1. Скопировать проект игры в Linux home, например в `~/MyGame`, а не собирать из `/mnt/c/...`.
+1. Если нужен локальный исходный `SpritePro`, тоже скопировать репозиторий в Linux home и установить его там.
+1. Сгенерировать `buildozer.spec` через `spritePro.cli` или вручную.
+1. Зафиксировать в `buildozer.spec`:
+
+```ini
+requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
+android.archs = arm64-v8a
+```
+
+1. Запустить `buildozer android debug`.
+
+Именно такой сценарий уже был проверен на реальной сборке `SpritePro`-игры в `apk`.
+
+Если игра собирается на локальных непубликованных фикcах `SpritePro`, добавьте ещё один шаг между копированием проекта и сборкой:
+
+1. Синхронизировать свежую папку `spritePro/` в каталог игры или убедиться, что Android build берёт именно ваш локальный пакет, а не старую версию из Python environment.
+
+### Проверка после установки APK
+
+Если APK установился, но игра не открывается как ожидается, сначала не пересобирайте вслепую, а снимите лог:
+
+```bash
+adb logcat -c
+adb shell monkey -p org.example.mygame -c android.intent.category.LAUNCHER 1
+adb logcat -d
+```
+
+Что искать в выводе:
+
+- `Traceback` — обычная Python-ошибка внутри игры или библиотеки
+- `Py_Exit` / `Process ... has died` — приложение закрылось слишком рано, часто ещё на bootstrap-этапе
+- путь к `main.py`, `spritePro/...` и тип ошибки (`AttributeError`, `TypeError`, `ImportError`) — это обычно уже даёт точное место фикса
+
+Если у приложения уже есть экран ошибки от SpritePro mobile-host, дополнительно проверьте файлы `debug.log` и `spritepro_mobile_crash.log` внутри sandbox приложения.
 
 ### Что важно для mobile
 

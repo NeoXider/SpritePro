@@ -3,11 +3,35 @@
 from __future__ import annotations
 
 import os
+import traceback
+from pathlib import Path
 from typing import Any, Callable, List, Mapping, Sequence
 
 import pygame
 
 import spritePro as s
+
+
+def _write_mobile_crash_log(text: str) -> None:
+    candidates = [
+        Path.cwd() / "debug.log",
+        Path.cwd() / "spritepro_mobile_crash.log",
+        Path.cwd() / "android_error.log",
+    ]
+    for path in candidates:
+        try:
+            path.write_text(text, encoding="utf-8")
+            break
+        except OSError:
+            continue
+
+
+def _format_mobile_exception(exc: BaseException) -> str:
+    return "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)).strip()
+
+
+def _is_android_runtime() -> bool:
+    return bool(os.environ.get("ANDROID_ARGUMENT") or os.environ.get("P4A_BOOTSTRAP"))
 
 
 def _require_kivy():
@@ -41,7 +65,11 @@ class KivySpriteProWidget:
                 **kwargs,
             ):
                 super().__init__(**kwargs)
-                pygame.init()
+                try:
+                    if not pygame.font.get_init():
+                        pygame.font.init()
+                except Exception:
+                    pass
                 self._bootstrap = bootstrap
                 self._bootstrapped = False
                 self._fps = fps
@@ -52,6 +80,7 @@ class KivySpriteProWidget:
                 self._active_touch_id: str | None = None
                 self._last_touch_pos: tuple[int, int] | None = None
                 self._bootstrap_wait_frames = 0
+                self._fatal_error: str | None = None
 
                 with self.canvas:
                     self._rect = Rectangle(pos=self.pos, size=self.size)
@@ -107,6 +136,47 @@ class KivySpriteProWidget:
                         },
                     )
                 )
+
+            def _present_surface(self) -> None:
+                if self._surface is None or self._texture is None:
+                    return
+                buffer = pygame.image.tostring(self._surface, "RGBA")
+                self._texture.blit_buffer(buffer, colorfmt="rgba", bufferfmt="ubyte")
+                self.canvas.ask_update()
+
+            def _set_fatal_error(self, exc: BaseException) -> None:
+                self._fatal_error = _format_mobile_exception(exc)
+                _write_mobile_crash_log(self._fatal_error)
+                print(self._fatal_error, flush=True)
+
+            def _draw_fatal_error(self) -> None:
+                if self._surface is None:
+                    return
+                self._surface.fill((12, 12, 18))
+                try:
+                    if not pygame.font.get_init():
+                        pygame.font.init()
+                    title_font = pygame.font.Font(None, 36)
+                    text_font = pygame.font.Font(None, 22)
+                except Exception:
+                    self._present_surface()
+                    return
+
+                y = 18
+                title = title_font.render("SpritePro mobile error", True, (255, 120, 120))
+                self._surface.blit(title, (18, y))
+                y += 42
+
+                hint = text_font.render("Logs saved to debug.log / spritepro_mobile_crash.log", True, (220, 220, 220))
+                self._surface.blit(hint, (18, y))
+                y += 32
+
+                for line in (self._fatal_error or "").splitlines()[:14]:
+                    rendered = text_font.render(line[:110], True, (235, 235, 235))
+                    self._surface.blit(rendered, (18, y))
+                    y += 22
+
+                self._present_surface()
 
             def on_touch_down(self, touch):
                 if not self.collide_point(*touch.pos):
@@ -166,22 +236,32 @@ class KivySpriteProWidget:
                     self._on_resize()
                 if self._surface is None or self._texture is None:
                     return
+                if self._fatal_error is not None:
+                    self._draw_fatal_error()
+                    return
                 if not self._bootstrapped:
                     if self._bootstrap_wait_frames > 0:
                         self._bootstrap_wait_frames -= 1
                         return
                     self._bootstrapped = True
                     if self._bootstrap is not None:
-                        self._bootstrap()
+                        try:
+                            self._bootstrap()
+                        except Exception as exc:
+                            self._set_fatal_error(exc)
+                            self._draw_fatal_error()
                     return
 
                 events = self._event_queue
                 self._event_queue = []
-                s.update_embedded(self._fps, self._fill_color, events)
+                try:
+                    s.update_embedded(self._fps, self._fill_color, events)
+                except Exception as exc:
+                    self._set_fatal_error(exc)
+                    self._draw_fatal_error()
+                    return
 
-                buffer = pygame.image.tostring(self._surface, "RGBA")
-                self._texture.blit_buffer(buffer, colorfmt="rgba", bufferfmt="ubyte")
-                self.canvas.ask_update()
+                self._present_surface()
 
         return _KivySpriteProWidget, App
 
@@ -231,19 +311,26 @@ def run_kivy_app(
     построит ваш Kivy-интерфейс вокруг встроенного игрового виджета.
     """
     _, App = KivySpriteProWidget.create_class()
-    if window_size is not None:
-        from kivy.core.window import Window
+    from kivy.core.window import Window
 
+    if _is_android_runtime():
+        try:
+            Window.fullscreen = "auto"
+        except Exception:
+            pass
+    elif window_size is not None:
         Window.size = tuple(int(v) for v in window_size)
 
     class _SpriteProMobileApp(App):
         def build(self):
             self.title = title
+            resolved_widget_kwargs = dict(widget_kwargs or {})
+            resolved_widget_kwargs.setdefault("size_hint", (1, 1))
             game_widget = create_kivy_widget(
                 bootstrap,
                 fps=fps,
                 fill_color=fill_color,
-                **dict(widget_kwargs or {}),
+                **resolved_widget_kwargs,
             )
             if root_builder is None:
                 return game_widget

@@ -252,9 +252,18 @@ s.run(scene=MainScene, platform="kivy")
 
 ```bash
 python -m spritePro.cli --preview main.py --platform kivy --screen phone-portrait
+python -m spritePro.cli --preview main.py --platform kivy --screen phone-tall
 python -m spritePro.cli --preview main.py --platform kivy --screen tablet-landscape
+python -m spritePro.cli --preview main.py --platform pygame --size 412x915
 python -m spritePro.cli --list-screen-presets
 ```
+
+Практически это нужно не только для mobile-layout, но и для обычной разработки на небольшом мониторе:
+
+- не обязательно открывать огромное окно или нативное `4K`, чтобы проверить mobile-сцену
+- удобнее тестировать через логические размеры окна вроде `360x640`, `412x915`, `640x360`, `1280x720`
+- на реальном телефоне fullscreen-игра может визуально выглядеть мельче, чем в маленьком desktop-окне, поэтому layout лучше сверять на нескольких профилях, а не на одном размере
+- если игра использует `s.WH` и `s.WH_C`, помните: при resize они обновляются, но уже созданные объекты не перестраиваются автоматически без вашего relayout-кода
 
 Быстрая Android/APK-сборка через CLI:
 
@@ -262,7 +271,33 @@ python -m spritePro.cli --list-screen-presets
 python -m spritePro.cli --android .
 python -m spritePro.cli --android . --android-mode release
 python -m spritePro.cli --android . --android-mode spec
+python -m spritePro.cli --android . --android-orientation portrait
+python -m spritePro.cli --android . --android-orientation auto
 ```
+
+По ориентации:
+
+- `landscape` — режим по умолчанию
+- `portrait` — принудительный портретный режим
+- `auto` — автоповорот устройства
+
+Для `pygame`-игр на Android используйте проверенную конфигурацию `Buildozer`:
+
+```ini
+requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
+android.archs = arm64-v8a
+```
+
+И собирать проект лучше внутри `WSL/Linux home`, а не из `/mnt/c/...`.
+
+Если вы проверяете не опубликованный `spritepro`, а локальные свежие правки библиотеки, не полагайтесь на старый пакет из окружения сборки:
+
+- либо сначала соберите/установите актуальную локальную версию `SpritePro`
+- либо явно включите папку `spritePro/` в проект игры перед Android build
+
+После первой установки APK удобно сразу проверить запуск через `adb logcat`, чтобы быстро поймать Python traceback, если приложение не доходит до игрового экрана.
+
+Полный рабочий flow: [docs/building.md](docs/building.md).
 
 ### Что уже работает
 

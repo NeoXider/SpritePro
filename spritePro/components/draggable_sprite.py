@@ -86,7 +86,7 @@ class DraggableSprite(Sprite):
         self._update_drag()
         velocity_backup = None
         if self.dragging:
-            velocity_backup = self.velocity.copy()
+            velocity_backup = Vector2(self.velocity.x, self.velocity.y)
             self.velocity.update(0, 0)
         super().update(screen)
         if velocity_backup is not None:
@@ -136,7 +136,8 @@ class DraggableSprite(Sprite):
     def _start_drag(self, mouse_world: Vector2) -> None:
         """Запускает режим перетаскивания и вызывает колбэк."""
         self.dragging = True
-        self.drag_origin = self.get_world_position().copy()
+        current_pos = self.get_world_position()
+        self.drag_origin = Vector2(current_pos.x, current_pos.y)
         self._drag_offset = self.get_world_position() - mouse_world
         self._call_drag_callback(
             self._on_drag_start,

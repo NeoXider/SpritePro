@@ -5,6 +5,17 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.2]
+
+### Changed
+- **Android/Kivy runtime** — инициализация `pygame` в mobile-host сделана безопаснее для `python-for-android`: на Android ранний import `SpritePro` больше не поднимает агрессивный `pygame.init()` / `pygame.mixer.init()` до запуска `Kivy` host.
+- **Совместимость с Android stack** — убраны места, где код опирался на `pygame.math.Vector2.copy()`, потому что в реально используемом Android-стеке с `pygame 2.1.0` этот метод может отсутствовать. Это исправляет падения при создании текста, tween-значений, camera offset и drag/update-сценариев.
+- **Аннотации импорта** — в `spritePro.__init__` включены postponed annotations, чтобы импорт библиотеки не падал на Python 3.10 внутри Android bootstrap.
+- **Документация по APK build** — README и Android-docs обновлены под реально проверенный flow: `WSL/Linux home`, стек `python3==3.10.12`, `hostpython3==3.10.12`, `kivy==2.3.0`, `pyjnius==1.5.0`, `pygame,pymunk,spritepro`, проверка запуска через `adb logcat`, а для непубликованных локальных фиксов — явное включение свежего `spritePro` в проект сборки.
+- **Версия библиотеки** — релиз обновлён до `3.0.2`.
+
+---
+
 ## [3.0.1]
 
 ### Added

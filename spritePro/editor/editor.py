@@ -603,7 +603,7 @@ class SpriteEditor:
                         self.deselect_all()
 
                 # Сохраняем позиции для перетаскивания
-                self.drag_start = self.mouse_world_pos.copy()
+                self.drag_start = Vector2(self.mouse_world_pos.x, self.mouse_world_pos.y)
                 self.camera_drag_start = Vector2(event.pos)  # Для pan
                 self._capture_drag_state()
                 self.mouse_dragging = True

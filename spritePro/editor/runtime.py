@@ -146,6 +146,27 @@ class RuntimeScene:
             )
         self.source.save(str(target_path))
 
+    def dispose(self) -> None:
+        """Удаляет заспавненные спрайты и связанные физические тела."""
+        world = self.physics_world
+        for spawned_obj in self.spawned:
+            sprite = spawned_obj.sprite
+            for body in list(getattr(sprite, "_physics_bodies", []) or []):
+                if world is None:
+                    continue
+                try:
+                    world.remove(body)
+                except Exception:
+                    pass
+            try:
+                sprite.kill()
+            except Exception:
+                pass
+
+        self.spawned.clear()
+        self.by_id.clear()
+        self.by_name.clear()
+
 
 def _sprite_size_from_transform(image_path: Path, obj: SceneObject) -> tuple[int, int]:
     image = pygame.image.load(str(image_path)).convert_alpha()

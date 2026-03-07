@@ -114,7 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--android-orientation",
         choices=ANDROID_ORIENTATIONS,
         default=None,
-        help="Orientation for generated buildozer.spec",
+        help="Orientation for generated buildozer.spec: landscape (default), portrait, auto",
     )
     parser.add_argument(
         "--android-requirements",

@@ -95,6 +95,7 @@
 - desktop packaging
 - web build через `pygbag`
 - Android build через `Kivy + Buildozer`
+- проверенная конфигурация для `pygame` Android build: `Python 3.10.12` + `hostpython3 3.10.12` + `kivy 2.3.0` + `pyjnius 1.5.0`
 
 ## 📚 Документация компонентов
 
@@ -426,6 +427,8 @@
 ## 🔄 Обновления документации
 
 ### Последние обновления
+- **2026-03 (v3.0.2)**: Android/APK-документация уточнена по реально проверенному запуску после сборки: добавлены рекомендации по `adb logcat`, проверке ранних Python traceback и по явному включению свежего локального `spritePro` в проект игры, если тестируются непубликованные фиксы. Обновлены [README.md](README.md), [docs/building.md](docs/building.md), [docs/mobile.md](docs/mobile.md), [docs/kivy_hybrid.md](docs/kivy_hybrid.md).
+- **2026-03 (v3.0.1)**: Документация по Android-сборке обновлена под реально проверенный flow для `SpritePro` + `pygame`: `WSL/Linux home`, `python3==3.10.12`, `hostpython3==3.10.12`, `kivy==2.3.0`, `pyjnius==1.5.0`, `android.archs = arm64-v8a`. Обновлены [README.md](README.md), [docs/building.md](docs/building.md), [docs/mobile.md](docs/mobile.md), [docs/kivy_hybrid.md](docs/kivy_hybrid.md).
 - **2025-02 (v2.1.0)**: Физика: подсказки и докстринги для `s.physics`; авто-добавление тел в мир (`auto_add=True` у add_physics/add_static_physics/add_kinematic_physics); при загрузке сцены через spawn_scene типы физики из редактора применяются к глобальному миру. Builder: `s.sprite(...).build()` возвращает типизированный Sprite. Демо переведены на `import spritePro as s`. Документация: [physics.md](docs/physics.md) (auto_add, редактор), [builder.md](docs/builder.md) (s., тип build()), [sprite_editor.md](docs/sprite_editor.md) (физика из сцены), OVERVIEW, CHANGELOG.
 - **2026-02 (v2.0.8)**: Лобби мультиплеера: убрана кнопка «Готов»; у хоста кнопки «Назад» и «В игру», у клиента «Назад». «Назад» отключает соединение и возвращает к настройке. Исправлена запись лога хоста при входе в игру из лобби (`debug_host.log` / `debug_client.log`). Документация [networking.md](docs/networking.md) обновлена.
 - **2026-02**: Физика: глобальный мир `s.physics` (один мир с игрой), `set_gravity`, `add_constraint`; демо physics_demo, hoop_bounce_demo переведены на него. Ping Pong: мяч на физике, направление от ракетки (offset), подача с минимальной вертикалью. Hoop Bounce: одно кольцо (без двойного контура). Документация [physics.md](docs/physics.md) — раздел «Глобальный мир физики», примеры без создания мира.

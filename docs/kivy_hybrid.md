@@ -301,6 +301,18 @@ buildozer init
 buildozer android debug
 ```
 
+После `buildozer init` для `SpritePro`/`pygame` hybrid-приложения сразу проверьте `buildozer.spec` и выставьте проверенную конфигурацию:
+
+```ini
+requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
+android.archs = arm64-v8a
+```
+
+Если hybrid-приложение использует локальные непубликованные фиксы `SpritePro`, проследите, чтобы в APK попал именно свежий код библиотеки:
+
+- либо упаковывайте уже обновлённый локальный пакет
+- либо явно синхронизируйте папку `spritePro/` в проект игры перед Android build
+
 Если hybrid-приложение использует сеть, не забудьте добавить:
 
 ```ini
@@ -313,6 +325,8 @@ android.permissions = INTERNET
 - что `game_widget` получает ожидаемый размер
 - что `s.WH` и `s.WH_C` внутри игровой области совпадают с ожиданиями
 - что внешние `Kivy`-кнопки и внутриигровой touch не конфликтуют
+
+Если после установки APK hybrid-приложение доходит только до splash screen или экрана ошибки, снимите `adb logcat` сразу после запуска. Для hybrid-режима это особенно полезно, потому что проблема может быть не в `Kivy` layout, а в обычном Python traceback внутри SpritePro runtime.
 
 Подробный общий гайд по Android-сборке: [building.md](building.md)
 
