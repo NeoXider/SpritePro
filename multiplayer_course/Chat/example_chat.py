@@ -34,4 +34,4 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
 
 
 if __name__ == "__main__":
-    s.networking.run(clients=3)
+    s.run(multiplayer=True, multiplayer_entry=multiplayer_main, multiplayer_clients=3)

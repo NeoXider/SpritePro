@@ -1,8 +1,8 @@
 # Курс по мультиплееру на SpritePro
 
 Этот курс ведет от базового сетевого обмена до небольшой мультиплеерной мини‑игры с меню и результатами.
-Он обновлён под `SpritePro 3.x`: рекомендованный запуск игры теперь идёт через `s.run(...)`,
-а `s.networking.run()` используется как удобная точка входа для мультиплеерного bootstrap.
+Он обновлён под актуальный `SpritePro 3.x`: теперь рекомендованный запуск мультиплеерной игры идёт через
+`s.run(..., multiplayer=True)`, а `s.networking.run()` оставлен как low-level runner и учебный bootstrap.
 
 ## Как проходить курс
 1. Идите по порядку папок `1` → `10`.
@@ -16,7 +16,7 @@
 В курсе есть два уровня:
 
 - **Low-level уроки** — показывают сетевые примитивы, обмен сообщениями, `ctx.send()`, `ctx.poll()`, роутинг, roster и базовую синхронизацию.
-- **App-level уроки** — показывают, как собирать из этого полноценную игру через `Scene`, `s.run(...)` и `s.networking.run(...)`.
+- **App-level уроки** — показывают, как собирать из этого полноценную игру через `Scene` и единый вход `s.run(...)`, в том числе `s.run(..., multiplayer=True)`.
 
 Это важно: ручной цикл `while True: s.update(...)` в SpritePro всё ещё рабочий, но для полноценных игровых примеров и scene-based структуры теперь рекомендован `s.run(...)`.
 
@@ -33,7 +33,7 @@
 
 ## Как запускать примеры
 
-Для уроков с мультиплеером используйте встроенный запуск `s.networking.run()`:
+Для уроков с мультиплеером теперь используйте единый запуск `s.run(..., multiplayer=True)`:
 
 ```bash
 python multiplayer_course/2/example_sync_positions.py
@@ -50,24 +50,18 @@ python multiplayer_course/2/example_sync_positions.py --net_debug
 Также в уроках показано, когда удобнее использовать `EventBus` для игровых событий,
 а когда лучше отправлять частые сообщения напрямую через `net.send()`/`send_every()`.
 
-Для современных scene-based примеров внутри `multiplayer_main(net, role)` обычно используется такая схема:
+В курсе сохранена учебная функция `multiplayer_main(net, role)`, но сама точка входа теперь уже такая:
 
 ```python
-def multiplayer_main(net: s.NetClient, role: str) -> None:
-    s.multiplayer.init_context(net, role)
-
-    def setup():
-        s.scene.add_scene("menu", MenuScene)
-        s.scene.add_scene("game", GameScene)
-        s.scene.set_scene_by_name("menu")
-
-    s.run(setup=setup, size=(800, 600), title="My Multiplayer Game")
+if __name__ == "__main__":
+    s.run(multiplayer=True, multiplayer_entry=multiplayer_main)
 ```
 
 То есть:
 
-- `s.networking.run(...)` отвечает за запуск хоста/клиентов и передачу `net, role`
-- `s.run(...)` отвечает за сам игровой цикл и scene-based приложение
+- `s.run(..., multiplayer=True)` отвечает и за app-level запуск, и за multiplayer bootstrap
+- `multiplayer_main(net, role)` остаётся удобной учебной entry-функцией
+- `s.networking.run(...)` можно использовать отдельно, если нужен низкоуровневый ручной runner
 
 ## Структура курса по темам
 1. Базовый обмен сообщениями и очередь.
@@ -96,7 +90,7 @@ python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py --q
 Для разработки удобен quick-режим. Для реального UX в своей игре посмотри также встроенное лобби из `docs/networking.md`:
 
 ```python
-s.networking.run(use_lobby=True)
+s.run(multiplayer=True, multiplayer_entry=multiplayer_main, multiplayer_use_lobby=True)
 ```
 
 ## Дополнительно

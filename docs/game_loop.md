@@ -8,7 +8,23 @@
 python -m spritePro.cli --create MyGame
 ```
 
-Шаблон создаёт `main.py`, `scenes/main_scene.py`, `scenes/second_scene.py` и `scenes/main_level.json`.
+Шаблон создаёт:
+
+- `main.py`
+- `config.py`
+- `game_events.py`
+- `game/domain/game_state.py`
+- `game/services/game_service.py`
+- `scenes/main_scene.py`
+- `scenes/second_scene.py`
+- `scenes/main_level.json`
+
+В шаблоне уже есть:
+
+- две сцены: основная и почти пустая вторая сцена-заготовка
+- готовые пути к проекту, сценам, domain и services в `config.py`
+- базовый `EventBus`-файл с событием старта игры и логом через `s.debug_log_info(...)`
+- разделение структуры: `scenes/` для сцен, `game/domain/` для моделей, `game/services/` для игровой логики
 
 ```python
 import spritePro as s

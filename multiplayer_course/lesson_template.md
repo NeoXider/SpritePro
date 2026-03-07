@@ -25,9 +25,10 @@
 1. ...
 
 ## Рекомендуемый запуск в `SpritePro 3.x`
-- `s.networking.run(...)` — поднимает хост/клиентов и вызывает `multiplayer_main(net, role)`.
-- `s.run(...)` — запускает уже саму игру/сцены без ручного `while True`.
-- Если урок про кастомное лобби, отдельно поясните разницу между low-level решением и встроенным `s.networking.run(use_lobby=True)`.
+- `s.run(..., multiplayer=True)` — основной app-level вход для современных multiplayer-примеров.
+- `multiplayer_main(net, role)` можно оставлять как учебную entry-функцию и передавать через `multiplayer_entry=...`.
+- `s.networking.run(...)` — низкоуровневый runner, если урок специально объясняет transport/bootstrap отдельно.
+- Если урок про кастомное лобби, отдельно поясните разницу между low-level решением и встроенным `s.run(..., multiplayer_use_lobby=True)`.
 
 ## Вопросы для самопроверки
 - ...

@@ -87,7 +87,7 @@ TCP + JSON‑сообщения формата `{"event": "...", "data": {...}}`
 
 - **NetServer** — TCP relay (пересылает сообщения всем клиентам)
 - **NetClient** — клиент с `send()` и `poll()`
-- **s.networking.run()** — единая точка входа с разными режимами
+- **s.run(..., multiplayer=True)** — рекомендуемая единая точка входа для современных multiplayer-игр; `s.networking.run()` оставлен как low-level runner
 
 ### Режимы запуска
 

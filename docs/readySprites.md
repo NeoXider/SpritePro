@@ -22,7 +22,7 @@ Ready Sprites are pre-configured sprite classes that solve common game developme
 
 ```python
 # Через run() — одно окно с лобби, затем ваша игра
-s.networking.run(use_lobby=True)
+s.run(multiplayer=True, multiplayer_entry=your_multiplayer_main, multiplayer_use_lobby=True)
 ```
 
 ```python

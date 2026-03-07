@@ -76,5 +76,5 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
 
 
 if __name__ == "__main__":
-    # Запуск решения.
-    s.networking.run()
+    # Запуск решения через единый app-level API.
+    s.run(multiplayer=True, multiplayer_entry=multiplayer_main)

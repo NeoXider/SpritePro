@@ -58,4 +58,10 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
 
 if __name__ == "__main__":
     # clients=3 => host + client_1 через 3 сек + client_2 через 6 сек.
-    s.networking.run(clients=3, client_spawn_delay=3, net_debug=True)
+    s.run(
+        multiplayer=True,
+        multiplayer_entry=multiplayer_main,
+        multiplayer_clients=3,
+        multiplayer_client_spawn_delay=3,
+        multiplayer_net_debug=True,
+    )

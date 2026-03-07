@@ -25,7 +25,7 @@ python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py --q
 Если в своей игре нужен пользовательский вход без quick-режима, можно строить поверх встроенного лобби:
 
 ```python
-s.networking.run(use_lobby=True)
+s.run(multiplayer=True, multiplayer_entry=multiplayer_main, multiplayer_use_lobby=True)
 ```
 
 ## Управление

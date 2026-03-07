@@ -19,9 +19,16 @@
 - Клиентов можно запускать на разных ПК (укажите IP сервера).
 
 Из кода:
+    import sys
     import spritePro as s
-    s.networking.run()              # по умолчанию — два окна (разработка)
-    s.networking.run(use_lobby=True)  # одно окно с лобби (хост/клиент, IP, порт), затем игра
+
+    s.run(multiplayer=True, multiplayer_entry=main)
+    s.run(
+        multiplayer=True,
+        multiplayer_entry=main,
+        multiplayer_use_lobby=True,
+        multiplayer_argv=[arg for arg in sys.argv[1:] if arg != "--lobby"],
+    )
 """
 
 import sys
@@ -99,7 +106,11 @@ def main(net: s.NetClient, role: str) -> None:
 
 
 if __name__ == "__main__":
-    # if "--lobby" in sys.argv:
-    #    s.networking.run(use_lobby=True)
-    # else:
-    s.networking.run()
+    lobby_enabled = "--lobby" in sys.argv
+    filtered_argv = [arg for arg in sys.argv[1:] if arg != "--lobby"]
+    s.run(
+        multiplayer=True,
+        multiplayer_entry=main,
+        multiplayer_argv=filtered_argv,
+        multiplayer_use_lobby=lobby_enabled,
+    )

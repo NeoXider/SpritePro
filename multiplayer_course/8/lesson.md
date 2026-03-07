@@ -19,7 +19,7 @@
 
 Начиная с этого этапа, итоговая структура уже должна выглядеть как обычный проект на `SpritePro 3.x`:
 
-- `s.networking.run(...)` — только точка входа в мультиплеер и dev/bootstrap
+- `s.run(..., multiplayer=True)` — основной app-level вход, включая multiplayer bootstrap
 - `s.run(...)` — основной игровой цикл
 - `Scene` и `SceneManager` — структура меню, матча и результата
 

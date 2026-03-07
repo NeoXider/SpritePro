@@ -19,8 +19,8 @@
 
 В этом уроке уже полноценная mini-game, поэтому правильная обвязка теперь такая:
 
-- `s.networking.run(...)` поднимает хост/клиента
-- `multiplayer_main(net, role)` инициализирует `MultiplayerContext`
+- `s.run(..., multiplayer=True)` поднимает multiplayer bootstrap и остаётся верхнеуровневым входом
+- `multiplayer_main(net, role)` инициализирует `MultiplayerContext`, если вы оставляете учебную entry-функцию
 - сцены регистрируются в `setup()`
 - сама игра стартует через `s.run(setup=setup, ...)`
 

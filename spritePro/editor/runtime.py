@@ -12,6 +12,7 @@ import spritePro as s
 from .scene import Scene, SceneObject
 from . import sprite_types as st
 from .path_utils import normalize_sprite_path, resolve_sprite_path
+from ..resources import resource_cache
 
 if TYPE_CHECKING:
     from spritePro.physics import PhysicsWorld
@@ -169,7 +170,9 @@ class RuntimeScene:
 
 
 def _sprite_size_from_transform(image_path: Path, obj: SceneObject) -> tuple[int, int]:
-    image = pygame.image.load(str(image_path)).convert_alpha()
+    image = resource_cache.load_texture(str(image_path))
+    if image is None:
+        raise FileNotFoundError(f"Sprite image not found: {image_path}")
     w, h = image.get_size()
     return (
         max(1, int(w * obj.transform.scale_x)),

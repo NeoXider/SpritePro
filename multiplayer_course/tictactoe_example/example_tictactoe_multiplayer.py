@@ -403,4 +403,4 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
 
 
 if __name__ == "__main__":
-    s.networking.run(entry="multiplayer_main")
+    s.run(multiplayer=True, multiplayer_entry=multiplayer_main)

@@ -5,6 +5,22 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1]
+
+### Added
+- **Project template paths** — `spritePro.cli --create` теперь создаёт `config.py` с готовыми путями `PROJECT_ROOT`, `ASSETS_DIR`, `AUDIO_DIR`, `IMAGES_DIR`, `SCENES_DIR` и `MAIN_LEVEL_PATH`, чтобы в новых проектах не нужно было каждый раз вручную собирать `Path(__file__).resolve()...`.
+- **Project template events file** — в шаблон добавлен `game_events.py` с базовым событием `game_started`, подпиской через `s.events.connect(...)`, отправкой через `s.events.get_event(...).send(...)` и логом через `s.debug_log_info(...)`.
+
+### Changed
+- **Project template structure** — шаблон `--create` по умолчанию создаёт `main.py`, `config.py`, `game_events.py`, `scenes/main_scene.py`, `scenes/second_scene.py` и `scenes/main_level.json`. Вторая сцена остаётся почти пустой заготовкой для меню, паузы, магазина или другого уровня.
+- **Multiplayer entrypoint** — рекомендации, demoGames и `multiplayer_course` обновлены под единый app-level запуск через `s.run(..., multiplayer=True)`, а `s.networking.run(...)` оставлен как low-level runner.
+- **Версия библиотеки** — релиз обновлён до `3.1.1`.
+
+### Fixed
+- **Editor runtime image sizing** — runtime-сцены, созданные в редакторе, снова корректно подхватывают размер image-объектов в embedded/Kivy-сценариях вместо fallback-белого прямоугольника.
+
+---
+
 ## [3.1.0]
 
 ### Added

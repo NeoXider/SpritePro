@@ -19,7 +19,7 @@
 В реальной игре на `SpritePro 3.x` сначала посмотрите встроенный вариант:
 
 ```python
-s.networking.run(use_lobby=True)
+s.run(multiplayer=True, multiplayer_entry=multiplayer_main, multiplayer_use_lobby=True)
 ```
 
 То есть этот урок нужен не потому, что встроенного решения нет, а потому что полезно понимать, как устроить свой кастомный roster/state flow.
@@ -40,7 +40,7 @@ s.networking.run(use_lobby=True)
    - `client_2` появляется через 6 сек.
 1. Убедитесь, что список игроков (`roster`) одинаков во всех окнах.
 1. Посмотрите, как хост формирует `roster` и рассылает его остальным.
-1. Для транспортных сетевых логов (`send/recv`) включите `net_debug=True` в `s.networking.run(...)` и смотрите файлы `spritepro_logs/debug_net_host.log`, `debug_net_client_0.log`, `debug_net_client_1.log`.
+1. Для транспортных сетевых логов (`send/recv`) включите `multiplayer_net_debug=True` в `s.run(..., multiplayer=True)` или `net_debug=True` в low-level `s.networking.run(...)` и смотрите файлы `spritepro_logs/debug_net_host.log`, `debug_net_client_0.log`, `debug_net_client_1.log`.
 1. `init_context(..., debug=True)` включает логи контекста в stdout, а не transport-логи в `debug_net_*.log`.
 
 ## Современный контекст для `SpritePro 3.x`

@@ -17,11 +17,13 @@ Kivy/mobile:
    python -m spritePro.demoGames.three_clients_move_demo --kivy
    python -m spritePro.demoGames.three_clients_move_demo --kivy --host 192.168.1.10 --port 5050
 
-При прямом запуске файла demo по умолчанию стартует в `kivy` и в quick-режиме
-на 3 окна (host + 2 клиента). Для desktop-режима используйте `--pygame`.
+При прямом запуске demo использует единый `s.run(..., multiplayer=True)`:
+- по умолчанию стартует quick-режим на 3 окна (host + 2 клиента)
+- `--pygame` / `--kivy` переключают runtime
+- `--server`, `--host_mode`, `--quick`, `--host`, `--port`, `--clients`
+  продолжают работать как terminal-аргументы multiplayer runner
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -40,8 +42,6 @@ PALETTE = [
     (70, 220, 120),  # id 2
     (220, 180, 70),  # id 3+
 ]
-
-PLATFORM_ENV_KEY = "SPRITEPRO_PLATFORM"
 
 
 def _color_for_id(client_id: int) -> tuple[int, int, int]:
@@ -140,43 +140,18 @@ class ThreeClientsMoveScene(s.Scene):
             label.set_position((spr_pos.x, spr_pos.y - 40))
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
+def main(default_platform: str = "kivy") -> None:
     s.run(
-        scene=lambda: ThreeClientsMoveScene(net, role),
+        scene=ThreeClientsMoveScene,
         size=(900, 600),
         title="Three Clients Move Demo",
         fps=60,
         fill_color=(20, 20, 30),
-        platform=os.environ.get(PLATFORM_ENV_KEY, "pygame"),
-    )
-
-
-def _extract_platform(
-    argv: list[str], default_platform: str | None = None
-) -> tuple[str, list[str]]:
-    filtered: list[str] = []
-    platform = (
-        default_platform or os.environ.get(PLATFORM_ENV_KEY, "pygame")
-    ).strip().lower() or "pygame"
-    for arg in argv:
-        if arg == "--kivy":
-            platform = "kivy"
-            continue
-        if arg == "--pygame":
-            platform = "pygame"
-            continue
-        filtered.append(arg)
-    return platform, filtered
-
-
-def main(default_platform: str = "kivy") -> None:
-    platform, filtered_argv = _extract_platform(sys.argv[1:], default_platform=default_platform)
-    os.environ[PLATFORM_ENV_KEY] = platform
-
-    s.networking.run(
-        argv=filtered_argv,
-        clients=3,
-        client_spawn_delay=2,
+        platform=default_platform,
+        multiplayer=True,
+        multiplayer_argv=sys.argv[1:],
+        multiplayer_clients=3,
+        multiplayer_client_spawn_delay=2,
     )
 
 

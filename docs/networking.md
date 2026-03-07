@@ -42,7 +42,58 @@ TCP‑клиент, который отправляет сообщения и п
 - `poll(max_messages=100)` — забирает входящие сообщения.
 - `close()` — закрывает соединение.
 
-### s.networking.run(...)
+### Рекомендуемый запуск: `s.run(..., multiplayer=True)`
+
+Для новых игр удобнее использовать один вход через `s.run(...)`, а multiplayer
+включать флагом `multiplayer=True`.
+
+```python
+import spritePro as s
+
+
+class MultiplayerScene(s.Scene):
+    def __init__(self, net: s.NetClient, role: str):
+        super().__init__()
+        s.multiplayer.init_context(net, role)
+        self.ctx = s.multiplayer_ctx
+        self.me = s.Sprite("", (40, 40), (200, 300), scene=self)
+        self.me.set_color((220, 70, 70) if self.ctx.is_host else (70, 120, 220))
+
+    def update(self, dt):
+        pos = self.me.get_world_position()
+        self.ctx.send_every("pos", {"pos": list(pos)}, 1.0 / 60.0)
+
+
+if __name__ == "__main__":
+    s.run(
+        scene=MultiplayerScene,
+        size=(800, 600),
+        title="My Multiplayer",
+        fps=60,
+        fill_color=(20, 20, 25),
+        multiplayer=True,
+    )
+```
+
+Что это даёт:
+
+- один и тот же `s.run(...)` для singleplayer и multiplayer
+- `scene` и `setup` могут принимать `net` и `role`, если они нужны
+- те же terminal-аргументы `--quick`, `--server`, `--host_mode`, `--host`, `--port`, `--clients` работают без отдельного вызова `s.networking.run(...)`
+- `--kivy` и `--pygame` тоже можно передавать в тот же запуск
+
+Если нужен quick-режим на 3 окна прямо из кода:
+
+```python
+s.run(
+    scene=MultiplayerScene,
+    multiplayer=True,
+    multiplayer_clients=3,
+    multiplayer_client_spawn_delay=2,
+)
+```
+
+### Низкоуровневый запуск: `s.networking.run(...)`
 
 Утилита запуска для быстрого мультиплеера с автозапуском клиента/серверов.
 
@@ -60,7 +111,7 @@ s.networking.run(
 ```
 
 - **По умолчанию** (`use_lobby=False`): без аргументов запускается быстрый режим (два окна — хост и клиент). Удобно для разработки.
-- **С лобби** (`use_lobby=True`): одно окно. Сначала экран настройки: имя, выбор «Хост» / «Клиент», порт (и для клиента — IP). После подключения — список игроков (roster). У хоста: кнопки «Назад» и «В игру»; у клиента: кнопка «Назад». «Назад» отключает соединение и возвращает к настройке. По нажатию «В игру» вызывается ваша `multiplayer_main(net, role)`. Для готового приложения достаточно заменить вызов на `s.networking.run(use_lobby=True)`.
+- **С лобби** (`use_lobby=True`): одно окно. Сначала экран настройки: имя, выбор «Хост» / «Клиент», порт (и для клиента — IP). После подключения — список игроков (roster). У хоста: кнопки «Назад» и «В игру»; у клиента: кнопка «Назад». «Назад» отключает соединение и возвращает к настройке. По нажатию «В игру» вызывается ваша `multiplayer_main(net, role)`. Для нового кода удобнее использовать `s.run(..., multiplayer=True, multiplayer_use_lobby=True)`, а `s.networking.run(use_lobby=True)` оставить как low-level вариант.
 
 Важно: `run()` нужно вызывать из файла, а не из REPL.
 
@@ -152,9 +203,9 @@ while True:
     other.set_position(remote_pos)
 ```
 
-## Интеграция через s.networking.run()
+## Интеграция через `s.networking.run()`
 
-Создайте функцию входа и вызовите `run()`:
+Если нужен старый или более явный low-level flow, можно оставить отдельную entry-функцию:
 
 ```python
 import pygame
@@ -201,7 +252,11 @@ s.networking.run(entry="module:function")
 
 ```python
 if __name__ == "__main__":
-    s.networking.run(use_lobby=True)
+    s.run(
+        multiplayer=True,
+        multiplayer_entry=multiplayer_main,
+        multiplayer_use_lobby=True,
+    )
 ```
 
 Либо запустите демо с флагом:
@@ -241,7 +296,7 @@ s.get_screen((480, 540), "Лобби")
 run_multiplayer_lobby(lambda net, role: your_multiplayer_main(net, role))
 ```
 
-Если сама игра уже переведена на `s.run(...)`, обычно проще оставить это внутри `your_multiplayer_main(net, role)` и считать `run_multiplayer_lobby(...)` только экраном подключения.
+Если игра уже запускается через `s.run(...)`, то для нового кода обычно удобнее перейти на `s.run(..., multiplayer=True)` и использовать `s.networking.run(...)` только как низкоуровневый runner.
 
 - **Константа события:** `from spritePro.readyScenes import EVENT_START_GAME` — имя события `"start_game"` для согласования с своей логикой.
 
@@ -361,7 +416,7 @@ def multiplayer_main(net: s.NetClient, role: str):
     # ctx.send("ready", {...})
     # for msg in ctx.poll(): ...
 
-s.networking.run()
+s.run(multiplayer=True, multiplayer_entry=multiplayer_main)
 ```
 
 ### Кто такой «этот процесс» (наш компьютер)

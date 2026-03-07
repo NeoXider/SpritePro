@@ -9,12 +9,14 @@ MAIN_TEMPLATE = dedent(
     import spritePro as s
 
     import config
+    import game_events
     from scenes.main_scene import MainScene
     from scenes.second_scene import SecondScene
 
 
     def main():
         def setup():
+            game_events.register_event_handlers()
             s.scene.add_scene(config.MAIN_SCENE_NAME, MainScene)
             s.scene.add_scene(config.SECOND_SCENE_NAME, SecondScene)
             s.scene.set_scene_by_name(config.START_SCENE_NAME)
@@ -22,6 +24,7 @@ MAIN_TEMPLATE = dedent(
         s.run(
             setup=setup,
             size=config.WINDOW_SIZE,
+            reference_size=config.REFERENCE_SIZE,
             title=config.TITLE,
             fps=config.FPS,
             fill_color=config.FILL_COLOR,
@@ -36,20 +39,22 @@ MAIN_TEMPLATE = dedent(
 MAIN_SCENE_TEMPLATE = dedent(
     """\
     import pygame
-    from pathlib import Path
 
     import spritePro as s
     from spritePro.editor.runtime import spawn_scene
+    from game.services.game_service import GameService
 
     import config
+    import game_events
 
-    SCENE_JSON = Path(__file__).resolve().parent / "main_level.json"
+    SCENE_JSON = config.MAIN_LEVEL_PATH
     PLAYER_NAME = "player"
 
 
     class MainScene(s.Scene):
         def __init__(self):
             super().__init__()
+            self.game_service = GameService()
             self.runtime_scene = None
             self.player = None
             self._status = "Loaded editor scene"
@@ -63,7 +68,7 @@ MAIN_SCENE_TEMPLATE = dedent(
                 scene=self,
             )
             self.hint = s.TextSprite(
-                "WASD: move | Enter: next scene | R: restart",
+                "WASD: move | Space: score | Enter: next scene | R: restart",
                 20,
                 (200, 200, 210),
                 (20, 56),
@@ -100,7 +105,7 @@ MAIN_SCENE_TEMPLATE = dedent(
             s.set_camera_follow(self.player)
 
         def on_enter(self, context):
-            pass
+            game_events.emit_game_started(self.name or config.MAIN_SCENE_NAME)
 
         def on_exit(self):
             pass
@@ -108,6 +113,9 @@ MAIN_SCENE_TEMPLATE = dedent(
         def update(self, dt):
             if self.player is not None:
                 self.player.handle_keyboard_input()
+            if s.input.was_pressed(pygame.K_SPACE):
+                self.game_service.add_score(1)
+                self.status.set_text(f"Score: {self.game_service.state.score}")
             if s.input.was_pressed(pygame.K_RETURN) or s.input.was_pressed(pygame.K_KP_ENTER):
                 s.scene.set_scene_by_name(config.SECOND_SCENE_NAME)
                 return
@@ -177,15 +185,98 @@ SECOND_SCENE_TEMPLATE = dedent(
 
 CONFIG_TEMPLATE = dedent(
     """\
+    from pathlib import Path
+
     WINDOW_SIZE = (800, 600)
     TITLE = "My SpritePro Game"
     FILL_COLOR = (20, 20, 30)
     FPS = 60
     PLAYER_SPEED = 5
+    REFERENCE_SIZE = None
 
     MAIN_SCENE_NAME = "main"
     SECOND_SCENE_NAME = "second"
     START_SCENE_NAME = MAIN_SCENE_NAME
+
+    PROJECT_ROOT = Path(__file__).resolve().parent
+    ASSETS_DIR = PROJECT_ROOT / "assets"
+    AUDIO_DIR = ASSETS_DIR / "audio"
+    IMAGES_DIR = ASSETS_DIR / "images"
+    SCENES_DIR = PROJECT_ROOT / "scenes"
+    GAME_DIR = PROJECT_ROOT / "game"
+    DOMAIN_DIR = GAME_DIR / "domain"
+    SERVICES_DIR = GAME_DIR / "services"
+    MAIN_LEVEL_PATH = SCENES_DIR / "main_level.json"
+    """
+)
+
+EVENTS_TEMPLATE = dedent(
+    """\
+    import spritePro as s
+
+    class GameEvents:
+        GAME_STARTED = s.events.get_event("game_started")
+
+
+    def _on_game_started(scene_name: str | None = None) -> None:
+        suffix = f" | scene={scene_name}" if scene_name else ""
+        s.debug_log_info(f"[event] game_started{suffix}")
+
+
+    def register_event_handlers() -> None:
+        GameEvents.GAME_STARTED.disconnect(_on_game_started)
+        GameEvents.GAME_STARTED.connect(_on_game_started)
+
+
+    def emit_game_started(scene_name: str | None = None) -> None:
+        GameEvents.GAME_STARTED.send(scene_name=scene_name)
+    """
+)
+
+GAME_INIT_TEMPLATE = dedent(
+    """\
+    \"\"\"Игровая логика проекта: domain, services и вспомогательные модули.\"\"\"
+    """
+)
+
+DOMAIN_INIT_TEMPLATE = dedent(
+    """\
+    \"\"\"Domain-модели проекта.\"\"\"
+    """
+)
+
+SERVICES_INIT_TEMPLATE = dedent(
+    """\
+    \"\"\"Сервисы и orchestration-логика проекта.\"\"\"
+    """
+)
+
+GAME_STATE_TEMPLATE = dedent(
+    """\
+    from dataclasses import dataclass
+
+
+    @dataclass
+    class GameState:
+        score: int = 0
+    """
+)
+
+GAME_SERVICE_TEMPLATE = dedent(
+    """\
+    from game.domain.game_state import GameState
+
+
+    class GameService:
+        def __init__(self) -> None:
+            self.state = GameState()
+
+        def add_score(self, amount: int = 1) -> int:
+            self.state.score += int(amount)
+            return self.state.score
+
+        def reset(self) -> None:
+            self.state.score = 0
     """
 )
 
@@ -244,8 +335,17 @@ def project_root_from_target(target: Path) -> tuple[Path, Path]:
 def create_project(target: Path) -> Path:
     project_root, main_file = project_root_from_target(target)
     config_file = project_root / "config.py"
+    events_file = project_root / "game_events.py"
     scenes_root = project_root / "scenes"
+    game_root = project_root / "game"
+    domain_root = game_root / "domain"
+    services_root = game_root / "services"
     scenes_init = scenes_root / "__init__.py"
+    game_init = game_root / "__init__.py"
+    domain_init = domain_root / "__init__.py"
+    services_init = services_root / "__init__.py"
+    game_state_file = domain_root / "game_state.py"
+    game_service_file = services_root / "game_service.py"
     main_scene_file = scenes_root / "main_scene.py"
     second_scene_file = scenes_root / "second_scene.py"
     level_file = scenes_root / "main_level.json"
@@ -256,13 +356,27 @@ def create_project(target: Path) -> Path:
     (assets_root / "audio").mkdir(exist_ok=True)
     (assets_root / "images").mkdir(exist_ok=True)
     scenes_root.mkdir(exist_ok=True)
+    domain_root.mkdir(parents=True, exist_ok=True)
+    services_root.mkdir(parents=True, exist_ok=True)
 
     if not main_file.exists():
         main_file.write_text(MAIN_TEMPLATE, encoding="utf-8")
     if not config_file.exists():
         config_file.write_text(CONFIG_TEMPLATE, encoding="utf-8")
+    if not events_file.exists():
+        events_file.write_text(EVENTS_TEMPLATE, encoding="utf-8")
     if not scenes_init.exists():
         scenes_init.write_text("", encoding="utf-8")
+    if not game_init.exists():
+        game_init.write_text(GAME_INIT_TEMPLATE, encoding="utf-8")
+    if not domain_init.exists():
+        domain_init.write_text(DOMAIN_INIT_TEMPLATE, encoding="utf-8")
+    if not services_init.exists():
+        services_init.write_text(SERVICES_INIT_TEMPLATE, encoding="utf-8")
+    if not game_state_file.exists():
+        game_state_file.write_text(GAME_STATE_TEMPLATE, encoding="utf-8")
+    if not game_service_file.exists():
+        game_service_file.write_text(GAME_SERVICE_TEMPLATE, encoding="utf-8")
     if not main_scene_file.exists():
         main_scene_file.write_text(MAIN_SCENE_TEMPLATE, encoding="utf-8")
     if not second_scene_file.exists():

@@ -142,7 +142,7 @@ s.run(
 - ✅ **Автолейаут (Layout)** - flex, сетка, круг, линия для автоматического размещения дочерних спрайтов ([документация](docs/layout.md))
 - ✅ **ScrollView** — скроллируемая область для контента (лейаут), колёсико и перетаскивание мышью, опциональная маска (клиппинг по viewport)
 - ✅ **Готовые сцены (readyScenes)** — подключаемые сцены: **ChatScene** (мультиплеерный чат с историей, скроллом и маской) и **ChatStyle** для настройки оформления
-- ✅ **Мультиплеер** — сетевые игры: TCP relay, контекст (send/poll/send_every), EventBus; быстрый старт через `s.networking.run()`. **Готовое лобби** (`run(use_lobby=True)`): один экран — имя, хост/клиент, порт, IP, список игроков; у хоста кнопки «В игру» и «Назад», у клиента — «Назад». По нажатию «В игру» игра запускается у обоих. Подробно: [Networking — лобби](docs/networking.md#подробная-инструкция-лобби-use_lobbytrue). Мини-курс в папке `multiplayer_course/` — 10 уроков от обмена сообщениями до готовой мини-игры.
+- ✅ **Мультиплеер** — сетевые игры: TCP relay, контекст (send/poll/send_every), EventBus; теперь можно запускать прямо через `s.run(..., multiplayer=True)` без отдельного `multiplayer_main`-runner, а `s.networking.run()` оставлен как low-level вариант. **Готовое лобби** (`s.run(..., multiplayer_use_lobby=True)`): один экран — имя, хост/клиент, порт, IP, список игроков; у хоста кнопки «В игру» и «Назад», у клиента — «Назад». По нажатию «В игру» игра запускается у обоих. Подробно: [Networking — лобби](docs/networking.md#подробная-инструкция-лобби-use_lobbytrue). Мини-курс в папке `multiplayer_course/` — 10 уроков от обмена сообщениями до готовой мини-игры.
 - ✅ **Mobile-рантайм** — запуск через `Kivy`: `s.run(..., platform="kivy")`, встроенный host для touch-ввода и мобильных demo
 
 ---
@@ -233,9 +233,13 @@ python -m spritePro.cli --create
 Шаблон теперь сразу современный:
 
 - `main.py` запускает игру через `s.run(...)`
-- `scenes/main_scene.py` — основная сцена, которая грузит `scenes/main_level.json`
+- `config.py` — общие настройки игры и готовые пути `PROJECT_ROOT`, `ASSETS_DIR`, `AUDIO_DIR`, `IMAGES_DIR`, `SCENES_DIR`, `GAME_DIR`, `DOMAIN_DIR`, `SERVICES_DIR`
+- `game_events.py` — базовый файл для `EventBus`: событие старта игры, подписка и лог
+- `scenes/main_scene.py` — основная сцена, которая грузит `config.MAIN_LEVEL_PATH`
 - `scenes/second_scene.py` — вторая почти пустая сцена-заготовка, чтобы было удобно расширять проект
 - `scenes/main_level.json` — стартовый уровень в формате Sprite Editor
+- `game/domain/game_state.py` — пример domain-модели
+- `game/services/game_service.py` — пример сервиса для игровой логики
 
 То есть новый проект после `--create` уже показывает нормальную scene-based структуру, а не только один файл с ручным циклом.
 
