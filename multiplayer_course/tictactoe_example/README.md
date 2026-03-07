@@ -11,11 +11,21 @@
 ## Запуск
 
 ```bash
-# Быстрый запуск (хост + клиент в двух окнах)
+# Обычный запуск
+python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py
+
+# Быстрый запуск для разработки (хост + клиент в двух окнах)
 python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py --quick
 
 # С указанием хоста и порта
 python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py --quick --host 127.0.0.1 --port 5050
+```
+
+Внутри сам пример уже использует современный scene-based запуск через `s.run(...)`.
+Если в своей игре нужен пользовательский вход без quick-режима, можно строить поверх встроенного лобби:
+
+```python
+s.networking.run(use_lobby=True)
 ```
 
 ## Управление

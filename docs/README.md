@@ -10,6 +10,9 @@
 | **Краткий обзор** | [OVERVIEW.md](OVERVIEW.md) — Layout, физика, Builder, мультиплеер, таблицы API |
 | **Физика (подробно)** | [physics.md](physics.md) · [physics_issues.md](physics_issues.md) |
 | **Редактор сцен** | [sprite_editor.md](sprite_editor.md) |
+| **Mobile** | [mobile.md](mobile.md) — запуск через `platform="kivy"`, touch-ввод, mobile demo |
+| **Hybrid Kivy UI** | [kivy_hybrid.md](kivy_hybrid.md) — Kivy menu/layout + встроенная игровая область SpritePro |
+| **Сборка и билды** | [building.md](building.md) — wheel/sdist, desktop, web, Android |
 
 ---
 

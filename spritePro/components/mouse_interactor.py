@@ -90,7 +90,8 @@ class MouseInteractor:
             events (Optional[List[pygame.event.Event]], optional): Список событий pygame для обработки. Если None, используется spritePro.pygame_events.
         """
         events = events or spritePro.pygame_events
-        pos = pygame.mouse.get_pos()
+        input_state = getattr(spritePro, "input", None)
+        pos = getattr(input_state, "mouse_pos", (0, 0))
         if getattr(self.sprite, "screen_space", False):
             check_pos = pos
         else:

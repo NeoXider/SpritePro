@@ -98,13 +98,18 @@ class GameScene(s.Scene):
 
 def multiplayer_main(net: s.NetClient, role: str) -> None:
     s.multiplayer.init_context(net, role)
-    s.get_screen((800, 600), "Lesson 5 - Menu + Scenes")
-    s.scene.add_scene("menu", MenuScene)
-    s.scene.add_scene("game", GameScene)
-    s.scene.set_scene_by_name("menu")
 
-    while True:
-        s.update(fill_color=(16, 16, 22))
+    def setup() -> None:
+        s.scene.add_scene("menu", MenuScene)
+        s.scene.add_scene("game", GameScene)
+        s.scene.set_scene_by_name("menu")
+
+    s.run(
+        setup=setup,
+        size=(800, 600),
+        title="Lesson 5 - Menu + Scenes",
+        fill_color=(16, 16, 22),
+    )
 
 
 if __name__ == "__main__":

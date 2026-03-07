@@ -37,11 +37,13 @@ class DemoScene(s.Scene):
 
 
 def main():
-    s.get_screen((800, 600), "Plugin demo")
     s.enable_debug(True)
-    s.set_scene(DemoScene())
-    while not s.quit_requested():
-        s.update(fill_color=(30, 30, 40))
+    s.run(
+        scene=DemoScene,
+        size=(800, 600),
+        title="Plugin demo",
+        fill_color=(30, 30, 40),
+    )
 
 
 if __name__ == "__main__":

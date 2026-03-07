@@ -71,53 +71,64 @@ class HoopConstraint:
             self.ball_body.velocity = Vector2(v.x * scale, v.y * scale)
 
 
-def run_demo():
-    s.get_screen((800, 600), "Hoop Bounce — ball inside ring")
-    s.enable_debug()
+class HoopBounceScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        s.enable_debug()
 
-    center = (400, 300)
-    hoop_radius = 220
-    ring_width = 8
-    ball_radius = 18
+        center = (400, 300)
+        hoop_radius = 220
+        ring_width = 8
+        self.ball_radius = 18
+        size = hoop_radius * 2 + ring_width * 2
+        cx, cy = size // 2, size // 2
+        ring_surf = pygame.Surface((size, size), pygame.SRCALPHA)
+        pygame.draw.circle(ring_surf, (60, 60, 80), (cx, cy), hoop_radius)
+        pygame.draw.circle(ring_surf, (25, 25, 35), (cx, cy), hoop_radius - ring_width)
+        hoop = s.Sprite("", pos=center, size=(size, size), scene=self)
+        hoop.set_image(ring_surf)
+        hoop.rect.center = center
 
-    size = hoop_radius * 2 + ring_width * 2
-    cx, cy = size // 2, size // 2
-    ring_surf = pygame.Surface((size, size), pygame.SRCALPHA)
-    pygame.draw.circle(ring_surf, (60, 60, 80), (cx, cy), hoop_radius)
-    pygame.draw.circle(ring_surf, (25, 25, 35), (cx, cy), hoop_radius - ring_width)
-    hoop = s.Sprite("", pos=center, size=(size, size))
-    hoop.set_image(ring_surf)
-    hoop.rect.center = center
+        self.center = center
+        self.ball = s.Sprite("", pos=center, size=(self.ball_radius * 2,) * 2, scene=self)
+        self.ball.set_circle_shape(radius=self.ball_radius, color=BOUNCE_COLORS[0])
+        self.ball.rect.center = center
 
-    ball = s.Sprite("", pos=center, size=(ball_radius * 2,) * 2)
-    ball.set_circle_shape(radius=ball_radius, color=BOUNCE_COLORS[0])
-    ball.rect.center = center
+        s.physics.set_gravity(400.0)
+        config = s.PhysicsConfig(mass=1.0, friction=1.0, bounce=3.0)
+        self.ball_body = s.add_physics(self.ball, config, shape=s.PhysicsShape.CIRCLE)
+        self.ball_body.set_velocity(50, -80)
 
-    s.physics.set_gravity(400.0)
-    config = s.PhysicsConfig(mass=1.0, friction=1.0, bounce=3.0)
-    ball_body = s.add_physics(ball, config, shape=s.PhysicsShape.CIRCLE)
-    ball_body.set_velocity(50, -80)
+        inner_radius = hoop_radius - ring_width
+        self.constraint = HoopConstraint(
+            self.ball_body, center, inner_radius, self.ball_radius, BOUNCE_COLORS
+        )
+        s.physics.add_constraint(self.constraint)
 
-    inner_radius = hoop_radius - ring_width
-    constraint = HoopConstraint(
-        ball_body, center, inner_radius, ball_radius, BOUNCE_COLORS
-    )
-    s.physics.add_constraint(constraint)
+        self.hint = s.TextSprite(
+            "Ball in hoop — elastic bounce, color change on hit. R: reset",
+            color=(200, 200, 200),
+            pos=(20, 20),
+            scene=self,
+        )
+        self.hint.set_position((20, 20), anchor="topleft")
 
-    hint = s.TextSprite(
-        "Ball in hoop — elastic bounce, color change on hit. R: reset",
-        color=(200, 200, 200), pos=(20, 20),
-    )
-    hint.set_position((20, 20), anchor="topleft")
-
-    while True:
-        s.update(fill_color=(25, 25, 35))
-
+    def update(self, dt: float) -> None:
         if s.input.was_pressed(pygame.K_r):
-            ball.position = center
-            ball_body.set_velocity(200, -80)
-            constraint.color_index = 0
-            ball.set_circle_shape(radius=ball_radius, color=BOUNCE_COLORS[0])
+            self.ball.position = self.center
+            self.ball_body.set_velocity(200, -80)
+            self.constraint.color_index = 0
+            self.ball.set_circle_shape(radius=self.ball_radius, color=BOUNCE_COLORS[0])
+
+
+def run_demo(platform: str = "pygame"):
+    s.run(
+        scene=HoopBounceScene,
+        size=(800, 600),
+        title="Hoop Bounce — ball inside ring",
+        fill_color=(25, 25, 35),
+        platform=platform,
+    )
 
 
 if __name__ == "__main__":

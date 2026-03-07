@@ -20,7 +20,7 @@ python demoGames/main.py
 
 ## Что внутри
 
-- **main.py** — точка входа: экран, сцена `MainScene`, цикл `s.update()`.
+- **main.py** — точка входа: запуск через `s.run(...)`, сцена `MainScene`.
 - **scenes/main_scene.py** — загрузка сцены через `spawn_scene("scenes/level.json", scene=self)`, получение игрока по имени, настройка физики в коде.
 - **scenes/level.json** — сцена, собранная в редакторе (объект `player` с типом физики Dynamic, платформы `rect*` и т.д.).
 - **config.py** — размер окна, FPS, скорость и высота прыжка.

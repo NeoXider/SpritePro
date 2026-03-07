@@ -114,14 +114,16 @@ def run_platformer(level_path: str | None = None) -> None:
         print("Или передайте путь: python -m spritePro.demoGames.platformer_demo path/to/level.json")
         return
 
-    s.get_screen((800, 600), "Платформер")
     scene = Platformer(level_path)
     if not scene.has_player:
         print("В сцене должен быть объект с именем 'Player'.")
         return
-    s.set_scene(scene)
-    while True:
-        s.update(fill_color=(135, 206, 255))
+    s.run(
+        scene=lambda: Platformer(level_path),
+        size=(800, 600),
+        title="Платформер",
+        fill_color=(135, 206, 255),
+    )
 
 
 if __name__ == "__main__":

@@ -10,116 +10,109 @@ sys.path.insert(0, str(parent_dir))
 import spritePro as s  # noqa: E402
 
 
-def main() -> None:
-    s.get_screen((900, 600), "EventBus Demo")
+class EventBusDemoScene(s.Scene):
+    def __init__(self) -> None:
+        super().__init__()
+        self.box = s.Sprite("", (70, 70), s.WH_C, scene=self)
+        self.box.set_color((120, 200, 255))
 
-    box = s.Sprite("", (70, 70), s.WH_C)
-    box.set_color((120, 200, 255))
+        self.title = s.TextSprite("EventBus Demo", 28, (255, 255, 255), (s.WH_C.x, 30), scene=self)
+        self.hints = s.TextSprite(
+            "1: start timer  |  2: stop timer  |  C: custom event  |  L: local event  |  R: reset counter  |  Mouse: click",
+            18,
+            (200, 200, 200),
+            (s.WH_C.x, 565),
+            scene=self,
+        )
+        self.status = s.TextSprite(
+            "События будут появляться здесь...",
+            20,
+            (220, 220, 220),
+            (s.WH_C.x, 520),
+            scene=self,
+        )
 
-    title = s.TextSprite("EventBus Demo", 28, (255, 255, 255), (s.WH_C.x, 30))
-    hints = s.TextSprite(
-        "1: start timer  |  2: stop timer  |  C: custom event  |  L: local event  |  R: reset counter  |  Mouse: click",
-        18,
-        (200, 200, 200),
-        (s.WH_C.x, 565),
-    )
-    status = s.TextSprite("События будут появляться здесь...", 20, (220, 220, 220), (s.WH_C.x, 520))
+        self.state = {"ticks": 0}
+        self.timer = s.Timer(
+            1.0,
+            callback=lambda: s.events.send("timer_tick"),
+            repeat=True,
+            autostart=False,
+        )
+        self.local_event = s.LocalEvent()
+        self.local_event.connect(self.on_local_event)
 
-    state = {"ticks": 0}
+        s.events.connect(s.globalEvents.KEY_DOWN, self.on_key_down)
+        s.events.connect(s.globalEvents.KEY_UP, self.on_key_up)
+        s.events.connect(s.globalEvents.MOUSE_DOWN, self.on_mouse_down)
+        s.events.connect(s.globalEvents.MOUSE_UP, self.on_mouse_up)
+        s.events.connect("timer_tick", self.on_timer_tick)
+        s.events.connect("custom_event", self.on_custom_event)
+        s.events.connect(s.globalEvents.QUIT, self.on_quit)
 
-    def show(text: str) -> None:
-        status.text = text
+    def show(self, text: str) -> None:
+        self.status.text = text
 
-    def on_key_down(key, event) -> None:
+    def on_key_down(self, key, event) -> None:
         if key == pygame.K_1:
-            timer.start()
+            self.timer.start()
             s.debug_log_info("Timer started")
-            show("Timer started")
+            self.show("Timer started")
             return
         if key == pygame.K_2:
-            timer.stop()
+            self.timer.stop()
             s.debug_log_info("Timer stopped")
-            show("Timer stopped")
+            self.show("Timer stopped")
             return
         if key == pygame.K_c:
             s.events.send("custom_event", message="Привет из EventBus!")
             return
         if key == pygame.K_l:
-            local_event.send(value=state["ticks"])
+            self.local_event.send(value=self.state["ticks"])
             return
         if key == pygame.K_r:
-            state["ticks"] = 0
-            show("Counter reset")
+            self.state["ticks"] = 0
+            self.show("Counter reset")
             return
-        show(f"Key down: {pygame.key.name(key)}")
+        self.show(f"Key down: {pygame.key.name(key)}")
 
-    def on_key_up(key, event) -> None:
-        show(f"Key up: {pygame.key.name(key)}")
+    def on_key_up(self, key, event) -> None:
+        self.show(f"Key up: {pygame.key.name(key)}")
 
-    def on_mouse_down(button, pos, event) -> None:
-        show(f"Mouse down: button={button}, pos={pos}")
+    def on_mouse_down(self, button, pos, event) -> None:
+        self.show(f"Mouse down: button={button}, pos={pos}")
 
-    def on_mouse_up(button, pos, event) -> None:
-        show(f"Mouse up: button={button}, pos={pos}")
+    def on_mouse_up(self, button, pos, event) -> None:
+        self.show(f"Mouse up: button={button}, pos={pos}")
 
-    def on_timer_tick() -> None:
-        state["ticks"] += 1
-        show(f"Tick #{state['ticks']}")
-        if state["ticks"] % 2 == 0:
-            box.set_color((120, 200, 255))
+    def on_timer_tick(self) -> None:
+        self.state["ticks"] += 1
+        self.show(f"Tick #{self.state['ticks']}")
+        if self.state["ticks"] % 2 == 0:
+            self.box.set_color((120, 200, 255))
         else:
-            box.set_color((255, 170, 120))
+            self.box.set_color((255, 170, 120))
 
-    def on_custom_event(message: str) -> None:
-        show(f"Custom event: {message}")
+    def on_custom_event(self, message: str) -> None:
+        self.show(f"Custom event: {message}")
 
-    def on_local_event(value: int) -> None:
-        show(f"Local event: value={value}")
+    def on_local_event(self, value: int) -> None:
+        self.show(f"Local event: value={value}")
 
-    def on_quit(event) -> None:
+    def on_quit(self, event) -> None:
         s.debug_log_info("Quit requested")
 
-    timer = s.Timer(
-        1.0,
-        callback=lambda: s.events.send("timer_tick"),
-        repeat=True,
-        autostart=False,
+    def update(self, dt: float) -> None:
+        pass
+
+
+def main() -> None:
+    s.run(
+        scene=EventBusDemoScene,
+        size=(900, 600),
+        title="EventBus Demo",
+        fill_color=(20, 20, 30),
     )
-    local_event = s.LocalEvent()
-    local_event.connect(on_local_event)
-
-    s.events.connect(s.globalEvents.KEY_DOWN, on_key_down)
-    s.events.connect(s.globalEvents.KEY_UP, on_key_up)
-    s.events.connect(s.globalEvents.MOUSE_DOWN, on_mouse_down)
-    s.events.connect(s.globalEvents.MOUSE_UP, on_mouse_up)
-    s.events.connect("timer_tick", on_timer_tick)
-    s.events.connect("custom_event", on_custom_event)
-    s.events.connect(s.globalEvents.QUIT, on_quit)
-
-    _ = (title, hints, status)
-
-    running = True
-    while running:
-        s.update(fill_color=(20, 20, 30))
-
-        if s.input.was_pressed(pygame.K_ESCAPE):
-            running = False
-        for key in (
-            pygame.K_1,
-            pygame.K_2,
-            pygame.K_c,
-            pygame.K_l,
-            pygame.K_r,
-        ):
-            if s.input.was_pressed(key):
-                s.events.send(s.globalEvents.KEY_DOWN, key=key, event=None)
-            if s.input.was_released(key):
-                s.events.send(s.globalEvents.KEY_UP, key=key, event=None)
-
-        if s.input.was_mouse_pressed(1):
-            s.events.send(s.globalEvents.MOUSE_DOWN, button=1, pos=s.input.mouse_pos, event=None)
-        if s.input.was_mouse_released(1):
-            s.events.send(s.globalEvents.MOUSE_UP, button=1, pos=s.input.mouse_pos, event=None)
 
 
 if __name__ == "__main__":

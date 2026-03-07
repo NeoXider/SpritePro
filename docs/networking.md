@@ -160,16 +160,27 @@ while True:
 import pygame
 import spritePro as s
 
-def multiplayer_main(net: s.NetClient, role: str):
-    s.get_screen((800, 600), "My Multiplayer")
-    ctx = s.multiplayer.init_context(net, role)
-    me = s.Sprite("", (40, 40), (200, 300))
-    me.set_color((220, 70, 70) if ctx.is_host else (70, 120, 220))
+class MultiplayerScene(s.Scene):
+    def __init__(self, net: s.NetClient, role: str):
+        super().__init__()
+        s.multiplayer.init_context(net, role)
+        self.ctx = s.multiplayer_ctx
+        self.me = s.Sprite("", (40, 40), (200, 300), scene=self)
+        self.me.set_color((220, 70, 70) if self.ctx.is_host else (70, 120, 220))
 
-    while True:
-        s.update(fill_color=(20, 20, 25))
-        pos = me.get_world_position()
-        net.send("pos", {"x": pos.x, "y": pos.y})
+    def update(self, dt):
+        pos = self.me.get_world_position()
+        self.ctx.send_every("pos", {"pos": list(pos)}, 1.0 / 60.0)
+
+
+def multiplayer_main(net: s.NetClient, role: str):
+    s.run(
+        scene=lambda: MultiplayerScene(net, role),
+        size=(800, 600),
+        title="My Multiplayer",
+        fps=60,
+        fill_color=(20, 20, 25),
+    )
 
 s.networking.run()
 ```
@@ -205,13 +216,13 @@ python spritePro/demoGames/local_multiplayer_demo.py --lobby
    - Открыть приложение.  
    - Ввести имя (по желанию), оставить **Роль: Хост**, указать порт (по умолчанию 5050).  
    - Нажать **«Запустить сервер»**.  
-   - Появится экран «В лобби»: список игроков (сначала только Host), кнопки **«Назад»** и **«В игру»** (у хоста и у клиента).
+   - Появится экран «В лобби»: список игроков (сначала только Host), у хоста кнопки **«Назад»** и **«В игру»**.
 
 2. **Второй экземпляр (клиент)**  
    - Запустить приложение ещё раз (второе окно).  
    - Выбрать **Роль: Клиент**, ввести **IP сервера** (например `127.0.0.1`) и порт (тот же, что у хоста).  
    - Нажать **«Подключиться»**.  
-   - Появится экран «В лобби»: список игроков (Host, Player 1), кнопки **«Назад»** и **«В игру»**. Клиент может нажать **«В игру»** и войти в игру даже если хост уже её запустил.  
+   - Появится экран «В лобби»: список игроков (Host, Player 1), у клиента кнопка **«Назад»**.
 
 3. **Старт игры**  
    - Хост нажимает **«В игру»**.  
@@ -219,7 +230,7 @@ python spritePro/demoGames/local_multiplayer_demo.py --lobby
 
 ### Для разработчика
 
-- **События лобби:** хост рассылает `start_game` при нажатии «В игру»; клиент при получении `start_game` тоже переходит в игру. «Назад» закрывает соединение и возвращает к экрану настройки.
+- **События лобби:** хост рассылает `start_game` при нажатии «В игру»; клиент при получении `start_game` тоже переходит в игру. Кнопка «Назад» закрывает соединение и возвращает к экрану настройки.
 - **Очистка UI:** лобби реализовано как `MultiplayerLobbyScene(s.Scene)`. При выходе из лобби вызывается `on_exit()`: все спрайты лобби (кнопки, поля ввода, текст, в том числе дочерние `text_sprite`) снимаются с регистрации, в игре не остаётся элементов лобби.
 - **Использование без run():** можно вызвать лобби вручную после `get_screen()` и передать колбэк перехода в игру:
 
@@ -229,6 +240,8 @@ from spritePro.readyScenes import run_multiplayer_lobby
 s.get_screen((480, 540), "Лобби")
 run_multiplayer_lobby(lambda net, role: your_multiplayer_main(net, role))
 ```
+
+Если сама игра уже переведена на `s.run(...)`, обычно проще оставить это внутри `your_multiplayer_main(net, role)` и считать `run_multiplayer_lobby(...)` только экраном подключения.
 
 - **Константа события:** `from spritePro.readyScenes import EVENT_START_GAME` — имя события `"start_game"` для согласования с своей логикой.
 

@@ -1,5 +1,13 @@
 """
 Сцены Demo → JSON редактора → правка в редакторе → загрузка в игре (round-trip).
+
+По умолчанию запускается как обычный desktop demo.
+Для Kivy:
+    python "spritePro/demoGames/scenes_demo editor.py" --kivy
+
+При прямом запуске файла `Kivy` используется по умолчанию.
+Чтобы принудительно запустить desktop-режим:
+    python "spritePro/demoGames/scenes_demo editor.py" --pygame
 """
 import sys
 from pathlib import Path
@@ -211,22 +219,27 @@ class SceneB(s.Scene):
             particle._scene_particle = True
 
 
-def main():
-    s.get_screen((800, 600), "Scenes Demo")
+def run_demo(platform: str = "kivy") -> None:
     s.enable_debug(True)
 
-    s.scene.add_scene("scene_a", SceneA)
-    s.scene.add_scene("scene_b", SceneB)
-    s.scene.set_scene_by_name("scene_a")
+    def setup() -> None:
+        s.scene.add_scene("scene_a", SceneA)
+        s.scene.add_scene("scene_b", SceneB)
+        s.scene.set_scene_by_name("scene_a")
 
-    # Экспорт в JSON редактора: имена = атрибуты сцены (label, mover, button, ...), данные из спрайтов.
-    from spritePro.editor.scene import Scene as EditorScene
+        # Экспорт в JSON редактора: имена = атрибуты сцены (label, mover, button, ...), данные из спрайтов.
+        from spritePro.editor.scene import Scene as EditorScene
 
-    EditorScene.export_from_runtime(SceneA, str(current_dir / "scene_a.json"))
+        EditorScene.export_from_runtime(SceneA, str(current_dir / "scene_a.json"))
 
-    while True:
-        s.update(fill_color=(10, 10, 20))
+    s.run(
+        setup=setup,
+        size=(800, 600),
+        title="Scenes Demo",
+        fill_color=(10, 10, 20),
+        platform=platform,
+    )
 
 
 if __name__ == "__main__":
-    main()
+    run_demo("pygame" if "--pygame" in sys.argv else "kivy")

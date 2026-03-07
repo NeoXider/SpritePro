@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Set, Tuple
+from typing import Dict, Iterable, Set, Tuple
 
 import pygame
 
@@ -21,9 +21,11 @@ class InputState:
         self._mouse_down: Set[int] = set()
         self._mouse_up: Set[int] = set()
         self._mouse_pressed: Tuple[bool, ...] = tuple()
+        self._mouse_buttons_state: Dict[int, bool] = {}
         self.mouse_pos: Tuple[int, int] = (0, 0)
         self.mouse_rel: Tuple[int, int] = (0, 0)
         self.mouse_wheel: Tuple[int, int] = (0, 0)
+        self._last_mouse_pos: Tuple[int, int] = (0, 0)
 
     def update(self, events: Iterable[pygame.event.Event]) -> None:
         """Обновляет состояние ввода по событиям текущего кадра.
@@ -31,11 +33,16 @@ class InputState:
         Args:
             events (Iterable[pygame.event.Event]): События pygame за кадр.
         """
+        events = list(events)
         self._keys_down.clear()
         self._keys_up.clear()
         self._mouse_down.clear()
         self._mouse_up.clear()
         self.mouse_wheel = (0, 0)
+        self.mouse_rel = (0, 0)
+        self._last_mouse_pos = self.mouse_pos
+
+        saw_mouse_event = False
 
         for event in events:
             if event.type == pygame.KEYDOWN:
@@ -44,15 +51,51 @@ class InputState:
                 self._keys_up.add(event.key)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self._mouse_down.add(event.button)
+                self._mouse_buttons_state[event.button] = True
+                if hasattr(event, "pos"):
+                    self.mouse_pos = (int(event.pos[0]), int(event.pos[1]))
+                    saw_mouse_event = True
             elif event.type == pygame.MOUSEBUTTONUP:
                 self._mouse_up.add(event.button)
+                self._mouse_buttons_state[event.button] = False
+                if hasattr(event, "pos"):
+                    self.mouse_pos = (int(event.pos[0]), int(event.pos[1]))
+                    saw_mouse_event = True
+            elif event.type == pygame.MOUSEMOTION:
+                if hasattr(event, "pos"):
+                    self.mouse_pos = (int(event.pos[0]), int(event.pos[1]))
+                    saw_mouse_event = True
+                if hasattr(event, "rel"):
+                    self.mouse_rel = (int(event.rel[0]), int(event.rel[1]))
             elif event.type == pygame.MOUSEWHEEL:
                 self.mouse_wheel = (event.x, event.y)
 
         self._keys_pressed = pygame.key.get_pressed()
-        self._mouse_pressed = pygame.mouse.get_pressed()
-        self.mouse_pos = pygame.mouse.get_pos()
-        self.mouse_rel = pygame.mouse.get_rel()
+        try:
+            mouse_pressed = pygame.mouse.get_pressed(5)
+        except TypeError:
+            mouse_pressed = pygame.mouse.get_pressed()
+        if mouse_pressed:
+            self._mouse_pressed = tuple(bool(v) for v in mouse_pressed)
+            for index, value in enumerate(self._mouse_pressed, start=1):
+                self._mouse_buttons_state[index] = bool(value)
+
+        if not saw_mouse_event:
+            try:
+                current_mouse_pos = pygame.mouse.get_pos()
+                self.mouse_pos = (int(current_mouse_pos[0]), int(current_mouse_pos[1]))
+                rel = pygame.mouse.get_rel()
+                self.mouse_rel = (int(rel[0]), int(rel[1]))
+            except pygame.error:
+                self.mouse_rel = (
+                    self.mouse_pos[0] - self._last_mouse_pos[0],
+                    self.mouse_pos[1] - self._last_mouse_pos[1],
+                )
+        elif self.mouse_rel == (0, 0):
+            self.mouse_rel = (
+                self.mouse_pos[0] - self._last_mouse_pos[0],
+                self.mouse_pos[1] - self._last_mouse_pos[1],
+            )
 
     def is_pressed(self, key: int) -> bool:
         """Проверяет, удерживается ли клавиша.
@@ -113,6 +156,8 @@ class InputState:
         Returns:
             bool: True, если кнопка удерживается.
         """
+        if button in self._mouse_buttons_state:
+            return self._mouse_buttons_state[button]
         index = max(0, min(button - 1, len(self._mouse_pressed) - 1))
         return bool(self._mouse_pressed[index]) if self._mouse_pressed else False
 

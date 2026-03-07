@@ -528,11 +528,12 @@ class LayoutDemoScene(s.Scene):
 
 
 def main():
-    s.get_screen((900, 600), "Layout Demo")
-    scene = LayoutDemoScene()
-    s.set_scene(scene)
-    while True:
-        s.update(fill_color=(25, 25, 35))
+    s.run(
+        scene=LayoutDemoScene,
+        size=(900, 600),
+        title="Layout Demo",
+        fill_color=(25, 25, 35),
+    )
 
 
 if __name__ == "__main__":

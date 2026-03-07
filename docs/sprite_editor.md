@@ -416,41 +416,38 @@ from spritePro.editor.scene import Scene
 # Загружаем сцену
 scene = Scene.load("level1.json")
 
-# Создаём игровые спрайты
-s.get_screen((800, 600), "My Game")
 
-sprites_map = {}  # id -> s.Sprite
+class ManualLoadedScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.sprites_map = {}  # id -> s.Sprite
 
-for obj in scene.objects:
-    if not obj.visible:
-        continue
+        for obj in scene.objects:
+            if not obj.visible:
+                continue
 
-    image = s.pygame.image.load(obj.sprite_path).convert_alpha()
-    native_w, native_h = image.get_size()
-    final_size = (
-        max(1, int(native_w * obj.transform.scale_x)),
-        max(1, int(native_h * obj.transform.scale_y)),
-    )
-    
-    sprite = s.Sprite(
-        obj.sprite_path,
-        final_size,
-        (obj.transform.x, obj.transform.y),
-        scene=s.get_current_scene()
-    )
-    
-    # Применяем трансформации
-    if obj.transform.rotation:
-        sprite.angle = obj.transform.rotation
-    
-    # Z-index через sorting_order
-    sprite.sorting_order = obj.z_index
-    
-    sprites_map[obj.id] = sprite
+            image = s.pygame.image.load(obj.sprite_path).convert_alpha()
+            native_w, native_h = image.get_size()
+            final_size = (
+                max(1, int(native_w * obj.transform.scale_x)),
+                max(1, int(native_h * obj.transform.scale_y)),
+            )
 
-# Запускаем игру
-while True:
-    s.update(fill_color=(20, 20, 30))
+            sprite = s.Sprite(
+                obj.sprite_path,
+                final_size,
+                (obj.transform.x, obj.transform.y),
+                scene=self,
+            )
+
+            if obj.transform.rotation:
+                sprite.angle = obj.transform.rotation
+
+            sprite.sorting_order = obj.z_index
+            self.sprites_map[obj.id] = sprite
+
+
+s.run(scene=ManualLoadedScene, size=(800, 600), title="My Game", fill_color=(20, 20, 30))
 ```
 
 ### Короткий путь (рекомендуется): spawn_scene и RuntimeScene
@@ -459,13 +456,18 @@ while True:
 import spritePro as s
 from spritePro.editor.runtime import spawn_scene
 
-s.get_screen((800, 600), "My Game")
-rt = spawn_scene("level1.json", scene=s.get_current_scene(), apply_camera=True)
+class LevelScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.rt = spawn_scene("level1.json", scene=self, apply_camera=True)
 
-# По имени (без учёта регистра) или точное имя
-player = rt.first("player")      # первый с именем "player"
-obj = rt.exact("Player")         # точное совпадение имени
-enemies = rt.startswith("enemy") # все, чьё имя начинается с "enemy"
+        # По имени (без учёта регистра) или точное имя
+        self.player = self.rt.first("player")      # первый с именем "player"
+        self.obj = self.rt.exact("Player")         # точное совпадение имени
+        self.enemies = self.rt.startswith("enemy") # все, чьё имя начинается с "enemy"
+
+
+s.run(scene=LevelScene, size=(800, 600), title="My Game")
 ```
 
 **Размещение из сцены:** `placement()` возвращает данные из сцены: **pos (центр)**, size, angle, sorting_order, screen_space, scene. Этим пользуются хелперы ниже; позиция — центр объекта (как в редакторе).

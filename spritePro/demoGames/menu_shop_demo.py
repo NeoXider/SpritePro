@@ -425,11 +425,12 @@ class MenuShopScene(s.Scene):
 
 
 def main():
-    s.get_screen((W, H), "Меню и Инвентарь")
-    scene = MenuShopScene()
-    s.set_scene(scene)
-    while True:
-        s.update(fill_color=COLOR_BG)
+    s.run(
+        scene=MenuShopScene,
+        size=(W, H),
+        title="Меню и Инвентарь",
+        fill_color=COLOR_BG,
+    )
 
 
 if __name__ == "__main__":

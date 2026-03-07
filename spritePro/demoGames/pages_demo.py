@@ -65,40 +65,40 @@ class BasePage(s.Page):
 
 
 class Menu(BasePage):
-    def __init__(self, scene=None):
+    def __init__(self, page_manager: s.PageManager, scene=None):
         super().__init__(PageType.MENU, scene=scene)
-        self.btn.on_click(lambda: pm.set_active_page(PageType.GAME))
+        self.btn.on_click(lambda: page_manager.set_active_page(PageType.GAME))
         self.btn.text_sprite.text = "Go to Game"
         self.bg.color = (100, 100, 200)
 
 
 class Game(BasePage):
-    def __init__(self, scene=None):
+    def __init__(self, page_manager: s.PageManager, scene=None):
         super().__init__(PageType.GAME, scene=scene)
-        self.btn.on_click(lambda: pm.set_active_page(PageType.MENU))
+        self.btn.on_click(lambda: page_manager.set_active_page(PageType.MENU))
         self.btn.text_sprite.text = "BACK to Menu"
         self.btn.set_position((20, 20), s.Anchor.TOP_LEFT)
         self.bg.color = (100, 200, 100)
-
-
-s.get_screen()
-
 
 class PagesScene(s.Scene):
     def __init__(self):
         super().__init__()
         self.page_manager = s.PageManager(scene=self)
-        self.page_manager.add_page(Menu(scene=self))
-        self.page_manager.add_page(Game(scene=self))
+        self.page_manager.add_page(Menu(self.page_manager, scene=self))
+        self.page_manager.add_page(Game(self.page_manager, scene=self))
         self.page_manager.set_active_page(PageType.MENU)
 
     def update(self, dt):
         self.page_manager.update()
 
+def run_demo(platform: str = "pygame") -> None:
+    s.run(
+        scene=PagesScene,
+        title="Pages Demo",
+        fill_color=(0, 0, 30),
+        platform=platform,
+    )
 
-scene = PagesScene()
-pm = scene.page_manager
-s.set_scene(scene)
 
-while True:
-    s.update(fill_color=(0, 0, 30))
+if __name__ == "__main__":
+    run_demo("kivy" if "--kivy" in sys.argv else "pygame")

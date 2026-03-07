@@ -11,47 +11,44 @@ sys.path.insert(0, str(parent_dir))
 import spritePro as s  # noqa: E402
 
 
-def on_key_down(key, event):
-    if key == pygame.K_ESCAPE:
-        s.debug_log_info("ESC pressed (event)")
+class InputEventsDemoScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        s.events.connect(s.globalEvents.KEY_DOWN, self.on_key_down)
+        s.events.connect(s.globalEvents.QUIT, self.on_quit)
 
+        self.player = s.Sprite("", (60, 60), (400, 300), speed=5, scene=self)
+        self.player.set_color((120, 200, 255))
+        self.player.angle = 0
 
-def on_quit(event):
-    s.debug_log_info("Quit requested")
+        self.title = s.TextSprite("Input + EventBus Demo", 28, (255, 255, 255), (400, 40), scene=self)
+        self.hints = s.TextSprite(
+            "R: color  |  Q: tween rotate 90  |  Space: scale",
+            20,
+            (200, 200, 200),
+            (400, 560),
+            scene=self,
+        )
 
+    def on_key_down(self, key, event):
+        if key == pygame.K_ESCAPE:
+            s.debug_log_info("ESC pressed (event)")
 
-def main():
-    s.get_screen((800, 600), "Input + EventBus Demo")
-    s.events.connect(s.globalEvents.KEY_DOWN, on_key_down)
-    s.events.connect(s.globalEvents.QUIT, on_quit)
+    def on_quit(self, event):
+        s.debug_log_info("Quit requested")
 
-    player = s.Sprite("", (60, 60), (400, 300), speed=5)
-    player.set_color((120, 200, 255))
-    player.angle = 0
-
-    title = s.TextSprite("Input + EventBus Demo", 28, (255, 255, 255), (400, 40))
-    hints = s.TextSprite(
-        "R: color  |  Q: tween rotate 90  |  Space: scale",
-        20,
-        (200, 200, 200),
-        (400, 560),
-    )
-    _ = (title, hints)
-
-    while True:
-        s.update(fill_color=(20, 20, 30))
-
+    def update(self, dt: float) -> None:
         x_axis = s.input.get_axis(pygame.K_LEFT, pygame.K_RIGHT)
         y_axis = s.input.get_axis(pygame.K_UP, pygame.K_DOWN)
-        player.velocity.x = x_axis * player.speed
-        player.velocity.y = y_axis * player.speed
+        self.player.velocity.x = x_axis * self.player.speed
+        self.player.velocity.y = y_axis * self.player.speed
 
         if s.input.was_pressed(pygame.K_SPACE):
-            player.set_scale(1.2)
+            self.player.set_scale(1.2)
         if s.input.was_released(pygame.K_SPACE):
-            player.set_scale(1.0)
+            self.player.set_scale(1.0)
         if s.input.was_pressed(pygame.K_r):
-            player.set_color(
+            self.player.set_color(
                 (
                     random.randint(80, 255),
                     random.randint(80, 255),
@@ -59,11 +56,11 @@ def main():
                 )
             )
         if s.input.was_pressed(pygame.K_q):
-            start_angle = player.angle
+            start_angle = self.player.angle
             target_angle = start_angle + 90
 
             def apply_angle(value):
-                player.rotate_to(value)
+                self.player.rotate_to(value)
 
             tween = s.Tween(
                 start_angle,
@@ -73,6 +70,15 @@ def main():
                 on_update=apply_angle,
             )
             tween.start()
+
+
+def main():
+    s.run(
+        scene=InputEventsDemoScene,
+        size=(800, 600),
+        title="Input + EventBus Demo",
+        fill_color=(20, 20, 30),
+    )
 
 
 if __name__ == "__main__":

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import spritePro as s
 
 
@@ -67,12 +69,15 @@ class SliderTextInputDemoScene(s.Scene):
         self.label_text.set_text(f"Submitted: {value}")
 
 
-def run_demo() -> None:
-    s.get_screen((600, 400), "Slider & TextInput Demo")
-    s.set_scene(SliderTextInputDemoScene())
-    while True:
-        s.update(fill_color=(30, 30, 38))
+def run_demo(platform: str = "pygame") -> None:
+    s.run(
+        scene=SliderTextInputDemoScene,
+        size=(600, 400),
+        title="Slider & TextInput Demo",
+        fill_color=(30, 30, 38),
+        platform=platform,
+    )
 
 
 if __name__ == "__main__":
-    run_demo()
+    run_demo("kivy" if "--kivy" in sys.argv else "pygame")

@@ -1,17 +1,33 @@
 # Игровой цикл и сцены
 
-## Базовый цикл
+## Рекомендуемый запуск: `s.run(...)`
+
+Если нужен готовый стартовый проект с уже настроенными сценами, используйте:
+
+```bash
+python -m spritePro.cli --create MyGame
+```
+
+Шаблон создаёт `main.py`, `scenes/main_scene.py`, `scenes/second_scene.py` и `scenes/main_level.json`.
 
 ```python
 import spritePro as s
 
-s.get_screen((800, 600), "Game Loop")
+class MainScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.player = s.Sprite("player.png", (64, 64), (400, 300), speed=5, scene=self)
 
-player = s.Sprite("player.png", (64, 64), (400, 300), speed=5)
+    def update(self, dt):
+        self.player.handle_keyboard_input()
 
-while True:
-    s.update(fill_color=(20, 20, 30))
-    player.handle_keyboard_input()
+
+s.run(
+    scene=MainScene,
+    size=(800, 600),
+    title="Game Loop",
+    fill_color=(20, 20, 30),
+)
 ```
 
 ## Сцены
@@ -23,22 +39,23 @@ import spritePro as s
 
 class MainScene(s.Scene):
     def on_enter(self, context):
-        self.player = s.Sprite("player.png", (64, 64), (400, 300), speed=5)
+        self.player = s.Sprite("player.png", (64, 64), (400, 300), speed=5, scene=self)
 
     def update(self, dt):
         self.player.handle_keyboard_input()
 
-    def draw(self, screen):
-        pass
+def setup():
+    s.scene.add_scene("main", MainScene)
+    s.register_scene_factory("main", MainScene)
+    s.scene.set_scene_by_name("main")
 
-s.get_screen((800, 600), "Scenes")
-manager = s.get_context().scene_manager
-manager.add_scene("main", MainScene())
-s.register_scene_factory("main", MainScene)
-s.scene.set_scene_by_name("main")
 
-while True:
-    s.update(fill_color=(10, 10, 20))
+s.run(
+    setup=setup,
+    size=(800, 600),
+    title="Scenes",
+    fill_color=(10, 10, 20),
+)
 ```
 
 Важно: если переключаете сцену прямо в `update`, завершайте метод сразу после `set_scene_by_name`, чтобы не запускать логику кадра дальше.
@@ -53,8 +70,8 @@ def update(self, dt):
 Перезапуск сцены:
 
 ```python
-s.scene.restart_current(context)  # текущая сцена
-s.scene.restart_by_name("main", context)
+s.restart_scene()         # текущая сцена
+s.restart_scene("main")   # сцена по имени
 ```
 
 ### Имя сцены и context
@@ -79,10 +96,13 @@ class MainScene(s.Scene):
         print("Frame count:", context.frame_count)
         print("Time since start:", context.time_since_start)
 
-s.get_screen((800, 600), "Scene Context")
-    manager = s.scene
-    manager.add_scene("main", MainScene)
+
+def setup():
+    s.scene.add_scene("main", MainScene)
     s.scene.set_scene_by_name("main")
+
+
+s.run(setup=setup, size=(800, 600), title="Scene Context")
 ```
 
 Контекст в `on_enter` необязателен — можно объявлять `on_enter(self)` без параметров,
@@ -156,3 +176,20 @@ class MyScene(s.Scene):
     def _on_tick(self):
         print("Tick via Timer")
 ```
+
+## Низкоуровневый ручной цикл
+
+Если нужен полный ручной контроль, старый путь тоже остаётся рабочим:
+
+```python
+import spritePro as s
+
+s.get_screen((800, 600), "Manual Loop")
+player = s.Sprite("player.png", (64, 64), (400, 300), speed=5)
+
+while True:
+    s.update(fill_color=(20, 20, 30))
+    player.handle_keyboard_input()
+```
+
+Но для demo, сцен и Kivy-хоста теперь лучше использовать `s.run(...)`.

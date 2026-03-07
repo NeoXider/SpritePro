@@ -2,13 +2,13 @@
 
 # 🎮 [SpritePro](https://github.com/NeoXider/SpritePro)
 
-### **Создавайте игры на Python БЫСТРО и ПРОСТО!**
+### **Создавайте 2D игры на Python быстро: desktop, web и mobile**
 
 [![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/)
 [![Pygame](https://img.shields.io/badge/Pygame-2.0+-green.svg)](https://www.pygame.org/)
 [![License](https://img.shields.io/badge/License-Open%20Source-yellow.svg)](LICENSE)
 
-**Мощный игровой фреймворк, который превращает создание 2D игр из сложной задачи в удовольствие!**
+**Мощный игровой фреймворк, который превращает создание 2D игр из сложной задачи в удовольствие.**
 
 ![Demo](https://github.com/user-attachments/assets/db56e1fd-0db5-4353-945d-c4a31c6b9d7f)
 
@@ -46,7 +46,7 @@ python -m spritePro.cli -e
 
 ---
 
-**SpritePro** — высокоуровневая библиотека для 2D игр на Python (поверх Pygame): автоматическая отрисовка, камера, ввод, слои. Плюс **физика** (pymunk), **Layout** (flex, сетка, круг, линия), **редактор сцен** (JSON + spawn_scene), **мультиплеер** (TCP, лобби, курс), UI (кнопки, текст, бары), частицы, сохранения (PlayerPrefs), твины и анимации — без лишнего кода.
+**SpritePro** — высокоуровневая библиотека для 2D игр на Python: автоматическая отрисовка, камера, ввод, сцены, физика, UI, частицы, редактор уровней и мультиплеер. Базовый рантайм работает на `pygame`, а для мобильных игр теперь есть запуск через **Kivy host**, так что одну и ту же игру можно запускать как на desktop, так и в mobile-оболочке.
 
 ---
 
@@ -54,6 +54,7 @@ python -m spritePro.cli -e
 
 - [⚡ Почему SpritePro?](#-почему-spritepro) · [🌟 Особенности](#-что-делает-spritepro-особенным)
 - [🚀 Быстрый старт](#-быстрый-старт-30-секунд) — установка, первая игра, шаблон `--create`
+- [📱 Mobile и Build](#-mobile-и-build) — Kivy, Android, web, сборка библиотеки и билдов
 - [💡 Примеры возможностей](#-примеры-вау-возможностей) · [🎮 Что можно создать?](#-что-можно-создать)
 - [📖 Документация](#-документация) — **главная карта** и ссылки по разделам
 - [🎬 Демо-игры](#-демо-игры) · [📦 Что внутри?](#-что-внутри)
@@ -77,19 +78,20 @@ sprite = pygame.sprite.Sprite()
 
 ### ✨ **С SpritePro:**
 ```python
-# Всё работает из коробки!
 import spritePro as s
 
-s.get_screen((800, 600), "My Awesome Game")
+class MainScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.player = s.Sprite("player.png", (50, 50), s.WH_C, speed=5, scene=self)
 
-player = s.Sprite("player.png", (50, 50), s.WH_C, speed=5)
+    def update(self, dt):
+        self.player.handle_keyboard_input()
 
-while True:
-    s.update(fill_color=(20, 20, 30))
-    player.handle_keyboard_input()  # Готово! Движение работает!
+s.run(scene=MainScene, size=(800, 600), title="My Awesome Game", fill_color=(20, 20, 30))
 ```
 
-**Это всё!** Игра готова за 5 строк кода! 🎉
+**Это всё!** Игра запускается через движок, без ручного цикла в каждом файле. 🎉
 
 ---
 
@@ -109,6 +111,7 @@ while True:
 | ❌ Свой движок или интеграция Box2D/pymunk | ✅ Физика на pymunk: add_physics, типы тел, коллизии |
 | ❌ Ручная расстановка UI (x, y каждого элемента) | ✅ Layout: flex, сетка, круг, линия; ScrollView |
 | ❌ Кодом расставлять объекты на уровне | ✅ Редактор сцен (JSON), spawn_scene, объекты по имени |
+| ❌ Отдельный код под mobile-host | ✅ Один и тот же runtime: `s.run(..., platform="pygame")` / `s.run(..., platform="kivy")` |
 
 ### 🎯 **Всё, что нужно для игры - уже внутри:**
 
@@ -124,7 +127,8 @@ while True:
 - ✅ **Автолейаут (Layout)** - flex, сетка, круг, линия для автоматического размещения дочерних спрайтов ([документация](docs/layout.md))
 - ✅ **ScrollView** — скроллируемая область для контента (лейаут), колёсико и перетаскивание мышью, опциональная маска (клиппинг по viewport)
 - ✅ **Готовые сцены (readyScenes)** — подключаемые сцены: **ChatScene** (мультиплеерный чат с историей, скроллом и маской) и **ChatStyle** для настройки оформления
-- ✅ **Мультиплеер** — сетевые игры: TCP relay, контекст (send/poll/send_every), EventBus; быстрый старт через `s.networking.run()`. **Готовое лобби** (`run(use_lobby=True)`): один экран — имя, хост/клиент, порт, IP, список игроков, кнопки «В игру» и «Готов»; по нажатию «В игру» игра запускается у обоих. Подробно: [Networking — лобби](docs/networking.md#подробная-инструкция-лобби-use_lobbytrue). Мини-курс в папке `multiplayer_course/` — 10 уроков от обмена сообщениями до готовой мини-игры.
+- ✅ **Мультиплеер** — сетевые игры: TCP relay, контекст (send/poll/send_every), EventBus; быстрый старт через `s.networking.run()`. **Готовое лобби** (`run(use_lobby=True)`): один экран — имя, хост/клиент, порт, IP, список игроков; у хоста кнопки «В игру» и «Назад», у клиента — «Назад». По нажатию «В игру» игра запускается у обоих. Подробно: [Networking — лобби](docs/networking.md#подробная-инструкция-лобби-use_lobbytrue). Мини-курс в папке `multiplayer_course/` — 10 уроков от обмена сообщениями до готовой мини-игры.
+- ✅ **Mobile-рантайм** — запуск через `Kivy`: `s.run(..., platform="kivy")`, встроенный host для touch-ввода и мобильных demo
 
 ---
 
@@ -140,6 +144,12 @@ while True:
 pip install spritepro
 ```
 Все зависимости, включая `pygame`, будут установлены автоматически.
+
+Для мобильного host-режима:
+
+```bash
+pip install kivy
+```
 
 #### Обновление
 
@@ -167,21 +177,23 @@ pip install --upgrade spritepro
     ```
     Это позволит вам изменять код библиотеки и сразу видеть изменения в своих проектах.
 
-### Ваша первая игра (5 строк!)
+### Ваша первая игра
 
 ```python
 import spritePro as s
 
-s.get_screen((800, 600), "My Game")
+class MainScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.player = s.Sprite("", (50, 50), s.WH_C, speed=5, scene=self)
 
-player = s.Sprite("", (50, 50), s.WH_C, speed=5)
+    def update(self, dt):
+        self.player.handle_keyboard_input()
 
-while True:
-    s.update(fill_color=(20, 20, 30))
-    player.handle_keyboard_input()  # Готово! Игра работает!
+s.run(scene=MainScene, size=(800, 600), title="My Game", fill_color=(20, 20, 30))
 ```
 
-**Вот и всё!** У вас уже есть игра с управлением, отрисовкой и игровым циклом! 🎮
+**Вот и всё!** У вас уже есть игра с управлением, отрисовкой и игровым циклом. Для mobile достаточно сменить `platform` на `"kivy"`. 🎮
 
 ### ⚡ Быстрый старт 2.0 (шаблон проекта)
 
@@ -190,12 +202,52 @@ python -m spritePro.cli --create
 ```
 
 Создаст `main.py` в текущей папке и структуру `assets/audio`, `assets/images`, `scenes`.
-Также создаст `scenes/level.json` (формат Sprite Editor): сцена по умолчанию загрузит уровень из JSON и возьмёт `player` по имени.
+Шаблон теперь сразу современный:
+
+- `main.py` запускает игру через `s.run(...)`
+- `scenes/main_scene.py` — основная сцена, которая грузит `scenes/main_level.json`
+- `scenes/second_scene.py` — вторая почти пустая сцена-заготовка, чтобы было удобно расширять проект
+- `scenes/main_level.json` — стартовый уровень в формате Sprite Editor
+
+То есть новый проект после `--create` уже показывает нормальную scene-based структуру, а не только один файл с ручным циклом.
 
 Если хотите создать проект в отдельной папке, укажите путь:
 ```bash
 python -m spritePro.cli --create MyGame
 ```
+
+## 📱 Mobile и Build
+
+### Mobile игры
+
+Теперь на SpritePro можно делать и мобильные 2D-игры. Идея простая:
+
+```python
+s.run(scene=MainScene, platform="pygame")
+s.run(scene=MainScene, platform="kivy")
+```
+
+То есть логика игры остаётся той же, меняется только host-платформа.
+
+Полезные ссылки:
+
+- [Mobile guide](docs/mobile.md) — как устроен Kivy runtime и touch-ввод
+- [Hybrid Kivy UI guide](docs/kivy_hybrid.md) — Kivy menu/layout + встроенная игровая область SpritePro
+- [Build guide](docs/building.md) — как собирать library, web и mobile build
+
+### Что уже работает
+
+- desktop runtime через `pygame`
+- web build через `pygbag`
+- mobile host через `Kivy`
+- hybrid-режим: `Kivy` UI + встроенный `SpritePro`-виджет
+- demo, которые можно запускать через `--kivy`
+
+### Отдельная инструкция по сборке
+
+Подробный гайд вынесен в отдельный файл:
+
+- [docs/building.md](docs/building.md)
 
 ---
 
@@ -206,38 +258,29 @@ python -m spritePro.cli --create MyGame
 ```python
 import spritePro as s
 
-screen = s.get_screen((800, 600), "Platformer")
+class PlatformerScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.player = s.Sprite("player.png", (50, 50), (100, 300), speed=5, scene=self)
+        self.platforms = [
+            s.Sprite("", (200, 20), (200, 400), scene=self),
+            s.Sprite("", (200, 20), (500, 350), scene=self),
+        ]
+        self.emitter = s.ParticleEmitter(s.ParticleConfig(
+            amount=10,
+            speed_range=(50, 100),
+            lifetime_range=(0.5, 1.0),
+        ))
 
-# Игрок с автоматическим движением
-player = s.Sprite("player.png", (50, 50), (100, 300), speed=5)
+        self.player.set_collision_targets(self.platforms)
+        s.set_camera_follow(self.player)
 
-# Платформы
-platforms = [
-    s.Sprite("", (200, 20), (200, 400)),
-    s.Sprite("", (200, 20), (500, 350)),
-]
+    def update(self, dt):
+        self.player.handle_keyboard_input()
+        if self.player.velocity.length() > 0:
+            self.emitter.emit(self.player.rect.center)
 
-# Камера следует за игроком
-s.set_camera_follow(player)
-
-# Частицы при движении
-emitter = s.ParticleEmitter(s.ParticleConfig(
-    amount=10,
-    speed_range=(50, 100),
-    lifetime_range=(0.5, 1.0)
-))
-
-# Настраиваем столкновения один раз (не в цикле!)
-player.set_collision_targets(platforms)
-
-while True:
-    s.update(fill_color=(135, 206, 235))  # Небо
-    
-    player.handle_keyboard_input()  # Столкновения обрабатываются автоматически!
-    
-    # Частицы
-    if player.velocity.length() > 0:
-        emitter.emit(player.rect.center)
+s.run(scene=PlatformerScene, size=(800, 600), title="Platformer", fill_color=(135, 206, 235))
 ```
 
 **Результат:** Полноценная платформер-игра с физикой, камерой и эффектами!
@@ -301,18 +344,19 @@ score_text = s.TextSprite(
 import pygame
 import spritePro as s
 
-s.get_screen((800, 600), "Input")
+class InputScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        s.events.on("quit", self.on_quit)
 
-def on_quit(event):
-    print("Quit")
+    def on_quit(self, event):
+        print("Quit")
 
-s.events.on("quit", on_quit)
+    def update(self, dt):
+        if s.input.was_pressed(pygame.K_SPACE):
+            print("Space pressed")
 
-while True:
-    s.update()
-
-    if s.input.was_pressed(pygame.K_SPACE):
-        print("Space pressed")
+s.run(scene=InputScene, size=(800, 600), title="Input")
 ```
 
 Если нужен доступ к сырым событиям pygame — используйте `s.pygame_events`.
@@ -326,11 +370,7 @@ class MainScene(s.Scene):
     def on_enter(self, context):
         pass
 
-s.get_screen((800, 600), "Scenes")
-manager = s.get_context().scene_manager
-manager.add_scene("main", MainScene())
-s.register_scene_factory("main", MainScene)
-s.set_scene_by_name("main")
+s.run(scene=MainScene, size=(800, 600), title="Scenes")
 
 # Перезапуск сцены
 s.restart_scene()         # текущая сцена
@@ -412,6 +452,11 @@ pos = prefs.get_vector2("player_pos", (0, 0))
 - Синхронизация позиций, состояний, событий (ready, start, счёт)
 - Мини-курс в папке `multiplayer_course/`: уроки 1–10 с примерами, практикой и решениями
 
+### ✅ Мобильные игры
+- Запуск той же игры через `platform="kivy"`
+- Экранные кнопки, touch-ввод, Kivy-host
+- Основа для Android-сборок через Kivy/Buildozer
+
 ---
 
 ## 📊 Сравнение с альтернативами
@@ -467,6 +512,8 @@ pos = prefs.get_vector2("player_pos", (0, 0))
 |------|----------|
 | [Ping Pong](spritePro/demoGames/ping_pong.py) | Игра с меню, звуком, физикой |
 | [Physics Demo](spritePro/demoGames/physics_demo.py) | Гравитация, отскок, платформы, статика/кинематика |
+| [Mobile Orb Collector](spritePro/demoGames/mobile_orb_collector_demo.py) | Mobile-first demo: экранные кнопки, touch, Kivy |
+| [Kivy Hybrid Demo](spritePro/demoGames/kivy_hybrid_demo.py) | Kivy UI + встроенная игровая область SpritePro |
 | [demoGames/](demoGames/README.md) | **Сцена из редактора**: level.json, spawn_scene, get_physics, платформер. `python demoGames/main.py` |
 | [Fireworks](spritePro/demoGames/fireworks_demo.py) | Частицы |
 | [Tween](spritePro/demoGames/tweenDemo.py) | Плавные анимации |
@@ -503,6 +550,12 @@ pos = prefs.get_vector2("player_pos", (0, 0))
 - **Лобби** — экран с именем, хост/клиент, порт, «В игру». [docs/networking.md](docs/networking.md)
 - Курс: [multiplayer_course/](multiplayer_course/README.md) — 10 уроков
 
+### 📱 Mobile и build
+- **Kivy host** — запуск game loop внутри mobile-оболочки
+- **run(platform="kivy") / run_kivy(...)** — full-screen режим по умолчанию
+- **run_kivy_hybrid(...) / create_kivy_widget(...)** — Kivy UI вокруг встроенной игровой области
+- Подробно: [docs/mobile.md](docs/mobile.md), [docs/kivy_hybrid.md](docs/kivy_hybrid.md), [docs/building.md](docs/building.md)
+
 ### 🛠️ Утилиты
 - **AudioManager** — звук и музыка
 - **PlayerPrefs** — сохранения в JSON
@@ -522,12 +575,15 @@ pos = prefs.get_vector2("player_pos", (0, 0))
 
 | Раздел | Куда смотреть |
 |--------|----------------|
-| **Старт** | [Установка](#установка), [Первая игра](#ваша-первая-игра-5-строк), [Шаблон проекта](#-быстрый-старт-20-шаблон-проекта) |
+| **Старт** | [Установка](#установка), [Первая игра](#ваша-первая-игра), [Шаблон проекта](#-быстрый-старт-20-шаблон-проекта) |
 | **Обзор** | [docs/OVERVIEW.md](docs/OVERVIEW.md) — Layout, физика, Builder, мультиплеер кратко |
 | **Физика** | [docs/physics.md](docs/physics.md) — pymunk, типы тел, PhysicsShape, сцена из редактора; [docs/physics_issues.md](docs/physics_issues.md) — нюансы |
 | **Редактор сцен** | [docs/sprite_editor.md](docs/sprite_editor.md) — редактор, spawn_scene, get_physics из сцены |
 | **Демо** | [DOCUMENTATION_INDEX.md → Демо](DOCUMENTATION_INDEX.md#-демонстрационные-игры); сцена из редактора: [demoGames/](demoGames/README.md) |
 | **Сеть** | [docs/networking.md](docs/networking.md); курс: [multiplayer_course/](multiplayer_course/README.md) |
+| **Mobile** | [docs/mobile.md](docs/mobile.md) — Kivy runtime, touch, mobile demo |
+| **Hybrid Kivy UI** | [docs/kivy_hybrid.md](docs/kivy_hybrid.md) — меню/кнопки Kivy + встроенная игра SpritePro |
+| **Build** | [docs/building.md](docs/building.md) — library wheel/sdist, web, Android, packaging |
 | **Вся документация** | [docs/README.md](docs/README.md) — навигация по docs |
 
 ---
@@ -539,38 +595,33 @@ pos = prefs.get_vector2("player_pos", (0, 0))
 ```python
 import spritePro as s
 
-screen = s.get_screen((800, 600), "My Game")
+class MainScene(s.Scene):
+    def __init__(self):
+        super().__init__()
 
-# Аудио
-audio = s.audio_manager
-audio.load_sound("click", "sounds/click.mp3")
-click_sound = audio.get_sound("click")
-audio.play_music("music/bg.mp3")
+        audio = s.audio_manager
+        audio.load_sound("click", "sounds/click.mp3")
+        self.click_sound = audio.get_sound("click")
+        audio.play_music("music/bg.mp3")
 
-# Сохранения
-prefs = s.PlayerPrefs("save.json")
-high_score = prefs.get_int("high_score", 0)
+        self.prefs = s.PlayerPrefs("save.json")
+        self.high_score = self.prefs.get_int("high_score", 0)
+        self.score = 0
 
-# UI
-start_button = s.Button(
-    "", (200, 50), s.WH_C,
-    "Начать игру",
-    on_click=lambda: click_sound.play()
-)
+        self.start_button = s.Button(
+            "", (200, 50), s.WH_C, "Начать игру",
+            on_click=lambda: self.click_sound.play(),
+            scene=self,
+        )
+        self.player = s.Sprite("player.png", (50, 50), (100, 300), speed=5, scene=self)
+        s.set_camera_follow(self.player)
 
-# Игрок
-player = s.Sprite("player.png", (50, 50), (100, 300), speed=5)
+    def update(self, dt):
+        self.player.handle_keyboard_input()
+        if self.score > self.high_score:
+            self.prefs.set_int("high_score", self.score)
 
-# Камера
-s.set_camera_follow(player)
-
-while True:
-    s.update(fill_color=(20, 20, 30))
-    player.handle_keyboard_input()
-    
-    # Сохраняем рекорд
-    if score > high_score:
-        prefs.set_int("high_score", score)
+s.run(scene=MainScene, size=(800, 600), title="My Game", fill_color=(20, 20, 30))
 ```
 
 **Всё работает вместе из коробки!**
@@ -596,15 +647,17 @@ sprites = pygame.sprite.Group()
 
 ### ✅ С SpritePro:
 ```python
-# 10 строк для той же игры!
 import spritePro as s
 
-s.get_screen((800, 600), "Game")
-player = s.Sprite("player.png", (50, 50), s.WH_C, speed=5)
+class MainScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.player = s.Sprite("player.png", (50, 50), s.WH_C, speed=5, scene=self)
 
-while True:
-    s.update()
-    player.handle_keyboard_input()
+    def update(self, dt):
+        self.player.handle_keyboard_input()
+
+s.run(scene=MainScene, size=(800, 600), title="Game")
 ```
 
 **В 10 раз меньше кода!** 🚀
@@ -639,7 +692,7 @@ while True:
 pip install spritepro
 ```
 
-Затем — [Ваша первая игра (5 строк)](#ваша-первая-игра-5-строк) выше или шаблон: `python -m spritePro.cli --create`.
+Затем — [Ваша первая игра](#ваша-первая-игра) выше или шаблон: `python -m spritePro.cli --create`.
 
 ---
 

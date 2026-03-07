@@ -110,20 +110,22 @@ TCP + JSON‑сообщения формата `{"event": "...", "data": {...}}`
 ### Пример синхронизации позиции
 
 ```python
-def main(net, role):
-    s.multiplayer.init_context(net, role)
-    ctx = s.multiplayer_ctx
-    me = s.Sprite("", (50, 50), (200, 300))
-    remote_pos = [600.0, 300.0]
+class MultiplayerScene(s.Scene):
+    def __init__(self, net, role):
+        super().__init__()
+        s.multiplayer.init_context(net, role)
+        self.ctx = s.multiplayer_ctx
+        self.me = s.Sprite("", (50, 50), (200, 300), scene=self)
+        self.other = s.Sprite("", (50, 50), (600, 300), scene=self)
+        self.remote_pos = [600.0, 300.0]
 
-    while True:
-        s.update(...)
-        pos = me.get_world_position()
-        ctx.send_every("pos", {"pos": list(pos)}, 0.016)
-        for msg in ctx.poll():
+    def update(self, dt):
+        pos = self.me.get_world_position()
+        self.ctx.send_every("pos", {"pos": list(pos)}, 0.016)
+        for msg in self.ctx.poll():
             if msg.get("event") == "pos":
-                remote_pos[:] = msg.get("data", {}).get("pos", [0, 0])
-        other.set_position(remote_pos)
+                self.remote_pos[:] = msg.get("data", {}).get("pos", [0, 0])
+        self.other.set_position(self.remote_pos)
 ```
 
 ### Курс по мультиплееру

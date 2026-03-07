@@ -42,94 +42,90 @@ def _resolve_winner(left: str, right: str) -> int:
     return -1
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
-    s.get_screen((800, 520), "Events RPS Demo")
-    _ = s.multiplayer.init_context(net, role)
-    ctx = s.multiplayer_ctx
+class EventsRpsScene(s.Scene):
+    def __init__(self, net: s.NetClient, role: str) -> None:
+        super().__init__()
+        s.multiplayer.init_context(net, role)
+        self.ctx = s.multiplayer_ctx
+        self.title = s.TextSprite("Rock / Paper / Scissors", 30, (255, 255, 255), (400, 40), scene=self)
+        self.hint = s.TextSprite("1=Rock  2=Paper  3=Scissors", 20, (200, 200, 200), (400, 80), scene=self)
+        self.status = s.TextSprite("Make your choice...", 20, (220, 220, 220), (400, 120), scene=self)
+        self.my_info = s.TextSprite("You (ID: ?)", 20, (120, 200, 255), (200, 220), scene=self)
+        self.other_info = s.TextSprite("Other (ID: ?)", 20, (255, 200, 120), (600, 220), scene=self)
+        self.my_choice_text = s.TextSprite("?", 36, (120, 200, 255), (200, 270), scene=self)
+        self.other_choice_text = s.TextSprite("?", 36, (255, 200, 120), (600, 270), scene=self)
+        self.score_text = s.TextSprite("Score: 0 - 0", 22, (255, 255, 255), (400, 360), scene=self)
 
-    title = s.TextSprite("Rock / Paper / Scissors", 30, (255, 255, 255), (400, 40))
-    hint = s.TextSprite("1=Rock  2=Paper  3=Scissors", 20, (200, 200, 200), (400, 80))
-    status = s.TextSprite("Make your choice...", 20, (220, 220, 220), (400, 120))
+        self.my_choice: str | None = None
+        self.other_choice: str | None = None
+        self.my_score = 0
+        self.other_score = 0
+        self.other_id: int | None = None
+        self.last_result_at: float | None = None
+        self.result_delay = 1.0
+        s.events.connect("rps_choice", self.on_choice)
 
-    my_info = s.TextSprite("You (ID: ?)", 20, (120, 200, 255), (200, 220))
-    other_info = s.TextSprite("Other (ID: ?)", 20, (255, 200, 120), (600, 220))
-    my_choice_text = s.TextSprite("?", 36, (120, 200, 255), (200, 270))
-    other_choice_text = s.TextSprite("?", 36, (255, 200, 120), (600, 270))
-    score_text = s.TextSprite("Score: 0 - 0", 22, (255, 255, 255), (400, 360))
-
-    _ = (title, hint)
-
-    # Текущие выборы игрока и соперника.
-    my_choice: str | None = None
-    other_choice: str | None = None
-    my_score = 0
-    other_score = 0
-    other_id: int | None = None
-    # Пауза после результата, чтобы было видно победителя.
-    last_result_at: float | None = None
-    result_delay = 1.0
-
-    def on_choice(choice: str, sender_id: int | None = None) -> None:
-        nonlocal my_choice, other_choice, my_score, other_score, other_id, last_result_at
-        # Не принимаем новые ходы, пока показываем результат.
-        if last_result_at is not None:
+    def on_choice(self, choice: str, sender_id: int | None = None) -> None:
+        if self.last_result_at is not None:
             return
 
-        if sender_id == ctx.client_id or sender_id is None:
-            my_choice = choice
+        if sender_id == self.ctx.client_id or sender_id is None:
+            self.my_choice = choice
         else:
-            other_choice = choice
-            other_id = sender_id
+            self.other_choice = choice
+            self.other_id = sender_id
 
-        # Оба выбора готовы — считаем результат и запускаем паузу.
-        if my_choice and other_choice:
-            result = _resolve_winner(my_choice, other_choice)
+        if self.my_choice and self.other_choice:
+            result = _resolve_winner(self.my_choice, self.other_choice)
             if result > 0:
-                my_score += 1
-                status.set_text("You win this round!")
+                self.my_score += 1
+                self.status.set_text("You win this round!")
             elif result < 0:
-                other_score += 1
-                status.set_text("You lose this round!")
+                self.other_score += 1
+                self.status.set_text("You lose this round!")
             else:
-                status.set_text("Draw.")
-            last_result_at = s.time_since_start
+                self.status.set_text("Draw.")
+            self.last_result_at = s.time_since_start
 
-    s.events.connect("rps_choice", on_choice)
-
-    while True:
-        s.update(fps=60, fill_color=(20, 20, 30))
-
-        # Во время паузы после результата ввод блокируется.
-        if last_result_at is None:
+    def update(self, dt: float) -> None:
+        if self.last_result_at is None:
             for key, choice in CHOICES.items():
                 if s.input.was_pressed(key):
                     s.events.send(
                         "rps_choice",
                         route="all",
-                        net=ctx,
+                        net=self.ctx,
                         choice=choice,
-                        sender_id=ctx.client_id,
+                        sender_id=self.ctx.client_id,
                     )
 
-        for msg in ctx.poll():
+        for msg in self.ctx.poll():
             if msg.get("event") == "rps_choice":
                 s.events.send("rps_choice", **msg.get("data", {}))
 
-        my_info.set_text(f"You (ID: {ctx.client_id})")
-        other_id_label = "?" if other_id is None else str(other_id)
-        other_info.set_text(f"Other (ID: {other_id_label})")
+        self.my_info.set_text(f"You (ID: {self.ctx.client_id})")
+        other_id_label = "?" if self.other_id is None else str(self.other_id)
+        self.other_info.set_text(f"Other (ID: {other_id_label})")
 
-        # Сброс после задержки и ожидание нового раунда.
-        if last_result_at is not None:
-            if s.time_since_start - last_result_at >= result_delay:
-                last_result_at = None
-                my_choice = None
-                other_choice = None
-                status.set_text("Make your choice...")
+        if self.last_result_at is not None and s.time_since_start - self.last_result_at >= self.result_delay:
+            self.last_result_at = None
+            self.my_choice = None
+            self.other_choice = None
+            self.status.set_text("Make your choice...")
 
-        my_choice_text.set_text(my_choice or "?")
-        other_choice_text.set_text(other_choice or "?")
-        score_text.set_text(f"Score: {my_score} - {other_score}")
+        self.my_choice_text.set_text(self.my_choice or "?")
+        self.other_choice_text.set_text(self.other_choice or "?")
+        self.score_text.set_text(f"Score: {self.my_score} - {self.other_score}")
+
+
+def multiplayer_main(net: s.NetClient, role: str) -> None:
+    s.run(
+        scene=lambda: EventsRpsScene(net, role),
+        size=(800, 520),
+        title="Events RPS Demo",
+        fps=60,
+        fill_color=(20, 20, 30),
+    )
 
 
 if __name__ == "__main__":

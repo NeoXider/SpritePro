@@ -13,6 +13,8 @@ def _format_numeric_for_input(prop: str, value: float) -> str:
         return str(int(round(value)))
     if prop in ("color_r", "color_g", "color_b"):
         return str(max(0, min(255, int(round(value)))))
+    if prop in ("scale_x_percent", "scale_y_percent"):
+        return str(max(0, min(999, int(round(value)))))
     text = f"{value:.3f}".rstrip("0").rstrip(".")
     return text if text else "0"
 
@@ -231,22 +233,34 @@ def render(editor) -> None:
         return
 
     obj = editor.selected_objects[0]
+    shape = getattr(obj, "sprite_shape", "image")
+    is_image = shape == sprite_types.SHAPE_IMAGE
     y = top + 40
     y = _render_name_row(editor, x, y, obj.name)
     y += 10
     y = _render_numeric_property_row(editor, x, y, "Position X", obj.transform.x, -10.0, 10.0, "x", "{:.1f}")
     y = _render_numeric_property_row(editor, x, y, "Position Y", obj.transform.y, -10.0, 10.0, "y", "{:.1f}")
     y = _render_numeric_property_row(editor, x, y, "Rotation", obj.transform.rotation, -5.0, 5.0, "rotation", "{:.1f} deg")
-    y = _render_numeric_property_row(editor, x, y, "Scale X", obj.transform.scale_x, -0.1, 0.1, "scale_x", "{:.2f}")
-    y = _render_numeric_property_row(editor, x, y, "Scale Y", obj.transform.scale_y, -0.1, 0.1, "scale_y", "{:.2f}")
+    if is_image:
+        y = _render_numeric_property_row(
+            editor, x, y, "Scale X %", obj.transform.scale_x * 100, -10.0, 10.0,
+            "scale_x_percent", "{:.0f}%", value_type="int"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Scale Y %", obj.transform.scale_y * 100, -10.0, 10.0,
+            "scale_y_percent", "{:.0f}%", value_type="int"
+        )
+    else:
+        y = _render_numeric_property_row(editor, x, y, "Scale X", obj.transform.scale_x, -0.1, 0.1, "scale_x", "{:.2f}")
+        y = _render_numeric_property_row(editor, x, y, "Scale Y", obj.transform.scale_y, -0.1, 0.1, "scale_y", "{:.2f}")
     native_w, native_h = editor._get_object_native_size(obj)
     size_x, size_y = editor._get_object_display_size(obj)
     y += 8
-    y = _render_property_row(editor, x, y, "Image Size", f"{native_w} x {native_h}")
+    if is_image:
+        y = _render_property_row(editor, x, y, "Image Size (px)", f"{native_w} x {native_h}")
     y = _render_numeric_property_row(editor, x, y, "Size X", size_x, -8.0, 8.0, "width", "{:.1f}px")
     y = _render_numeric_property_row(editor, x, y, "Size Y", size_y, -8.0, 8.0, "height", "{:.1f}px")
     y += 8
-    shape = getattr(obj, "sprite_shape", "image")
     y = _render_dropdown_row(editor, x, y, "Sprite Type", shape, "sprite_shape")
     if shape == "image":
         sprite_text = os.path.basename(obj.sprite_path) if obj.sprite_path else "None"

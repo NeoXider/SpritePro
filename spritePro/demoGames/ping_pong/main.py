@@ -11,12 +11,13 @@ from scene import PingPongScene
 
 
 def main():
-    s.get_screen((900, 600), "Ping Pong")
     s.enable_debug(True)
-    s.set_scene(PingPongScene())
-
-    while True:
-        s.update(fill_color=(20, 20, 30))
+    s.run(
+        scene=PingPongScene,
+        size=(900, 600),
+        title="Ping Pong",
+        fill_color=(20, 20, 30),
+    )
 
 
 if __name__ == "__main__":

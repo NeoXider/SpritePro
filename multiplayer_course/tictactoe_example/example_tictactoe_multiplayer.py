@@ -8,6 +8,7 @@
 
 Запуск:
   python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py
+  python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py --quick
   python ... --quick --host 127.0.0.1 --port 5050
 """
 
@@ -388,12 +389,17 @@ class TicTacToeScene(s.Scene):
 # -----------------------------------------------------------------------------
 def multiplayer_main(net: s.NetClient, role: str) -> None:
     s.multiplayer.init_context(net, role)
-    s.get_screen(SCREEN_SIZE, "Крестики-нолики | Multiplayer")
-    s.scene.add_scene("game", TicTacToeScene)
-    s.scene.set_scene_by_name("game", recreate=True)
 
-    while True:
-        s.update(fill_color=COLOR_BG)
+    def setup() -> None:
+        s.scene.add_scene("game", TicTacToeScene)
+        s.scene.set_scene_by_name("game", recreate=True)
+
+    s.run(
+        setup=setup,
+        size=SCREEN_SIZE,
+        title="Крестики-нолики | Multiplayer",
+        fill_color=COLOR_BG,
+    )
 
 
 if __name__ == "__main__":

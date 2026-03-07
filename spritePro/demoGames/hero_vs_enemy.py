@@ -34,26 +34,43 @@ class Hero(s.Sprite):
 
 
 path_sprites = "spritePro\\demoGames\\Sprites\\"
-s.init()
-screen = s.get_screen((1260, 960), "Game")
 
-bg = s.Sprite(path_sprites + "background_game.png", s.WH, s.WH_C)
-bg.set_color((150, 150, 150))
 
-player = Hero(path_sprites + "hero.png", speed=5)
-player.set_native_size()
-player.set_position((s.WH_C.x, 730))
-player.set_scale(0.5)
-player.set_bar(create_bar())
+class HeroVsEnemyScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.bg = s.Sprite(path_sprites + "background_game.png", s.WH, s.WH_C, scene=self)
+        self.bg.set_color((150, 150, 150))
 
-enemy = Hero(path_sprites + "enemy.png", speed=1)
-enemy.set_native_size()
-enemy.set_position((s.WH_C.x + 500, 730))
-enemy.set_scale(0.5)
-enemy.set_bar(create_bar())
+        self.player = Hero(path_sprites + "hero.png", speed=5, scene=self)
+        self.player.set_native_size()
+        self.player.set_position((s.WH_C.x, 730))
+        self.player.set_scale(0.5)
+        self.player.set_bar(create_bar())
 
-while True:
-    s.update(60, fill_color=(0, 0, 0))
-    player.handle_keyboard_input(None, None, pygame.K_a, pygame.K_d)
-    s.set_camera_follow(player, (0, -250))
-    enemy.move_towards(player.get_position())
+        self.enemy = Hero(path_sprites + "enemy.png", speed=1, scene=self)
+        self.enemy.set_native_size()
+        self.enemy.set_position((s.WH_C.x + 500, 730))
+        self.enemy.set_scale(0.5)
+        self.enemy.set_bar(create_bar())
+
+    def update(self, dt: float) -> None:
+        self.player.handle_keyboard_input(None, None, pygame.K_a, pygame.K_d)
+        s.set_camera_follow(self.player, (0, -250))
+        self.enemy.move_towards(self.player.get_position())
+
+
+def run_demo(platform: str = "kivy") -> None:
+    s.run(
+        scene=HeroVsEnemyScene,
+        size=(1260, 960),
+        title="Game",
+        fps=60,
+        fill_color=(0, 0, 0),
+        platform=platform,
+    )
+
+
+if __name__ == "__main__":
+    #run_demo("pygame")
+    run_demo()

@@ -36,63 +36,70 @@ import pygame  # noqa: E402
 import spritePro as s  # noqa: E402
 
 
-def main(net: s.NetClient, role: str) -> None:
-    s.get_screen((800, 600), "SpritePro Multiplayer Demo")
+class LocalMultiplayerScene(s.Scene):
+    def __init__(self, net: s.NetClient, role: str) -> None:
+        super().__init__()
+        s.multiplayer.init_context(net, role)
+        self.ctx = s.multiplayer_ctx
+        self.speed = 240.0
+        self.tick_rate = 60
+        self.other_id: int | None = None
 
-    # Контекст мультиплеера: хранит id/role и упрощает send/poll.
-    _ = s.multiplayer.init_context(net, role)
-    ctx = s.multiplayer_ctx
+        self.me = s.Sprite("", (50, 50), (200, 300), scene=self)
+        self.me.DoScale(1.5, 1).SetLoops(-1).SetYoyo(True)
+        self.other = s.Sprite("", (50, 50), (600, 300), scene=self)
 
-    me = s.Sprite("", (50, 50), (200, 300))
-    me.DoScale(1.5, 1).SetLoops(-1).SetYoyo(True)
-    other = s.Sprite("", (50, 50), (600, 300))
+        my_color = (220, 70, 70) if self.ctx.is_host else (70, 120, 220)
+        other_color = (70, 120, 220) if self.ctx.is_host else (220, 70, 70)
+        self.me.set_color(my_color)
+        self.other.set_color(other_color)
 
-    my_color = (220, 70, 70) if ctx.is_host else (70, 120, 220)
-    other_color = (70, 120, 220) if ctx.is_host else (220, 70, 70)
-    me.set_color(my_color)
-    other.set_color(other_color)
+        other_pos = self.other.get_world_position()
+        self.remote_pos = [other_pos.x, other_pos.y]
 
-    other_pos = other.get_world_position()
-    remote_pos = [other_pos.x, other_pos.y]
-    speed = 240.0
-    tick_rate = 60
-    other_id: int | None = None
+        self.me_label = s.TextSprite("?", 18, (255, 255, 255), (0, 0), scene=self)
+        self.other_label = s.TextSprite("?", 18, (255, 255, 255), (0, 0), scene=self)
 
-    me_label = s.TextSprite("?", 18, (255, 255, 255), (0, 0))
-    other_label = s.TextSprite("?", 18, (255, 255, 255), (0, 0))
-
-    while True:
-        s.update(fps=tick_rate, fill_color=(20, 20, 25))
-        dt = s.dt
-
+    def update(self, dt: float) -> None:
         dx = s.input.get_axis(pygame.K_a, pygame.K_d)
         dy = s.input.get_axis(pygame.K_w, pygame.K_s)
-        pos = me.get_world_position()
-        pos.x += dx * speed * dt
-        pos.y += dy * speed * dt
-        me.set_position(pos)
+        pos = self.me.get_world_position()
+        pos.x += dx * self.speed * dt
+        pos.y += dy * self.speed * dt
+        self.me.set_position(pos)
 
-        # Отправляем позицию списком — list(Vector2) даёт [x, y].
-        ctx.send_every("pos", {"pos": list(pos)}, 1.0 / tick_rate)
-        for msg in ctx.poll():
+        self.ctx.send_every("pos", {"pos": list(pos)}, 1.0 / self.tick_rate)
+        for msg in self.ctx.poll():
             if msg.get("event") == "pos":
                 data = msg.get("data", {})
-                remote_pos[:] = data.get("pos", [0, 0])
-                other_id = data.get("sender_id")
-        other.set_position(remote_pos)
+                self.remote_pos[:] = data.get("pos", [0, 0])
+                self.other_id = data.get("sender_id")
+        self.other.set_position(self.remote_pos)
 
-        me_label.set_text(f"{ctx.role} (ID: {ctx.client_id})")
-        me_pos = me.get_world_position()
-        me_label.set_position((me_pos.x, me_pos.y - 40))
+        self.me_label.set_text(f"{self.ctx.role} (ID: {self.ctx.client_id})")
+        me_pos = self.me.get_world_position()
+        self.me_label.set_position((me_pos.x, me_pos.y - 40))
 
-        other_label_str = f"other (ID: {other_id})" if other_id is not None else "other (ID: ?)"
-        other_label.set_text(other_label_str)
-        other_pos = other.get_world_position()
-        other_label.set_position((other_pos.x, other_pos.y - 40))
+        other_label_str = (
+            f"other (ID: {self.other_id})" if self.other_id is not None else "other (ID: ?)"
+        )
+        self.other_label.set_text(other_label_str)
+        other_pos = self.other.get_world_position()
+        self.other_label.set_position((other_pos.x, other_pos.y - 40))
+
+
+def main(net: s.NetClient, role: str) -> None:
+    s.run(
+        scene=lambda: LocalMultiplayerScene(net, role),
+        size=(800, 600),
+        title="SpritePro Multiplayer Demo",
+        fps=60,
+        fill_color=(20, 20, 25),
+    )
 
 
 if __name__ == "__main__":
     # if "--lobby" in sys.argv:
-        s.networking.run(use_lobby=True)
+    #    s.networking.run(use_lobby=True)
     # else:
-    #     s.networking.run()
+        s.networking.run()

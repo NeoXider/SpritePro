@@ -10,6 +10,7 @@
 |-------|------------|
 | [📋 Основные документы](#-основные-документы-проекта) | README, OVERVIEW, ROADMAP, CONTRIBUTING, GAME_IDEAS |
 | [🎯 Старт и основы](#-основные-компоненты) | Sprite, игровой цикл, ввод, события, сцены, debug |
+| [📱 Mobile и Build](#-mobile-и-build) | [mobile.md](docs/mobile.md), [kivy_hybrid.md](docs/kivy_hybrid.md), [building.md](docs/building.md) |
 | [⚙️ Физика](#-игровые-системы) | [physics.md](docs/physics.md) — типы тел, PhysicsShape, сцена из редактора; [physics_issues.md](docs/physics_issues.md) |
 | [🎨 Редактор сцен](#-основные-компоненты) | [sprite_editor.md](docs/sprite_editor.md) — редактор, spawn_scene, get_physics |
 | [🖼️ UI](#-ui-компоненты) | Button, Toggle, Slider, Text, TextInput, Layout, Pages, Bar |
@@ -75,6 +76,25 @@
 - Планируемые улучшения
 - Профилирование и мониторинг
 - Бенчмарки и тесты
+
+### [docs/mobile.md](docs/mobile.md) 📱
+**Мобильный запуск через Kivy**
+- `s.run(..., platform="kivy")`
+- touch-ввод и mobile host
+- список demo с запуском через `--kivy`
+
+### [docs/kivy_hybrid.md](docs/kivy_hybrid.md) 🧩
+**Hybrid Kivy UI + SpritePro**
+- `s.run_kivy_hybrid(...)`
+- `s.create_kivy_widget(...)`
+- меню, кнопки и layout на Kivy вокруг встроенной игровой области
+
+### [docs/building.md](docs/building.md) 📦
+**Сборка библиотеки и игр**
+- wheel/sdist для SpritePro
+- desktop packaging
+- web build через `pygbag`
+- Android build через `Kivy + Buildozer`
 
 ## 📚 Документация компонентов
 

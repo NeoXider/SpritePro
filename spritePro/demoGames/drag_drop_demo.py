@@ -88,15 +88,15 @@ class DragDropScene(s.Scene):
         return None
 
 
-def main():
-    s.get_screen((800, 600), "Drag & Drop Demo")
-    manager = s.get_context().scene_manager
-    manager.add_scene("drag_demo", DragDropScene())
-    s.scene.set_scene_by_name("drag_demo")
-
-    while True:
-        s.update(fill_color=(15, 15, 25))
+def run_demo(platform: str = "pygame") -> None:
+    s.run(
+        scene=DragDropScene,
+        size=(800, 600),
+        title="Drag & Drop Demo",
+        fill_color=(15, 15, 25),
+        platform=platform,
+    )
 
 
 if __name__ == "__main__":
-    main()
+    run_demo("kivy" if "--kivy" in sys.argv else "pygame")

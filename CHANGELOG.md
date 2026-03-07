@@ -5,6 +5,26 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0]
+
+### Added
+- **Mobile runtime через Kivy** — одну и ту же игру теперь можно запускать через `s.run(..., platform="pygame")` и `s.run(..., platform="kivy")`. Добавлены low-level API для embedded-рендера и mobile host, touch-события прокидываются в игровой ввод.
+- **Новый mobile demo** — добавлен `spritePro/demoGames/mobile_orb_collector_demo.py` как пример игры с экранными кнопками и запуском в Kivy.
+- **Документация по мобильному запуску и сборке** — добавлены и обновлены материалы по mobile flow, Kivy runtime, web/mobile build и запуску demo.
+
+### Changed
+- **Основной игровой запуск** — рекомендованный путь теперь через `s.run(...)`, `Scene` и `SceneManager`, вместо ручного `while True: s.update(...)` в каждом примере.
+- **Демо-игры** — демо переведены на новый Scene-based запуск; часть примеров теперь умеет запускаться и в `Kivy`.
+- **CLI `--create`** — шаблон нового проекта теперь создаёт современный scene-based старт: `main.py` на `s.run(...)`, основную сцену с `main_level.json` и вторую сцену-заготовку для расширения проекта.
+- **README и docs** — главный README обновлён под SpritePro 3.x: desktop/web/mobile позиционирование, ссылки на mobile/build guide, актуализированные примеры запуска.
+- **Версия библиотеки** — релиз обновлён до `3.0.0`.
+
+### Fixed
+- **Ввод в mobile host** — обработка `mouse_pos`, нажатий, отпусканий и перемещения мыши/тача теперь работает корректнее в embedded/Kivy-режиме.
+- **UI взаимодействие** — `MouseInteractor` использует обобщённый input state, поэтому hover/click работают стабильнее в desktop и mobile host.
+
+---
+
 ## [2.2.3]
 
 ### Added
@@ -149,7 +169,6 @@
 
 ### Планируется
 - Продвинутые UI компоненты
-- Мобильная поддержка
 
 ## [1.4.9]
 

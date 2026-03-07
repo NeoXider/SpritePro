@@ -10,55 +10,62 @@ sys.path.insert(0, str(parent_dir))
 import spritePro as s  # noqa: E402
 
 
-def main():
-    s.get_screen((900, 600), "Particles Auto Emit Demo")
+class ParticlesAutoEmitScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.title = s.TextSprite("Particles Auto Emit Demo", 28, (255, 255, 255), (s.WH_C.x, 30), scene=self)
+        self.hints = s.TextSprite(
+            "Слева: по времени  |  Синий квадрат: по расстоянию (только при движении)",
+            18,
+            (200, 200, 200),
+            (s.WH_C.x, 565),
+            scene=self,
+        )
 
-    title = s.TextSprite("Particles Auto Emit Demo", 28, (255, 255, 255), (s.WH_C.x, 30))
-    hints = s.TextSprite(
-        "Слева: по времени  |  Синий квадрат: по расстоянию (только при движении)",
-        18,
-        (200, 200, 200),
-        (s.WH_C.x, 565),
-    )
+        self.mover = s.Sprite("", (40, 40), (650, 300), speed=320, scene=self)
+        self.mover.set_color((120, 200, 255))
 
-    mover = s.Sprite("", (40, 40), (650, 300), speed=320)
-    mover.set_color((120, 200, 255))
+        self.interval_emitter = s.ParticleEmitter(
+            s.template_trail(),
+            auto_emit=True,
+            emit_interval=(0.05, 0.15),
+            auto_register=True,
+        )
+        self.interval_emitter.set_position((200, 300))
 
-    interval_emitter = s.ParticleEmitter(
-        s.template_trail(),
-        auto_emit=True,
-        emit_interval=(0.05, 0.15),
-        auto_register=True,
-    )
-    interval_emitter.set_position((200, 300))
+        self.step_emitter = s.ParticleEmitter(
+            s.template_sparks(),
+            auto_emit=True,
+            emit_step=50,
+            emit_interval=0,
+            auto_register=True,
+        )
 
-    step_emitter = s.ParticleEmitter(
-        s.template_sparks(),
-        auto_emit=True,
-        emit_step=50,
-        emit_interval=0,
-        auto_register=True,
-    )
-
-    _ = (title, hints)
-
-    while True:
-        s.update(fill_color=(20, 20, 30))
-
+    def update(self, dt: float) -> None:
         axis_x = s.input.get_axis(pygame.K_LEFT, pygame.K_RIGHT)
         axis_y = s.input.get_axis(pygame.K_UP, pygame.K_DOWN)
-        mover.velocity.x = axis_x * mover.speed * s.dt
-        mover.velocity.y = axis_y * mover.speed * s.dt
+        self.mover.velocity.x = axis_x * self.mover.speed * s.dt
+        self.mover.velocity.y = axis_y * self.mover.speed * s.dt
 
-        step_emitter.set_position(mover.rect.center)
+        self.step_emitter.set_position(self.mover.rect.center)
 
         if s.input.was_pressed(pygame.K_SPACE):
-            if interval_emitter.auto_emit:
-                interval_emitter.stop_auto_emit()
-                hints.text = "Слева: выкл  |  Синий квадрат: по расстоянию"
+            if self.interval_emitter.auto_emit:
+                self.interval_emitter.stop_auto_emit()
+                self.hints.text = "Слева: выкл  |  Синий квадрат: по расстоянию"
             else:
-                interval_emitter.start_auto_emit()
-                hints.text = "Слева: по времени  |  Синий квадрат: по расстоянию"
+                self.interval_emitter.start_auto_emit()
+                self.hints.text = "Слева: по времени  |  Синий квадрат: по расстоянию"
+
+
+def main(platform: str = "pygame"):
+    s.run(
+        scene=ParticlesAutoEmitScene,
+        size=(900, 600),
+        title="Particles Auto Emit Demo",
+        fill_color=(20, 20, 30),
+        platform=platform,
+    )
 
 
 if __name__ == "__main__":

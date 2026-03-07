@@ -196,15 +196,19 @@ class ResultScene(s.Scene):
 
 def multiplayer_main(net: s.NetClient, role: str) -> None:
     s.multiplayer.init_context(net, role)
-    s.get_screen((800, 600), "Lesson 7 - Game + Results")
-    s.scene.add_scene("menu", MenuScene)
-    s.scene.add_scene("game", GameScene)
-    s.scene.add_scene("result", ResultScene)
-    s.scene.set_scene_by_name("menu", recreate=True)
 
-    while True:
-        # Основной тик.
-        s.update(fill_color=(16, 16, 22))
+    def setup() -> None:
+        s.scene.add_scene("menu", MenuScene)
+        s.scene.add_scene("game", GameScene)
+        s.scene.add_scene("result", ResultScene)
+        s.scene.set_scene_by_name("menu", recreate=True)
+
+    s.run(
+        setup=setup,
+        size=(800, 600),
+        title="Lesson 7 - Game + Results",
+        fill_color=(16, 16, 22),
+    )
 
 
 if __name__ == "__main__":

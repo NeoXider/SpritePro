@@ -162,6 +162,15 @@ class GameContext:
 
             spritePro.debug_log_warning("Error init pygame")
 
+    def attach_surface(self, surface: pygame.Surface) -> pygame.Surface:
+        """Подключает внешнюю поверхность рендера вместо окна pygame."""
+        self.screen = surface
+        self.screen_rect = surface.get_rect()
+        self._quit_requested = False
+        self.WH = Vector2(self.screen_rect.size)
+        self.WH_C = Vector2(self.screen_rect.center)
+        return surface
+
     def get_screen(
         self,
         size: Tuple[int, int] = (800, 600),
@@ -186,17 +195,13 @@ class GameContext:
                 os.environ["SDL_VIDEO_WINDOW_POS"] = f"{x},{y}"
             except ValueError:
                 pass
-        self.screen = pygame.display.set_mode(size)
-        self.screen_rect = self.screen.get_rect()
-        self._quit_requested = False
+        self.attach_surface(pygame.display.set_mode(size))
         pygame.display.set_caption(title)
         if icon:
             icon_surface = resource_cache.load_texture(icon)
             if icon_surface is not None:
                 pygame.display.set_icon(icon_surface)
 
-        self.WH = Vector2(size)
-        self.WH_C = Vector2(self.screen_rect.center)
         get_plugin_manager().emit("game_init")
         pm = get_plugin_manager()
         enabled_plugins = [n for n in pm.list_plugins() if pm.get_plugin(n) and pm.get_plugin(n).enabled]
@@ -211,32 +216,15 @@ class GameContext:
             )
         return self.screen
 
-    def update(
+    def _run_frame(
         self,
-        fps: int = 60,
-        fill_color: Tuple[int, int, int] | None = None,
-        update_display: bool = True,
-        *update_objects,
+        *,
+        events: List[pygame.event.Event],
+        update_display: bool,
+        fill_color: Tuple[int, int, int] | None,
+        update_objects: Tuple[object, ...],
+        exit_on_quit: bool,
     ) -> None:
-        """Обновляет ввод, сцены, спрайты и debug overlay.
-
-        Args:
-            fps (int, optional): Целевой FPS. По умолчанию 60.
-            fill_color (tuple[int, int, int] | None, optional): Цвет заливки экрана.
-                Если None, заливка не выполняется.
-            update_display (bool, optional): Вызывать ли обновление окна.
-            *update_objects: Объекты, которые нужно обновлять каждый кадр.
-        """
-        if fps >= 0 and fps != self.fps:
-            self.fps = fps
-        self.dt = self.clock.tick(self.fps) / 1000.0
-        self.frame_count += 1
-        self.time_since_start = time.perf_counter() - self._start_time
-        self.game.debug_fps_value = self.clock.get_fps()
-
-        if self.screen is None:
-            return
-
         if fill_color is not None:
             self.screen.fill(fill_color)
 
@@ -246,7 +234,7 @@ class GameContext:
             if not self.game.debug_hud_on_top:
                 self.game.draw_debug_hud(self.screen)
 
-        self.events = pygame.event.get()
+        self.events = list(events)
         try:
             import spritePro as _sp
 
@@ -310,13 +298,74 @@ class GameContext:
                 self.game.draw_debug_hud(self.screen)
             self.game.draw_debug_overlay(self.screen, self.WH_C, dt=self.dt)
 
-        if update_display:
+        if update_display and pygame.display.get_surface() is not None:
             pygame.display.update()
 
-        if self._quit_requested:
+        if self._quit_requested and exit_on_quit:
             import sys
+
             if sys.platform != "emscripten":
                 sys.exit(0)
+
+    def update(
+        self,
+        fps: int = 60,
+        fill_color: Tuple[int, int, int] | None = None,
+        update_display: bool = True,
+        *update_objects,
+    ) -> None:
+        """Обновляет ввод, сцены, спрайты и debug overlay.
+
+        Args:
+            fps (int, optional): Целевой FPS. По умолчанию 60.
+            fill_color (tuple[int, int, int] | None, optional): Цвет заливки экрана.
+                Если None, заливка не выполняется.
+            update_display (bool, optional): Вызывать ли обновление окна.
+            *update_objects: Объекты, которые нужно обновлять каждый кадр.
+        """
+        if fps >= 0 and fps != self.fps:
+            self.fps = fps
+        self.dt = self.clock.tick(self.fps) / 1000.0
+        self.frame_count += 1
+        self.time_since_start = time.perf_counter() - self._start_time
+        self.game.debug_fps_value = self.clock.get_fps()
+
+        if self.screen is None:
+            return
+
+        self._run_frame(
+            events=pygame.event.get(),
+            update_display=update_display,
+            fill_color=fill_color,
+            update_objects=update_objects,
+            exit_on_quit=True,
+        )
+
+    def update_embedded(
+        self,
+        fps: int = 60,
+        fill_color: Tuple[int, int, int] | None = None,
+        events: List[pygame.event.Event] | None = None,
+        *update_objects,
+    ) -> None:
+        """Обновляет игру на внешней поверхности без собственного окна pygame."""
+        if fps >= 0 and fps != self.fps:
+            self.fps = fps
+        self.dt = self.clock.tick(self.fps) / 1000.0
+        self.frame_count += 1
+        self.time_since_start = time.perf_counter() - self._start_time
+        self.game.debug_fps_value = self.clock.get_fps()
+
+        if self.screen is None:
+            return
+
+        self._run_frame(
+            events=list(events or []),
+            update_display=False,
+            fill_color=fill_color,
+            update_objects=update_objects,
+            exit_on_quit=False,
+        )
 
     def quit_requested(self) -> bool:
         """Возвращает True, если было событие выхода (закрытие окна)."""

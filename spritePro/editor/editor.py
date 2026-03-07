@@ -447,8 +447,14 @@ class SpriteEditor:
                     return img
             except Exception:
                 continue
-        
-        return None
+
+        cd = getattr(obj, "custom_data", None) or {}
+        w = max(1, int(cd.get("width") or cd.get("w") or 64))
+        h = max(1, int(cd.get("height") or cd.get("h") or 64))
+        fallback = editor_sprite_types.render_primitive_surface(
+            editor_sprite_types.SHAPE_RECTANGLE, w, h, (255, 255, 255)
+        )
+        return fallback
 
     def _snap_to_grid(self, value: float) -> float:
         """Привязка к сетке"""
@@ -923,6 +929,12 @@ class SpriteEditor:
             elif prop == "scale_y":
                 obj.transform.scale_y = max(0.05, obj.transform.scale_y + delta)
                 changed = True
+            elif prop == "scale_x_percent":
+                obj.transform.scale_x = max(0.05, min(10.0, obj.transform.scale_x + delta / 100.0))
+                changed = True
+            elif prop == "scale_y_percent":
+                obj.transform.scale_y = max(0.05, min(10.0, obj.transform.scale_y + delta / 100.0))
+                changed = True
             elif prop == "z_index":
                 obj.z_index += int(delta)
                 changed = True
@@ -1145,6 +1157,24 @@ class SpriteEditor:
                 if abs(obj.transform.scale_y - new_value) > 1e-9:
                     obj.transform.scale_y = new_value
                     changed = True
+            elif prop == "scale_x_percent":
+                v = float(value)
+                if 1 <= v <= 1000:
+                    new_scale = v / 100.0
+                else:
+                    new_scale = max(0.05, v)
+                if abs(obj.transform.scale_x - new_scale) > 1e-9:
+                    obj.transform.scale_x = max(0.05, min(10.0, new_scale))
+                    changed = True
+            elif prop == "scale_y_percent":
+                v = float(value)
+                if 1 <= v <= 1000:
+                    new_scale = v / 100.0
+                else:
+                    new_scale = max(0.05, v)
+                if abs(obj.transform.scale_y - new_scale) > 1e-9:
+                    obj.transform.scale_y = max(0.05, min(10.0, new_scale))
+                    changed = True
             elif prop == "z_index":
                 new_value = int(round(value))
                 if obj.z_index != new_value:
@@ -1293,6 +1323,14 @@ class SpriteEditor:
                 return
         filepath = str(Path(filepath).expanduser())
         self._sync_scene_camera()
+        for obj in self.scene.objects:
+            if getattr(obj, "sprite_shape", "") == editor_sprite_types.SHAPE_IMAGE:
+                img = self._get_sprite_image(obj)
+                if img is not None:
+                    if obj.custom_data is None:
+                        obj.custom_data = {}
+                    obj.custom_data["width"] = img.get_width()
+                    obj.custom_data["height"] = img.get_height()
         try:
             self.scene.save(filepath)
         except Exception as e:

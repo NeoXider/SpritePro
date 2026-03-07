@@ -6,52 +6,61 @@ import spritePro as s
 PING_INTERVAL = 2.0
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
-    s.get_screen((800, 600), "Lesson 10 - Solution Routing")
-    ctx = s.multiplayer.init_context(net, role)
+class RoutingSolutionScene(s.Scene):
+    def __init__(self, net: s.NetClient, role: str) -> None:
+        super().__init__()
+        self.ctx = s.multiplayer.init_context(net, role)
+        self.ping_timer = 0.0
 
-    ping_timer = 0.0
+        s.events.connect("ping", self.on_ping)
+        s.events.connect("emoji", self.on_emoji)
 
-    def on_ping(**payload):
+        s.TextSprite(
+            "Ping каждые 2 сек (server) | E = emoji (all)",
+            22,
+            (240, 240, 240),
+            (20, 20),
+            anchor=s.Anchor.TOP_LEFT,
+            scene=self,
+        )
+        s.TextSprite(
+            "ping — только в сеть (route=server), не вызываем локально; emoji — всем (route=all), все видят.",
+            18,
+            (180, 180, 180),
+            (20, 50),
+            anchor=s.Anchor.TOP_LEFT,
+            scene=self,
+        )
+
+    def on_ping(self, **payload):
         print("  [local] on_ping")
 
-    def on_emoji(**payload):
+    def on_emoji(self, **payload):
         print("  [local] on_emoji", payload.get("symbol"))
 
-    s.events.connect("ping", on_ping)
-    s.events.connect("emoji", on_emoji)
+    def update(self, dt: float) -> None:
+        self.ping_timer += dt
 
-    s.TextSprite(
-        "Ping каждые 2 сек (server) | E = emoji (all)",
-        22,
-        (240, 240, 240),
-        (20, 20),
-        anchor=s.Anchor.TOP_LEFT,
-    )
-    s.TextSprite(
-        "ping — только в сеть (route=server), не вызываем локально; emoji — всем (route=all), все видят.",
-        18,
-        (180, 180, 180),
-        (20, 50),
-        anchor=s.Anchor.TOP_LEFT,
-    )
-
-    while True:
-        s.update(fill_color=(18, 18, 24))
-        dt = s.dt
-        ping_timer += dt
-
-        if ping_timer >= PING_INTERVAL:
-            ping_timer = 0.0
-            s.events.send("ping", route="server", net=ctx)
+        if self.ping_timer >= PING_INTERVAL:
+            self.ping_timer = 0.0
+            s.events.send("ping", route="server", net=self.ctx)
 
         if s.input.was_pressed(pygame.K_e):
-            s.events.send("emoji", route="all", net=ctx, symbol="👋")
+            s.events.send("emoji", route="all", net=self.ctx, symbol="👋")
 
-        for msg in ctx.poll():
+        for msg in self.ctx.poll():
             ev = msg.get("event")
             data = msg.get("data", {})
             s.events.send(ev, **data)
+
+
+def multiplayer_main(net: s.NetClient, role: str) -> None:
+    s.run(
+        scene=lambda: RoutingSolutionScene(net, role),
+        size=(800, 600),
+        title="Lesson 10 - Solution Routing",
+        fill_color=(18, 18, 24),
+    )
 
 
 # Задание 2: Почему хост рассылает score_update, а не клиент всем?
@@ -62,3 +71,7 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
 # Задание 3: Кто должен рассылать roster в лобби?
 # Хост. Список игроков — состояние лобби; хост собирает join от всех и хранит единый roster,
 # затем рассылает его всем. Если бы каждый рассылал свой список, состояния разъехались бы.
+
+
+if __name__ == "__main__":
+    s.networking.run(entry="multiplayer_main")

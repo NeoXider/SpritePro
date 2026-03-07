@@ -104,14 +104,17 @@ def multiplayer_main(net: s.NetClient, role: str) -> None:
     s.multiplayer.init_context(net, role)
 
     # Настройка сцен.
-    s.get_screen((800, 600), "Lesson 5 - Solution")
-    s.scene.add_scene("menu", MenuScene)
-    s.scene.add_scene("game", GameScene)
-    s.scene.set_scene_by_name("menu")
+    def setup() -> None:
+        s.scene.add_scene("menu", MenuScene)
+        s.scene.add_scene("game", GameScene)
+        s.scene.set_scene_by_name("menu")
 
-    while True:
-        # Основной тик.
-        s.update(fill_color=(16, 16, 22))
+    s.run(
+        setup=setup,
+        size=(800, 600),
+        title="Lesson 5 - Solution",
+        fill_color=(16, 16, 22),
+    )
 
 
 if __name__ == "__main__":

@@ -10,8 +10,18 @@
 
 Опционально для --quick:
    --client_spawn_delay 1  # запуск клиента с задержкой в 1 сек
+
+Kivy/mobile:
+   python spritePro/demoGames/three_clients_move_demo.py
+   python spritePro/demoGames/three_clients_move_demo.py --pygame
+   python -m spritePro.demoGames.three_clients_move_demo --kivy
+   python -m spritePro.demoGames.three_clients_move_demo --kivy --host 192.168.1.10 --port 5050
+
+При прямом запуске файла demo по умолчанию стартует в `kivy` и в quick-режиме
+на 3 окна (host + 2 клиента). Для desktop-режима используйте `--pygame`.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -31,102 +41,138 @@ PALETTE = [
     (220, 180, 70),  # id 3+
 ]
 
+PLATFORM_ENV_KEY = "SPRITEPRO_PLATFORM"
+
 
 def _color_for_id(client_id: int) -> tuple[int, int, int]:
     return PALETTE[client_id % len(PALETTE)]
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
-    s.get_screen((900, 600), "Three Clients Move Demo")
-    _ = s.multiplayer.init_context(net, role)
-    ctx = s.multiplayer_ctx
+class ThreeClientsMoveScene(s.Scene):
+    def __init__(self, net: s.NetClient, role: str) -> None:
+        super().__init__()
+        s.multiplayer.init_context(net, role)
+        self.ctx = s.multiplayer_ctx
+        self.hint = s.TextSprite("WASD — move | IDs above players", 20, (200, 200, 200), (450, 30), scene=self)
+        self.wait_id = s.TextSprite("Waiting for ID...", 18, (200, 200, 200), (450, 60), scene=self)
+        self.window_id = s.TextSprite(
+            "Window ID: ?",
+            18,
+            (200, 200, 200),
+            (20, 20),
+            anchor=s.Anchor.TOP_LEFT,
+            scene=self,
+        )
 
-    hint = s.TextSprite("WASD — move | IDs above players", 20, (200, 200, 200), (450, 30))
-    wait_id = s.TextSprite("Waiting for ID...", 18, (200, 200, 200), (450, 60))
-    window_id = s.TextSprite(
-        "Window ID: ?", 18, (200, 200, 200), (20, 20), anchor=s.Anchor.TOP_LEFT
-    )
+        self.me = s.Sprite("", (50, 50), (200, 300), scene=self)
+        self.me_id = s.TextSprite("ID: ?", 18, (255, 255, 255), (200, 250), scene=self)
+        self.others: dict[int, s.Sprite] = {}
+        self.others_id: dict[int, s.TextSprite] = {}
+        self.last_id: int | None = None
+        self.base_positions = {
+            0: (200, 300),
+            1: (450, 300),
+            2: (700, 300),
+            3: (450, 450),
+        }
+        self.speed = 260.0
+        self.tick_rate = 60
 
-    me = s.Sprite("", (50, 50), (200, 300))
-    me_id = s.TextSprite("ID: ?", 18, (255, 255, 255), (200, 250))
-
-    others: dict[int, s.Sprite] = {}
-    others_id: dict[int, s.TextSprite] = {}
-    last_id: int | None = None
-
-    base_positions = {
-        0: (200, 300),
-        1: (450, 300),
-        2: (700, 300),
-        3: (450, 450),
-    }
-
-    speed = 260.0
-    tick_rate = 60
-
-    _ = (hint, window_id, wait_id)
-
-    while True:
-        s.update(fps=tick_rate, fill_color=(20, 20, 30))
-        dt = s.dt
-
-        if ctx.client_id != last_id:
-            last_id = ctx.client_id
-            my_color = _color_for_id(ctx.client_id)
-            me.set_color(my_color)
-            me_id.color = my_color
-            window_id.color = my_color
-            me_pos = base_positions.get(ctx.client_id)
+    def update(self, dt: float) -> None:
+        if self.ctx.client_id != self.last_id:
+            self.last_id = self.ctx.client_id
+            my_color = _color_for_id(self.ctx.client_id)
+            self.me.set_color(my_color)
+            self.me_id.color = my_color
+            self.window_id.color = my_color
+            me_pos = self.base_positions.get(self.ctx.client_id)
             if me_pos is not None:
-                me.set_position(me_pos)
+                self.me.set_position(me_pos)
 
-        wait_id.set_active(not ctx.id_assigned)
-        if ctx.id_assigned:
+        self.wait_id.set_active(not self.ctx.id_assigned)
+        if self.ctx.id_assigned:
             dx = s.input.get_axis(pygame.K_a, pygame.K_d)
             dy = s.input.get_axis(pygame.K_w, pygame.K_s)
-            pos = me.get_world_position()
-            pos.x += dx * speed * dt
-            pos.y += dy * speed * dt
-            me.set_position(pos)
+            pos = self.me.get_world_position()
+            pos.x += dx * self.speed * dt
+            pos.y += dy * self.speed * dt
+            self.me.set_position(pos)
 
-            ctx.send_every(
+            self.ctx.send_every(
                 "pos",
-                {"pos": list(pos), "sender_id": ctx.client_id},
-                1.0 / tick_rate,
+                {"pos": list(pos), "sender_id": self.ctx.client_id},
+                1.0 / self.tick_rate,
             )
 
-        for msg in ctx.poll():
+        for msg in self.ctx.poll():
             if msg.get("event") != "pos":
                 continue
             data = msg.get("data", {})
             sender_id = data.get("sender_id")
             if sender_id is None:
                 continue
-            if sender_id == ctx.client_id:
+            if sender_id == self.ctx.client_id:
                 continue
-            if sender_id not in others:
-                other = s.Sprite("", (50, 50), (450, 300))
+            if sender_id not in self.others:
+                other = s.Sprite("", (50, 50), (450, 300), scene=self)
                 other.set_color(_color_for_id(sender_id))
-                others[sender_id] = other
+                self.others[sender_id] = other
                 label = s.TextSprite(
                     f"ID: {sender_id}",
                     18,
                     _color_for_id(sender_id),
                     (0, 0),
+                    scene=self,
                 )
-                others_id[sender_id] = label
-            others[sender_id].set_position(data.get("pos", [0, 0]))
+                self.others_id[sender_id] = label
+            self.others[sender_id].set_position(data.get("pos", [0, 0]))
 
-        current_pos = me.get_world_position()
-        me_id.set_text(f"ID: {ctx.client_id}")
-        me_id.set_position((current_pos.x, current_pos.y - 40))
-        window_id.set_text(f"Window ID: {ctx.client_id}")
+        current_pos = self.me.get_world_position()
+        self.me_id.set_text(f"ID: {self.ctx.client_id}")
+        self.me_id.set_position((current_pos.x, current_pos.y - 40))
+        self.window_id.set_text(f"Window ID: {self.ctx.client_id}")
 
-        for sender_id, sprite in others.items():
-            label = others_id[sender_id]
+        for sender_id, sprite in self.others.items():
+            label = self.others_id[sender_id]
             spr_pos = sprite.get_world_position()
             label.set_position((spr_pos.x, spr_pos.y - 40))
 
 
+def multiplayer_main(net: s.NetClient, role: str) -> None:
+    s.run(
+        scene=lambda: ThreeClientsMoveScene(net, role),
+        size=(900, 600),
+        title="Three Clients Move Demo",
+        fps=60,
+        fill_color=(20, 20, 30),
+        platform=os.environ.get(PLATFORM_ENV_KEY, "pygame"),
+    )
+
+
+def _extract_platform(argv: list[str], default_platform: str | None = None) -> tuple[str, list[str]]:
+    filtered: list[str] = []
+    platform = (default_platform or os.environ.get(PLATFORM_ENV_KEY, "pygame")).strip().lower() or "pygame"
+    for arg in argv:
+        if arg == "--kivy":
+            platform = "kivy"
+            continue
+        if arg == "--pygame":
+            platform = "pygame"
+            continue
+        filtered.append(arg)
+    return platform, filtered
+
+
+def main(default_platform: str = "kivy") -> None:
+    platform, filtered_argv = _extract_platform(sys.argv[1:], default_platform=default_platform)
+    os.environ[PLATFORM_ENV_KEY] = platform
+
+    s.networking.run(
+        argv=filtered_argv,
+        clients=3,
+        client_spawn_delay=2,
+    )
+
+
 if __name__ == "__main__":
-    s.networking.run(clients=3, client_spawn_delay=2)
+    main(default_platform="kivy")

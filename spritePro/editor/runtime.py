@@ -166,6 +166,16 @@ def _sprite_size_from_transform(image_path: Path, obj: SceneObject) -> tuple[int
     )
 
 
+def _fallback_size_for_image(obj: SceneObject) -> tuple[int, int]:
+    """Размер для подстановки, когда картинка недоступна (custom_data или 64×64)."""
+    cd = obj.custom_data or {}
+    w = cd.get("width") or cd.get("w")
+    h = cd.get("height") or cd.get("h")
+    if w is not None and h is not None:
+        return (max(1, int(w)), max(1, int(h)))
+    return (64, 64)
+
+
 def _primitive_size_and_color(obj: SceneObject) -> Optional[tuple[tuple[int, int], tuple[int, int, int]]]:
     """Размер и цвет для примитива: из sprite_shape/sprite_color/custom_data или по имени (legacy)."""
     cd = obj.custom_data or {}
@@ -215,17 +225,24 @@ def spawn_scene(
         if not obj.visible:
             continue
         pos = (obj.transform.x, obj.transform.y)
-        sprite_path = _resolve_sprite_path(scene_file, obj.sprite_path) if obj.sprite_path else None
-
         shape = getattr(obj, "sprite_shape", "image")
-        if sprite_path is not None and shape == st.SHAPE_IMAGE:
-            size = _sprite_size_from_transform(sprite_path, obj)
-            sprite = s.Sprite(
-                str(sprite_path),
-                size,
-                pos,
-                scene=runtime_scene,
-            )
+        if shape == st.SHAPE_IMAGE:
+            resolved = _resolve_sprite_path(scene_file, obj.sprite_path) if obj.sprite_path else None
+            try:
+                if resolved is not None:
+                    size = _sprite_size_from_transform(resolved, obj)
+                    sprite = s.Sprite(
+                        str(resolved),
+                        size,
+                        pos,
+                        scene=runtime_scene,
+                    )
+                else:
+                    raise FileNotFoundError("sprite path not found")
+            except Exception:
+                size = _fallback_size_for_image(obj)
+                sprite = s.Sprite("", size, pos, scene=runtime_scene)
+                sprite.set_rect_shape(size, (255, 255, 255))
         elif st.is_primitive(shape):
             prim = _primitive_size_and_color(obj)
             if prim is None:

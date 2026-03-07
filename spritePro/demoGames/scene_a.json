@@ -11,7 +11,7 @@
     },
     "objects": [
         {
-            "id": "50139a78",
+            "id": "91ce3c0e",
             "name": "anim_sprite",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -31,13 +31,19 @@
             "screen_space": false,
             "visible": true,
             "locked": false,
+            "physics_type": "none",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
             "custom_data": {
                 "width": 40,
                 "height": 40
             }
         },
         {
-            "id": "1c0ae387",
+            "id": "85e994b0",
             "name": "mover",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -57,13 +63,19 @@
             "screen_space": false,
             "visible": true,
             "locked": false,
+            "physics_type": "none",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
             "custom_data": {
                 "width": 60,
                 "height": 60
             }
         },
         {
-            "id": "30412828",
+            "id": "79f3b414",
             "name": "toggle_obj",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -83,13 +95,19 @@
             "screen_space": false,
             "visible": true,
             "locked": false,
+            "physics_type": "none",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
             "custom_data": {
                 "width": 100,
                 "height": 40
             }
         },
         {
-            "id": "393d16cf",
+            "id": "7df831bf",
             "name": "button",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -109,13 +127,19 @@
             "screen_space": false,
             "visible": true,
             "locked": false,
+            "physics_type": "none",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
             "custom_data": {
                 "width": 170,
                 "height": 50
             }
         },
         {
-            "id": "f19e0e16",
+            "id": "e1a82389",
             "name": "hint",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -135,13 +159,19 @@
             "screen_space": false,
             "visible": true,
             "locked": false,
+            "physics_type": "none",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
             "custom_data": {
                 "width": 525,
                 "height": 16
             }
         },
         {
-            "id": "911fa758",
+            "id": "c1bdff8b",
             "name": "label",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -161,13 +191,19 @@
             "screen_space": false,
             "visible": true,
             "locked": false,
+            "physics_type": "none",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
             "custom_data": {
                 "width": 232,
                 "height": 22
             }
         },
         {
-            "id": "7927be28",
+            "id": "0a2918bf",
             "name": "timer_label",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -187,13 +223,19 @@
             "screen_space": false,
             "visible": true,
             "locked": false,
+            "physics_type": "none",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
             "custom_data": {
                 "width": 51,
                 "height": 13
             }
         },
         {
-            "id": "e617d2ed",
+            "id": "f2d9ae25",
             "name": "toggle",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -213,6 +255,12 @@
             "screen_space": false,
             "visible": true,
             "locked": false,
+            "physics_type": "none",
+            "physics_mass": 1.0,
+            "physics_friction": 0.98,
+            "physics_bounce": 0.5,
+            "physics_collision_category": null,
+            "physics_collision_mask": null,
             "custom_data": {
                 "width": 170,
                 "height": 50

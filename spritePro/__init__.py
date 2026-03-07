@@ -19,7 +19,7 @@ SpritePro — высокоуровневый фреймворк для 2D-игр
 Документация: см. docs/ в корне репозитория и DOCUMENTATION_INDEX.md.
 """
 
-from typing import List
+from typing import Callable, List
 
 import pygame
 from pygame.math import Vector2
@@ -409,7 +409,13 @@ __all__ = [
     # methods
     "init",
     "get_screen",
+    "attach_surface",
+    "run",
+    "run_kivy",
+    "run_kivy_hybrid",
+    "create_kivy_widget",
     "update",
+    "update_embedded",
     "quit_requested",
 ]
 
@@ -1033,6 +1039,164 @@ def get_screen(
     return result
 
 
+def attach_surface(surface: pygame.Surface) -> pygame.Surface:
+    """Подключает внешнюю поверхность рендера вместо окна pygame."""
+    result = _context.attach_surface(surface)
+    _sync_globals()
+    return result
+
+
+def _resolve_scene_value(scene):
+    if scene is None:
+        return None
+    if isinstance(scene, Scene):
+        return scene
+    if isinstance(scene, type) and issubclass(scene, Scene):
+        return scene()
+    if callable(scene):
+        resolved = scene()
+        if resolved is None or isinstance(resolved, Scene):
+            return resolved
+        raise TypeError("scene factory must return Scene or None")
+    raise TypeError("scene must be Scene instance, Scene class, or callable returning Scene")
+
+
+def _run_bootstrap(
+    setup: Callable[[], object] | None = None,
+    scene: Scene | type[Scene] | Callable[[], Scene | None] | None = None,
+) -> None:
+    resolved_scene = _resolve_scene_value(scene)
+    if resolved_scene is not None:
+        set_scene(resolved_scene)
+    if setup is None:
+        return
+    setup_result = setup()
+    if isinstance(setup_result, Scene):
+        set_scene(setup_result)
+
+
+def run(
+    setup: Callable[[], object] | None = None,
+    *,
+    scene: Scene | type[Scene] | Callable[[], Scene | None] | None = None,
+    size: tuple[int, int] = (800, 600),
+    title: str = "Игра",
+    icon: str | None = None,
+    fps: int = 60,
+    fill_color: tuple[int, int, int] | None = None,
+    platform: str = "pygame",
+) -> None:
+    """Запускает SpritePro-игру в pygame или Kivy без ручного цикла.
+
+    Args:
+        setup: Функция инициализации игры. Можно создавать спрайты, регистрировать сцены
+            или вернуть Scene для автоматического set_scene().
+        scene: Scene, класс Scene или фабрика сцены. Удобно для типового запуска.
+        size: Размер окна desktop-превью.
+        title: Заголовок окна.
+        icon: Иконка desktop-окна.
+        fps: Целевой FPS.
+        fill_color: Цвет очистки кадра.
+        platform: "pygame" или "kivy".
+    """
+    platform_normalized = platform.lower().strip()
+    if platform_normalized in {"pygame", "desktop"}:
+        get_screen(size=size, title=title, icon=icon)
+        _run_bootstrap(setup, scene)
+        while True:
+            update(fps=fps, fill_color=fill_color)
+    elif platform_normalized == "kivy":
+        from .mobile import run_kivy_app
+
+        def bootstrap() -> None:
+            _run_bootstrap(setup, scene)
+
+        run_kivy_app(
+            bootstrap,
+            title=title,
+            fps=fps,
+            fill_color=fill_color if fill_color is not None else (0, 0, 0),
+            window_size=size,
+        )
+    else:
+        raise ValueError("platform must be 'pygame' or 'kivy'")
+
+
+def run_kivy(
+    setup: Callable[[], object] | None = None,
+    *,
+    scene: Scene | type[Scene] | Callable[[], Scene | None] | None = None,
+    size: tuple[int, int] = (800, 600),
+    title: str = "Игра",
+    fps: int = 60,
+    fill_color: tuple[int, int, int] | None = None,
+) -> None:
+    """Короткий алиас для run(..., platform="kivy")."""
+    run(
+        setup,
+        scene=scene,
+        size=size,
+        title=title,
+        fps=fps,
+        fill_color=fill_color,
+        platform="kivy",
+    )
+
+
+def create_kivy_widget(
+    setup: Callable[[], object] | None = None,
+    *,
+    scene: Scene | type[Scene] | Callable[[], Scene | None] | None = None,
+    fps: int = 60,
+    fill_color: tuple[int, int, int] | None = None,
+    **widget_kwargs,
+):
+    """Создаёт SpritePro как обычный Kivy Widget для hybrid-интерфейсов.
+
+    Подходит для сценария "Kivy UI вокруг игры": меню, верхняя панель,
+    кнопка назад и отдельная игровая область в layout.
+    """
+    from .mobile import create_kivy_widget as _create_kivy_widget_impl
+
+    def bootstrap() -> None:
+        _run_bootstrap(setup, scene)
+
+    return _create_kivy_widget_impl(
+        bootstrap,
+        fps=fps,
+        fill_color=fill_color if fill_color is not None else (0, 0, 0),
+        **widget_kwargs,
+    )
+
+
+def run_kivy_hybrid(
+    setup: Callable[[], object] | None = None,
+    *,
+    scene: Scene | type[Scene] | Callable[[], Scene | None] | None = None,
+    root_builder: Callable[[object], object],
+    size: tuple[int, int] = (800, 600),
+    title: str = "Игра",
+    fps: int = 60,
+    fill_color: tuple[int, int, int] | None = None,
+    **widget_kwargs,
+) -> None:
+    """Запускает Kivy-приложение с внешним UI и встроенной игрой SpritePro."""
+    from .mobile import run_kivy_app
+
+    def bootstrap() -> None:
+        _run_bootstrap(setup, scene)
+
+    run_kivy_app(
+        bootstrap,
+        title=title,
+        fps=fps,
+        fill_color=fill_color if fill_color is not None else (0, 0, 0),
+        window_size=size,
+        root_builder=root_builder,
+        widget_kwargs=widget_kwargs,
+    )
+
+
 def update(
     fps: int = -1,
     fill_color: tuple[int, int, int] = None,
@@ -1052,6 +1216,17 @@ def update(
         *update_objects: Объекты для автоматического обновления (TweenManager, Animation, Timer и т.д.).
     """
     _context.update(fps, fill_color, update_display, *update_objects)
+    _sync_globals()
+
+
+def update_embedded(
+    fps: int = -1,
+    fill_color: tuple[int, int, int] = None,
+    events: List[pygame.event.Event] | None = None,
+    *update_objects,
+) -> None:
+    """Обновляет игру на внешней поверхности без вызова pygame.display.update()."""
+    _context.update_embedded(fps, fill_color, events, *update_objects)
     _sync_globals()
 
 

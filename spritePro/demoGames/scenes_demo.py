@@ -227,14 +227,20 @@ class SceneB(s.Scene):
 
 
 def main():
-    s.get_screen((800, 600), "Scenes Demo")
     s.enable_debug(True)
-    s.scene.add_scene("scene_a", SceneA)
-    s.scene.add_scene("scene_b", SceneB)
-    s.scene.set_scene_by_name("scene_a")
 
-    while True:
-        s.update(fill_color=(10, 10, 20))
+    def setup() -> None:
+        s.scene.add_scene("scene_a", SceneA)
+        s.scene.add_scene("scene_b", SceneB)
+        s.scene.set_scene_by_name("scene_a")
+
+    s.run(
+        setup=setup,
+        size=(800, 600),
+        title="Scenes Demo",
+        fill_color=(10, 10, 20),
+        platform="pygame",
+    )
 
 
 if __name__ == "__main__":

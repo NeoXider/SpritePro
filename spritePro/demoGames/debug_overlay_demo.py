@@ -68,17 +68,15 @@ class DebugOverlayScene(s.Scene):
 
 
 def main():
-    s.get_screen((900, 600), "Debug Overlay Demo")
     s.enable_debug(True)
     s.set_debug_grid(size=100, label_every=1, alpha=120, label_limit=10000)
     s.set_debug_log_anchor("bottom_left")
-
-    manager = s.get_context().scene_manager
-    manager.add_scene("debug_overlay", DebugOverlayScene())
-    s.scene.set_scene_by_name("debug_overlay")
-
-    while True:
-        s.update(fill_color=(15, 15, 25))
+    s.run(
+        scene=DebugOverlayScene,
+        size=(900, 600),
+        title="Debug Overlay Demo",
+        fill_color=(15, 15, 25),
+    )
 
 
 if __name__ == "__main__":
