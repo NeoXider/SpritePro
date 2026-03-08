@@ -312,6 +312,134 @@ android.archs = arm64-v8a
 - для mobile-host на Android важно не использовать устаревший bundle `SpritePro`, если вы тестируете свежие локальные фиксы
 - при проблемах старта быстрее всего сразу смотреть `adb logcat`, а не гадать по splash screen
 
+### Два практических сценария проверки Android
+
+Ниже два реально полезных сценария:
+
+1. `Локальная разработка SpritePro`:
+   вы меняете саму библиотеку, хотите быстро проверить свежие фиксы в APK и не зависеть от уже опубликованной версии.
+1. `Проверка через pip`:
+   вы тестируете игру как обычный пользователь пакета `spritepro`, без локального vendoring библиотеки.
+
+Оба сценария рабочие, но цель у них разная.
+
+### Сценарий A. Локальная проверка свежих правок `SpritePro`
+
+Это основной вариант для разработки самой библиотеки.
+
+Когда использовать:
+
+- вы меняете `spritePro/` локально
+- нужно проверить Android-поведение до публикации в `pip`
+- важно, чтобы APK гарантированно собрался именно на свежем коде
+
+Рекомендуемый цикл:
+
+1. На Windows или Linux прогоните быстрый desktop smoke-test библиотеки:
+
+```bash
+pip install -e ".[kivy]"
+python -m spritePro.cli --preview path/to/main.py --platform kivy --screen phone-landscape
+```
+
+1. При желании соберите сам пакет библиотеки, чтобы проверить packaging:
+
+```bash
+python -m build
+```
+
+1. Скопируйте проект игры в `WSL/Linux home`, например в `~/MyGame`.
+1. Перед Android build синхронизируйте актуальную папку `spritePro/` прямо внутрь проекта игры.
+1. Запустите `buildozer android debug`.
+1. Установите APK на устройство и сразу снимите лог запуска.
+
+Пример синхронизации локальных исходников в `WSL`:
+
+```bash
+rsync -a --delete /mnt/d/GIT/_fork/SpritePro/spritePro/ ~/MyGame/spritePro/
+```
+
+Пример полного dev-цикла в `WSL`:
+
+```bash
+cd ~/MyGame
+rsync -a --delete /mnt/d/GIT/_fork/SpritePro/spritePro/ ./spritePro/
+python3 -m compileall main.py spritePro >/dev/null
+buildozer android debug
+```
+
+Почему этот путь самый надёжный для разработки библиотеки:
+
+- APK берёт текущие `.py` файлы из вашей папки `spritePro/`
+- вы не зависите от того, какая версия `spritepro` лежит в Python environment
+- не нужно ждать публикации в `pip`, чтобы проверить фикс на телефоне
+
+Что важно помнить:
+
+- если вы просто сделали `python -m build`, этого недостаточно для Android-проверки само по себе
+- `Buildozer` может упаковать не тот код, который вы только что меняли, если проект игры смотрит на старую зависимость
+- для dev-проверки библиотеки надёжнее либо vendoring папки `spritePro/`, либо очень осознанный контроль того, откуда именно Android build берёт пакет
+
+### Сценарий B. Проверка игры через установленный `pip`-пакет
+
+Это хороший вариант, когда нужно проверить пользовательский сценарий: "игра использует опубликованный `spritepro`".
+
+Когда использовать:
+
+- вы не меняете библиотеку локально
+- хотите воспроизвести поведение так, как его получит пользователь
+- нужно проверить свежевыпущенную версию пакета
+
+Локальная проверка на ПК:
+
+```bash
+pip install "spritepro[kivy]"
+python main.py
+python -m spritePro.cli --preview main.py --platform kivy --screen phone-portrait
+```
+
+Для Android build в `buildozer.spec` оставьте пакет в `requirements`:
+
+```ini
+requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
+android.archs = arm64-v8a
+```
+
+Дальше обычный flow:
+
+```bash
+cd ~/MyGame
+buildozer android debug
+```
+
+В этом сценарии не нужно копировать папку `spritePro/` в проект игры, потому что вы специально проверяете пакетную поставку через `requirements`.
+
+### Какой вариант выбрать
+
+- Если вы разрабатываете `SpritePro` и чините баги в рантайме, Android/mobile или editor-runtime, используйте сценарий A.
+- Если вы проверяете релиз, повторяете пользовательскую установку или хотите убедиться, что версия из `pip` работает как ожидается, используйте сценарий B.
+- Для серьёзных изменений полезно прогонять оба сценария: сначала A для быстрого цикла правок, потом B для финальной проверки пакета.
+
+### Минимальная проверка APK после сборки
+
+Независимо от сценария, после `buildozer android debug` полезно сразу сделать одно и то же:
+
+```bash
+adb install -r bin/<your-apk>.apk
+adb shell am start -n org.example.mygame/org.kivy.android.PythonActivity
+adb logcat -c
+adb shell monkey -p org.example.mygame -c android.intent.category.LAUNCHER 1
+adb logcat -d
+```
+
+Что проверять сразу после установки:
+
+- игра реально открывается, а не закрывается на splash screen
+- работают изображения, музыка и JSON-сцены
+- `reference_size` и layout выглядят так, как ожидалось
+- touch hitbox не слишком мелкие
+- в `logcat` нет `Traceback`, `TypeError`, `ImportError` и ранних ошибок загрузки ресурсов
+
 ### Быстрый путь через `spritePro.cli`
 
 Если проект уже имеет `main.py`, самый удобный путь теперь такой:

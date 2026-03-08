@@ -6,7 +6,7 @@ import json
 import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -44,7 +44,7 @@ class SceneObject:
     transform: Transform = field(default_factory=Transform)
     z_index: int = 0
     screen_space: bool = False
-    visible: bool = True
+    active: bool = True
     locked: bool = False
     physics_type: str = "none"
     physics_mass: float = 1.0
@@ -53,6 +53,56 @@ class SceneObject:
     physics_collision_category: Optional[int] = None
     physics_collision_mask: Optional[int] = None
     custom_data: Dict[str, Any] = field(default_factory=dict)
+    _active_callbacks: List[Callable[["SceneObject", bool], None]] = field(
+        default_factory=list,
+        init=False,
+        repr=False,
+        compare=False,
+    )
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name == "visible":
+            name = "active"
+        if name != "active" or "active" not in self.__dict__:
+            super().__setattr__(name, value)
+            return
+        new_value = bool(value)
+        old_value = bool(self.__dict__.get("active", True))
+        super().__setattr__(name, new_value)
+        if old_value != new_value:
+            self._emit_active_changed(new_value)
+
+    @property
+    def visible(self) -> bool:
+        return self.active
+
+    @visible.setter
+    def visible(self, value: bool) -> None:
+        self.active = value
+
+    def set_active(self, value: bool) -> "SceneObject":
+        self.active = value
+        return self
+
+    def add_active_changed_callback(
+        self,
+        callback: Callable[["SceneObject", bool], None],
+    ) -> "SceneObject":
+        if callback not in self._active_callbacks:
+            self._active_callbacks.append(callback)
+        return self
+
+    def remove_active_changed_callback(
+        self,
+        callback: Callable[["SceneObject", bool], None],
+    ) -> "SceneObject":
+        if callback in self._active_callbacks:
+            self._active_callbacks.remove(callback)
+        return self
+
+    def _emit_active_changed(self, value: bool) -> None:
+        for callback in list(self._active_callbacks):
+            callback(self, value)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -64,7 +114,7 @@ class SceneObject:
             "transform": self.transform.to_dict(),
             "z_index": self.z_index,
             "screen_space": self.screen_space,
-            "visible": self.visible,
+            "active": self.active,
             "locked": self.locked,
             "physics_type": self.physics_type,
             "physics_mass": self.physics_mass,
@@ -82,6 +132,9 @@ class SceneObject:
             color = (int(color[0]), int(color[1]), int(color[2]))
         else:
             color = (255, 255, 255)
+        active = data.get("active")
+        if active is None:
+            active = data.get("visible", True)
         return cls(
             id=data.get("id", str(uuid.uuid4())[:8]),
             name=data.get("name", "New Object"),
@@ -91,7 +144,7 @@ class SceneObject:
             transform=Transform.from_dict(data.get("transform", {})),
             z_index=data.get("z_index", 0),
             screen_space=data.get("screen_space", False),
-            visible=data.get("visible", True),
+            active=active,
             locked=data.get("locked", False),
             physics_type=data.get("physics_type", "none"),
             physics_mass=float(data.get("physics_mass", 1.0)),
@@ -111,7 +164,7 @@ class SceneObject:
             transform=self.transform.copy(),
             z_index=self.z_index,
             screen_space=self.screen_space,
-            visible=self.visible,
+            active=self.active,
             locked=self.locked,
             physics_type=self.physics_type,
             physics_mass=self.physics_mass,
@@ -306,6 +359,7 @@ class Scene:
                 custom_data["height"] = int(rect.height)
 
             screen_space = getattr(obj, "screen_space", False)
+            active = getattr(obj, "active", getattr(obj, "visible", True))
 
             # Редактор хранит позицию как центр объекта; в runtime rect может быть с любым якорем — экспортируем центр.
             cx = (
@@ -328,6 +382,7 @@ class Scene:
                     transform=Transform(x=cx, y=cy),
                     z_index=z,
                     screen_space=screen_space,
+                    active=active,
                     custom_data=custom_data,
                 )
             )

@@ -37,7 +37,12 @@ def _draw_property_input_box(
     name: str,
     rect: pygame.Rect,
     value_display: str,
+    *,
+    placeholder: str = "",
 ) -> None:
+    def _single_line_preview(value: str) -> str:
+        return value.replace("\r\n", "\n").replace("\r", "\n").replace("\n", " \\n ")
+
     active = editor._active_text_input == name
     hovered = rect.collidepoint(pygame.mouse.get_pos())
     bg = (
@@ -50,12 +55,57 @@ def _draw_property_input_box(
     border = editor.colors["ui_accent"] if active else theme.COLORS["ui_input_border"]
     pygame.draw.rect(editor.screen, bg, rect, border_radius=3)
     pygame.draw.rect(editor.screen, border, rect, 1, border_radius=3)
+    text_color = (235, 235, 240)
     if active:
-        display = f"{editor._text_input_buffers.get(name, '')}|"
+        display = f"{_single_line_preview(editor._text_input_buffers.get(name, ''))}|"
     else:
-        display = value_display
-    text_surface = editor.font.render(display, True, (235, 235, 240))
+        display = _single_line_preview(value_display)
+        if not display and placeholder:
+            display = placeholder
+            text_color = (145, 145, 155)
+    text_surface = editor.font.render(display, True, text_color)
     editor.screen.blit(text_surface, (rect.x + 3, rect.y + 2))
+
+
+def _draw_multiline_property_input_box(
+    editor,
+    name: str,
+    rect: pygame.Rect,
+    value_display: str,
+    *,
+    placeholder: str = "",
+) -> None:
+    active = editor._active_text_input == name
+    hovered = rect.collidepoint(pygame.mouse.get_pos())
+    bg = (
+        theme.COLORS["ui_input_bg_active"]
+        if active
+        else theme.COLORS["ui_input_bg_hover"]
+        if hovered
+        else theme.COLORS["ui_input_bg"]
+    )
+    border = editor.colors["ui_accent"] if active else theme.COLORS["ui_input_border"]
+    pygame.draw.rect(editor.screen, bg, rect, border_radius=4)
+    pygame.draw.rect(editor.screen, border, rect, 1, border_radius=4)
+
+    text_color = (235, 235, 240)
+    raw_value = editor._text_input_buffers.get(name, "") if active else value_display
+    normalized = raw_value.replace("\r\n", "\n").replace("\r", "\n")
+    lines = normalized.split("\n")
+    if not lines:
+        lines = [""]
+    if len(lines) == 1 and not lines[0] and placeholder:
+        lines = [placeholder]
+        text_color = (145, 145, 155)
+    elif active:
+        lines[-1] = f"{lines[-1]}|"
+
+    line_height = editor.font.get_linesize()
+    y = rect.y + 4
+    for line in lines:
+        text_surface = editor.font.render(line if line else " ", True, text_color)
+        editor.screen.blit(text_surface, (rect.x + 5, y))
+        y += line_height
 
 
 def _render_property_row(editor, x: int, y: int, label: str, value: str) -> int:
@@ -87,6 +137,56 @@ def _render_name_row(editor, x: int, y: int, name_value: str) -> int:
         ),
     )
     return y + theme.INSPECTOR_ROW_HEIGHT
+
+
+def _render_text_row(editor, x: int, y: int, text_value: str) -> int:
+    right_w = theme.UI_RIGHT_WIDTH
+    normalized = text_value.replace("\r\n", "\n").replace("\r", "\n")
+    active = editor._active_text_input == "prop_input_text"
+    raw_value = editor._text_input_buffers.get("prop_input_text", normalized) if active else normalized
+    line_count = max(1, len(raw_value.split("\n")))
+    line_height = editor.font.get_linesize()
+    visible_lines = max(1, min(6, line_count))
+    input_height = max(22, visible_lines * line_height + 8)
+    editor.screen.blit(
+        editor.font.render("Text", True, editor.colors["ui_text"]),
+        (x + 10, y),
+    )
+    input_name = "prop_input_text"
+    input_rect = pygame.Rect(x + 70, y + 1, right_w - 80, input_height)
+    editor._property_input_rects[input_name] = input_rect
+    _draw_multiline_property_input_box(
+        editor,
+        input_name,
+        input_rect,
+        normalized,
+        placeholder="New Text",
+    )
+    editor._inspector_actions.append(
+        (
+            input_rect,
+            lambda n=input_name, v=text_value: editor._activate_text_input(n, v, "text"),
+        ),
+    )
+    return y + input_rect.height + 4
+
+
+def _render_section_header(editor, x: int, y: int, title: str) -> int:
+    if y > theme.UI_TOP_HEIGHT + 40:
+        y += 4
+    line_y = y + 8
+    pygame.draw.line(
+        editor.screen,
+        editor.colors["ui_border"],
+        (x + 10, line_y),
+        (x + theme.UI_RIGHT_WIDTH - 10, line_y),
+        1,
+    )
+    title_surface = editor.font_bold.render(title, True, (180, 180, 188))
+    title_bg = pygame.Rect(x + 8, y, title_surface.get_width() + 10, 16)
+    pygame.draw.rect(editor.screen, editor.colors["ui_bg"], title_bg)
+    editor.screen.blit(title_surface, (x + 13, y - 1))
+    return y + 18
 
 
 def _render_numeric_property_row(
@@ -294,9 +394,13 @@ def render(editor) -> None:
     obj = editor.selected_objects[0]
     shape = getattr(obj, "sprite_shape", "image")
     is_image = shape == sprite_types.SHAPE_IMAGE
+    is_text = shape == sprite_types.SHAPE_TEXT
     y = top + 40
     y = _render_name_row(editor, x, y, obj.name)
-    y += 10
+    if is_text:
+        y = _render_section_header(editor, x, y + 2, "Text")
+        y = _render_text_row(editor, x, y, str((obj.custom_data or {}).get("text", "New Text")))
+    y = _render_section_header(editor, x, y + 2, "Transform")
     y = _render_numeric_property_row(
         editor, x, y, "Position X", obj.transform.x, -10.0, 10.0, "x", "{:.1f}"
     )
@@ -306,7 +410,7 @@ def render(editor) -> None:
     y = _render_numeric_property_row(
         editor, x, y, "Rotation", obj.transform.rotation, -5.0, 5.0, "rotation", "{:.1f} deg"
     )
-    if is_image:
+    if is_image or is_text:
         y = _render_numeric_property_row(
             editor,
             x,
@@ -340,14 +444,16 @@ def render(editor) -> None:
         )
     native_w, native_h = editor._get_object_native_size(obj)
     size_x, size_y = editor._get_object_display_size(obj)
-    y += 8
+    y = _render_section_header(editor, x, y + 2, "Layout")
     if is_image:
         y = _render_property_row(editor, x, y, "Image Size (px)", f"{native_w} x {native_h}")
+    elif is_text:
+        y = _render_property_row(editor, x, y, "Text Size (px)", f"{native_w} x {native_h}")
     y = _render_numeric_property_row(editor, x, y, "Size X", size_x, -8.0, 8.0, "width", "{:.1f}px")
     y = _render_numeric_property_row(
         editor, x, y, "Size Y", size_y, -8.0, 8.0, "height", "{:.1f}px"
     )
-    y += 8
+    y = _render_section_header(editor, x, y + 2, "Appearance")
     y = _render_dropdown_row(editor, x, y, "Sprite Type", shape, "sprite_shape")
     if shape == "image":
         sprite_text = os.path.basename(obj.sprite_path) if obj.sprite_path else "None"
@@ -363,7 +469,24 @@ def render(editor) -> None:
         label_short = editor.font.render(sprite_text, True, (150, 150, 150))
         editor.screen.blit(label_short, (x + right_w - 72 - label_short.get_width(), y))
         y += theme.INSPECTOR_ROW_HEIGHT
-    else:
+    elif is_text:
+        y = _render_section_header(editor, x, y + 2, "Font")
+        font_size = int((obj.custom_data or {}).get("font_size", 28))
+        y = _render_numeric_property_row(
+            editor,
+            x,
+            y,
+            "Font Size",
+            float(font_size),
+            -1.0,
+            1.0,
+            "font_size",
+            "{:.0f}px",
+            value_type="int",
+        )
+        y = _render_property_row(editor, x, y, "Font Family", "Default")
+        y = _render_property_row(editor, x, y, "Alignment", "Left (planned)")
+        y = _render_section_header(editor, x, y + 2, "Text Color")
         color = getattr(obj, "sprite_color", (255, 255, 255))
         y = _render_numeric_property_row(
             editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", "{:.0f}", value_type="int"
@@ -374,7 +497,19 @@ def render(editor) -> None:
         y = _render_numeric_property_row(
             editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", "{:.0f}", value_type="int"
         )
-    y += 8
+    else:
+        y = _render_section_header(editor, x, y + 2, "Color")
+        color = getattr(obj, "sprite_color", (255, 255, 255))
+        y = _render_numeric_property_row(
+            editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", "{:.0f}", value_type="int"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Color G", float(color[1]), -10, 10, "color_g", "{:.0f}", value_type="int"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", "{:.0f}", value_type="int"
+        )
+    y = _render_section_header(editor, x, y + 2, "Scene")
     y = _render_numeric_property_row(
         editor,
         x,
@@ -388,7 +523,7 @@ def render(editor) -> None:
         value_type="int",
     )
     y = _render_toggle_property_row(editor, x, y, "Screen Space", obj.screen_space, "screen_space")
-    y += 8
+    y = _render_section_header(editor, x, y + 2, "Physics")
     physics_type = getattr(obj, "physics_type", "none")
     y = _render_dropdown_row(
         editor, x, y, "Physics", physics_type, "physics_type", labels=sprite_types.PHYSICS_LABELS
@@ -406,8 +541,8 @@ def render(editor) -> None:
         y = _render_numeric_property_row(
             editor, x, y, "Bounce", float(bounce), -0.1, 0.1, "physics_bounce", "{:.2f}"
         )
-    y += 8
-    y = _render_toggle_property_row(editor, x, y, "Visible", obj.visible, "visible")
+    y = _render_section_header(editor, x, y + 2, "State")
+    y = _render_toggle_property_row(editor, x, y, "Active", obj.active, "active")
     y = _render_toggle_property_row(editor, x, y, "Locked", obj.locked, "locked")
 
 

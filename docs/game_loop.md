@@ -68,6 +68,89 @@ s.run(
 - `input.mouse_pos` и `event.pos` автоматически пересчитываются обратно в виртуальные координаты
 - итоговый кадр масштабируется в реальное окно с сохранением пропорций
 
+## Desktop resize
+
+Если вы хотите, чтобы обычное `pygame`-окно можно было растягивать мышкой на Windows/Linux/macOS,
+передайте `resizable=True`:
+
+```python
+s.run(
+    scene=MainScene,
+    size=(1280, 720),
+    reference_size=(1920, 1080),
+    resizable=True,
+    title="Resizable Window",
+    fill_color=(20, 20, 30),
+)
+```
+
+После реального resize SpritePro сам обновляет:
+
+- `s.WH`
+- `s.WH_C`
+- `s.VISIBLE_RECT`
+- `s.SAFE_RECT`
+
+Важно: уже созданные объекты не перестраиваются автоматически только потому, что окно стало больше или меньше.
+Если вам нужен adaptive layout, подпишитесь на `s.GlobalEvents.RESIZE` и пересчитайте позиции вручную.
+
+Простой рабочий паттерн:
+
+```python
+import pygame
+import spritePro as s
+
+
+class MainScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.title = s.TextSprite(
+            "Resizable HUD",
+            28,
+            (255, 255, 255),
+            (0, 0),
+            anchor=s.Anchor.TOP_LEFT,
+            scene=self,
+        )
+        self.title.set_screen_space(True)
+
+        self.center_label = s.TextSprite(
+            "Center",
+            28,
+            (255, 220, 120),
+            s.WH_C,
+            anchor=s.Anchor.CENTER,
+            scene=self,
+        )
+        self.center_label.set_screen_space(True)
+
+        s.events.connect(s.GlobalEvents.RESIZE, self._on_resize)
+        self._apply_layout()
+
+    def _get_layout_rect(self) -> pygame.Rect:
+        safe_rect = getattr(s, "SAFE_RECT", None)
+        if isinstance(safe_rect, pygame.Rect) and safe_rect.width > 0 and safe_rect.height > 0:
+            return safe_rect.copy()
+        return pygame.Rect(0, 0, int(s.WH.x), int(s.WH.y))
+
+    def _apply_layout(self) -> None:
+        layout_rect = self._get_layout_rect()
+        self.title.position = (layout_rect.left + 24, layout_rect.top + 24)
+        self.center_label.position = layout_rect.center
+
+    def _on_resize(self, **_payload) -> None:
+        self._apply_layout()
+
+    def on_exit(self):
+        s.events.disconnect(s.GlobalEvents.RESIZE, self._on_resize)
+```
+
+Практическое правило:
+
+- для world-space объектов обычно достаточно заново читать `s.WH` / `s.WH_C`
+- для screen-space HUD лучше опираться на `s.SAFE_RECT`
+- если используете `reference_size`, layout лучше пересчитывать от виртуальных координат, а не от физического размера окна
+
 ## Сцены
 
 Сцены помогают разделять меню, игру и паузу. Можно переключать по имени без пересоздания, а при необходимости перезапускать.

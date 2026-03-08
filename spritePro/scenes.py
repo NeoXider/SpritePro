@@ -72,10 +72,24 @@ class SceneManager:
         """Инициализирует менеджер сцен и внутренние реестры."""
         self.current_scene: Optional[Scene] = None
         self._active_scenes: list[Scene] = []
+        self._sorted_active_scenes: list[Scene] = []
+        self._active_scenes_dirty = True
         self._activation_index: dict[Scene, int] = {}
         self._activation_counter = 0
         self._scenes: dict[str, Scene] = {}
         self._scene_factories: dict[str, callable] = {}
+
+    def _mark_active_scenes_dirty(self) -> None:
+        self._active_scenes_dirty = True
+
+    def _get_sorted_active_scenes(self) -> list[Scene]:
+        if self._active_scenes_dirty:
+            self._sorted_active_scenes = sorted(
+                self._active_scenes,
+                key=lambda s: (s.order, self._activation_index.get(s, 0)),
+            )
+            self._active_scenes_dirty = False
+        return self._sorted_active_scenes
 
     def _resolve_scene(self, scene_or_name: Scene | str | None) -> Optional[Scene]:
         """Возвращает сцену по объекту или имени.
@@ -105,6 +119,7 @@ class SceneManager:
         self._activation_index[scene] = self._activation_counter
         scene._active = True
         self._active_scenes.append(scene)
+        self._mark_active_scenes_dirty()
         self._call_on_enter(scene, context)
         get_plugin_manager().emit("scene_loaded", scene=scene)
 
@@ -141,6 +156,7 @@ class SceneManager:
         scene._active = False
         self._active_scenes.remove(scene)
         self._activation_index.pop(scene, None)
+        self._mark_active_scenes_dirty()
 
     def set_scene(self, scene: Optional[Scene], context=None) -> None:
         """Устанавливает текущую сцену и отключает остальные.
@@ -235,6 +251,7 @@ class SceneManager:
         if scene is None:
             return
         scene.order = int(order)
+        self._mark_active_scenes_dirty()
 
     def add_scene(self, name: str, scene) -> None:
         """Добавляет сцену по имени.
@@ -332,10 +349,7 @@ class SceneManager:
         Args:
             dt (float): Время кадра в секундах.
         """
-        for scene in sorted(
-            self._active_scenes,
-            key=lambda s: (s.order, self._activation_index.get(s, 0)),
-        ):
+        for scene in self._get_sorted_active_scenes():
             scene.update(dt)
 
     def draw(self, screen: pygame.Surface) -> None:
@@ -344,8 +358,5 @@ class SceneManager:
         Args:
             screen (pygame.Surface): Экран для отрисовки.
         """
-        for scene in sorted(
-            self._active_scenes,
-            key=lambda s: (s.order, self._activation_index.get(s, 0)),
-        ):
+        for scene in self._get_sorted_active_scenes():
             scene.draw(screen)

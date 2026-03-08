@@ -16,6 +16,9 @@ if TYPE_CHECKING:
     from spritePro.constants import Anchor
 
 
+_FONT_CACHE: dict[tuple[str | None, int], pygame.font.Font] = {}
+
+
 class TextSprite(Sprite):
     """Спрайт, отображающий текст со всеми базовыми механиками Sprite.
 
@@ -84,6 +87,9 @@ class TextSprite(Sprite):
         self.color = color
         self.font_path = font_name
         self.font_size = font_size
+        self.font: pygame.font.Font | None = None
+        self._font_cache_key: tuple[str | None, int] | None = None
+        self._render_cache_key: tuple[tuple[str | None, int], str, tuple[int, int, int]] | None = None
 
         # создаём и рендерим шрифт через set_font
         self.set_font(font_name, font_size)
@@ -180,17 +186,29 @@ class TextSprite(Sprite):
             TextSprite: self для цепочек вызовов.
         """
         self.font_size = font_size
-        try:
-            if font_name:
-                self.font = pygame.font.Font(str(font_name), font_size)
-            else:
-                self.font = pygame.font.SysFont(None, font_size)
-        except FileNotFoundError:
-            self.font = pygame.font.SysFont("arial", font_size)
+        font_path = str(font_name) if font_name else None
+        font_key = (font_path, font_size)
+        if self._font_cache_key != font_key or self.font is None:
+            cached_font = _FONT_CACHE.get(font_key)
+            if cached_font is None:
+                try:
+                    if font_path:
+                        cached_font = pygame.font.Font(font_path, font_size)
+                    else:
+                        cached_font = pygame.font.SysFont(None, font_size)
+                except FileNotFoundError:
+                    cached_font = pygame.font.SysFont("arial", font_size)
+                _FONT_CACHE[font_key] = cached_font
+            self.font = cached_font
+            self._font_cache_key = font_key
 
         display_str = self._text if self._text else ("|" if self._input_active else "")
+        render_key = (font_key, display_str, self.color)
+        if self._render_cache_key == render_key:
+            return self
         surf = self._render_text_multiline(display_str)
         self.set_image(surf)
+        self._render_cache_key = render_key
         return self
 
     def _render_text_multiline(self, text: str, line_spacing: int = 2) -> pygame.Surface:

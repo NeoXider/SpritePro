@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional
 import time
 import sys
 import inspect
@@ -9,6 +9,31 @@ from pygame.math import Vector2
 from .camera_effects import CameraShake
 from . import grid_renderer
 from .physics import PhysicsWorld
+
+
+PERF_STAGE_ORDER = (
+    "input",
+    "events",
+    "plugins",
+    "scenes",
+    "sprites",
+    "debug",
+    "present",
+)
+
+
+@dataclass
+class _PerfSnapshot:
+    frame_ms: float = 0.0
+    cpu_ms: float = 0.0
+    dt_ms: float = 0.0
+    fps: float = 0.0
+    sprite_count: int = 0
+    body_count: int = 0
+    event_count: int = 0
+    stages_last: Dict[str, float] | None = None
+    stages_avg: Dict[str, float] | None = None
+    stages_peak: Dict[str, float] | None = None
 
 
 class SpriteProGame:
@@ -44,7 +69,7 @@ class SpriteProGame:
         self.update_objects: list = []
         self.camera_shake = CameraShake(self)
         self.register_update_object(self.camera_shake)
-        self.physics_world = PhysicsWorld(gravity=980.0, substeps=8)
+        self.physics_world = PhysicsWorld(gravity=980.0)
         self.register_update_object(self.physics_world)
 
         # Debug overlay settings
@@ -87,6 +112,24 @@ class SpriteProGame:
         self.debug_show_camera_coords = True
         self.debug_hud_on_top = True
         self.debug_fps_value = 0.0
+        self.debug_perf_enabled = False
+        self.debug_perf_show_breakdown = True
+        self.debug_perf_show_counts = True
+        self.debug_perf_update_interval = 0.35
+        self.debug_perf_warn_ms = 8.0
+        self.debug_perf_hot_ms = 16.0
+        self._perf_last_presented = _PerfSnapshot(
+            stages_last={stage: 0.0 for stage in PERF_STAGE_ORDER},
+            stages_avg={stage: 0.0 for stage in PERF_STAGE_ORDER},
+            stages_peak={stage: 0.0 for stage in PERF_STAGE_ORDER},
+        )
+        self._perf_window_started_at = time.perf_counter()
+        self._perf_window_frames = 0
+        self._perf_window_frame_sum = 0.0
+        self._perf_window_cpu_sum = 0.0
+        self._perf_window_dt_sum = 0.0
+        self._perf_window_stage_sum = {stage: 0.0 for stage in PERF_STAGE_ORDER}
+        self._perf_window_stage_peak = {stage: 0.0 for stage in PERF_STAGE_ORDER}
         self.debug_log_prefixes = {
             "info": "[log]",
             "warning": "[warning]",
@@ -556,6 +599,98 @@ class SpriteProGame:
         if show_camera is not None:
             self.debug_show_camera_coords = bool(show_camera)
 
+    def set_debug_perf_enabled(self, enabled: bool = True) -> None:
+        """Включает или выключает встроенный профайлер стадий кадра."""
+        self.debug_perf_enabled = bool(enabled)
+        if enabled:
+            self._reset_perf_window()
+
+    def set_debug_perf_style(
+        self,
+        *,
+        update_interval: float | None = None,
+        show_breakdown: bool | None = None,
+        show_counts: bool | None = None,
+        warn_ms: float | None = None,
+        hot_ms: float | None = None,
+    ) -> None:
+        """Настраивает отображение встроенного профайлера."""
+        if update_interval is not None:
+            self.debug_perf_update_interval = max(0.1, float(update_interval))
+        if show_breakdown is not None:
+            self.debug_perf_show_breakdown = bool(show_breakdown)
+        if show_counts is not None:
+            self.debug_perf_show_counts = bool(show_counts)
+        if warn_ms is not None:
+            self.debug_perf_warn_ms = max(0.1, float(warn_ms))
+        if hot_ms is not None:
+            self.debug_perf_hot_ms = max(self.debug_perf_warn_ms, float(hot_ms))
+
+    def _reset_perf_window(self) -> None:
+        self._perf_window_started_at = time.perf_counter()
+        self._perf_window_frames = 0
+        self._perf_window_frame_sum = 0.0
+        self._perf_window_cpu_sum = 0.0
+        self._perf_window_dt_sum = 0.0
+        for stage in PERF_STAGE_ORDER:
+            self._perf_window_stage_sum[stage] = 0.0
+            self._perf_window_stage_peak[stage] = 0.0
+
+    def record_perf_frame(
+        self,
+        *,
+        frame_ms: float,
+        cpu_ms: float,
+        dt_ms: float,
+        fps: float,
+        event_count: int,
+        sprite_count: int,
+        body_count: int,
+        stages: Dict[str, float],
+    ) -> None:
+        """Сохраняет метрики последнего кадра и агрегирует окно профилирования."""
+        if not self.debug_perf_enabled:
+            return
+
+        self._perf_window_frames += 1
+        self._perf_window_frame_sum += frame_ms
+        self._perf_window_cpu_sum += cpu_ms
+        self._perf_window_dt_sum += dt_ms
+        for stage in PERF_STAGE_ORDER:
+            value = float(stages.get(stage, 0.0))
+            self._perf_window_stage_sum[stage] += value
+            if value > self._perf_window_stage_peak[stage]:
+                self._perf_window_stage_peak[stage] = value
+
+        now = time.perf_counter()
+        if now - self._perf_window_started_at < self.debug_perf_update_interval:
+            return
+
+        frame_count = max(1, self._perf_window_frames)
+        self._perf_last_presented = _PerfSnapshot(
+            frame_ms=frame_ms,
+            cpu_ms=cpu_ms,
+            dt_ms=dt_ms,
+            fps=fps,
+            sprite_count=sprite_count,
+            body_count=body_count,
+            event_count=event_count,
+            stages_last={stage: float(stages.get(stage, 0.0)) for stage in PERF_STAGE_ORDER},
+            stages_avg={
+                stage: self._perf_window_stage_sum[stage] / frame_count for stage in PERF_STAGE_ORDER
+            },
+            stages_peak={stage: self._perf_window_stage_peak[stage] for stage in PERF_STAGE_ORDER},
+        )
+        self._perf_last_presented.frame_ms = self._perf_window_frame_sum / frame_count
+        self._perf_last_presented.cpu_ms = self._perf_window_cpu_sum / frame_count
+        self._perf_last_presented.dt_ms = self._perf_window_dt_sum / frame_count
+        self._perf_last_presented.fps = fps
+        self._reset_perf_window()
+
+    def get_perf_snapshot(self) -> _PerfSnapshot:
+        """Возвращает последнее агрегированное окно метрик производительности."""
+        return self._perf_last_presented
+
     def set_debug_log_stack_enabled(self, enabled: bool = True) -> None:
         """Включает или выключает добавление источника вызова в лог."""
         self.debug_log_stack_enabled = enabled
@@ -816,7 +951,7 @@ class SpriteProGame:
         """Рисует HUD с FPS и координатами камеры."""
         if self._debug_hud_font is None:
             return
-        if not self.debug_show_fps and not self.debug_show_camera_coords:
+        if not self.debug_show_fps and not self.debug_show_camera_coords and not self.debug_perf_enabled:
             return
         lines = []
         if self.debug_show_camera_coords:
@@ -824,6 +959,25 @@ class SpriteProGame:
             lines.append(f"Camera: {int(cam.x)}, {int(cam.y)}")
         if self.debug_show_fps:
             lines.append(f"FPS: {int(self.debug_fps_value)}")
+        if self.debug_perf_enabled:
+            snapshot = self.get_perf_snapshot()
+            lines.append(
+                "Perf CPU "
+                f"{snapshot.cpu_ms:.1f} ms | Frame {snapshot.frame_ms:.1f} ms | DT {snapshot.dt_ms:.1f} ms"
+            )
+            if self.debug_perf_show_counts:
+                lines.append(
+                    f"Perf counts Sprites {snapshot.sprite_count} | Bodies {snapshot.body_count} | Events {snapshot.event_count}"
+                )
+            if self.debug_perf_show_breakdown and snapshot.stages_avg is not None:
+                for stage in PERF_STAGE_ORDER:
+                    avg_ms = snapshot.stages_avg.get(stage, 0.0)
+                    peak_ms = (
+                        snapshot.stages_peak.get(stage, 0.0)
+                        if snapshot.stages_peak is not None
+                        else 0.0
+                    )
+                    lines.append(f"Perf {stage}: {avg_ms:.2f} ms avg | {peak_ms:.2f} ms peak")
 
         padding = self.debug_hud_padding
         anchor = self.debug_hud_anchor
@@ -842,7 +996,18 @@ class SpriteProGame:
             y_step = self.debug_hud_font_size + 2
 
         for line in lines:
-            text_surf = self._debug_hud_font.render(line, True, self.debug_hud_color)
+            text_color = self.debug_hud_color
+            if line.startswith("Perf ") and " ms" in line:
+                try:
+                    value_part = line.split(":", 1)[1].split("ms", 1)[0]
+                    perf_value = float(value_part.strip().split(" ", 1)[0])
+                except (IndexError, ValueError):
+                    perf_value = 0.0
+                if perf_value >= self.debug_perf_hot_ms:
+                    text_color = (255, 110, 110)
+                elif perf_value >= self.debug_perf_warn_ms:
+                    text_color = (255, 210, 110)
+            text_surf = self._debug_hud_font.render(line, True, text_color)
             pos_x = x if anchor.endswith("left") else x - text_surf.get_width()
             surface.blit(text_surf, (pos_x, y))
             y += y_step

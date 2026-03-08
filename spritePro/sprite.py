@@ -146,6 +146,10 @@ class Sprite(pygame.sprite.Sprite):
         self._transformed_image = None
         self.mask = None
         self._active_tweens: List[object] = []
+        self._zoom_cache_zoom: float | None = None
+        self._zoom_cache_image_id: int | None = None
+        self._zoom_cache_size: Tuple[int, int] | None = None
+        self._zoom_cache_surface: pygame.Surface | None = None
 
         self.set_image(sprite, self.size_vector)
         self.set_position(self.start_pos, anchor=anchor)
@@ -1223,18 +1227,31 @@ class Sprite(pygame.sprite.Sprite):
         if self.active:
             screen = screen or spritePro.screen
             if screen is not None:
-                if getattr(self, "screen_space", False):
+                screen_w = screen.get_width()
+                screen_h = screen.get_height()
+                if self.screen_space:
                     # Режим screen space: привязаны к экрану, не к камере — без зума и смещения, размер 1:1
-                    screen.blit(self.image, self.rect)
+                    if not (
+                        self.rect.right <= 0
+                        or self.rect.bottom <= 0
+                        or self.rect.left >= screen_w
+                        or self.rect.top >= screen_h
+                    ):
+                        screen.blit(self.image, self.rect)
                 else:
                     game = spritePro.get_game()
-                    camera = getattr(game, "camera", Vector2())
-                    zoom = getattr(game, "camera_zoom", 1.0)
+                    camera = game.camera
+                    zoom = game.camera_zoom
                     if zoom == 1.0:
-                        draw_rect = self.rect.copy()
-                        draw_rect.x -= int(camera.x)
-                        draw_rect.y -= int(camera.y)
-                        screen.blit(self.image, draw_rect)
+                        draw_x = self.rect.x - int(camera.x)
+                        draw_y = self.rect.y - int(camera.y)
+                        if not (
+                            draw_x + self.rect.width <= 0
+                            or draw_y + self.rect.height <= 0
+                            or draw_x >= screen_w
+                            or draw_y >= screen_h
+                        ):
+                            screen.blit(self.image, (draw_x, draw_y))
                     else:
                         cx = screen.get_width() / 2
                         cy = screen.get_height() / 2
@@ -1242,15 +1259,44 @@ class Sprite(pygame.sprite.Sprite):
                         screen_y = (self.rect.y - camera.y) * zoom + cy * (1 - zoom)
                         w, h = self.image.get_size()
                         if w < 1 or h < 1:
-                            draw_rect = self.rect.copy()
-                            draw_rect.x = int(screen_x)
-                            draw_rect.y = int(screen_y)
-                            screen.blit(self.image, draw_rect)
+                            draw_x = int(screen_x)
+                            draw_y = int(screen_y)
+                            if not (
+                                draw_x + self.rect.width <= 0
+                                or draw_y + self.rect.height <= 0
+                                or draw_x >= screen_w
+                                or draw_y >= screen_h
+                            ):
+                                screen.blit(self.image, (draw_x, draw_y))
                         else:
                             scaled_w = max(1, int(w * zoom))
                             scaled_h = max(1, int(h * zoom))
-                            scaled = pygame.transform.smoothscale(self.image, (scaled_w, scaled_h))
-                            screen.blit(scaled, (int(screen_x), int(screen_y)))
+                            draw_x = int(screen_x)
+                            draw_y = int(screen_y)
+                            if (
+                                draw_x + scaled_w <= 0
+                                or draw_y + scaled_h <= 0
+                                or draw_x >= screen_w
+                                or draw_y >= screen_h
+                            ):
+                                pass
+                            else:
+                                image_id = id(self.image)
+                                cache_hit = (
+                                    self._zoom_cache_surface is not None
+                                    and self._zoom_cache_zoom == zoom
+                                    and self._zoom_cache_image_id == image_id
+                                    and self._zoom_cache_size == (scaled_w, scaled_h)
+                                )
+                                if cache_hit:
+                                    scaled = self._zoom_cache_surface
+                                else:
+                                    scaled = pygame.transform.smoothscale(self.image, (scaled_w, scaled_h))
+                                    self._zoom_cache_zoom = zoom
+                                    self._zoom_cache_image_id = image_id
+                                    self._zoom_cache_size = (scaled_w, scaled_h)
+                                    self._zoom_cache_surface = scaled
+                                screen.blit(scaled, (draw_x, draw_y))
         self._sync_local_offset()
         self._update_children_world_positions()
 
@@ -1284,12 +1330,16 @@ class Sprite(pygame.sprite.Sprite):
             self.image = self._transformed_image.copy()
             if self._alpha != 255:
                 self.image.set_alpha(self._alpha)
-            shape_fill = getattr(self, "_shape_fill_color", None)
+            shape_fill = self._shape_fill_color
             if shape_fill is not None and self._color == shape_fill:
                 pass
             elif self._color != (255, 255, 255):
                 self.image.fill(self._color, special_flags=pygame.BLEND_RGBA_MULT)
 
+            self._zoom_cache_zoom = None
+            self._zoom_cache_image_id = None
+            self._zoom_cache_size = None
+            self._zoom_cache_surface = None
             self._color_dirty = False
 
     def set_flip(self, flip_h: bool, flip_v: bool) -> "Sprite":
@@ -1810,8 +1860,15 @@ class Sprite(pygame.sprite.Sprite):
         if not self.collision_targets:
             return
 
-        # Filter out killed sprites to prevent errors
-        self.collision_targets = [s for s in self.collision_targets if s.alive()]
+        alive_targets = self.collision_targets
+        write_index = 0
+        for read_index in range(len(alive_targets)):
+            target = alive_targets[read_index]
+            if target.alive():
+                alive_targets[write_index] = target
+                write_index += 1
+        if write_index != len(alive_targets):
+            del alive_targets[write_index:]
 
         collider_rect = getattr(self, "collide", self).rect
 

@@ -1,8 +1,8 @@
 """
-Типы спрайтов в редакторе сцен: Image, Rectangle, Circle, Ellipse.
+Типы спрайтов в редакторе сцен: Image, Text, Rectangle, Circle, Ellipse.
 
-Аналог Unity: GameObject → 2D → Sprites (Square, Circle и т.д.).
-В Inspector можно переключать тип (выпадающий список) и для примитивов задавать цвет и размер.
+Аналог Unity: GameObject → 2D → Sprites/Text.
+В Inspector можно переключать тип (выпадающий список) и для примитивов/текста задавать основные свойства.
 """
 
 from __future__ import annotations
@@ -13,14 +13,16 @@ import pygame
 
 
 SHAPE_IMAGE = "image"
+SHAPE_TEXT = "text"
 SHAPE_RECTANGLE = "rectangle"
 SHAPE_CIRCLE = "circle"
 SHAPE_ELLIPSE = "ellipse"
 
-SHAPES_ORDER: List[str] = [SHAPE_IMAGE, SHAPE_RECTANGLE, SHAPE_CIRCLE, SHAPE_ELLIPSE]
+SHAPES_ORDER: List[str] = [SHAPE_IMAGE, SHAPE_TEXT, SHAPE_RECTANGLE, SHAPE_CIRCLE, SHAPE_ELLIPSE]
 
 SHAPE_LABELS: dict[str, str] = {
     SHAPE_IMAGE: "Image",
+    SHAPE_TEXT: "Text",
     SHAPE_RECTANGLE: "Rectangle",
     SHAPE_CIRCLE: "Circle",
     SHAPE_ELLIPSE: "Ellipse",
@@ -80,4 +82,24 @@ def render_primitive_surface(
         pygame.draw.ellipse(surf, color, surf.get_rect())
     else:
         pygame.draw.rect(surf, color, surf.get_rect())
+    return surf
+
+
+def render_text_surface(
+    text: str,
+    font_size: int,
+    color: Tuple[int, int, int],
+    font_name: str | None = None,
+) -> pygame.Surface:
+    pygame.font.init()
+    font = pygame.font.Font(font_name, max(1, int(font_size)))
+    lines = (text or "").splitlines() or [""]
+    rendered_lines = [font.render(line if line else " ", True, color) for line in lines]
+    width = max((line.get_width() for line in rendered_lines), default=1)
+    height = max(1, sum(line.get_height() for line in rendered_lines))
+    surf = pygame.Surface((max(1, width), height), pygame.SRCALPHA)
+    y = 0
+    for line in rendered_lines:
+        surf.blit(line, (0, y))
+        y += line.get_height()
     return surf

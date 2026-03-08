@@ -36,11 +36,11 @@ python -m spritePro.cli -e
 
 ### Что делать в редакторе
 
-1. **Добавлять объекты** — кнопки Rect, Circle, Ellipse для примитивов; Add или перетаскивание файлов для изображений.
-2. **Редактировать** — инструменты Move (G), Rotate (R), Scale (T); перемещение, вращение, масштаб мышью.
-3. **Настраивать** — Inspector справа: имя, позиция, размер, цвет, слой (Sorting Order).
-4. **Сохранять** — Ctrl+S или кнопка Save; сцена сохраняется в JSON.
-5. **Загружать в игру** — `spawn_scene("scene.json", scene=...)` и получение объектов по имени: `rt.exact("player").Sprite(speed=5)`, `rt.exact("button").to_button(...)`.
+1. **Добавлять объекты** — через меню `GameObject`: изображения, `Text`, `Rectangle`, `Circle`, `Ellipse`; также работает drag & drop изображений.
+2. **Редактировать** — инструменты вынесены в меню `Tools`: Move (G), Rotate (R), Scale (T), Select (V).
+3. **Настраивать** — Inspector справа: имя, позиция, размер, цвет, слой (Sorting Order), `active`, а для `Text` ещё и содержимое текста / `Font Size`.
+4. **Сохранять** — через меню `File` или горячими клавишами `Ctrl+S`, `Ctrl+Shift+S`, `Ctrl+O`, `Ctrl+N`.
+5. **Загружать в игру** — `spawn_scene("scene.json", scene=...)` и получение объектов по имени: `rt.exact("player").Sprite(speed=5)`, `rt.exact("button").to_button(...)`. `Text`-объекты из сцены автоматически поднимаются как `TextSprite`.
 
 Подробнее: [документация редактора](docs/sprite_editor.md).
 
@@ -107,6 +107,23 @@ s.run(
 
 В этом режиме `s.WH`, `s.WH_C`, камера и ввод работают в координатах `1920x1080`,
 а итоговый кадр просто масштабируется в реальный размер окна.
+
+Если нужно обычное desktop-окно с возможностью менять размер мышкой:
+
+```python
+s.run(
+    scene=MainScene,
+    size=(1280, 720),
+    reference_size=(1920, 1080),
+    resizable=True,
+    title="Resizable Window",
+    fill_color=(20, 20, 30),
+)
+```
+
+При resize SpritePro обновляет `s.WH`, `s.WH_C`, `s.VISIBLE_RECT` и `s.SAFE_RECT`,
+но уже созданные HUD-объекты не relayout'ятся сами по себе. Для adaptive layout
+подписывайтесь на `s.GlobalEvents.RESIZE` и пересчитывайте позиции.
 
 ---
 
@@ -265,7 +282,7 @@ s.run(scene=MainScene, platform="kivy")
 
 - [Mobile guide](docs/mobile.md) — как устроен Kivy runtime и touch-ввод
 - [Hybrid Kivy UI guide](docs/kivy_hybrid.md) — Kivy menu/layout + встроенная игровая область SpritePro
-- [Build guide](docs/building.md) — как собирать library, web и mobile build
+- [Build guide](docs/building.md) — как собирать library, web и mobile build, включая два Android-сценария: локальные правки `SpritePro` и проверка через `pip`
 
 Быстрый preview разных экранов через CLI:
 
@@ -646,7 +663,7 @@ pos = prefs.get_vector2("player_pos", (0, 0))
 - **Builder** — fluent API для спрайтов и частиц
 
 ### 🎨 Редактор сцен
-- **Sprite Editor** — сцены в стиле Unity: Move/Rotate/Scale, Hierarchy, Inspector, JSON
+- **Sprite Editor** — сцены в стиле Unity: `File` / `GameObject` / `Tools` / `View`, Hierarchy, Inspector, JSON, `Text`-объекты
 - В игре: `spawn_scene("level.json", ...)`, объекты по имени, физика из сцены. [docs/sprite_editor.md](docs/sprite_editor.md)
 - Запуск: `python -m spritePro.cli --editor` или `-e`
 

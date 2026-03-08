@@ -71,6 +71,20 @@ class AudioManager:
         self.sounds: dict[str, pygame.mixer.Sound] = {}
         self.current_music: Optional[str] = None
 
+    def _ensure_mixer_ready(self) -> bool:
+        if pygame.mixer.get_init() is not None:
+            return True
+        try:
+            if not pygame.get_init():
+                pygame.init()
+            pygame.mixer.init()
+            return True
+        except Exception as e:
+            import spritePro
+
+            spritePro.debug_log_warning(f"Audio mixer not initialized: {e}")
+            return False
+
     def load_sound(self, name: str, path: str) -> "Sound":
         """Загрузить звуковой эффект и вернуть объект Sound.
 
@@ -85,6 +99,8 @@ class AudioManager:
             >>> jump_sound = audio.load_sound("jump", "sounds/jump.mp3")
             >>> jump_sound.play()  # Можно сразу использовать!
         """
+        if not self._ensure_mixer_ready():
+            return Sound(self, name)
         cached = resource_cache.load_sound(path)
         if cached is None:
             import spritePro
@@ -116,6 +132,8 @@ class AudioManager:
             >>> audio.play_sound("sounds/coin.wav", volume=0.8)
         """
         if not self.sfx_enabled:
+            return
+        if not self._ensure_mixer_ready():
             return
 
         # Проверяем, есть ли звук в словаре (загружен ранее)
@@ -150,6 +168,8 @@ class AudioManager:
             >>> audio.play_music("music/intro.mp3", loop=False, volume=0.7)
         """
         if not self.music_enabled:
+            return
+        if not self._ensure_mixer_ready():
             return
         try:
             pygame.mixer.music.load(path)

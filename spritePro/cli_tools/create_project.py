@@ -309,7 +309,7 @@ LEVEL_TEMPLATE = dedent(
                 },
                 "z_index": 10,
                 "screen_space": false,
-                "visible": true,
+                "active": true,
                 "locked": false,
                 "custom_data": {
                     "width": 64,

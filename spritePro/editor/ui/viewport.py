@@ -13,7 +13,7 @@ def render(editor) -> None:
     if editor.scene.grid_visible:
         _render_grid(editor, viewport)
     for obj in editor.scene.objects:
-        if not obj.visible:
+        if not obj.active:
             continue
         _render_sprite(editor, obj)
     for obj in editor.selected_objects:

@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import math
+import os
 from typing import Optional, List, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -140,6 +141,7 @@ class PhysicsBody:
         self._shapes: List[pymunk.Shape] = []
         self._space: Optional[pymunk.Space] = None
         self._last_rect_size: Optional[Tuple[int, int]] = None
+        self._last_center: Optional[Tuple[int, int]] = None
         self.acceleration = Vector2(0, 0)
         self._last_scale: float = getattr(sprite, "scale", 1.0)
         self._last_shape_kind: Optional[str] = None
@@ -237,6 +239,7 @@ class PhysicsBody:
 
         self._shapes = [shape]
         self._last_rect_size = (r.width, r.height)
+        self._last_center = (r.centerx, r.centery)
         self._last_scale = getattr(self.sprite, "scale", 1.0)
         self._last_shape_kind = shape_kind
 
@@ -282,18 +285,29 @@ class PhysicsBody:
         if self._body is None:
             return
         r = sprite.rect
-        if self.config.body_type == BodyType.STATIC:
-            self._body.position = (float(r.centerx), float(r.centery))
-
-        self.enabled = getattr(sprite, "visible", getattr(sprite, "active", True))
-
+        current_center = (r.centerx, r.centery)
+        is_static = self.config.body_type == BodyType.STATIC
+        enabled = getattr(sprite, "visible", getattr(sprite, "active", True))
         scale = getattr(sprite, "scale", 1.0)
         current_size = (r.width, r.height)
+        position_changed = self._last_center != current_center
+        enabled_changed = self.enabled != enabled
         size_changed = self._last_rect_size != current_size or self._last_scale != scale
-        shape_changed = self._last_shape_kind != self._resolve_shape_kind()
+        shape_kind = self._resolve_shape_kind()
+        shape_changed = self._last_shape_kind != shape_kind
+
+        self.enabled = enabled
+
+        if not size_changed and not shape_changed:
+            if is_static and position_changed:
+                self._body.position = (float(current_center[0]), float(current_center[1]))
+            if position_changed or enabled_changed:
+                self._last_center = current_center
+            return
 
         if size_changed or shape_changed:
             self._last_rect_size = current_size
+            self._last_center = current_center
             self._last_scale = scale
             if self._space is not None:
                 for sh in self._shapes:
@@ -342,17 +356,34 @@ class PhysicsBody:
 
 NEAR_GROUND_PX = 8
 MAX_PHYSICS_DT = 1.0 / 30.0
+ANDROID_PHYSICS_SUBSTEPS = 2
+ANDROID_PHYSICS_ITERATIONS = 16
+DEFAULT_PHYSICS_SUBSTEPS = 8
+DEFAULT_PHYSICS_ITERATIONS = 40
 
 
 class PhysicsWorld:
     """Мир физики на pymunk. Управляет space, синхронизацией спрайт↔тело и ограничениями."""
 
-    def __init__(self, gravity: float = 980.0, substeps: int = 8):
+    def __init__(self, gravity: float = 980.0, substeps: int | None = None):
         self._space = pymunk.Space()
         self._space.gravity = (0, gravity)
         self.gravity = gravity
+        is_android_runtime = bool(
+            os.environ.get("ANDROID_ARGUMENT") or os.environ.get("P4A_BOOTSTRAP")
+        )
+        if substeps is None:
+            substeps = (
+                ANDROID_PHYSICS_SUBSTEPS
+                if is_android_runtime
+                else DEFAULT_PHYSICS_SUBSTEPS
+            )
         self.substeps = max(1, substeps)
-        self._space.iterations = 40
+        self._space.iterations = (
+            ANDROID_PHYSICS_ITERATIONS
+            if is_android_runtime
+            else DEFAULT_PHYSICS_ITERATIONS
+        )
         self._space.collision_slop = 0.001
         self._space.collision_bias = 0.002
         self.bodies: List[PhysicsBody] = []
@@ -361,6 +392,7 @@ class PhysicsWorld:
         self.constraints: List[Any] = []
         self.bounds: Optional[pygame.Rect] = None
         self.collision_enabled = True
+        self._ground_query_filter = pymunk.ShapeFilter()
 
         self._setup_collision_handler()
 
@@ -457,7 +489,7 @@ class PhysicsWorld:
         half_h = r.height / 2.0
         start = (pos.x, pos.y + half_h)
         end = (pos.x, pos.y + half_h + NEAR_GROUND_PX)
-        query = self._space.segment_query(start, end, 1, pymunk.ShapeFilter())
+        query = self._space.segment_query(start, end, 1, self._ground_query_filter)
         for hit in query:
             if hit.shape.body is not body._body:
                 body.grounded = True

@@ -8,6 +8,46 @@ from . import layouts
 from . import theme
 
 
+def _fit_status_line(font: pygame.font.Font, text: str, max_width: int) -> str:
+    if max_width <= 0 or font.size(text)[0] <= max_width:
+        return text
+    ellipsis = "..."
+    left, right = 0, len(text)
+    best = ellipsis
+    while left <= right:
+        mid = (left + right) // 2
+        candidate = text[:mid].rstrip() + ellipsis
+        if font.size(candidate)[0] <= max_width:
+            best = candidate
+            left = mid + 1
+        else:
+            right = mid - 1
+    return best
+
+
+def _render_status_toast(editor) -> None:
+    if editor.status_message_timer <= 0:
+        return
+    viewport = editor._get_viewport_rect()
+    max_width = max(180, min(viewport.width - 24, 520))
+    text_value = _fit_status_line(editor.font, editor.status_message, max_width - 20)
+    is_error = any(
+        token in editor.status_message.lower() for token in ("failed", "error", "invalid")
+    )
+    bg_color = (56, 40, 40) if is_error else (34, 36, 44)
+    border_color = (190, 95, 95) if is_error else theme.COLORS["ui_input_border"]
+    text_color = (255, 210, 210) if is_error else (230, 230, 238)
+    text_surface = editor.font.render(text_value, True, text_color)
+    toast_rect = pygame.Rect(0, 0, text_surface.get_width() + 20, text_surface.get_height() + 10)
+    toast_rect.midtop = (viewport.centerx, viewport.y + 10)
+    pygame.draw.rect(editor.screen, bg_color, toast_rect, border_radius=6)
+    pygame.draw.rect(editor.screen, border_color, toast_rect, 1, border_radius=6)
+    editor.screen.blit(
+        text_surface,
+        (toast_rect.x + 10, toast_rect.y + (toast_rect.height - text_surface.get_height()) // 2),
+    )
+
+
 def _draw_slider(
     screen: pygame.Surface,
     rect: pygame.Rect,
@@ -162,9 +202,7 @@ def render(editor) -> None:
         "px",
     )
 
-    if editor.status_message_timer > 0:
-        status = font.render(editor.status_message, True, (160, 160, 170))
-        screen.blit(status, (w // 2 - status.get_width() // 2, bar_top + pad))
+    _render_status_toast(editor)
 
 
 def _draw_status_input_box(

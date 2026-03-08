@@ -38,10 +38,15 @@ def _allowed_for_editor_text(name: str) -> Optional[set]:
 
 
 def can_add_char(input_type: InputType, current: str, ch: str, name: str = "") -> bool:
+    if name == "prop_input_text" and ch == "\n":
+        return input_type == "text"
     return _can_add_char(input_type, current, ch, _allowed_for_editor_text(name) if name else None)
 
 
 def filter_chars_for_paste(input_type: InputType, text: str, name: str = "") -> str:
+    if input_type == "text" and name == "prop_input_text":
+        normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+        return "".join(c for c in normalized if c == "\n" or _can_add_char(input_type, "", c, None))
     return _filter_chars_for_paste(
         input_type, text, _allowed_for_editor_text(name) if name else None
     )
@@ -109,6 +114,9 @@ def handle_text_input_keydown(editor, event: pygame.event.Event) -> bool:
             return True
 
     if event.key == pygame.K_RETURN:
+        if name == "prop_input_text" and not mod:
+            editor._text_input_buffers[name] = editor._text_input_buffers.get(name, "") + "\n"
+            return True
         editor._deactivate_text_input(apply=True)
         return True
     if event.key == pygame.K_ESCAPE:

@@ -16,6 +16,7 @@ class InputState:
         """Инициализирует состояние ввода и буферы событий."""
         self._keys_down: Set[int] = set()
         self._keys_up: Set[int] = set()
+        self._keys_pressed_state: Dict[int, bool] = {}
         self._keys_pressed: Tuple[bool, ...] = tuple()
 
         self._mouse_down: Set[int] = set()
@@ -27,13 +28,21 @@ class InputState:
         self.mouse_wheel: Tuple[int, int] = (0, 0)
         self._last_mouse_pos: Tuple[int, int] = (0, 0)
 
-    def update(self, events: Iterable[pygame.event.Event]) -> None:
+    def update(
+        self,
+        events: Iterable[pygame.event.Event],
+        *,
+        poll_hardware: bool = True,
+    ) -> None:
         """Обновляет состояние ввода по событиям текущего кадра.
 
         Args:
             events (Iterable[pygame.event.Event]): События pygame за кадр.
         """
-        events = list(events)
+        if isinstance(events, list):
+            events_list = events
+        else:
+            events_list = list(events)
         self._keys_down.clear()
         self._keys_up.clear()
         self._mouse_down.clear()
@@ -44,11 +53,13 @@ class InputState:
 
         saw_mouse_event = False
 
-        for event in events:
+        for event in events_list:
             if event.type == pygame.KEYDOWN:
                 self._keys_down.add(event.key)
+                self._keys_pressed_state[event.key] = True
             elif event.type == pygame.KEYUP:
                 self._keys_up.add(event.key)
+                self._keys_pressed_state[event.key] = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self._mouse_down.add(event.button)
                 self._mouse_buttons_state[event.button] = True
@@ -70,17 +81,21 @@ class InputState:
             elif event.type == pygame.MOUSEWHEEL:
                 self.mouse_wheel = (event.x, event.y)
 
-        self._keys_pressed = pygame.key.get_pressed()
-        try:
-            mouse_pressed = pygame.mouse.get_pressed(5)
-        except TypeError:
-            mouse_pressed = pygame.mouse.get_pressed()
-        if mouse_pressed:
-            self._mouse_pressed = tuple(bool(v) for v in mouse_pressed)
-            for index, value in enumerate(self._mouse_pressed, start=1):
-                self._mouse_buttons_state[index] = bool(value)
+        if poll_hardware:
+            self._keys_pressed = pygame.key.get_pressed()
+            try:
+                mouse_pressed = pygame.mouse.get_pressed(5)
+            except TypeError:
+                mouse_pressed = pygame.mouse.get_pressed()
+            if mouse_pressed:
+                self._mouse_pressed = tuple(bool(v) for v in mouse_pressed)
+                for index, value in enumerate(self._mouse_pressed, start=1):
+                    self._mouse_buttons_state[index] = bool(value)
+        else:
+            self._keys_pressed = tuple()
+            self._mouse_pressed = tuple()
 
-        if not saw_mouse_event:
+        if not saw_mouse_event and poll_hardware:
             try:
                 current_mouse_pos = pygame.mouse.get_pos()
                 self.mouse_pos = (int(current_mouse_pos[0]), int(current_mouse_pos[1]))
@@ -106,6 +121,8 @@ class InputState:
         Returns:
             bool: True, если клавиша удерживается.
         """
+        if key in self._keys_pressed_state:
+            return self._keys_pressed_state[key]
         try:
             return bool(self._keys_pressed[key])
         except IndexError:

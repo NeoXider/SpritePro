@@ -11,6 +11,9 @@ import pygame
 
 import spritePro as s
 
+_MAX_MOBILE_RENDER_LONGEST_SIDE = 1920
+_MAX_MOBILE_REFERENCE_RENDER_LONGEST_SIDE = 1920
+
 
 def _write_mobile_crash_log(text: str) -> None:
     candidates = [
@@ -77,6 +80,7 @@ class KivySpriteProWidget:
                 self._fps = fps
                 self._fill_color = fill_color
                 self._event_queue: List[pygame.event.Event] = []
+                self._dispatch_event_queue: List[pygame.event.Event] = []
                 self._surface: pygame.Surface | None = None
                 self._texture = None
                 self._active_touch_id: str | None = None
@@ -97,14 +101,15 @@ class KivySpriteProWidget:
             def _on_resize(self, *_args) -> None:
                 width = max(1, int(self.width))
                 height = max(1, int(self.height))
-                if self._surface is not None and self._surface.get_size() == (width, height):
+                surface_size = self._calculate_surface_size(width, height)
+                if self._surface is not None and self._surface.get_size() == surface_size:
                     self._update_rect()
                     return
 
-                self._surface = pygame.Surface((width, height), pygame.SRCALPHA, 32)
+                self._surface = pygame.Surface(surface_size, 0, 24)
                 s.attach_surface(self._surface, reference_size=self._reference_size)
 
-                self._texture = Texture.create(size=(width, height), colorfmt="rgba")
+                self._texture = Texture.create(size=surface_size, colorfmt="rgb")
                 self._texture.flip_vertical()
                 self._rect.texture = self._texture
                 self._update_rect()
@@ -115,12 +120,33 @@ class KivySpriteProWidget:
                     # с финальными s.WH / s.WH_C, как в pygame-режиме.
                     self._bootstrap_wait_frames = 2
 
+            def _calculate_surface_size(self, width: int, height: int) -> tuple[int, int]:
+                limit = (
+                    _MAX_MOBILE_REFERENCE_RENDER_LONGEST_SIDE
+                    if self._reference_size is not None
+                    else _MAX_MOBILE_RENDER_LONGEST_SIDE
+                )
+                longest_side = max(width, height)
+                if longest_side <= limit:
+                    return (width, height)
+                scale = limit / float(longest_side)
+                return (
+                    max(1, int(round(width * scale))),
+                    max(1, int(round(height * scale))),
+                )
+
             def _to_local_pos(self, touch) -> tuple[int, int]:
+                surface_w = max(1, self._surface.get_width() if self._surface is not None else int(self.width))
+                surface_h = max(1, self._surface.get_height() if self._surface is not None else int(self.height))
+                widget_w = max(1, int(self.width))
+                widget_h = max(1, int(self.height))
                 local_x = int(touch.x - self.x)
                 local_y = int(touch.y - self.y)
-                clamped_x = max(0, min(int(self.width) - 1, local_x))
-                clamped_y = max(0, min(int(self.height) - 1, local_y))
-                return (clamped_x, max(0, int(self.height) - 1 - clamped_y))
+                mapped_x = int(round(local_x * surface_w / widget_w))
+                mapped_y = int(round(local_y * surface_h / widget_h))
+                clamped_x = max(0, min(surface_w - 1, mapped_x))
+                clamped_y = max(0, min(surface_h - 1, mapped_y))
+                return (clamped_x, max(0, surface_h - 1 - clamped_y))
 
             def _enqueue_mouse_motion(
                 self,
@@ -142,8 +168,8 @@ class KivySpriteProWidget:
             def _present_surface(self) -> None:
                 if self._surface is None or self._texture is None:
                     return
-                buffer = pygame.image.tostring(self._surface, "RGBA")
-                self._texture.blit_buffer(buffer, colorfmt="rgba", bufferfmt="ubyte")
+                buffer = pygame.image.tostring(self._surface, "RGB")
+                self._texture.blit_buffer(buffer, colorfmt="rgb", bufferfmt="ubyte")
                 self.canvas.ask_update()
 
             def _set_fatal_error(self, exc: BaseException) -> None:
@@ -257,7 +283,9 @@ class KivySpriteProWidget:
                     return
 
                 events = self._event_queue
-                self._event_queue = []
+                self._event_queue = self._dispatch_event_queue
+                self._event_queue.clear()
+                self._dispatch_event_queue = events
                 try:
                     s.update_embedded(self._fps, self._fill_color, events)
                 except Exception as exc:

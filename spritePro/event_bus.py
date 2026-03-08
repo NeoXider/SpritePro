@@ -102,6 +102,7 @@ class GlobalEvents:
     KEY_UP = "key_up"
     MOUSE_DOWN = "mouse_down"
     MOUSE_UP = "mouse_up"
+    RESIZE = "resize"
     TICK = "tick"
 
 

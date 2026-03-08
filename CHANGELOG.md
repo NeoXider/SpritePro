@@ -5,7 +5,7 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.1]
+## [3.2.0]
 
 ### Added
 - **Project template paths** — `spritePro.cli --create` теперь создаёт `config.py` с готовыми путями `PROJECT_ROOT`, `ASSETS_DIR`, `AUDIO_DIR`, `IMAGES_DIR`, `SCENES_DIR` и `MAIN_LEVEL_PATH`, чтобы в новых проектах не нужно было каждый раз вручную собирать `Path(__file__).resolve()...`.
@@ -14,10 +14,26 @@
 ### Changed
 - **Project template structure** — шаблон `--create` по умолчанию создаёт `main.py`, `config.py`, `game_events.py`, `scenes/main_scene.py`, `scenes/second_scene.py` и `scenes/main_level.json`. Вторая сцена остаётся почти пустой заготовкой для меню, паузы, магазина или другого уровня.
 - **Multiplayer entrypoint** — рекомендации, demoGames и `multiplayer_course` обновлены под единый app-level запуск через `s.run(..., multiplayer=True)`, а `s.networking.run(...)` оставлен как low-level runner.
-- **Версия библиотеки** — релиз обновлён до `3.1.1`.
+- **Версия библиотеки** — релиз обновлён до `3.2.0`.
 
 ### Fixed
 - **Editor runtime image sizing** — runtime-сцены, созданные в редакторе, снова корректно подхватывают размер image-объектов в embedded/Kivy-сценариях вместо fallback-белого прямоугольника.
+
+---
+
+## [3.2.1]
+
+### Added
+- **Редактор: Text object** — в Sprite Editor появился тип объекта `Text`: его можно создать через `GameObject -> New Text`, редактировать текст, `Font Size` и цвет в Inspector, а `spawn_scene(...)` автоматически поднимает такие объекты как `TextSprite`.
+- **Редактор: dropdown menu bar** — верхняя панель собрана в расширяемые меню `File`, `GameObject`, `Tools`, `View` с видимыми hotkey-подсказками рядом с действиями.
+
+### Changed
+- **Редактор: модульность** — часть крупной логики вынесена из `spritePro/editor/editor.py` в `spritePro/editor/file_actions.py` и `spritePro/editor/object_actions.py`, чтобы редактор было проще расширять дальше.
+- **Редактор: hierarchy UX** — контекстное меню в иерархии локализовано (`Дублировать` / `Удалить`), показывает hotkeys и визуально выделяет удаление.
+- **Версия библиотеки** — релиз обновлён до `3.2.1`.
+
+### Fixed
+- **Редактор: статусные сообщения** — `Saved`, `Loaded`, `Invalid input` и ошибки больше не теряются в нижней панели: теперь они показываются заметной toast-плашкой поверх viewport.
 
 ---
 

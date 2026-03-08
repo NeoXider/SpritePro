@@ -341,3 +341,71 @@ android.archs = arm64-v8a
 - либо явно включите папку `spritePro/` в проект игры перед сборкой
 
 Если APK установился, но поведение на телефоне отличается от desktop-preview, первым делом снимите `adb logcat` и проверьте, нет ли обычного Python traceback внутри mobile-host. Это быстрее, чем пересобирать вслепую.
+
+## Два варианта Android-проверки
+
+Для mobile-разработки полезно держать в голове два разных режима проверки.
+
+### Вариант A. Проверка локальных правок `SpritePro`
+
+Используйте этот путь, если вы меняете саму библиотеку и хотите проверить APK на свежем коде до публикации.
+
+Коротко:
+
+```bash
+pip install -e ".[kivy]"
+python -m build
+```
+
+После этого для Android не полагайтесь только на собранный wheel: надёжнее синхронизировать актуальную папку `spritePro/` прямо в проект игры перед `buildozer android debug`.
+
+Пример:
+
+```bash
+rsync -a --delete /mnt/d/GIT/_fork/SpritePro/spritePro/ ~/MyGame/spritePro/
+cd ~/MyGame
+buildozer android debug
+```
+
+Когда это полезно:
+
+- вы чините Android/Kivy/runtime-баги
+- тестируете непубликованные изменения
+- хотите исключить ситуацию, где APK собрался на старой версии `spritepro`
+
+### Вариант B. Проверка через `pip`
+
+Используйте этот путь, если хотите проверить обычный пользовательский сценарий: игра зависит от опубликованного пакета.
+
+Локальная проверка:
+
+```bash
+pip install "spritepro[kivy]"
+python -m spritePro.cli --preview main.py --platform kivy --screen phone-portrait
+```
+
+Android-проверка:
+
+```ini
+requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
+android.archs = arm64-v8a
+```
+
+```bash
+cd ~/MyGame
+buildozer android debug
+```
+
+Когда это полезно:
+
+- проверяете релизную версию пакета
+- воспроизводите install-flow пользователя
+- хотите убедиться, что `requirements = ...,spritepro` собираются без локального vendoring
+
+### Что лучше на практике
+
+- для ежедневной разработки библиотеки лучше вариант A
+- для финальной проверки релиза полезно прогнать вариант B
+- если баг проявляется только на телефоне, после сборки сразу снимайте `adb logcat`
+
+Полный пошаговый flow для обоих сценариев: [building.md](building.md)
