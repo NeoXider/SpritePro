@@ -505,13 +505,13 @@ class Sprite(pygame.sprite.Sprite):
 
     @position.setter
     def position(self, value: VectorInput):
-        """Устанавливает центральную позицию спрайта.
+        """Устанавливает позицию спрайта, сохраняя текущий anchor.
 
         Args:
-            value (VectorInput): Новые координаты центра (x, y).
+            value (VectorInput): Новые координаты для текущего anchor.
         """
         vec = _coerce_vector2(value, (0, 0))
-        self.set_position((int(vec.x), int(vec.y)), anchor=Anchor.CENTER)
+        self.set_position((int(vec.x), int(vec.y)), anchor=self.anchor)
 
     @property
     def local_position(self) -> Tuple[int, int]:
@@ -1318,9 +1318,10 @@ class Sprite(pygame.sprite.Sprite):
 
             self._transformed_image = img  # cache the transformed image
 
-            center = self.rect.center
+            anchor_attr = Anchor.MAP.get(str(self.anchor_key), "center")
+            anchor_pos = getattr(self.rect, anchor_attr)
             self.rect = self._transformed_image.get_rect()
-            self.rect.center = center
+            setattr(self.rect, anchor_attr, anchor_pos)
 
             self._transform_dirty = False
             self._color_dirty = True  # Force color update after transform
