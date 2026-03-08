@@ -62,12 +62,23 @@ def set_status(editor: "SpriteEditor", message: str, ttl: float = 2.0) -> None:
 
 def resolve_run_script_path(editor: "SpriteEditor") -> Optional[Path]:
     candidates: list[Path] = []
+    seen_dirs: set[Path] = set()
+
+    def add_dir_chain(start_dir: Path) -> None:
+        current = start_dir
+        while True:
+            if current not in seen_dirs:
+                seen_dirs.add(current)
+                candidates.append(current / "main.py")
+            if current.parent == current:
+                break
+            current = current.parent
+
     if editor.filepath:
-        candidates.append(Path(editor.filepath).expanduser().resolve().parent / "main.py")
+        add_dir_chain(Path(editor.filepath).expanduser().resolve().parent)
     if editor.project_root:
-        project_main = Path(editor.project_root).expanduser().resolve() / "main.py"
-        if project_main not in candidates:
-            candidates.append(project_main)
+        add_dir_chain(Path(editor.project_root).expanduser().resolve())
+
     for candidate in candidates:
         if candidate.is_file():
             return candidate
@@ -103,7 +114,11 @@ def run_project(editor: "SpriteEditor") -> None:
 
 def new_scene(editor: "SpriteEditor") -> None:
     editor.scene = Scene(name="New Scene")
-    editor.scene.grid_size = 10
+    scene_settings = editor.editor_settings["scene"]
+    editor.scene.grid_size = int(scene_settings["grid_size"])
+    editor.scene.grid_visible = bool(scene_settings["grid_visible"])
+    editor.scene.grid_labels_visible = bool(scene_settings["grid_labels_visible"])
+    editor.scene.snap_to_grid = bool(scene_settings["snap_to_grid"])
     editor.filepath = None
     editor.selected_objects.clear()
     editor.image_cache.clear()
@@ -181,27 +196,39 @@ def render_windows(editor: "SpriteEditor") -> None:
         editor.font,
         editor.font_bold,
         editor.colors,
-        scene_grid_visible=editor.scene.grid_visible,
-        scene_grid_labels_visible=editor.scene.grid_labels_visible,
-        scene_snap_to_grid=editor.scene.snap_to_grid,
-        on_toggle_grid=editor._toggle_grid_visibility,
-        on_toggle_grid_labels=editor._toggle_grid_labels,
-        on_toggle_snap=editor._toggle_snap,
+        settings=editor.editor_settings,
+        on_toggle_scene_grid=lambda: editor._toggle_scene_setting("grid_visible"),
+        on_toggle_scene_labels=lambda: editor._toggle_scene_setting("grid_labels_visible"),
+        on_toggle_scene_snap=lambda: editor._toggle_scene_setting("snap_to_grid"),
+        on_adjust_scene_grid_size=lambda delta: editor._adjust_scene_setting("grid_size", delta),
+        on_toggle_camera_preview=lambda: editor._toggle_view_setting("camera_preview_enabled"),
+        on_toggle_hierarchy_previews=lambda: editor._toggle_view_setting("hierarchy_previews_enabled"),
+        on_toggle_viewport_tool_badge=lambda: editor._toggle_view_setting("viewport_tool_badge_enabled"),
+        on_adjust_preview_width=lambda delta: editor._adjust_view_setting("camera_preview_width", delta),
+        on_adjust_preview_height=lambda delta: editor._adjust_view_setting("camera_preview_height", delta),
+        on_adjust_font_size=lambda delta: editor._adjust_theme_setting("font_size", delta),
+        on_adjust_font_bold_size=lambda delta: editor._adjust_theme_setting("font_bold_size", delta),
+        on_adjust_theme_color=editor._adjust_theme_color,
+        on_save_settings=editor._save_editor_settings,
+        on_reload_settings=editor._reload_editor_settings,
+        on_export_settings=editor._export_editor_settings,
+        on_import_settings=editor._import_editor_settings,
+        on_reset_settings=editor._reset_editor_settings,
         zoom_text=f"{editor.zoom * 100:.0f}%",
         grid_text=f"{editor.scene.grid_size}px",
     )
 
 
 def toggle_grid_visibility(editor: "SpriteEditor") -> None:
-    editor.scene.grid_visible = not editor.scene.grid_visible
+    editor._toggle_scene_setting("grid_visible")
     editor._save_state()
 
 
 def toggle_grid_labels(editor: "SpriteEditor") -> None:
-    editor.scene.grid_labels_visible = not editor.scene.grid_labels_visible
+    editor._toggle_scene_setting("grid_labels_visible")
     editor._save_state()
 
 
 def toggle_snap(editor: "SpriteEditor") -> None:
-    editor.scene.snap_to_grid = not editor.scene.snap_to_grid
+    editor._toggle_scene_setting("snap_to_grid")
     editor._save_state()

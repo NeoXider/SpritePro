@@ -2,13 +2,15 @@
 
 # 🎮 [SpritePro](https://github.com/NeoXider/SpritePro)
 
-### **Создавайте 2D игры на Python быстро: мультиплатформенно для desktop, web и mobile**
+### Создавайте 2D-игры на Python быстрее: editor, runtime, physics, UI, mobile и web в одном фреймворке
 
 [![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/)
 [![Pygame](https://img.shields.io/badge/Pygame-2.0+-green.svg)](https://www.pygame.org/)
 [![License](https://img.shields.io/badge/License-Open%20Source-yellow.svg)](LICENSE)
 
-**Мощный мультиплатформенный игровой фреймворк, который превращает создание 2D игр из сложной задачи в удовольствие.**
+**SpritePro** помогает перейти от идеи к играбельному прототипу без тонны инфраструктурного кода.
+
+**Меньше борьбы с циклом, камерой, UI, физикой и layout. Больше времени на саму игру.**
 
 ![Demo](https://github.com/user-attachments/assets/db56e1fd-0db5-4353-945d-c4a31c6b9d7f)
 
@@ -16,67 +18,26 @@
 
 ---
 
-## 🎨 Sprite Editor — визуальный редактор сцен
+## Почему это интересно
 
-В SpritePro появился **встроенный редактор спрайтов** в стиле Unity: создавайте сцены визуально, расставляйте объекты мышью и сохраняйте в JSON для использования в игре.
+SpritePro — это не просто обёртка над `pygame`. Это **высокоуровневый 2D game framework** с единым developer flow:
 
-<img width="800" alt="Sprite Editor" src="https://github.com/user-attachments/assets/01947bfe-d5e6-40cb-ba75-c03f2d4aeb9d" />
+- **Desktop, web и mobile** из одной кодовой базы
+- **Scene-based архитектура**, а не разрозненные скрипты
+- **Встроенный Sprite Editor** с JSON-сценами и запуском игры прямо из editor
+- **Камера, физика, частицы, UI, tween, audio, save/load, multiplayer** уже внутри
+- **Reference resolution**, resize-aware runtime и путь к Android/Kivy без переписывания логики
 
-### Запуск через терминал
-
-```bash
-python -m spritePro.cli --editor
-```
-
-или коротко:
-
-```bash
-python -m spritePro.cli -e
-```
-
-### Что делать в редакторе
-
-1. **Добавлять объекты** — через меню `GameObject`: изображения, `Text`, `Rectangle`, `Circle`, `Ellipse`; также работает drag & drop изображений.
-2. **Редактировать** — инструменты вынесены в меню `Tools`: Move (G), Rotate (R), Scale (T), Select (V).
-3. **Настраивать** — Inspector справа: имя, позиция, размер, цвет, слой (Sorting Order), `active`, а для `Text` ещё и содержимое текста / `Font Size`.
-4. **Сохранять** — через меню `File` или горячими клавишами `Ctrl+S`, `Ctrl+Shift+S`, `Ctrl+O`, `Ctrl+N`.
-5. **Загружать в игру** — `spawn_scene("scene.json", scene=...)` и получение объектов по имени: `rt.exact("player").Sprite(speed=5)`, `rt.exact("button").to_button(...)`. `Text`-объекты из сцены автоматически поднимаются как `TextSprite`.
-
-Подробнее: [документация редактора](docs/sprite_editor.md).
+Если коротко: `pygame` даёт низкий уровень. **SpritePro даёт темп разработки.**
 
 ---
 
-**SpritePro** — высокоуровневая **мультиплатформенная** библиотека для 2D игр на Python: автоматическая отрисовка, камера, ввод, сцены, физика, UI, частицы, редактор уровней и мультиплеер. Базовый рантайм работает на `pygame`, для mobile есть запуск через **Kivy host**, а для web — отдельный build flow, так что одну и ту же игру можно разворачивать под `desktop`, `web` и `mobile`.
+## Что даёт SpritePro
 
----
+### Быстрое прототипирование
 
-## 📑 Содержание
+Вместо ручной сборки игрового цикла, слоёв, камеры, UI и служебного кода:
 
-- [⚡ Почему SpritePro?](#-почему-spritepro) · [🌟 Особенности](#-что-делает-spritepro-особенным)
-- [🚀 Быстрый старт](#-быстрый-старт-30-секунд) — установка, первая игра, шаблон `--create`
-- [📱 Mobile и Build](#-mobile-и-build) — Kivy, Android, web, сборка библиотеки и билдов
-- [💡 Примеры возможностей](#-примеры-вау-возможностей) · [🎮 Что можно создать?](#-что-можно-создать)
-- [📖 Документация](#-документация) — **главная карта** и ссылки по разделам
-- [🎬 Демо-игры](#-демо-игры) · [📦 Что внутри?](#-что-внутри)
-- [🎯 Ключевые преимущества](#-ключевые-преимущества) · [🆚 SpritePro vs pygame](#-spritepro-vs-обычный-pygame)
-- [🚀 Начните прямо сейчас!](#-начните-прямо-сейчас) · [🤝 Сообщество](#-сообщество) · [📄 Лицензия](#-лицензия)
-
----
-
-## ⚡ Почему SpritePro?
-
-### 🚀 **Вместо этого:**
-```python
-# С pygame нужно писать ВСЁ самому:
-import pygame
-pygame.init()
-screen = pygame.display.set_mode((800, 600))
-clock = pygame.time.Clock()
-sprite = pygame.sprite.Sprite()
-# ... 50+ строк кода для базовой игры ...
-```
-
-### ✨ **С SpritePro:**
 ```python
 import spritePro as s
 
@@ -88,79 +49,117 @@ class MainScene(s.Scene):
     def update(self, dt):
         self.player.handle_keyboard_input()
 
-s.run(scene=MainScene, size=(800, 600), title="My Awesome Game", fill_color=(20, 20, 30))
+s.run(scene=MainScene, size=(800, 600), title="My Game", fill_color=(20, 20, 30))
 ```
 
-**Это всё!** Игра запускается через движок, без ручного цикла в каждом файле. 🎉
+Это уже полноценный рабочий старт: scene lifecycle, rendering, input, runtime loop и готовая точка расширения.
 
-Если нужно маленькое окно превью, но логика и layout как для большого экрана:
+### Один фреймворк, а не набор разрозненных решений
 
-```python
-s.run(
-    scene=MainScene,
-    size=(800, 600),
-    reference_size=(1920, 1080),
-    title="My Awesome Game",
-    fill_color=(20, 20, 30),
-)
-```
+| Что обычно приходится собирать вручную | Что уже есть в SpritePro |
+| --- | --- |
+| Рендер-цикл и обновление | `s.run(...)`, `Scene`, auto-render |
+| Камера и слежение | Camera API, follow, zoom, shake |
+| UI-слой | `Button`, `ToggleButton`, `TextSprite`, `Slider`, `TextInput`, `Layout` |
+| Физика | `pymunk`-интеграция, типы тел, коллизии, сцены из editor |
+| Частицы и эффекты | `ParticleEmitter`, presets, color/tween tools |
+| Сохранения | `PlayerPrefs`, save/load helpers |
+| Визуальная сборка уровней | Sprite Editor + `spawn_scene(...)` |
+| Mobile/web flow | `platform="kivy"`, `pygbag`, build docs |
 
-В этом режиме `s.WH`, `s.WH_C`, камера и ввод работают в координатах `1920x1080`,
-а итоговый кадр просто масштабируется в реальный размер окна.
+### Сильные стороны проекта
 
-Если нужно обычное desktop-окно с возможностью менять размер мышкой:
-
-```python
-s.run(
-    scene=MainScene,
-    size=(1280, 720),
-    reference_size=(1920, 1080),
-    resizable=True,
-    title="Resizable Window",
-    fill_color=(20, 20, 30),
-)
-```
-
-При resize SpritePro обновляет `s.WH`, `s.WH_C`, `s.VISIBLE_RECT` и `s.SAFE_RECT`,
-но уже созданные HUD-объекты не relayout'ятся сами по себе. Для adaptive layout
-подписывайтесь на `s.GlobalEvents.RESIZE` и пересчитывайте позиции.
+- **Scene-first подход**: удобно масштабировать игру, а не только прототип
+- **Editor-first workflow**: сцены можно собирать визуально и поднимать в рантайм как объекты
+- **Unity-like удобства**: PlayerPrefs, scene runtime, визуальный editor, tooling, callbacks
+- **Не отрезает от pygame**: при необходимости можно спускаться на низкий уровень
+- **Подходит и для solo-dev, и для команды**: editor settings и JSON-сцены удобно переносить между проектами и разработчиками
 
 ---
 
-## 🌟 Что делает SpritePro особенным?
+## Sprite Editor
 
-### 💎 **Автоматизация всего, что раздражает**
+В `SpritePro` встроен **визуальный редактор сцен**: можно собирать уровни мышью, сохранять в JSON и запускать игру прямо из editor.
 
-| С чистым pygame | Со SpritePro |
-|-----------------|--------------|
-| ❌ Ручная отрисовка каждого спрайта | ✅ Спрайты рисуются сами, один мир — один цикл |
-| ❌ Ручная камера и viewport | ✅ Камера из коробки, слежение одной строкой |
-| ❌ Своя обработка клавиш и мыши | ✅ InputState (was_pressed, оси), EventBus |
-| ❌ Ручные слои и порядок отрисовки | ✅ sorting_order, группы, LayeredUpdates |
-| ❌ mixer.Sound и своя логика громкости | ✅ AudioManager: load, play, музыка, громкость |
-| ❌ Парсинг JSON/файлов для сохранений | ✅ PlayerPrefs: set_int/get_int, set_float, … |
-| ❌ Циклы и спрайты для частиц | ✅ ParticleEmitter + ParticleConfig, emit() |
-| ❌ Свой движок или интеграция Box2D/pymunk | ✅ Физика на pymunk: add_physics, типы тел, коллизии |
-| ❌ Ручная расстановка UI (x, y каждого элемента) | ✅ Layout: flex, сетка, круг, линия; ScrollView |
-| ❌ Кодом расставлять объекты на уровне | ✅ Редактор сцен (JSON), spawn_scene, объекты по имени |
-| ❌ Отдельный код под mobile-host | ✅ Один и тот же runtime: `s.run(..., platform="pygame")` / `s.run(..., platform="kivy")` |
+<img width="800" alt="Sprite Editor" src="https://github.com/user-attachments/assets/01947bfe-d5e6-40cb-ba75-c03f2d4aeb9d" />
 
-### 🎯 **Всё, что нужно для игры - уже внутри:**
+### Что уже умеет editor
 
-- ✅ **Автоматическая отрисовка** - просто создайте спрайт, он сам отрисуется
-- ✅ **Умная камера** - слежение за объектами одной строкой
-- ✅ **Простая физика** - столкновения, гравитация, движение из коробки
-- ✅ **Система частиц** - красивые эффекты за 3 строки кода
-- ✅ **UI компоненты** - кнопки, переключатели, текст готовы к использованию
-- ✅ **Анимации и твининг** - плавные переходы без головной боли
-- ✅ **Аудио менеджер** - управление звуком и музыкой централизованно
-- ✅ **Система сохранений** - PlayerPrefs как в Unity!
-- ✅ **Якоря позиционирования** - размещайте объекты точно где нужно
-- ✅ **Автолейаут (Layout)** - flex, сетка, круг, линия для автоматического размещения дочерних спрайтов ([документация](docs/layout.md))
-- ✅ **ScrollView** — скроллируемая область для контента (лейаут), колёсико и перетаскивание мышью, опциональная маска (клиппинг по viewport)
-- ✅ **Готовые сцены (readyScenes)** — подключаемые сцены: **ChatScene** (мультиплеерный чат с историей, скроллом и маской) и **ChatStyle** для настройки оформления
-- ✅ **Мультиплеер** — сетевые игры: TCP relay, контекст (send/poll/send_every), EventBus; теперь можно запускать прямо через `s.run(..., multiplayer=True)` без отдельного `multiplayer_main`-runner, а `s.networking.run()` оставлен как low-level вариант. **Готовое лобби** (`s.run(..., multiplayer_use_lobby=True)`): один экран — имя, хост/клиент, порт, IP, список игроков; у хоста кнопки «В игру» и «Назад», у клиента — «Назад». По нажатию «В игру» игра запускается у обоих. Подробно: [Networking — лобби](docs/networking.md#подробная-инструкция-лобби-use_lobbytrue). Мини-курс в папке `multiplayer_course/` — 10 уроков от обмена сообщениями до готовой мини-игры.
-- ✅ **Mobile-рантайм** — запуск через `Kivy`: `s.run(..., platform="kivy")`, встроенный host для touch-ввода и мобильных demo
+- `File / GameObject / Tools / View` меню
+- `Image`, `Text`, `Rectangle`, `Circle`, `Ellipse`
+- Hierarchy с **мини-превью объектов**
+- Inspector со свойствами объекта и text-полями
+- gizmo с подписями угла, координат и размера
+- запуск игры через `Run` или `F5`
+- окно `Settings` с сохранением, импортом и экспортом editor-настроек
+
+### Запуск editor
+
+```bash
+python -m spritePro.cli --editor
+python -m spritePro.cli -e
+```
+
+### Что дальше
+
+1. Собираете сцену визуально
+2. Сохраняете её в JSON
+3. Загружаете в игре через `spawn_scene("scene.json", scene=...)`
+4. Получаете объекты по имени и навешиваете логику
+
+Подробнее: [docs/sprite_editor.md](docs/sprite_editor.md)
+
+---
+
+## Быстрый старт
+
+### Установка
+
+```bash
+pip install spritepro
+```
+
+Для mobile host-режима:
+
+```bash
+pip install "spritepro[kivy]"
+```
+
+### Первая игра
+
+```python
+import spritePro as s
+
+class MainScene(s.Scene):
+    def __init__(self):
+        super().__init__()
+        self.player = s.Sprite("", (50, 50), s.WH_C, speed=5, scene=self)
+
+    def update(self, dt):
+        self.player.handle_keyboard_input()
+
+s.run(scene=MainScene, size=(800, 600), title="My Game", fill_color=(20, 20, 30))
+```
+
+**Вот и всё.** У вас уже есть окно, сцена, игровой цикл, рендер и управление.
+
+### Если нужен готовый шаблон проекта
+
+```bash
+python -m spritePro.cli --create
+```
+
+Команда создаёт структуру проекта с `main.py`, `config.py`, `assets/`, `scenes/` и стартовой scene-based архитектурой.
+
+---
+
+## Когда SpritePro особенно хорош
+
+- когда вы хотите **быстро делать играбельные прототипы**
+- когда вам нужен **визуальный editor**, а не только код
+- когда хочется **pygame-экосистему**, но без постоянной рутины
+- когда важен путь к **mobile/web**, а не только desktop
+- когда хочется фреймворк, который можно начать просто, а потом масштабировать
 
 ---
 

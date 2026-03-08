@@ -21,6 +21,10 @@ _CONTEXT_MENU_ITEMS = (
     },
 )
 
+_PREVIEW_SIZE = 16
+_PREVIEW_LEFT = 12
+_TEXT_LEFT = _PREVIEW_LEFT + _PREVIEW_SIZE + 8
+
 
 def _fit_text_to_width(text: str, max_width: int, font: pygame.font.Font) -> str:
     if font.size(text)[0] <= max_width:
@@ -44,6 +48,48 @@ def _clamp_scroll(editor) -> None:
     cap = max(1, getattr(editor, "_hierarchy_visible_capacity", 1))
     max_scroll = max(0, total_items - cap)
     editor.hierarchy_scroll = max(0, min(editor.hierarchy_scroll, max_scroll))
+
+
+def _render_preview(editor, obj, item_rect: pygame.Rect, is_active: bool) -> None:
+    preview_rect = pygame.Rect(
+        item_rect.x + _PREVIEW_LEFT - 5,
+        item_rect.y + (item_rect.height - _PREVIEW_SIZE) // 2,
+        _PREVIEW_SIZE,
+        _PREVIEW_SIZE,
+    )
+    preview_bg = (56, 56, 64) if is_active else (44, 44, 50)
+    preview_border = (88, 88, 100) if is_active else (66, 66, 76)
+    pygame.draw.rect(editor.screen, preview_bg, preview_rect, border_radius=4)
+    pygame.draw.rect(editor.screen, preview_border, preview_rect, 1, border_radius=4)
+
+    sprite = editor._get_sprite_image(obj)
+    if sprite is None or sprite.get_width() <= 0 or sprite.get_height() <= 0:
+        inner = preview_rect.inflate(-6, -6)
+        pygame.draw.rect(
+            editor.screen,
+            getattr(obj, "sprite_color", (180, 180, 190)),
+            inner,
+            border_radius=2,
+        )
+        return
+
+    scale = min(
+        (preview_rect.width - 4) / max(1, sprite.get_width()),
+        (preview_rect.height - 4) / max(1, sprite.get_height()),
+    )
+    scaled_size = (
+        max(1, int(round(sprite.get_width() * scale))),
+        max(1, int(round(sprite.get_height() * scale))),
+    )
+    preview = pygame.transform.smoothscale(sprite, scaled_size)
+    if not is_active:
+        preview = preview.copy()
+        preview.set_alpha(150)
+    blit_pos = (
+        preview_rect.x + (preview_rect.width - scaled_size[0]) // 2,
+        preview_rect.y + (preview_rect.height - scaled_size[1]) // 2,
+    )
+    editor.screen.blit(preview, blit_pos)
 
 
 def render(editor) -> None:
@@ -93,7 +139,7 @@ def render(editor) -> None:
             is_selected = obj in editor.selected_objects
             is_active = obj.active
             state_icon = "●" if obj.active else "○"
-            max_name_width = left_w - 30
+            max_name_width = left_w - _TEXT_LEFT - 10
             label = _fit_text_to_width(f"{state_icon} {obj.name}", max_name_width, font)
         if is_selected:
             pygame.draw.rect(screen, colors["ui_accent"], text_rect, border_radius=3)
@@ -103,8 +149,11 @@ def render(editor) -> None:
             color = (150, 150, 160) if not is_active else colors["ui_text"]
         else:
             color = (115, 115, 125) if not is_active else colors["ui_text"]
+        text_x = _TEXT_LEFT if (i != 0 and getattr(editor, "hierarchy_previews_enabled", True)) else 15
+        if i != 0 and getattr(editor, "hierarchy_previews_enabled", True):
+            _render_preview(editor, obj, text_rect, is_active)
         text = font.render(label, True, color)
-        screen.blit(text, (15, y + 3))
+        screen.blit(text, (text_x, y + 3))
         y += theme.HIERARCHY_ITEM_HEIGHT
 
     _render_scrollbar(editor, list_top, list_bottom)

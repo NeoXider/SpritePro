@@ -105,7 +105,7 @@ class SettingsWindow(EditorWindow):
             window_id="settings",
             title="Settings",
             rect=rect,
-            page_titles=["Scene", "View"],
+            page_titles=["Scene", "View", "Theme", "Files"],
         )
 
     def render(
@@ -115,18 +115,40 @@ class SettingsWindow(EditorWindow):
         font_bold: pygame.font.Font,
         colors: Dict[str, Color],
         *,
-        scene_grid_visible: bool,
-        scene_grid_labels_visible: bool,
-        scene_snap_to_grid: bool,
-        on_toggle_grid: Callable[[], None],
-        on_toggle_grid_labels: Callable[[], None],
-        on_toggle_snap: Callable[[], None],
+        settings: Dict[str, object],
+        on_toggle_scene_grid: Callable[[], None],
+        on_toggle_scene_labels: Callable[[], None],
+        on_toggle_scene_snap: Callable[[], None],
+        on_adjust_scene_grid_size: Callable[[int], None],
+        on_toggle_camera_preview: Callable[[], None],
+        on_toggle_hierarchy_previews: Callable[[], None],
+        on_toggle_viewport_tool_badge: Callable[[], None],
+        on_adjust_preview_width: Callable[[int], None],
+        on_adjust_preview_height: Callable[[int], None],
+        on_adjust_font_size: Callable[[int], None],
+        on_adjust_font_bold_size: Callable[[int], None],
+        on_adjust_theme_color: Callable[[str, int, int], None],
+        on_save_settings: Callable[[], None],
+        on_reload_settings: Callable[[], None],
+        on_export_settings: Callable[[], None],
+        on_import_settings: Callable[[], None],
+        on_reset_settings: Callable[[], None],
         zoom_text: str,
         grid_text: str,
     ) -> None:
         if not self.visible:
             return
         body = self.render_base(screen, font, font_bold, colors)
+        body = self._render_quick_actions(
+            screen,
+            font,
+            colors,
+            body,
+            on_reset_settings=on_reset_settings,
+        )
+        scene_settings = settings["scene"]
+        view_settings = settings["view"]
+        theme_settings = settings["theme"]
 
         if self.current_page == "Scene":
             self._render_scene_page(
@@ -134,15 +156,71 @@ class SettingsWindow(EditorWindow):
                 font,
                 colors,
                 body,
-                scene_grid_visible=scene_grid_visible,
-                scene_grid_labels_visible=scene_grid_labels_visible,
-                scene_snap_to_grid=scene_snap_to_grid,
-                on_toggle_grid=on_toggle_grid,
-                on_toggle_grid_labels=on_toggle_grid_labels,
-                on_toggle_snap=on_toggle_snap,
+                scene_settings=scene_settings,
+                on_toggle_grid=on_toggle_scene_grid,
+                on_toggle_grid_labels=on_toggle_scene_labels,
+                on_toggle_snap=on_toggle_scene_snap,
+                on_adjust_grid_size=on_adjust_scene_grid_size,
             )
             return
-        self._render_view_page(screen, font, colors, body, zoom_text=zoom_text, grid_text=grid_text)
+        if self.current_page == "View":
+            self._render_view_page(
+                screen,
+                font,
+                colors,
+                body,
+                view_settings=view_settings,
+                on_toggle_camera_preview=on_toggle_camera_preview,
+                on_toggle_hierarchy_previews=on_toggle_hierarchy_previews,
+                on_toggle_viewport_tool_badge=on_toggle_viewport_tool_badge,
+                on_adjust_preview_width=on_adjust_preview_width,
+                on_adjust_preview_height=on_adjust_preview_height,
+                zoom_text=zoom_text,
+                grid_text=grid_text,
+            )
+            return
+        if self.current_page == "Theme":
+            self._render_theme_page(
+                screen,
+                font,
+                colors,
+                body,
+                theme_settings=theme_settings,
+                on_adjust_font_size=on_adjust_font_size,
+                on_adjust_font_bold_size=on_adjust_font_bold_size,
+                on_adjust_theme_color=on_adjust_theme_color,
+            )
+            return
+        self._render_files_page(
+            screen,
+            font,
+            colors,
+            body,
+            on_save_settings=on_save_settings,
+            on_reload_settings=on_reload_settings,
+            on_export_settings=on_export_settings,
+            on_import_settings=on_import_settings,
+            on_reset_settings=on_reset_settings,
+        )
+
+    def _render_quick_actions(
+        self,
+        screen: pygame.Surface,
+        font: pygame.font.Font,
+        colors: Dict[str, Color],
+        body: pygame.Rect,
+        *,
+        on_reset_settings: Callable[[], None],
+    ) -> pygame.Rect:
+        actions_h = 28
+        actions_rect = pygame.Rect(body.x, body.y, body.width, actions_h)
+        reset_rect = pygame.Rect(actions_rect.right - 110, actions_rect.y, 110, 24)
+        pygame.draw.rect(screen, (96, 64, 64), reset_rect, border_radius=5)
+        pygame.draw.rect(screen, colors["ui_border"], reset_rect, 1, border_radius=5)
+        text = font.render("Reset", True, colors["ui_text"])
+        screen.blit(text, (reset_rect.centerx - text.get_width() // 2, reset_rect.y + 4))
+        self._add_action(reset_rect, on_reset_settings)
+        return pygame.Rect(body.x, body.y + actions_h, body.width, max(0, body.height - actions_h))
 
     def _render_scene_page(
         self,
@@ -151,12 +229,11 @@ class SettingsWindow(EditorWindow):
         colors: Dict[str, Color],
         body: pygame.Rect,
         *,
-        scene_grid_visible: bool,
-        scene_grid_labels_visible: bool,
-        scene_snap_to_grid: bool,
+        scene_settings: Dict[str, object],
         on_toggle_grid: Callable[[], None],
         on_toggle_grid_labels: Callable[[], None],
         on_toggle_snap: Callable[[], None],
+        on_adjust_grid_size: Callable[[int], None],
     ) -> None:
         row_h = 26
         y = body.y
@@ -167,7 +244,7 @@ class SettingsWindow(EditorWindow):
             colors,
             pygame.Rect(body.x, y, body.width, row_h),
             "Grid Visible",
-            scene_grid_visible,
+            bool(scene_settings["grid_visible"]),
             on_toggle_grid,
         )
         y += row_h + 8
@@ -177,7 +254,7 @@ class SettingsWindow(EditorWindow):
             colors,
             pygame.Rect(body.x, y, body.width, row_h),
             "Grid Labels",
-            scene_grid_labels_visible,
+            bool(scene_settings["grid_labels_visible"]),
             on_toggle_grid_labels,
         )
         y += row_h + 8
@@ -187,8 +264,19 @@ class SettingsWindow(EditorWindow):
             colors,
             pygame.Rect(body.x, y, body.width, row_h),
             "Snap To Grid",
-            scene_snap_to_grid,
+            bool(scene_settings["snap_to_grid"]),
             on_toggle_snap,
+        )
+        y += row_h + 10
+        self._render_stepper_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Default Grid Size",
+            f"{int(scene_settings['grid_size'])} px",
+            lambda: on_adjust_grid_size(-2),
+            lambda: on_adjust_grid_size(2),
         )
 
     def _render_view_page(
@@ -198,15 +286,189 @@ class SettingsWindow(EditorWindow):
         colors: Dict[str, Color],
         body: pygame.Rect,
         *,
+        view_settings: Dict[str, object],
+        on_toggle_camera_preview: Callable[[], None],
+        on_toggle_hierarchy_previews: Callable[[], None],
+        on_toggle_viewport_tool_badge: Callable[[], None],
+        on_adjust_preview_width: Callable[[int], None],
+        on_adjust_preview_height: Callable[[int], None],
         zoom_text: str,
         grid_text: str,
     ) -> None:
+        row_h = 26
+        y = body.y
+        self._render_toggle_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Camera Preview",
+            bool(view_settings["camera_preview_enabled"]),
+            on_toggle_camera_preview,
+        )
+        y += row_h + 8
+        self._render_toggle_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Hierarchy Previews",
+            bool(view_settings["hierarchy_previews_enabled"]),
+            on_toggle_hierarchy_previews,
+        )
+        y += row_h + 8
+        self._render_toggle_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Viewport Tool Badge",
+            bool(view_settings["viewport_tool_badge_enabled"]),
+            on_toggle_viewport_tool_badge,
+        )
+        y += row_h + 10
+        self._render_stepper_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Preview Width",
+            f"{int(view_settings['camera_preview_width'])} px",
+            lambda: on_adjust_preview_width(-40),
+            lambda: on_adjust_preview_width(40),
+        )
+        y += row_h + 8
+        self._render_stepper_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Preview Height",
+            f"{int(view_settings['camera_preview_height'])} px",
+            lambda: on_adjust_preview_height(-40),
+            lambda: on_adjust_preview_height(40),
+        )
+        y += row_h + 16
         line1 = font.render(f"Camera Zoom: {zoom_text}", True, colors["ui_text"])
         line2 = font.render(f"Grid Size: {grid_text}", True, colors["ui_text"])
         hint = font.render("Use sliders in status bar", True, (140, 140, 150))
-        screen.blit(line1, (body.x, body.y))
-        screen.blit(line2, (body.x, body.y + 28))
-        screen.blit(hint, (body.x, body.y + 60))
+        screen.blit(line1, (body.x, y))
+        screen.blit(line2, (body.x, y + 24))
+        screen.blit(hint, (body.x, y + 52))
+
+    def _render_theme_page(
+        self,
+        screen: pygame.Surface,
+        font: pygame.font.Font,
+        colors: Dict[str, Color],
+        body: pygame.Rect,
+        *,
+        theme_settings: Dict[str, object],
+        on_adjust_font_size: Callable[[int], None],
+        on_adjust_font_bold_size: Callable[[int], None],
+        on_adjust_theme_color: Callable[[str, int, int], None],
+    ) -> None:
+        row_h = 26
+        y = body.y
+        self._render_stepper_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "UI Font Size",
+            str(int(theme_settings["font_size"])),
+            lambda: on_adjust_font_size(-1),
+            lambda: on_adjust_font_size(1),
+        )
+        y += row_h + 8
+        self._render_stepper_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "UI Bold Font Size",
+            str(int(theme_settings["font_bold_size"])),
+            lambda: on_adjust_font_bold_size(-1),
+            lambda: on_adjust_font_bold_size(1),
+        )
+        y += row_h + 12
+        for color_key in ("ui_text", "ui_accent", "selection", "background"):
+            self._render_color_row(
+                screen,
+                font,
+                colors,
+                pygame.Rect(body.x, y, body.width, 30),
+                color_key,
+                tuple(theme_settings["colors"][color_key]),
+                lambda ck=color_key, ch=0: on_adjust_theme_color(ck, ch, -8),
+                lambda ck=color_key, ch=0: on_adjust_theme_color(ck, ch, 8),
+                lambda ck=color_key, ch=1: on_adjust_theme_color(ck, ch, -8),
+                lambda ck=color_key, ch=1: on_adjust_theme_color(ck, ch, 8),
+                lambda ck=color_key, ch=2: on_adjust_theme_color(ck, ch, -8),
+                lambda ck=color_key, ch=2: on_adjust_theme_color(ck, ch, 8),
+            )
+            y += 38
+
+    def _render_files_page(
+        self,
+        screen: pygame.Surface,
+        font: pygame.font.Font,
+        colors: Dict[str, Color],
+        body: pygame.Rect,
+        *,
+        on_save_settings: Callable[[], None],
+        on_reload_settings: Callable[[], None],
+        on_export_settings: Callable[[], None],
+        on_import_settings: Callable[[], None],
+        on_reset_settings: Callable[[], None],
+    ) -> None:
+        row_h = 30
+        y = body.y
+        self._render_action_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Save local settings",
+            on_save_settings,
+        )
+        y += row_h + 8
+        self._render_action_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Reload from disk",
+            on_reload_settings,
+        )
+        y += row_h + 8
+        self._render_action_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Export settings...",
+            on_export_settings,
+        )
+        y += row_h + 8
+        self._render_action_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Import settings...",
+            on_import_settings,
+        )
+        y += row_h + 8
+        self._render_action_row(
+            screen,
+            font,
+            colors,
+            pygame.Rect(body.x, y, body.width, row_h),
+            "Reset to defaults",
+            on_reset_settings,
+            accent=(96, 64, 64),
+        )
 
     def _render_toggle_row(
         self,
@@ -231,6 +493,95 @@ class SettingsWindow(EditorWindow):
             caption_text, (toggle_rect.centerx - caption_text.get_width() // 2, toggle_rect.y + 4)
         )
         self._add_action(toggle_rect, callback)
+
+    def _render_stepper_row(
+        self,
+        screen: pygame.Surface,
+        font: pygame.font.Font,
+        colors: Dict[str, Color],
+        row_rect: pygame.Rect,
+        label: str,
+        value: str,
+        on_minus: Callable[[], None],
+        on_plus: Callable[[], None],
+    ) -> None:
+        txt = font.render(label, True, colors["ui_text"])
+        val = font.render(value, True, (200, 210, 225))
+        screen.blit(txt, (row_rect.x, row_rect.y + 5))
+        value_x = row_rect.right - 120
+        minus_rect = pygame.Rect(value_x - 56, row_rect.y + 2, 24, 22)
+        plus_rect = pygame.Rect(row_rect.right - 24, row_rect.y + 2, 24, 22)
+        value_rect = pygame.Rect(value_x - 28, row_rect.y + 2, 96, 22)
+        for rect, label_text, callback in (
+            (minus_rect, "-", on_minus),
+            (plus_rect, "+", on_plus),
+        ):
+            pygame.draw.rect(screen, (55, 55, 62), rect, border_radius=4)
+            cap = font.render(label_text, True, colors["ui_text"])
+            screen.blit(cap, (rect.centerx - cap.get_width() // 2, rect.y + 3))
+            self._add_action(rect, callback)
+        pygame.draw.rect(screen, (32, 34, 40), value_rect, border_radius=4)
+        pygame.draw.rect(screen, colors["ui_border"], value_rect, 1, border_radius=4)
+        screen.blit(val, (value_rect.centerx - val.get_width() // 2, value_rect.y + 3))
+
+    def _render_color_row(
+        self,
+        screen: pygame.Surface,
+        font: pygame.font.Font,
+        colors: Dict[str, Color],
+        row_rect: pygame.Rect,
+        label: str,
+        value: Color,
+        r_minus: Callable[[], None],
+        r_plus: Callable[[], None],
+        g_minus: Callable[[], None],
+        g_plus: Callable[[], None],
+        b_minus: Callable[[], None],
+        b_plus: Callable[[], None],
+    ) -> None:
+        txt = font.render(label, True, colors["ui_text"])
+        screen.blit(txt, (row_rect.x, row_rect.y + 5))
+        swatch = pygame.Rect(row_rect.x + 130, row_rect.y + 3, 20, 20)
+        pygame.draw.rect(screen, value, swatch, border_radius=4)
+        pygame.draw.rect(screen, colors["ui_border"], swatch, 1, border_radius=4)
+        start_x = row_rect.right - 156
+        for index, (name, channel_value, on_minus, on_plus) in enumerate(
+            (
+                ("R", value[0], r_minus, r_plus),
+                ("G", value[1], g_minus, g_plus),
+                ("B", value[2], b_minus, b_plus),
+            )
+        ):
+            block_x = start_x + index * 52
+            label_surf = font.render(f"{name}:{int(channel_value)}", True, colors["ui_text"])
+            screen.blit(label_surf, (block_x, row_rect.y + 5))
+            minus_rect = pygame.Rect(block_x, row_rect.y + 15, 20, 14)
+            plus_rect = pygame.Rect(block_x + 24, row_rect.y + 15, 20, 14)
+            for rect, label_text, callback in (
+                (minus_rect, "-", on_minus),
+                (plus_rect, "+", on_plus),
+            ):
+                pygame.draw.rect(screen, (55, 55, 62), rect, border_radius=4)
+                cap = font.render(label_text, True, colors["ui_text"])
+                screen.blit(cap, (rect.centerx - cap.get_width() // 2, rect.y - 1))
+                self._add_action(rect, callback)
+
+    def _render_action_row(
+        self,
+        screen: pygame.Surface,
+        font: pygame.font.Font,
+        colors: Dict[str, Color],
+        row_rect: pygame.Rect,
+        label: str,
+        callback: Callable[[], None],
+        accent: Color | None = None,
+    ) -> None:
+        bg = accent or (48, 52, 62)
+        pygame.draw.rect(screen, bg, row_rect, border_radius=5)
+        pygame.draw.rect(screen, colors["ui_border"], row_rect, 1, border_radius=5)
+        text = font.render(label, True, colors["ui_text"])
+        screen.blit(text, (row_rect.centerx - text.get_width() // 2, row_rect.y + 7))
+        self._add_action(row_rect, callback)
 
 
 class WindowManager:

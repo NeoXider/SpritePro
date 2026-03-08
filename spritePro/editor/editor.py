@@ -22,6 +22,7 @@ try:
         object_actions,
         property_actions,
         editor_actions,
+        settings_actions,
         event_actions,
         transform_actions,
         history_actions,
@@ -48,6 +49,7 @@ except ImportError:
         object_actions,
         property_actions,
         editor_actions,
+        settings_actions,
         event_actions,
         transform_actions,
         history_actions,
@@ -81,6 +83,7 @@ class SpriteEditor:
         self.running = True
         self.TKINTER_AVAILABLE = TKINTER_AVAILABLE
 
+        self.editor_settings = settings_actions.normalize_settings({})
         self.colors = dict(ui_theme.COLORS)
 
         # Сцена
@@ -108,6 +111,8 @@ class SpriteEditor:
         self.max_grid_size = ui_theme.EDITOR_MAX_GRID_SIZE
         self.camera_preview_enabled = True
         self.camera_preview_size = Vector2(800, 600)
+        self.hierarchy_previews_enabled = True
+        self.viewport_tool_badge_enabled = True
         self._camera_preview_copy_rect: Optional[pygame.Rect] = None
 
         # Инструменты
@@ -170,9 +175,11 @@ class SpriteEditor:
         # Окна/страницы
         self.window_manager = WindowManager()
         self.settings_window = SettingsWindow(
-            pygame.Rect(self.width // 2 - 190, self.height // 2 - 140, 380, 280)
+            pygame.Rect(self.width // 2 - 260, self.height // 2 - 220, 520, 440)
         )
         self.window_manager.register(self.settings_window)
+
+        settings_actions.load_into_editor(self)
 
         # Строка состояния
         self.status_message = "Ready"
@@ -476,6 +483,39 @@ class SpriteEditor:
     def _save_scene(self, filepath: Optional[str] = None) -> None:
         """Сохранение сцены"""
         file_actions.save_scene(self, filepath)
+
+    def _save_editor_settings(self) -> None:
+        settings_actions.save_now(self)
+
+    def _reload_editor_settings(self) -> None:
+        settings_actions.reload_from_disk(self)
+
+    def _reset_editor_settings(self) -> None:
+        settings_actions.reset_to_defaults(self)
+
+    def _export_editor_settings(self) -> None:
+        settings_actions.export_settings(self)
+
+    def _import_editor_settings(self) -> None:
+        settings_actions.import_settings(self)
+
+    def _toggle_scene_setting(self, key: str) -> None:
+        settings_actions.toggle_scene_setting(self, key)
+
+    def _adjust_scene_setting(self, key: str, delta: int) -> None:
+        settings_actions.adjust_scene_setting(self, key, delta)
+
+    def _toggle_view_setting(self, key: str) -> None:
+        settings_actions.toggle_view_setting(self, key)
+
+    def _adjust_view_setting(self, key: str, delta: int) -> None:
+        settings_actions.adjust_view_setting(self, key, delta)
+
+    def _adjust_theme_setting(self, key: str, delta: int) -> None:
+        settings_actions.adjust_theme_setting(self, key, delta)
+
+    def _adjust_theme_color(self, color_key: str, channel: int, delta: int) -> None:
+        settings_actions.adjust_theme_color(self, color_key, channel, delta)
 
     def _save_scene_as(self) -> None:
         """Сохраняет сцену в новый файл JSON."""

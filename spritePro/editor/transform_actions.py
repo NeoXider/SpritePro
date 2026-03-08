@@ -11,8 +11,29 @@ if TYPE_CHECKING:
     from .editor import SpriteEditor
 
 
+ROTATION_SNAP_STEP = 15.0
+
+
+def _is_snap_enabled(editor: "SpriteEditor") -> bool:
+    mods = pygame.key.get_mods()
+    ctrl_pressed = bool(mods & (pygame.KMOD_CTRL | pygame.KMOD_META))
+    return bool(editor.scene.snap_to_grid and not ctrl_pressed)
+
+
 def snap_to_grid(editor: "SpriteEditor", value: float) -> float:
-    if editor.scene.snap_to_grid:
+    if _is_snap_enabled(editor):
+        return round(value / editor.scene.grid_size) * editor.scene.grid_size
+    return value
+
+
+def snap_angle(editor: "SpriteEditor", value: float) -> float:
+    if _is_snap_enabled(editor):
+        return round(value / ROTATION_SNAP_STEP) * ROTATION_SNAP_STEP
+    return value
+
+
+def snap_size(editor: "SpriteEditor", value: float) -> float:
+    if _is_snap_enabled(editor):
         return round(value / editor.scene.grid_size) * editor.scene.grid_size
     return value
 
@@ -91,8 +112,6 @@ def update_rotate(editor: "SpriteEditor") -> None:
         return
     mouse_dx = editor.mouse_pos.x - editor.camera_drag_start.x
     angle_delta = mouse_dx * 0.5
-    keys = pygame.key.get_pressed()
-    snap_angle = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
 
     for obj in editor.selected_objects:
         if obj.locked:
@@ -100,9 +119,7 @@ def update_rotate(editor: "SpriteEditor") -> None:
         start = editor._drag_object_starts.get(obj.id)
         if start is None:
             continue
-        new_angle = start["rotation"] + angle_delta
-        if snap_angle:
-            new_angle = round(new_angle / 15.0) * 15.0
+        new_angle = snap_angle(editor, start["rotation"] + angle_delta)
         if abs(new_angle - obj.transform.rotation) > 1e-6:
             editor._transform_changed_during_drag = True
         obj.transform.rotation = new_angle
@@ -131,23 +148,31 @@ def update_scale(editor: "SpriteEditor") -> None:
         if editor_sprite_types.is_primitive(getattr(obj, "sprite_shape", "image")):
             if uniform:
                 scale = max(0.04, 1.0 + delta)
-                new_w = max(4, int(round(start["width"] * scale)))
-                new_h = max(4, int(round(start["height"] * scale)))
+                new_w = start["width"] * scale
+                new_h = start["height"] * scale
             else:
-                new_w = max(4, start["width"] + dw)
-                new_h = max(4, start["height"] + dh)
+                new_w = start["width"] + dw
+                new_h = start["height"] + dh
+            new_w = max(4, snap_size(editor, new_w))
+            new_h = max(4, snap_size(editor, new_h))
             if abs(new_w - obj.custom_data.get("width", 100)) > 1e-6 or abs(new_h - obj.custom_data.get("height", 100)) > 1e-6:
                 editor._transform_changed_during_drag = True
             obj.custom_data["width"] = int(round(new_w))
             obj.custom_data["height"] = int(round(new_h))
         else:
+            native_w, native_h = editor._get_object_native_size(obj)
+            if native_w <= 0 or native_h <= 0:
+                continue
             if uniform:
-                delta = (dx + dy) * 0.5
-                new_sx = max(0.05, start["scale_x"] + delta)
-                new_sy = max(0.05, start["scale_y"] + delta)
+                target_w = native_w * max(0.05, start["scale_x"] + delta)
+                target_h = native_h * max(0.05, start["scale_y"] + delta)
             else:
-                new_sx = max(0.05, start["scale_x"] + dx)
-                new_sy = max(0.05, start["scale_y"] + dy)
+                target_w = native_w * max(0.05, start["scale_x"] + dx)
+                target_h = native_h * max(0.05, start["scale_y"] + dy)
+            target_w = max(native_w * 0.05, snap_size(editor, target_w))
+            target_h = max(native_h * 0.05, snap_size(editor, target_h))
+            new_sx = max(0.05, target_w / native_w)
+            new_sy = max(0.05, target_h / native_h)
             if abs(new_sx - obj.transform.scale_x) > 1e-6 or abs(new_sy - obj.transform.scale_y) > 1e-6:
                 editor._transform_changed_during_drag = True
             obj.transform.scale_x = new_sx
