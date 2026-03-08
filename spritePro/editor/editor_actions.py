@@ -74,10 +74,28 @@ def resolve_run_script_path(editor: "SpriteEditor") -> Optional[Path]:
                 break
             current = current.parent
 
+    def add_scene_probe(base_dir: Path) -> None:
+        scene_name = getattr(getattr(editor, "scene", None), "name", "") or ""
+        if not scene_name:
+            return
+        scene_candidate_dirs = [
+            base_dir / "scenes",
+            base_dir / "scene",
+            base_dir / "levels",
+            base_dir,
+        ]
+        for candidate_dir in scene_candidate_dirs:
+            scene_path = candidate_dir / f"{scene_name}.json"
+            if scene_path.is_file():
+                add_dir_chain(scene_path.parent)
+
     if editor.filepath:
         add_dir_chain(Path(editor.filepath).expanduser().resolve().parent)
     if editor.project_root:
         add_dir_chain(Path(editor.project_root).expanduser().resolve())
+        add_scene_probe(Path(editor.project_root).expanduser().resolve())
+    add_dir_chain(Path.cwd().resolve())
+    add_scene_probe(Path.cwd().resolve())
 
     for candidate in candidates:
         if candidate.is_file():
