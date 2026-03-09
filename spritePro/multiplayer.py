@@ -58,8 +58,10 @@ class MultiplayerContext:
         client_id: Optional[int] = None,
         seed: Optional[int] = None,
         debug: Optional[NetDebug] = None,
+        server: Optional[Any] = None,
     ) -> None:
         self.net = net
+        self.server = server
         self.role = role
         self.is_host = role == "host"
         self.id_assigned = self.is_host
@@ -95,7 +97,11 @@ class MultiplayerContext:
         return True
 
     def poll(self, max_messages: int = 100) -> Iterable[NetMessage]:
-        messages = self.net.poll(max_messages)
+        messages = list(self.net.poll(max_messages))
+        if self.server is not None:
+            server_msgs = self.server.poll(max_messages)
+            for _, msg in server_msgs:
+                messages.append(msg)
         for msg in messages:
             self._handle_internal(msg)
             self.debug.log("traffic", "recv", msg.get("event"), msg.get("data", {}))
@@ -140,10 +146,18 @@ def init_context(
     seed: Optional[int] = None,
     debug: bool = False,
     color_logs: bool = True,
+    server: Optional[Any] = None,
 ) -> MultiplayerContext:
     """Создает и сохраняет глобальный контекст мультиплеера."""
 
     global _context
+    if server is None and role == "host":
+        try:
+            from . import networking
+
+            server = networking._host_server
+        except Exception:
+            pass
     debug_cfg = NetDebug(enabled=debug, color_logs=color_logs)
     _context = MultiplayerContext(
         net=net,
@@ -151,6 +165,7 @@ def init_context(
         client_id=client_id,
         seed=seed,
         debug=debug_cfg,
+        server=server,
     )
     try:
         import spritePro

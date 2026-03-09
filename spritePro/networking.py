@@ -155,6 +155,15 @@ class NetServer:
                     self._next_client_id += 1
                     self._client_ids[conn] = client_id
                 self._send_to(conn, "assign_id", {"id": client_id})
+                self._queue.put(
+                    (
+                        None,
+                        {
+                            "event": "client_connected",
+                            "data": {"client_id": client_id, "peer": _safe_peer(conn)},
+                        },
+                    )
+                )
                 if self._debug:
                     _net_log(
                         f"[NetServer:{self._name}] assign_id to={_safe_peer(conn)} id={client_id}"
@@ -194,7 +203,11 @@ class NetServer:
             with self._lock:
                 if conn in self._clients:
                     self._clients.remove(conn)
-                self._client_ids.pop(conn, None)
+                client_id = self._client_ids.pop(conn, None)
+            if client_id is not None:
+                self._queue.put(
+                    (None, {"event": "client_disconnected", "data": {"client_id": client_id}})
+                )
             try:
                 conn.close()
             except OSError:
@@ -364,6 +377,9 @@ class NetClient:
                 pass
 
 
+_host_server: Optional["NetServer"] = None
+
+
 def run(
     argv: Optional[List[str]] = None,
     entry: str = "multiplayer_main",
@@ -466,9 +482,11 @@ def run(
         )
         os.environ["SPRITEPRO_NET_LOG_TAG"] = log_tag
         _net_log("Worker started", f"role={role}", f"connect={connect_host}:{port}")
+        global _host_server
         if role == "host":
             server = NetServer(host=bind_host, port=port, debug=debug_enabled, name=role)
             server.start()
+            _host_server = server
         if connect_host in ("0.0.0.0", ""):
             connect_host = "127.0.0.1"
         net = NetClient(connect_host, port, debug=debug_enabled, name=color)
@@ -567,7 +585,26 @@ def run(
 
         from spritePro.readyScenes.multiplayer_lobby import run_multiplayer_lobby
 
-        run_multiplayer_lobby(_on_lobby_start)
+        platform_env = os.environ.get("SPRITEPRO_PLATFORM", "pygame")
+
+        # Для Kivy + use_lobby и clients>1 поднимаем несколько процессов с лобби
+        # (как для quick-режима), но без назначения ролей заранее.
+        if (
+            platform_env.lower().strip() == "kivy"
+            and clients > 1
+            and not os.environ.get("SPRITEPRO_LOBBY_SPAWNED")
+        ):
+            script = _get_script_path()
+            base_env = os.environ.copy()
+            base_env["SPRITEPRO_LOBBY_SPAWNED"] = "1"
+            base_env["SPRITEPRO_PLATFORM"] = "kivy"
+            for idx in range(clients - 1):
+                env_child = base_env.copy()
+                env_child["SPRITEPRO_NET_LOG_TAG"] = f"lobby_client_{idx}"
+                subprocess.Popen([sys.executable, str(script)], env=env_child)
+            os.environ["SPRITEPRO_LOBBY_SPAWNED"] = "1"
+
+        run_multiplayer_lobby(_on_lobby_start, platform=platform_env)
         return
 
     if argv is None:

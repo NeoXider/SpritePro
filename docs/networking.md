@@ -42,6 +42,33 @@ TCP‑клиент, который отправляет сообщения и п
 - `poll(max_messages=100)` — забирает входящие сообщения.
 - `close()` — закрывает соединение.
 
+### Системные события
+
+При использовании `MultiplayerContext` (рекомендуется), хост автоматически получает события о подключении/отключении клиентов через `ctx.poll()`:
+
+- `client_connected` — новый клиент подключился
+  - `data.client_id` — ID клиента (0, 1, 2...)
+  - `data.peer` — адрес клиента (например, "127.0.0.1:54321")
+- `client_disconnected` — клиент отключился
+  - `data.client_id` — ID клиента
+
+```python
+class MyScene(s.Scene):
+    def __init__(self, net, role):
+        super().__init__()
+        s.multiplayer.init_context(net, role)
+        self.ctx = s.multiplayer_ctx
+
+    def update(self, dt):
+        for msg in self.ctx.poll():
+            if msg.get("event") == "client_connected":
+                client_id = msg["data"]["client_id"]
+                print(f"Подключился клиент: {client_id}")
+            elif msg.get("event") == "client_disconnected":
+                client_id = msg["data"]["client_id"]
+                print(f"Отключился клиент: {client_id}")
+```
+
 ### Рекомендуемый запуск: `s.run(..., multiplayer=True)`
 
 Для новых игр удобнее использовать один вход через `s.run(...)`, а multiplayer
@@ -265,7 +292,7 @@ if __name__ == "__main__":
 python spritePro/demoGames/local_multiplayer_demo.py --lobby
 ```
 
-### Сценарий для игрока
+### Сценарий для игрока (desktop / pygame)
 
 1. **Один экземпляр (хост)**  
    - Открыть приложение.  
@@ -283,17 +310,34 @@ python spritePro/demoGames/local_multiplayer_demo.py --lobby
    - Хост нажимает **«В игру»**.  
    - У **обоих** игроков закрывается лобби и запускается игра (`multiplayer_main(net, role)`).
 
+### Сценарий для игрока (mobile / Kivy)
+
+- Запуск через `s.run(..., platform="kivy", multiplayer=True, multiplayer_use_lobby=True)` или Kivy-билд.
+- Окно лобби и сама игра работают внутри одного Kivy-приложения (SpritePro рендерится в Kivy-виджет).
+- Каждый процесс/билд даёт **одного** игрока; для локальных тестов мультиплеера используйте несколько устройств/эмуляторов (по одному клиенту на процесс) **или автоспавн процессов по `clients` (см. ниже)**.
+
+Если указать `multiplayer_clients=1`, такой запуск можно рассматривать как «build‑режим» (один экземпляр клиента, без автоспавна дополнительных окон).
+
 ### Для разработчика
 
 - **События лобби:** хост рассылает `start_game` при нажатии «В игру»; клиент при получении `start_game` тоже переходит в игру. Кнопка «Назад» закрывает соединение и возвращает к экрану настройки.
-- **Очистка UI:** лобби реализовано как `MultiplayerLobbyScene(s.Scene)`. При выходе из лобби вызывается `on_exit()`: все спрайты лобби (кнопки, поля ввода, текст, в том числе дочерние `text_sprite`) снимаются с регистрации, в игре не остаётся элементов лобби.
+- **Очистка UI:** лобби реализовано как `MultiplayerLobbyScene(s.Scene)` и обновляется через `update()`. При выходе из лобби вызывается `on_exit()`: все спрайты лобби (кнопки, поля ввода, текст, в том числе дочерние `text_sprite`) снимаются с регистрации, в игре не остаётся элементов лобби.
 - **Использование без run():** можно вызвать лобби вручную после `get_screen()` и передать колбэк перехода в игру:
 
 ```python
 from spritePro.readyScenes import run_multiplayer_lobby
 
+# pygame / desktop
 s.get_screen((480, 540), "Лобби")
 run_multiplayer_lobby(lambda net, role: your_multiplayer_main(net, role))
+
+# Kivy / mobile
+run_multiplayer_lobby(
+    lambda net, role: your_multiplayer_main(net, role),
+    window_size=(480, 540),
+    title="Лобби",
+    platform="kivy",
+)
 ```
 
 Если игра уже запускается через `s.run(...)`, то для нового кода обычно удобнее перейти на `s.run(..., multiplayer=True)` и использовать `s.networking.run(...)` только как низкоуровневый runner.
@@ -302,7 +346,10 @@ run_multiplayer_lobby(lambda net, role: your_multiplayer_main(net, role))
 
 ## Режимы запуска run()
 
-- **use_lobby=True** (в коде) — одно окно с лобби: настройка (имя, хост/клиент, порт, IP), подключение, roster; у хоста кнопки «Назад» и «В игру», у клиента «Назад». Не используется при запуске через `--quick` / env (тогда роль уже задана).
+- **use_lobby=True** (в коде)  
+  - desktop / pygame: одно окно с лобби: настройка (имя, хост/клиент, порт, IP), подключение, roster; у хоста кнопки «Назад» и «В игру», у клиента «Назад».  
+  - mobile / Kivy: одно окно с лобби внутри Kivy-приложения; `size` из `s.run(...)` переиспользуется для окна лобби.
+  - если `platform="kivy"` и `multiplayer_clients>1`, SpritePro поднимает несколько процессов Kivy с лобби (по одному игроку на процесс) — удобно для локального теста мультиплеера на ПК.
 - `--server` — только сервер.
 - `--host_mode` — сервер + клиент в одном процессе.
 - `--quick` — быстрый запуск (хост + второй клиент).

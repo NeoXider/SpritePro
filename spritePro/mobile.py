@@ -86,6 +86,7 @@ class KivySpriteProWidget:
                 self._active_touch_id: str | None = None
                 self._last_touch_pos: tuple[int, int] | None = None
                 self._bootstrap_wait_frames = 0
+                self._keyboard = None
                 self._fatal_error: str | None = None
 
                 with self.canvas:
@@ -261,6 +262,114 @@ class KivySpriteProWidget:
                 self._last_touch_pos = None
                 return True
 
+            def _map_kivy_key_to_pygame(self, keycode, modifiers) -> tuple[int, int]:
+                key_value, key_name = keycode
+                name = (key_name or "").lower()
+                mapping = {
+                    "enter": pygame.K_RETURN,
+                    "return": pygame.K_RETURN,
+                    "kp_enter": pygame.K_RETURN,
+                    "backspace": pygame.K_BACKSPACE,
+                    "escape": pygame.K_ESCAPE,
+                    "esc": pygame.K_ESCAPE,
+                    "space": pygame.K_SPACE,
+                    "spacebar": pygame.K_SPACE,
+                }
+                if name in mapping:
+                    pg_key = mapping[name]
+                elif len(name) == 1:
+                    attr_name = f"K_{name}"
+                    pg_key = getattr(pygame, attr_name, key_value)
+                else:
+                    pg_key = key_value
+
+                mod = 0
+                if "shift" in modifiers:
+                    mod |= pygame.KMOD_SHIFT
+                if "ctrl" in modifiers or "control" in modifiers:
+                    mod |= pygame.KMOD_CTRL
+                if "alt" in modifiers:
+                    mod |= pygame.KMOD_ALT
+                if "meta" in modifiers or "cmd" in modifiers or "super" in modifiers:
+                    mod |= pygame.KMOD_META
+                return pg_key, mod
+
+            def _open_soft_keyboard(self) -> None:
+                if self._keyboard is not None:
+                    return
+                try:
+                    from kivy.core.window import Window
+                except Exception:
+                    return
+                keyboard = Window.request_keyboard(self._on_keyboard_closed, self)
+                if keyboard is None:
+                    return
+                self._keyboard = keyboard
+                try:
+                    self._keyboard.bind(
+                        on_key_down=self._on_key_down,
+                        on_textinput=self._on_textinput,
+                    )
+                except Exception:
+                    self._keyboard = None
+
+            def _close_soft_keyboard(self) -> None:
+                kb = self._keyboard
+                if kb is None:
+                    return
+                try:
+                    kb.unbind(on_key_down=self._on_key_down, on_textinput=self._on_textinput)
+                except Exception:
+                    pass
+                try:
+                    kb.release()
+                except Exception:
+                    pass
+                self._keyboard = None
+
+            def _on_keyboard_closed(self, *_args) -> None:
+                self._keyboard = None
+
+            def _on_key_down(self, keyboard, keycode, text, modifiers):
+                pg_key, pg_mod = self._map_kivy_key_to_pygame(keycode, modifiers or [])
+                event = pygame.event.Event(
+                    pygame.KEYDOWN,
+                    {
+                        "key": pg_key,
+                        "mod": pg_mod,
+                        "unicode": text or "",
+                    },
+                )
+                self._event_queue.append(event)
+                return True
+
+            def _on_textinput(self, keyboard, text: str):
+                if not text:
+                    return False
+                event = pygame.event.Event(
+                    pygame.TEXTINPUT,
+                    {
+                        "text": text,
+                    },
+                )
+                self._event_queue.append(event)
+                return True
+
+            def _sync_soft_keyboard_state(self) -> None:
+                try:
+                    active_inputs = [
+                        ti
+                        for ti in s.get_sprites_by_class(s.TextInput, active_only=True)
+                        if getattr(ti, "is_active", False)
+                    ]
+                except Exception:
+                    active_inputs = []
+
+                if active_inputs and self._keyboard is None:
+                    self._open_soft_keyboard()
+                elif not active_inputs and self._keyboard is not None:
+                    self._close_soft_keyboard()
+
             def _tick(self, _dt: float) -> None:
                 if self._surface is None:
                     self._on_resize()
@@ -292,6 +401,8 @@ class KivySpriteProWidget:
                     self._set_fatal_error(exc)
                     self._draw_fatal_error()
                     return
+
+                self._sync_soft_keyboard_state()
 
                 self._present_surface()
 

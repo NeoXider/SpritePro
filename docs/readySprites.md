@@ -21,16 +21,40 @@ Ready Sprites are pre-configured sprite classes that solve common game developme
 **Использование:**
 
 ```python
-# Через run() — одно окно с лобби, затем ваша игра
-s.run(multiplayer=True, multiplayer_entry=your_multiplayer_main, multiplayer_use_lobby=True)
+# Через run() — одно окно с лобби, затем ваша игра (desktop / pygame)
+s.run(
+    multiplayer=True,
+    multiplayer_entry=your_multiplayer_main,
+    multiplayer_use_lobby=True,
+)
+
+# Мобильный / Kivy-вариант
+s.run(
+    multiplayer=True,
+    multiplayer_entry=your_multiplayer_main,
+    multiplayer_use_lobby=True,
+    platform="kivy",
+    # multiplayer_clients > 1 на ПК с Kivy поднимет несколько процессов с лобби
+    # (каждое окно — отдельный игрок, удобно для локального теста).
+    multiplayer_clients=1,
+)
 ```
 
 ```python
-# Вручную: после get_screen() вызвать лобби с колбэком
+# Вручную: после get_screen() или через Kivy вызвать лобби с колбэком
 from spritePro.readyScenes import run_multiplayer_lobby
 
+# pygame / desktop
 s.get_screen((480, 540), "Лобби")
 run_multiplayer_lobby(lambda net, role: your_multiplayer_main(net, role))
+
+# Kivy / mobile
+run_multiplayer_lobby(
+    lambda net, role: your_multiplayer_main(net, role),
+    window_size=(480, 540),
+    title="Лобби",
+    platform="kivy",
+)
 ```
 
 **Экспорт:** `run_multiplayer_lobby`, `MultiplayerLobbyScene`, `EVENT_START_GAME` из `spritePro.readyScenes`. Подробнее: [Networking — лобби](networking.md#подробная-инструкция-лобби-use_lobbytrue).

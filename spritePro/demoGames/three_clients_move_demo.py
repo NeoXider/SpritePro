@@ -51,7 +51,10 @@ def _color_for_id(client_id: int) -> tuple[int, int, int]:
 class ThreeClientsMoveScene(s.Scene):
     def __init__(self, net: s.NetClient, role: str) -> None:
         super().__init__()
-        s.multiplayer.init_context(net, role)
+        # Если контекст уже инициализирован (например, через лобби), переиспользуем его,
+        # иначе инициализируем заново для quick/terminal-режима.
+        if s.multiplayer_ctx is None:
+            s.multiplayer.init_context(net, role)
         self.ctx = s.multiplayer_ctx
         self.hint = s.TextSprite(
             "WASD — move | IDs above players", 20, (200, 200, 200), (450, 30), scene=self
@@ -152,6 +155,7 @@ def main(default_platform: str = "kivy") -> None:
         multiplayer_argv=sys.argv[1:],
         multiplayer_clients=3,
         multiplayer_client_spawn_delay=2,
+        multiplayer_use_lobby= True
     )
 
 
