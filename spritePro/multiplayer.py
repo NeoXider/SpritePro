@@ -66,12 +66,32 @@ class MultiplayerContext:
         self.is_host = role == "host"
         self.id_assigned = self.is_host
         self.client_id = 0 if role == "host" else (client_id if client_id is not None else 1)
-        self.players: Dict[str, Dict[str, Any]] = {}
+        # players: id -> произвольные данные игрока (например {"name": "Игрок"})
+        self.players: Dict[int, Dict[str, Any]] = {}
         self.state: Dict[str, Any] = {}
+        self.state["player_ids"] = []
+        self.state["players"] = {}
+        # roster сохраняем как совместимость: список id игроков
+        self.state["roster"] = []
         self.debug = debug or NetDebug(enabled=False)
         self._last_send: Dict[str, float] = {}
         self.seed = DEFAULT_MULTIPLAYER_SEED if seed is None else int(seed)
         self.random = random.Random(self.seed)
+
+    def get_player_ids(self) -> list[int]:
+        """Удобный доступ к списку подключенных id."""
+        ids = self.state.get("player_ids")
+        if isinstance(ids, list):
+            return [int(x) for x in ids]
+        # fallback на старый ключ (если кто-то не обновил)
+        roster = self.state.get("roster", [])
+        if isinstance(roster, list):
+            return [int(x) for x in roster]
+        return []
+
+    def get_players(self) -> Dict[int, Dict[str, Any]]:
+        """Удобный доступ к данным игроков (id -> data)."""
+        return self.players
 
     def send(
         self, event: str, data: Optional[Dict[str, Any]] = None, group: str = "traffic"
@@ -119,9 +139,40 @@ class MultiplayerContext:
             self.id_assigned = True
             self.debug.log("state", "assign_id", new_id)
         elif event == "roster":
-            players = data.get("players", [])
-            self.state["roster"] = players
-            self.debug.log("state", "roster", players)
+            players_raw = data.get("players", [])
+            # Поддерживаем оба формата:
+            # 1) {"players": [0, 1, 2]}  -> старый формат (список id)
+            # 2) {"players": {"0": {"name": "Host"}, "1": {"name": "Alice"}}} -> расширенный формат
+            if isinstance(players_raw, dict):
+                parsed: Dict[int, Dict[str, Any]] = {}
+                for k, v in players_raw.items():
+                    try:
+                        pid = int(k)
+                    except (TypeError, ValueError):
+                        continue
+                    if isinstance(v, dict):
+                        parsed[pid] = dict(v)
+                    else:
+                        # если сервер отправил просто строку имени
+                        parsed[pid] = {"name": str(v)}
+                self.players = parsed
+                ids = sorted(parsed.keys())
+                self.state["players"] = parsed
+                self.state["player_ids"] = ids
+                # обратно совместимо
+                self.state["roster"] = ids
+                self.debug.log("state", "roster", {"player_ids": ids, "players": parsed})
+            else:
+                if not isinstance(players_raw, list):
+                    players_raw = []
+                ids = [int(x) for x in players_raw]
+                # сохраняем уже имеющиеся данные, если они были
+                existing = self.players
+                self.players = {pid: existing.get(pid, {}) for pid in ids}
+                self.state["players"] = self.players
+                self.state["player_ids"] = ids
+                self.state["roster"] = ids
+                self.debug.log("state", "roster", {"player_ids": ids})
 
     def set_state(self, key: str, value: Any) -> None:
         self.state[key] = value

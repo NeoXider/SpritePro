@@ -11,7 +11,7 @@
     },
     "objects": [
         {
-            "id": "91ce3c0e",
+            "id": "6307fe70",
             "name": "anim_sprite",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -29,7 +29,7 @@
             },
             "z_index": 0,
             "screen_space": false,
-            "visible": true,
+            "active": true,
             "locked": false,
             "physics_type": "none",
             "physics_mass": 1.0,
@@ -43,7 +43,7 @@
             }
         },
         {
-            "id": "85e994b0",
+            "id": "caaa1702",
             "name": "mover",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -61,7 +61,7 @@
             },
             "z_index": 0,
             "screen_space": false,
-            "visible": true,
+            "active": true,
             "locked": false,
             "physics_type": "none",
             "physics_mass": 1.0,
@@ -75,7 +75,7 @@
             }
         },
         {
-            "id": "79f3b414",
+            "id": "ef30c6fd",
             "name": "toggle_obj",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -93,7 +93,7 @@
             },
             "z_index": 0,
             "screen_space": false,
-            "visible": true,
+            "active": true,
             "locked": false,
             "physics_type": "none",
             "physics_mass": 1.0,
@@ -107,7 +107,7 @@
             }
         },
         {
-            "id": "7df831bf",
+            "id": "14ad5bab",
             "name": "button",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -125,7 +125,7 @@
             },
             "z_index": 1000,
             "screen_space": false,
-            "visible": true,
+            "active": true,
             "locked": false,
             "physics_type": "none",
             "physics_mass": 1.0,
@@ -139,7 +139,7 @@
             }
         },
         {
-            "id": "e1a82389",
+            "id": "eed14b69",
             "name": "hint",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -157,7 +157,7 @@
             },
             "z_index": 1000,
             "screen_space": false,
-            "visible": true,
+            "active": true,
             "locked": false,
             "physics_type": "none",
             "physics_mass": 1.0,
@@ -171,7 +171,7 @@
             }
         },
         {
-            "id": "c1bdff8b",
+            "id": "84938b6a",
             "name": "label",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -189,7 +189,7 @@
             },
             "z_index": 1000,
             "screen_space": false,
-            "visible": true,
+            "active": true,
             "locked": false,
             "physics_type": "none",
             "physics_mass": 1.0,
@@ -203,7 +203,7 @@
             }
         },
         {
-            "id": "0a2918bf",
+            "id": "c34083b8",
             "name": "timer_label",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -221,7 +221,7 @@
             },
             "z_index": 1000,
             "screen_space": false,
-            "visible": true,
+            "active": true,
             "locked": false,
             "physics_type": "none",
             "physics_mass": 1.0,
@@ -235,7 +235,7 @@
             }
         },
         {
-            "id": "f2d9ae25",
+            "id": "92ce3cf6",
             "name": "toggle",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -253,7 +253,7 @@
             },
             "z_index": 1000,
             "screen_space": false,
-            "visible": true,
+            "active": true,
             "locked": false,
             "physics_type": "none",
             "physics_mass": 1.0,

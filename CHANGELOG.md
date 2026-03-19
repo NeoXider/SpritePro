@@ -5,6 +5,14 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.1]
+
+### Added
+- 🌐 MultiplayerContext: автозаполнение `ctx.players` / `ctx.get_player_ids()` из `roster`, включая имя игрока из лобби.
+- 🏷️ Встроенное лобби: имя из поля «Имя» отправляется в `join` и отображается в списке игроков.
+
+---
+
 ## [3.3.0]
 
 ### Added

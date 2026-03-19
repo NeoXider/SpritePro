@@ -36,6 +36,7 @@ def main():
 
         if s.input.was_pressed(pygame.K_ESCAPE):
             running = False
+            s.debug_log("Emit Particle")
 
         if s.input.was_mouse_pressed(1):
             emitter.emit(s.input.mouse_pos)

@@ -41,6 +41,15 @@ def _display_name(pid: int) -> str:
     return "Host" if pid == 0 else f"Player {pid}"
 
 
+def _display_name_with_map(pid: int, name_by_id: Optional[dict[int, str]] = None) -> str:
+    """Отображаемое имя игрока: берём из словаря, иначе fallback по id."""
+    if name_by_id is not None:
+        name = name_by_id.get(pid)
+        if name:
+            return name
+    return _display_name(pid)
+
+
 def _collect_sprites_with_children(
     buttons_and_inputs: List,
     other_sprites: List,
@@ -80,6 +89,7 @@ class MultiplayerLobbyScene(s.Scene):
         self.role: str = "host"
         self.server: Optional[NetServer] = None
         self.player_ids: set[int] = set()
+        self.player_names: dict[int, str] = {}
         self.roster: list[int] = []
         self.joined: bool = False
         self.error_msg: str = ""
@@ -391,6 +401,7 @@ class MultiplayerLobbyScene(s.Scene):
         self.connected = False
         self.joined = False
         self.player_ids.clear()
+        self.player_names.clear()
         self.roster = []
         self._layout_setup.set_active(True)
         for sp in self._setup_children:
@@ -448,8 +459,16 @@ class MultiplayerLobbyScene(s.Scene):
 
         if ctx_ref.id_assigned and not self.joined:
             self.joined = True
-            ctx_ref.send("join")
+            my_name = self._name_input.value or "Игрок"
+            ctx_ref.send("join", {"name": my_name})
             self.player_ids.add(ctx_ref.client_id)
+            self.player_names[ctx_ref.client_id] = my_name
+
+            # Хосту нужно сразу заполнить roster (он не получает собственный join обратно).
+            if ctx_ref.is_host:
+                self.roster = sorted(self.player_ids)
+                payload_players = {pid: self.player_names.get(pid, _display_name(pid)) for pid in self.roster}
+                ctx_ref.send("roster", {"players": payload_players})
 
         for msg in ctx_ref.poll():
             event = msg.get("event")
@@ -461,15 +480,44 @@ class MultiplayerLobbyScene(s.Scene):
             if event == "join":
                 pid = data.get("sender_id")
                 if pid is not None:
-                    self.player_ids.add(pid)
+                    pid_int = int(pid)
+                    self.player_ids.add(pid_int)
+                    join_name = data.get("name")
+                    if isinstance(join_name, str) and join_name:
+                        self.player_names[pid_int] = join_name
                 if ctx_ref.is_host:
                     self.roster = sorted(self.player_ids)
-                    ctx_ref.send("roster", {"players": self.roster})
+                    payload_players = {p: self.player_names.get(p, _display_name(p)) for p in self.roster}
+                    ctx_ref.send("roster", {"players": payload_players})
             elif event == "roster":
-                self.roster = list(data.get("players", []))
+                roster_players = data.get("players", [])
+                if isinstance(roster_players, dict):
+                    # dict: id -> ({"name": ...} | "name")
+                    parsed: dict[int, str] = {}
+                    for k, v in roster_players.items():
+                        try:
+                            pid_int = int(k)
+                        except (TypeError, ValueError):
+                            continue
+                        if isinstance(v, dict):
+                            name = v.get("name")
+                            if isinstance(name, str) and name:
+                                parsed[pid_int] = name
+                            else:
+                                parsed[pid_int] = _display_name(pid_int)
+                        else:
+                            name_str = str(v) if v is not None else ""
+                            parsed[pid_int] = name_str or _display_name(pid_int)
+                    self.player_names = parsed
+                    self.roster = sorted(parsed.keys())
+                else:
+                    # старый формат: список id
+                    self.roster = [int(x) for x in list(roster_players)]
+                    for pid_int in self.roster:
+                        self.player_names.setdefault(pid_int, _display_name(pid_int))
 
         self._roster_text.set_text(
-            "Игроки:\n" + "\n".join(_display_name(pid) for pid in self.roster)
+            "Игроки:\n" + "\n".join(_display_name_with_map(pid, self.player_names) for pid in self.roster)
         )
         self._btn_back.set_active(True)
         self._btn_start_game.set_active(True)

@@ -41,6 +41,7 @@ class HybridDemoScene(s.Scene):
     def update(self, dt: float) -> None:
         if s.input.is_mouse_pressed(1):
             self.player.set_position(s.input.mouse_pos)
+        self.player.color = s.utils.ColorEffects.rainbow()
 
 
 def build_root(game_widget):

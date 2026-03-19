@@ -664,8 +664,6 @@ def run(
     connect_host = host if host not in ("0.0.0.0", "") else "127.0.0.1"
 
     if args.quick:
-        if args.clients < 2:
-            raise ValueError("Для --quick нужно минимум 2 клиента.")
         for idx in range(args.clients - 1):
             client_color = "blue" if idx % 2 == 0 else "red"
             _spawn_client(
