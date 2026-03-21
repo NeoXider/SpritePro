@@ -1,13 +1,13 @@
-# Bar with Background
+# Bar с Background (Фон)
 
-The `BarWithBackground` class provides a progress bar with separate background and fill images. The background image is always visible, while the fill image is clipped based on the fill amount.
+Класс `BarWithBackground` предоставляет полосу прогресса с отдельными изображениями фона и заполнения. Изображение фона всегда видно, а изображение заполнения обрезается в зависимости от процента заполнения.
 
-## Features
+## Возможности
 
-- **Dual Images**: Separate background and fill images
-- **Fill Clipping**: Fill image is clipped based on fill amount and direction
-- **Animation Support**: Smooth transitions between fill amounts
-- **Camera Support**: Works correctly with camera movement and parent sprites
+- **Два изображения**: Отдельные фон и заполнение
+- **Обрезка заполнения**: Заполнение обрезается по проценту и направлению
+- **Поддержка анимации**: Плавные переходы между значениями заполнения
+- **Поддержка камеры**: Корректно работает с движением камеры и родительскими спрайтами
 - **Independent Sizing**: Background and fill can have different sizes
 - **All Bar Features**: Inherits all functionality from the base `Bar` class
 - **Flexible Images**: Support for different image formats and sources

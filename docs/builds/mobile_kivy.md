@@ -1,4 +1,4 @@
-# Mobile With SpritePro
+# Mobile With SpritePro (Мобильная разработка)
 
 `SpritePro` сам управляет кадром и сам отрисовывает игру, поэтому для `Kivy` важнее не переписать игру, а просто дать движку другой render target и другой host loop. Теперь это встроено в API.
 

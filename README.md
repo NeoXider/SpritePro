@@ -670,20 +670,8 @@ pos = prefs.get_vector2("player_pos", (0, 0))
 
 ## 📖 Документация
 
-**Главная карта** — [**DOCUMENTATION_INDEX.md**](DOCUMENTATION_INDEX.md): всё по полочкам (старт, основы, физика, редактор, UI, демо, порядок изучения).
+**Карта документации**: [docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) (59 файлов)
 
-| Раздел | Куда смотреть |
-|--------|----------------|
-| **Старт** | [Установка](#установка), [Первая игра](#ваша-первая-игра), [Шаблон проекта](#-быстрый-старт-20-шаблон-проекта) |
-| **Обзор** | [docs/OVERVIEW.md](docs/OVERVIEW.md) — Layout, физика, Builder, мультиплеер кратко |
-| **Физика** | [docs/physics.md](docs/physics.md) — pymunk, типы тел, PhysicsShape, сцена из редактора; [docs/physics_issues.md](docs/physics_issues.md) — нюансы |
-| **Редактор сцен** | [docs/sprite_editor.md](docs/sprite_editor.md) — редактор, spawn_scene, get_physics из сцены |
-| **Демо** | [DOCUMENTATION_INDEX.md → Демо](DOCUMENTATION_INDEX.md#-демонстрационные-игры); сцена из редактора: [demoGames/](demoGames/README.md) |
-| **Сеть** | [docs/networking.md](docs/networking.md); курс: [multiplayer_course/](multiplayer_course/README.md) |
-| **Mobile** | [docs/mobile.md](docs/mobile.md) — Kivy runtime, touch, mobile demo |
-| **Hybrid Kivy UI** | [docs/kivy_hybrid.md](docs/kivy_hybrid.md) — меню/кнопки Kivy + встроенная игра SpritePro |
-| **Build** | [docs/building.md](docs/building.md) — library wheel/sdist, web, Android, packaging |
-| **Вся документация** | [docs/README.md](docs/README.md) — навигация по docs |
 
 ---
 

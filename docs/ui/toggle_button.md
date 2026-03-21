@@ -1,10 +1,10 @@
-# ToggleButton Module
+# ToggleButton (Переключатель)
 
-The `ToggleButton` class extends the Button class to provide toggle functionality with ON/OFF states, different colors, and text labels.
+Класс `ToggleButton` расширяет класс Button, предоставляя функцию переключения с состояниями ВКЛ/ВЫКЛ, разными цветами и текстовыми метками.
 
-## Overview
+## Обзор
 
-ToggleButton is perfect for settings, options, and any binary state controls in your game. It automatically switches between two states with customizable appearance and provides callbacks for state changes.
+ToggleButton идеален для настроек, опций и любых бинарных элементов управления в игре. Автоматически переключается между двумя состояниями с настраиваемым внешним видом и предоставляет обратные вызовы при изменении состояния.
 
 ## Key Features
 

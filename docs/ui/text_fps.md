@@ -1,8 +1,8 @@
-# Text_fps - Ready-to-Use FPS Counter
+# Text_fps - Готовый счётчик FPS
 
-The `Text_fps` class is a ready-to-use sprite that automatically displays and updates the current FPS (Frames Per Second) in your game. It inherits from `TextSprite` and provides automatic FPS calculation, rolling averages, and customizable display options.
+Класс `Text_fps` — это готовый к использованию спрайт, который автоматически отображает и обновляет текущий FPS (Frames Per Second) в игре. Наследуется от `TextSprite` и обеспечивает автоматический расчёт FPS, скользящее среднее и настраиваемые параметры отображения.
 
-## Features
+## Возможности
 
 - **Automatic FPS Calculation**: Uses SpritePro's built-in delta time for accurate measurements
 - **Rolling Average**: Smooth FPS display over configurable number of frames

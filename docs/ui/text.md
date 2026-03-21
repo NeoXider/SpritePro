@@ -1,10 +1,10 @@
-# Text Component
+# Text Component (Текст)
 
-The `TextSprite` class provides advanced text rendering capabilities with support for custom fonts, colors, and dynamic text updates.
+Класс `TextSprite` предоставляет расширенные возможности рендеринга текста с поддержкой пользовательских шрифтов, цветов и динамического обновления текста.
 
-## Overview
+## Обзор
 
-TextSprite extends the base Sprite class to handle text rendering, making it easy to display and update text in your games. It supports custom fonts, multiple colors, and automatic text positioning.
+TextSprite расширяет базовый класс Sprite для обработки рендеринга текста, что позволяет легко отображать и обновлять текст в играх. Поддерживает пользовательские шрифты, несколько цветов и автоматическое позиционирование текста.
 
 ## Key Features
 

@@ -1,10 +1,10 @@
-# Surface Utilities
+# Surface Utilities (Утилиты поверхностей)
 
-The `surface` module provides utility functions for advanced surface manipulation, including rounded corners and masking operations.
+Модуль `surface` предоставляет утилитарные функции для продвинутого управления поверхностями, включая закругление углов и операции маскирования.
 
-## Overview
+## Обзор
 
-Surface utilities extend Pygame's surface capabilities with common visual effects and transformations. These functions are designed to be efficient and easy to use for creating polished visual elements.
+Утилиты поверхностей расширяют возможности Pygame с помощью распространённых визуальных эффектов и преобразований. Эти функции разработаны как эффективные и простые в использовании для создания отполированных визуальных элементов.
 
 ## Key Features
 

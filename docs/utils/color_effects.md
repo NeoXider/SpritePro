@@ -1,10 +1,10 @@
-# Color Effects Module
+# Color Effects (Цветовые эффекты)
 
-The `color_effects` module provides a comprehensive set of dynamic color effects and utilities for creating visually appealing animations and visual feedback in games.
+Модуль `color_effects` предоставляет комплексный набор динамических цветовых эффектов и утилит для создания визуально привлекательных анимаций и визуальной обратной связи в играх.
 
-## Overview
+## Обзор
 
-All color effects are time-based and return RGB color tuples that can be used directly with pygame surfaces, sprites, or any other color-accepting components. The effects use real-time calculations to provide smooth, continuous color transitions.
+Все цветовые эффекты основаны на времени и возвращают RGB-кортежи, которые можно напрямую использовать с поверхностями pygame, спрайтами или любыми другими компонентами, принимающими цвет. Эффекты используют вычисления в реальном времени для обеспечения плавных непрерывных переходов цвета.
 
 ## Key Features
 
