@@ -34,4 +34,4 @@ python demoGames/main.py
    - `body.velocity.x = config.SPEED` — горизонтальная скорость;
    - в `update()` по Space: `body.velocity.y = -config.JUMP` — прыжок.
 
-Подробнее: [docs/physics.md](../docs/physics.md) (раздел «Получение и настройка физики из сцены редактора»).
+Подробнее: [docs/core/physics_guide.md](../docs/core/physics_guide.md) (раздел «Получение и настройка физики из сцены редактора»).

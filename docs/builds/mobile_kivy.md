@@ -1,4 +1,4 @@
-# Mobile With SpritePro (Мобильная разработка)
+# Mobile (Мобильная разработка)
 
 `SpritePro` сам управляет кадром и сам отрисовывает игру, поэтому для `Kivy` важнее не переписать игру, а просто дать движку другой render target и другой host loop. Теперь это встроено в API.
 
@@ -318,7 +318,7 @@ python spritePro/demoGames/kivy_hybrid_demo.py
 
 Для быстрой Android-сборки через CLI и ручного `Buildozer` смотрите:
 
-- [building.md](building.md)
+- [building_web.md](building_web.md)
 
 ## Проверенная Android-конфигурация
 
@@ -333,7 +333,7 @@ android.archs = arm64-v8a
 
 - `python-for-android` с `pygame` заметно стабильнее на `Python 3.10.12`
 - сборка из `WSL/Linux home`, а не из `/mnt/c/...`, уменьшает количество проблем с правами и toolchain
-- для деталей и полного пошагового flow смотрите [building.md](building.md)
+- для деталей и полного пошагового flow смотрите [building_web.md](building_web.md)
 
 Если вы собираете APK не из опубликованного `spritepro`, а из локальных свежих правок библиотеки, заранее убедитесь, что Android build реально упаковывает актуальный код:
 

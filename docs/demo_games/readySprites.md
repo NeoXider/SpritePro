@@ -1,221 +1,47 @@
-# Ready Sprites - Pre-built Game Components
+# Ready Sprites (Готовые спрайты)
 
-The `readySprites` module provides a collection of ready-to-use sprite classes that inherit from SpritePro's base components and offer common game functionality out of the box. These components are designed to be drop-in solutions that require minimal setup while providing extensive customization options.
+Модуль `readySprites` предоставляет готовые к использованию компоненты.
 
-## Overview
+## Лобби мультиплеера
 
-Ready Sprites are pre-configured sprite classes that solve common game development needs:
-
-- **Immediate usability**: Work out of the box with sensible defaults
-- **Full customization**: All appearance and behavior can be modified
-- **Performance optimized**: Efficient implementations using SpritePro's core systems
-- **Well documented**: Complete API documentation and usage examples
-- **Integration friendly**: Designed to work seamlessly with existing SpritePro projects
-
-## Available Ready Sprites
-
-### Лобби мультиплеера (readyScenes)
-
-Готовый экран настройки мультиплеера: имя, выбор «Хост»/«Клиент», порт и IP, подключение, список игроков (roster), кнопки «В игру» (хост) и «Готов» (клиент). При нажатии «В игру» игра запускается у обоих игроков.
+Готовый экран настройки мультиплеера: имя, выбор «Хост»/«Клиент», порт и IP, подключение, список игроков (roster), кнопки «В игру» и «Готов».
 
 **Использование:**
 
 ```python
-# Через run() — одно окно с лобби, затем ваша игра (desktop / pygame)
 s.run(
     multiplayer=True,
     multiplayer_entry=your_multiplayer_main,
     multiplayer_use_lobby=True,
 )
+```
 
-# Мобильный / Kivy-вариант
-s.run(
-    multiplayer=True,
-    multiplayer_entry=your_multiplayer_main,
-    multiplayer_use_lobby=True,
-    platform="kivy",
-    # multiplayer_clients > 1 на ПК с Kivy поднимет несколько процессов с лобби
-    # (каждое окно — отдельный игрок, удобно для локального теста).
-    multiplayer_clients=1,
+**Ручное использование:**
+
+```python
+from spritePro.readyScenes import MultiplayerLobbyScene, ChatScene, ChatStyle
+
+s.scene.add_scene("lobby", MultiplayerLobbyScene())
+s.scene.set_scene_by_name("lobby", recreate=True)
+```
+
+## ChatScene
+
+Мультиплеерный чат: история сообщений, поле имени, ввод текста, скролл, время в сообщениях.
+
+```python
+from spritePro.readyScenes import ChatScene, ChatStyle
+
+chat = ChatScene()
+chat.init_chat_scene(
+    s.multiplayer_ctx,
+    name="Игрок",
+    style=ChatStyle()
 )
+s.scene.add_scene("chat", chat)
 ```
 
-```python
-# Вручную: после get_screen() или через Kivy вызвать лобби с колбэком
-from spritePro.readyScenes import run_multiplayer_lobby
+## Связанное
 
-# pygame / desktop
-s.get_screen((480, 540), "Лобби")
-run_multiplayer_lobby(lambda net, role: your_multiplayer_main(net, role))
-
-# Kivy / mobile
-run_multiplayer_lobby(
-    lambda net, role: your_multiplayer_main(net, role),
-    window_size=(480, 540),
-    title="Лобби",
-    platform="kivy",
-)
-```
-
-**Экспорт:** `run_multiplayer_lobby`, `MultiplayerLobbyScene`, `EVENT_START_GAME` из `spritePro.readyScenes`. Подробнее: [Networking — лобби](networking.md#подробная-инструкция-лобби-use_lobbytrue).
-
-### [Text_fps](text_fps.md)
-Автоматический счетчик FPS (кадров в секунду) с скользящим средним и статистикой производительности.
-
-**Основные возможности:**
-- Автоматический расчет FPS с использованием delta time SpritePro
-- Скользящее среднее за настраиваемое количество кадров
-- Настраиваемый формат текста, цвета и позиционирование
-- Отслеживание статистики производительности (мин, макс, среднее)
-- Минимальные накладные расходы на производительность
-
-## Design Philosophy
-
-Ready Sprites follow these design principles:
-
-### 1. **Inheritance-Based**
-All Ready Sprites inherit from appropriate SpritePro base classes, ensuring compatibility and access to all base functionality.
-
-### 2. **Configuration Over Code**
-Common customizations are handled through constructor parameters and configuration methods rather than requiring code modifications.
-
-### 3. **Sensible Defaults**
-Each Ready Sprite works immediately with no configuration, using defaults that work well in most scenarios.
-
-### 4. **Performance First**
-Implementations prioritize performance and minimize resource usage while maintaining full functionality.
-
-### 5. **Documentation Complete**
-Every Ready Sprite includes comprehensive documentation, examples, and integration guides.
-
-## Convenience Functions
-
-Многие Ready Sprites также предоставляют удобные функции для быстрой настройки:
-
-```python
-from spritePro.readySprites import create_fps_counter
-
-# Быстрая настройка с общими конфигурациями
-fps_counter = create_fps_counter(
-    pos=(10, 10),
-    color=(255, 255, 0)
-)
-```
-
-## Performance Considerations
-
-Ready Sprites are designed with performance in mind:
-
-- **Minimal overhead**: Efficient implementations that don't impact game performance
-- **Configurable update rates**: Many components allow adjusting update frequency
-- **Resource management**: Automatic cleanup and efficient resource usage
-- **Batch operations**: Support for updating multiple instances efficiently
-
-## Extending Ready Sprites
-
-Ready Sprites can be extended for custom functionality:
-
-```python
-from spritePro.readySprites import Text_fps
-
-class CustomFPSCounter(Text_fps):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.warning_threshold = 30.0
-    
-    def update_fps(self):
-        super().update_fps()
-        
-        # Custom behavior: change color based on performance
-        if self.get_fps() < self.warning_threshold:
-            self.set_color((255, 100, 100))  # Red for low FPS
-        else:
-            self.set_color((100, 255, 100))  # Green for good FPS
-```
-
-## Future Ready Sprites
-
-The readySprites module will continue to grow with additional pre-built components:
-
-- **Health Bars**: Visual health/progress indicators
-- **Score Displays**: Formatted score counters with animations
-- **Menu Components**: Pre-built menu systems and navigation
-- **HUD Elements**: Common heads-up display components
-- **Debug Tools**: Development and debugging utilities
-
-## Contributing
-
-When creating new Ready Sprites, follow these guidelines:
-
-1. **Inherit from appropriate base classes** (Sprite, TextSprite, etc.)
-2. **Provide sensible defaults** that work without configuration
-3. **Include comprehensive documentation** with examples
-4. **Add convenience functions** for common use cases
-5. **Write performance-conscious code** with minimal overhead
-6. **Include demo/example code** showing usage
-
-## Module Structure
-
-```
-readySprites/
-├── __init__.py          # Module exports and convenience functions
-├── text_fps.py          # FPS counter implementation
-└── [future components]  # Additional ready sprites
-```
-
-## Import Examples
-
-```python
-# Import specific ready sprites
-from spritePro.readySprites import Text_fps
-
-# Import convenience functions
-from spritePro.readySprites import create_fps_counter
-
-# Import entire module
-from spritePro import readySprites
-fps_counter = readySprites.Text_fps()
-```
-
-## Базовое использование
-
-```python
-from spritePro.readySprites import Text_fps
-
-# Создать счетчик FPS
-fps_counter = Text_fps(pos=(10, 10))
-
-# В игровом цикле
-fps_counter.update_fps()
-fps_counter.update(screen)
-```
-
-### Пользовательская конфигурация
-
-```python
-# Создать с пользовательской конфигурацией
-component = Text_fps(
-    pos=(800, 10),
-    color=(0, 255, 0),
-    font_size=20,
-    precision=0
-)
-```
-
-### Интеграция с игровыми классами
-
-```python
-class Game:
-    def __init__(self):
-        self.fps_counter = Text_fps(pos=(10, 10))
-        # ... другие компоненты
-    
-    def update(self, screen):
-        # ... игровая логика
-        
-        # Обновить готовые спрайты
-        self.fps_counter.update_fps()
-        self.fps_counter.update(screen)
-```
-
-Ready Sprites provide a foundation for rapid game development while maintaining the flexibility and power of the underlying SpritePro framework.
+- [Networking](../systems/networking_guide.md) — сетевое взаимодействие
+- [UI](../ui/) — UI компоненты

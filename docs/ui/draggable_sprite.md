@@ -1,4 +1,4 @@
-# DraggableSprite (Перетаскиваемый спрайт)
+# DraggableSprite (Перетаскивание)
 
 `DraggableSprite` — компонент для drag-and-drop в стиле Unity. Наследуется от `Sprite`, поэтому поддерживает все базовые возможности спрайта.
 

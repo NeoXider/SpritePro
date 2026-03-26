@@ -1,490 +1,139 @@
-# Модуль Tween
+# Tween System (Анимации)
 
-## Обзор
+Плавные переходы между значениями с поддержкой функций плавности, зацикливания и обратных вызовов.
 
-Модуль tween предоставляет мощную систему для создания плавных анимаций и переходов между значениями. Он поддерживает различные функции плавности, зацикливание и обратные вызовы для сложных последовательностей анимации.
-
-## Основные компоненты
-
-### TweenManager
-
-Основной класс для управления несколькими твинами одновременно.
+## TweenManager
 
 ```python
-import spritePro as s
-
 tween_manager = s.TweenManager()
 ```
 
-Можно привязать менеджер к сцене:
-```python
-tween_manager = s.TweenManager(scene="hud")
-```
-
-#### Методы
-
-- `add_tween(name: str, start_value: float, end_value: float, duration: float, easing: EasingType = EasingType.LINEAR, on_complete: Optional[Callable] = None, loop: bool = False, yoyo: bool = False, delay: float = 0, on_update: Optional[Callable[[float], None]] = None, auto_start: bool = True)`: Добавить новый твин (твины в менеджере не регистрируются отдельно, обновляются через менеджер)
-- `update(dt: Optional[float] = None)`: Обновить все активные твины (dt автоматически берется из spritePro.dt, если не указан)
-- `pause_all()`: Поставить на паузу все твины
-- `resume_all()`: Возобновить все твины
-- `stop_all(apply_end: bool = True)`: Остановить и удалить все твины (можно применить конечные значения)
-- `reset_all(apply_end: bool = False)`: Сбросить все твины (можно применить конечные значения перед сбросом)
-- `start_all(apply_end: bool = False)`: Запустить все твины (можно применить конечные значения перед стартом)
-- `start_tween(name: str)`: Запустить конкретный твин по имени
-- `get_tween(name: str) -> Optional[Tween]`: Получить конкретный твин
-- `remove_tween(name: str, apply_end: bool = True)`: Удалить конкретный твин (можно применить конечное значение)
-
-Если `scene` задан, `TweenManager.update()` автоматически пропускается, когда сцена не активна.
-
-### Tween
-
-Базовый класс для отдельных твинов.
-
-#### Параметры конструктора
-
-- `start_value` (Any): Начальное значение (float, Vector2, tuple/list)
-- `end_value` (Any): Конечное значение
-- `duration` (float): Длительность анимации в секундах
-- `easing` (EasingType): Тип функции плавности. По умолчанию: EasingType.LINEAR
-- `loop` (bool): Зациклить ли анимацию. По умолчанию: False
-- `yoyo` (bool): Обратить ли направление при зацикливании. По умолчанию: False
-- `on_update` (Optional[Callable[[Any], None]]): Обратный вызов для обновлений значения. По умолчанию: None
-- `on_complete` (Optional[Callable]): Обратный вызов при завершении анимации. По умолчанию: None
-- `delay` (float): Задержка перед началом в секундах. По умолчанию: 0
-- `auto_start` (bool): Автоматически запускать твин при создании. По умолчанию: True
-- `auto_register` (bool): Автоматически регистрировать твин для обновления в spritePro.update(). По умолчанию: True
-- `value_type` (Optional[str]): "vector2", "vector3", "color" или None (авто). По умолчанию: None
-- `scene` (Scene | str, optional): Сцена, в которой активен твин. По умолчанию: None
-- `auto_remove_on_complete` (bool, optional): Снять твин с обновления после завершения. По умолчанию: False
-
-#### Методы Tween
-
-- `start()`: Запустить твин (если был создан с auto_start=False)
-- `update(dt: Optional[float] = None) -> Optional[Any]`: Обновить твин и получить текущее значение (dt автоматически берется из spritePro.dt, если не указан)
-- `pause()`: Поставить твин на паузу
-- `resume()`: Возобновить твин
-- `stop(apply_end: bool = True, call_on_complete: bool = False)`: Остановить твин; при `call_on_complete=True` после применения конца вызывается on_complete
-- `set_easing(easing)`: Установить плавность (EasingType или Ease)
-- `reset(apply_end: bool = False)`: Сбросить твин (можно применить конечное значение перед сбросом)
-- `get_progress() -> float`: Получить прогресс от 0.0 до 1.0
-
-## Функции плавности
-
-Модуль предоставляет различные функции плавности через перечисление `EasingType`:
-
-```python
-from spritePro.components.tween import EasingType
-```
-
-### Базовые функции плавности
-
-- `LINEAR`: Постоянная скорость
-- `EASE_IN`: Медленное начало, быстрое окончание
-- `EASE_OUT`: Быстрое начало, медленное окончание
-- `EASE_IN_OUT`: Медленное начало и окончание, быстрое середину
-
-### Продвинутые функции плавности
-
-- `SINE`: Плавная плавность на основе синуса
-- `QUAD`: Квадратичная плавность
-- `CUBIC`: Кубическая плавность
-- `QUART`: Четвертая степень плавности
-- `QUINT`: Пятая степень плавности
-- `EXPO`: Экспоненциальная плавность
-- `CIRC`: Круговая плавность
-- `BACK`: Плавность с перелетом
-- `BOUNCE`: Отскакивающая плавность
-- `ELASTIC`: Эластичная плавность
-
-## Примеры использования
-
-### Готовые твины для спрайтов
-
-SpritePro предоставляет набор готовых твинов для типовых свойств спрайта:
-
-- `tween_position`, `tween_move_by`
-- `tween_scale`, `tween_scale_by`
-- `tween_rotate`, `tween_rotate_by`
-- `tween_color`, `tween_alpha`, `tween_size`
-
-Полная документация: [Tween Presets](tween_presets.md)
-
-```python
-import spritePro as s
-
-sprite = s.Sprite("", (60, 60), (200, 200))
-sprite.set_color((120, 200, 255))
-
-s.tween_position(sprite, to=(500, 300), duration=0.8, easing=s.EasingType.EASE_OUT)
-s.tween_scale(sprite, to=1.4, duration=0.5, yoyo=True, loop=True)
-s.tween_color(sprite, to=(255, 120, 120), duration=1.0)
-```
-
-### Fluent API (Do-твины)
-
-Удобный цепочечный API в стиле DOTween: методы на спрайте возвращают **твин** (`TweenHandle`), **не спрайт**. Хэндл можно сохранить в переменную и затем только его удалить (`Kill`) или перезапустить (`Restart`). У `TweenHandle`: `SetEase`, `SetDelay`, `OnComplete`, `SetLoops`, `SetYoyo`, `Restart`, `Kill`.
-
-- **По умолчанию** у Do-твинов: плавность `Ease.OutQuad`, **автоудаление по завершении** (если не зациклен) — твин снимается с обновления после окончания.
-- **Зацикливание**: `SetLoops(count)` — `0` или `1` = один проход и завершение, `2` и больше = столько проходов, `-1` = бесконечно. По умолчанию режим **reset** (каждый цикл с начала); `SetYoyo(True)` включает движение туда-обратно.
-- **Kill(complete=False)** (по умолчанию): остановить без применения конца, без вызова `on_complete`, удалить из обновлений.
-- **Kill(complete=True)**: применить конечное значение и вызвать `on_complete`, затем удалить. Для твинов с **SetYoyo(True)** запоминается «логический конец» (исходная стартовая позиция); при Kill(complete=True) применяется именно она, так что следующий твин можно запускать без ручного set_position.
-
-```python
-import spritePro as s
-
-player = s.Sprite("", (50, 50), (100, 300))
-player.set_color((120, 200, 255))
-
-# Простое движение (по умолчанию Ease.OutQuad, после завершения твин удалится)
-player.DoMove((500, 300), 1.2)
-
-# Цепочка: плавность, задержка, коллбек
-player.DoMove((200, 500), 1).SetEase(s.Ease.OutCubic).SetDelay(0.3).OnComplete(lambda: print("Done"))
-
-# Бесконечный yoyo-масштаб
-player.DoScale(1.5, 0.8).SetLoops(-1).SetYoyo(True)
-
-# Сохранить хэндл и потом остановить только этот твин
-handle = player.DoMove((600, 400), 2)
-handle.Kill(complete=False)
-
-# Перезапустить твин с начала (работает и после Kill)
-handle = player.DoMove((200, 200), 1)
-handle.Restart()  # или Restart(apply_end=True), чтобы перед сбросом применить конец
-
-# Завершить принудительно: применить конец, вызвать on_complete, удалить
-handle = player.DoMove((600, 400), 2).OnComplete(callback)
-handle.Kill(complete=True)
-
-# Убить все твины спрайта (без хранения хэндлов)
-player.DoMove((100, 100), 1).SetLoops(-1)
-player.DoScale(2, 0.5)
-player.DoKill(complete=False)  # остановить все, не применяя конец и не вызывая on_complete
-```
-
-#### Методы спрайта (Do*)
+### Методы
 
 | Метод | Описание |
 |-------|----------|
-| `DoMove(to, duration=1.0, anchor=None)` | Движение к позиции |
-| `DoMoveBy(delta, duration=1.0, anchor=None)` | Смещение на delta |
-| `DoScale(to, duration=1.0)` | Масштаб к значению |
-| `DoScaleBy(delta, duration=1.0)` | Изменение масштаба на delta |
-| `DoRotate(to, duration=1.0)` | Поворот к углу |
-| `DoRotateBy(delta, duration=1.0)` | Поворот на delta градусов |
-| `DoColor(to, duration=1.0)` | Цвет к RGB |
-| `DoAlpha(to, duration=1.0)` | Прозрачность |
-| `DoFadeIn(duration=1.0)` | Появление |
-| `DoFadeOut(duration=1.0)` | Исчезновение |
-| `DoSize(to, duration=1.0)` | Размер (width, height) |
-| `DoPunchScale(strength=0.2, duration=0.35)` | Удар масштаба |
-| `DoShakePosition(strength=(8,8), duration=0.4, anchor=None)` | Дрожание позиции |
-| `DoShakeRotation(strength=10, duration=0.4)` | Дрожание поворота |
-| `DoBezier(end, control1, control2=None, duration=1.0, anchor=None)` | Движение по Безье |
-| `DoKill(complete=False)` | Остановить все твины этого спрайта (DoMove, DoScale и т.д.) |
+| `add_tween(...)` | Добавить твин |
+| `update()` | Обновить все твины |
+| `pause_all()` | Пауза всем |
+| `resume_all()` | Возобновить |
+| `stop_all()` | Остановить все |
+| `start_tween(name)` | Запустить по имени |
+| `remove_tween(name)` | Удалить твин |
 
-#### Методы TweenHandle
-
-| Метод | Описание |
-|-------|----------|
-| `SetEase(ease)` | Плавность: `Ease.OutQuad`, `Ease.InCubic` и др. |
-| `SetDelay(seconds)` | Задержка перед стартом |
-| `OnComplete(callback)` | Вызов при завершении |
-| `SetLoops(count)` | Число проходов: `0` — без повтора (один проход), `1` — один проход, `2` и больше — столько проходов, `-1` — бесконечно |
-| `SetYoyo(yoyo=True)` | Режим туда-обратно при цикле |
-| `Restart(apply_end=False)` | Сбросить в начало и запустить заново; работает и после Kill() |
-| `Kill(complete=False)` | Остановить и удалить; при `complete=True` — применить конец и вызвать on_complete |
-
-#### Ease (удобные имена плавности)
-
-Доступны варианты по кривым: `Linear`, `InQuad`, `OutQuad`, `InOutQuad`, `InCubic`, `OutCubic`, `InOutCubic`, а также Quart, Quint, Sine, Expo, Circ, Back, `OutBounce`, `OutElastic`. Пример: `s.Ease.OutQuad`, `s.Ease.InOutCubic`.
-
-Демо: [fluent_tween_demo.py](../spritePro/demoGames/fluent_tween_demo.py).
-
-### Базовое движение
+## Tween
 
 ```python
-import spritePro as s
-
-# Создать твин для горизонтального движения
-tween_manager = s.TweenManager()
-
-tween_manager.add_tween(
-    "move_x",
-    start_value=0,
-    end_value=100,
-    duration=2.0,
-    easing=s.EasingType.EASE_IN_OUT,
-    on_update=lambda x: setattr(sprite, 'x', x)
-)
-
-# TweenManager автоматически регистрируется при создании (auto_register=True по умолчанию)
-# В игровом цикле - вариант 1: автоматическое обновление (по умолчанию)
-tween_manager = s.TweenManager()  # Автоматически регистрируется
-while True:
-    s.update()  # Автоматически обновит твины с dt
-
-# В игровом цикле - вариант 2: без автоматической регистрации
-tween_manager = s.TweenManager(auto_register=False)
-while True:
-    s.update()
-    tween_manager.update()  # dt автоматически берется из spritePro.dt
+tween = s.Tween(start_value, end_value, duration, easing=EasingType.LINEAR)
 ```
 
-### Переход цвета
+| Параметр | Описание | По умолчанию |
+|----------|----------|--------------|
+| `start_value` | Начальное значение | — |
+| `end_value` | Конечное значение | — |
+| `duration` | Длительность (сек) | — |
+| `easing` | Тип плавности | LINEAR |
+| `loop` | Зациклить | False |
+| `yoyo` | Туда-обратно | False |
+| `on_update` | Колбэк обновления | None |
+| `on_complete` | Колбэк завершения | None |
+| `delay` | Задержка (сек) | 0 |
+| `auto_start` | Автозапуск | True |
+
+### Методы
 
 ```python
-import spritePro as s
-
-tween_manager.add_tween(
-    "color",
-    start_value=(255, 0, 0),
-    end_value=(0, 255, 0),
-    duration=1.5,
-    easing=s.EasingType.SINE,
-    on_update=lambda c: sprite.set_color(c),
-    value_type="color"
-)
-```
-
-### Вектор2 (позиция)
-
-```python
-from pygame.math import Vector2
-import spritePro as s
-
-tween_manager.add_tween(
-    "move",
-    start_value=Vector2(100, 100),
-    end_value=Vector2(500, 300),
-    duration=1.2,
-    on_update=lambda v: setattr(sprite, "pos", v),
-    value_type="vector2"
-)
-```
-
-### Вектор3 (кастомные данные)
-
-```python
-import spritePro as s
-
-tween_manager.add_tween(
-    "data",
-    start_value=(0.0, 1.0, 0.0),
-    end_value=(1.0, 0.0, 2.0),
-    duration=2.0,
-    on_update=lambda v: print(v),
-    value_type="vector3"
-)
-```
-
-### Зацикленная анимация
-
-```python
-# Создать зацикленный твин с эффектом yoyo
-tween_manager.add_tween(
-    "scale",
-    start_value=1.0,
-    end_value=1.5,
-    duration=1.0,
-    easing=s.EasingType.EASE_IN_OUT,
-    loop=True,
-    yoyo=True,
-    on_update=lambda s: setattr(sprite, 'scale', s)
-)
-```
-
-### Несколько твинов
-
-```python
-# Создать несколько твинов для сложной анимации
-tween_manager.add_tween("move_x", start_value=0, end_value=100, duration=2.0)
-tween_manager.add_tween("move_y", start_value=0, end_value=50, duration=1.5)
-tween_manager.add_tween("angle", start_value=0, end_value=360, duration=3.0)
-
-# Обновить все твины
-tween_manager.update()
-```
-
-### Твин с задержкой
-
-```python
-# Твин с задержкой перед началом
-tween_manager.add_tween(
-    "fade",
-    start_value=255,
-    end_value=0,
-    duration=1.0,
-    delay=2.0,  # Начнется через 2 секунды
-    on_update=lambda alpha: sprite.set_alpha(int(alpha))
-)
-```
-
-### Управление отдельным твином
-
-```python
-# Создать твин напрямую (автоматически запускается)
-tween = s.Tween(
-    start_value=0,
-    end_value=100,
-    duration=2.0,
-    easing=s.EasingType.EASE_IN_OUT
-)
-
-# Создать твин без автоматического запуска
-tween = s.Tween(
-    start_value=0,
-    end_value=100,
-    duration=2.0,
-    auto_start=False  # Не запускается автоматически
-)
-tween.start()  # Запустить вручную
-
-# Управление
+tween.start()
 tween.pause()
 tween.resume()
 tween.stop()
 tween.reset()
-tween.start()  # Запустить заново
-
-# Обновление и получение значения
-current_value = tween.update()  # dt автоматически берется из spritePro.dt
-if current_value is not None:
-    sprite.x = current_value
+current_value = tween.update()
+tween.get_progress()  # 0.0 - 1.0
 ```
 
-### Обратные вызовы
+## Функции плавности (EasingType)
+
+- `LINEAR` — постоянная скорость
+- `EASE_IN` / `EASE_OUT` / `EASE_IN_OUT`
+- `SINE`, `QUAD`, `CUBIC`, `QUART`, `QUINT`
+- `EXPO`, `CIRC`
+- `BACK` — с перелетом
+- `BOUNCE` — отскок
+- `ELASTIC` — эластичность
+
+## Fluent API (Do-твины)
+
+Методы возвращают `TweenHandle`:
 
 ```python
-def on_complete():
-    print("Анимация завершена!")
+player.DoMove((500, 300), 1.2)  # По умолчанию Ease.OutQuad
 
-def on_update(value):
-    sprite.scale = value
-    print(f"Текущий масштаб: {value}")
+# Конфигурация хэндла
+handle = player.DoMove((200, 500), 1)\
+    .SetEase(s.Ease.OutCubic)\
+    .SetDelay(0.3)\
+    .OnComplete(lambda: print("Done"))
 
-tween_manager.add_tween(
-    "scale",
-    start_value=1.0,
-    end_value=2.0,
-    duration=2.0,
-    on_update=on_update,
-    on_complete=on_complete
-)
+player.DoScale(1.5, 0.8).SetLoops(-1).SetYoyo(True)
 ```
 
-### Создание твина без автоматического запуска
+### TweenHandle методы
+
+| Метод | Описание |
+|-------|----------|
+| `SetEase(ease)` | Плавность |
+| `SetDelay(sec)` | Задержка |
+| `OnComplete(cb)` | При завершении |
+| `SetLoops(n)` | Проходы (-1 = бесконечно) |
+| `SetYoyo(True)` | Туда-обратно |
+| `Restart()` | Перезапуск |
+| `Kill(complete=False)` | Остановить |
+
+### Do-методы спрайта
+
+| Метод | Описание |
+|-------|----------|
+| `DoMove(to, dur)` | Движение к позиции |
+| `DoMoveBy(delta, dur)` | Смещение |
+| `DoScale(to, dur)` | Масштаб |
+| `DoScaleBy(delta, dur)` | Изменение масштаба |
+| `DoRotate(to, dur)` | Поворот к углу |
+| `DoRotateBy(delta, dur)` | Поворот на угол |
+| `DoColor(to, dur)` | Цвет |
+| `DoAlpha(to, dur)` | Прозрачность |
+| `DoFadeIn(dur)` | Появление |
+| `DoFadeOut(dur)` | Исчезновение |
+| `DoSize(to, dur)` | Размер |
+| `DoPunchScale(s, dur)` | Удар масштаба |
+| `DoShakePosition(s, dur)` | Дрожание позиции |
+| `DoBezier(end, c1, c2, dur)` | Движение по Безье |
+| `DoKill()` | Остановить все твины |
+
+## Примеры
 
 ```python
-# Создать твин, который не запускается автоматически
-tween_manager.add_tween(
-    "fade_in",
-    start_value=0,
-    end_value=255,
-    duration=1.0,
-    auto_start=False  # Не запускается при создании
-)
+# Простое движение
+s.tween_position(sprite, to=(500, 300), duration=0.8, easing=s.EasingType.EASE_OUT)
 
-# Запустить в нужный момент
-def show_sprite():
-    tween_manager.start_tween("fade_in")
-    sprite.active = True
+# Fluent API
+player.DoMove((500, 300), 1.2).SetEase(s.Ease.OutQuad)
+
+# Зацикленный yoyo-масштаб
+player.DoScale(1.5, 0.8).SetLoops(-1).SetYoyo(True)
+
+# Векторное значение
+from pygame.math import Vector2
+tween_manager.add_tween("move", Vector2(100, 100), Vector2(500, 300), 1.2,
+    on_update=lambda v: setattr(sprite, "pos", v), value_type="vector2")
 ```
 
-### Сброс всех твинов
+## Демо
 
-```python
-# Сбросить все твины в начальное состояние
-tween_manager.reset_all()
-
-# Полезно при перезапуске уровня или сцены
-def restart_level():
-    tween_manager.reset_all()  # Все твины вернутся к начальным значениям
+```bash
+python -m spritePro.demoGames.fluent_tween_demo
 ```
 
-## Автоматическое обновление
+## См. также
 
-По умолчанию все компоненты (TweenManager, Animation, Timer, Tween) автоматически регистрируются для обновления при создании:
-
-```python
-import spritePro as s
-
-# Все эти объекты автоматически регистрируются при создании
-tween_manager = s.TweenManager()  # auto_register=True по умолчанию
-animation = s.Animation(...)  # auto_register=True по умолчанию
-timer = s.Timer(...)  # auto_register=True по умолчанию, autostart=True по умолчанию
-
-# В игровом цикле - все зарегистрированные объекты обновятся автоматически с dt
-while True:
-    s.update()  # Автоматически обновит все зарегистрированные объекты
-
-# Если нужно отключить автоматическую регистрацию
-tween_manager = s.TweenManager(auto_register=False)
-animation = s.Animation(..., auto_register=False)
-timer = s.Timer(..., auto_register=False)
-
-# Или отменить регистрацию вручную
-s.unregister_update_object(tween_manager)
-```
-
-## Лучшие практики
-
-1. **Используйте автоматическое обновление** - передавайте твины, анимации и таймеры в `spritePro.update()` или регистрируйте через `register_update_object()`
-2. **Параметр `dt` необязателен** - он автоматически берется из `spritePro.dt`, если не указан явно
-3. **Используйте `auto_start=False`** для твинов, которые нужно запускать вручную в определенный момент
-4. **Используйте уникальные идентификаторы** для каждого твина
-5. **Очищайте твины**, когда они больше не нужны, используя `remove_tween()` или `stop_all()`
-6. **Используйте `reset_all()`** для сброса всех твинов в начальное состояние
-7. **Используйте подходящие функции плавности** для разных типов анимаций
-8. **Рассмотрите использование обратных вызовов** для сложных анимаций
-
-## Соображения производительности
-
-- Твины легковесны и эффективны
-- Количество активных твинов должно контролироваться
-- Сложные функции плавности могут иметь более высокое использование CPU
-- Рассмотрите использование более простых функций плавности для мобильных устройств
-
-## Интеграция с другими компонентами
-
-### С системой спрайтов
-
-```python
-# Анимация позиции спрайта
-tween_manager.add_tween(
-    "position_x",
-    start_value=sprite.x,
-    end_value=500,
-    duration=2.0,
-    on_update=lambda x: setattr(sprite, 'x', x)
-)
-
-# Анимация масштаба
-tween_manager.add_tween(
-    "scale",
-    start_value=1.0,
-    end_value=1.5,
-    duration=1.0,
-    loop=True,
-    yoyo=True,
-    on_update=lambda s: setattr(sprite, 'scale', s)
-)
-```
-
-### С системой анимации
-
-```python
-# Использование твинов в Animation компоненте
-animation.add_tween(
-    "scale",
-    start_value=1.0,
-    end_value=1.5,
-    duration=1.0,
-    easing=s.EasingType.EASE_IN_OUT
-)
-```
-
-Для более подробной информации о связанных компонентах см.:
-
-- [Документация по анимации](animation.md) - Использование твинов в анимациях
-- [Документация по спрайтам](sprite.md) - Анимация свойств спрайтов
+- [Animation](animation.md)
+- [Sprite](sprite.md)

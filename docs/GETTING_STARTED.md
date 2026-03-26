@@ -1,4 +1,4 @@
-# 🚀 Getting Started — SpritePro v3.4.0
+# 🚀 Getting Started — SpritePro v3.5
 
 **Быстрый старт для новичков: установка, первая игра, базовые концепции**
 
@@ -251,9 +251,9 @@ python -m spritePro.cli --android . --android-orientation portrait
 
 ### Изучите документацию
 1. **[API Reference](docs/API_REFERENCE.md)** — полный справочник всех классов и функций
-2. **[Physics Guide](docs/guides/physics_guide.md)** — физика pymunk + редактор сцен
-3. **[UI & Layouts](docs/guides/ui_layouts.md)** — UI компоненты и автолейауты
-4. **[Animation & Tweens](docs/guides/animation_tweens.md)** — анимации и плавные переходы
+2. **[Physics Guide](docs/core/physics_guide.md)** — физика pymunk + редактор сцен
+3. **[UI & Layouts](docs/ui/layout_ui.md)** — UI компоненты и автолейауты
+4. **[Animation & Tweens](docs/core/tween_system.md)** — анимации и плавные переходы
 
 ### Практикуйтесь
 - Изучите код демо-игр в `spritePro/demoGames/`
@@ -290,6 +290,6 @@ A: `s.run(scene=MainScene, platform="kivy")`
 <div align="center">
 
 **🎮 Готовы к следующему шагу?**  
-Перейдите к [API Reference](docs/API_REFERENCE.md) или изучите [демо-игры](docs/guides/demo_games.md)!
+Перейдите к [API Reference](docs/API_REFERENCE.md) или изучите [демо-игры](docs/demo_games/demo_games.md)!
 
 </div>

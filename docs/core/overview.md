@@ -1,6 +1,6 @@
-# Обзор SpritePro
+# Overview (Обзор)
 
-Краткий обзор возможностей библиотеки SpritePro.
+Краткий обзор возможностей библиотеки.
 
 ---
 
@@ -51,7 +51,7 @@ from spritePro.layout import (
 - `layout_demo.py` — все 7 типов лейаутов
 - `menu_shop_demo.py` — меню и инвентарь на flex/grid
 
-Подробнее: [layout.md](layout.md)
+Подробнее: [layout.md](../ui/layout_ui.md)
 
 ---
 
@@ -62,9 +62,9 @@ from spritePro.layout import (
 - **s.physics** — прокси к глобальному миру. **s.add_physics**, **s.add_static_physics**, **s.add_kinematic_physics**, **s.PhysicsConfig**, **s.PhysicsShape** — создание тел; по умолчанию тело автоматически добавляется в мир (`auto_add=True`). Использование через `s.` гарантирует работу с тем же миром, что обновляется в `s.update()`.
 - **PhysicsConfig** — mass, gravity, friction, bounce; опционально collision_category, collision_mask.
 - **on_collision** — колбэк при столкновении.
-- **s.physics.set_bounds(rect)** — границы экрана с отскоком. При загрузке сцены через `spawn_scene` типы физики и настройки (mass, friction, bounce, маски) из редактора применяются к глобальному миру. Тело из сцены: **s.get_physics(sprite)**; донастройка в коде: `body.set_bounce(0)`, `body.velocity.x/y`, см. [physics.md](physics.md).
+- **s.physics.set_bounds(rect)** — границы экрана с отскоком. При загрузке сцены через `spawn_scene` типы физики и настройки (mass, friction, bounce, маски) из редактора применяются к глобальному миру. Тело из сцены: **s.get_physics(sprite)**; донастройка в коде: `body.set_bounce(0)`, `body.velocity.x/y`, см. [physics_guide.md](physics_guide.md).
 
-Демо: `physics_demo.py`, `hoop_bounce_demo.py`, `ping_pong`; сцена из редактора с физикой — `demoGames/` в корне репозитория. Подробнее: [physics.md](physics.md).
+Демо: `physics_demo.py`, `hoop_bounce_demo.py`, `ping_pong`; сцена из редактора с физикой — `demoGames/` в корне репозитория. Подробнее: [physics_guide.md](physics_guide.md).
 
 ---
 
@@ -75,7 +75,7 @@ from spritePro.layout import (
 - Спрайт: `.position()`, `.scale()`, `.color()`, `.crop()`, `.border_radius()`, `.mask()`, `.build()` — **build()** возвращает типизированный **Sprite**.
 - Частицы: `.amount()`, `.lifetime()`, `.speed()`, `.gravity()`, `.position()`, `.auto_emit()`, `.build()`.
 
-Демо: `builder_demo.py`. Подробнее: [builder.md](builder.md).
+Демо: `builder_demo.py`. Подробнее: [BUILDER_API.md](BUILDER_API.md).
 
 ---
 
@@ -132,7 +132,7 @@ class MultiplayerScene(s.Scene):
 
 В `multiplayer_course/` — 10 уроков: обмен сообщениями → синхронизация → лобби → меню → результаты → финальная сборка.
 
-Подробнее: [networking.md](networking.md)
+Подробнее: [networking_guide.md](../systems/networking_guide.md)
 
 ---
 
@@ -175,9 +175,9 @@ class MultiplayerScene(s.Scene):
 
 | Что | Где |
 |-----|-----|
-| Layout | [docs/layout.md](layout.md) |
-| Tween, Fluent API | [docs/tween.md](tween.md), [docs/tween_presets.md](tween_presets.md) |
-| Networking | [docs/networking.md](networking.md) |
+| Layout | [docs/ui/layout_ui.md](../ui/layout_ui.md) |
+| Tween, Fluent API | [docs/core/tween_system.md](tween_system.md), [docs/core/tween_presets.md](tween_presets.md) |
+| Networking | [systems/networking_guide.md](systems/networking_guide.md) |
 | Курс мультиплеера | [multiplayer_course/README.md](../multiplayer_course/README.md) |
 | Демо Layout | `spritePro/demoGames/layout_demo.py` |
 | Демо Fluent Tween | `spritePro/demoGames/fluent_tween_demo.py` |

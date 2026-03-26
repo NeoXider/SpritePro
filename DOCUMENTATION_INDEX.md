@@ -10,9 +10,9 @@
 |-------|------------|
 | [📋 Основные документы](#-основные-документы-проекта) | README, OVERVIEW, ROADMAP, CONTRIBUTING, GAME_IDEAS |
 | [🎯 Старт и основы](#-основные-компоненты) | Sprite, игровой цикл, ввод, события, сцены, debug |
-| [📱 Mobile и Build](#-mobile-и-build) | [mobile.md](docs/mobile.md), [kivy_hybrid.md](docs/kivy_hybrid.md), [building.md](docs/building.md) |
-| [⚙️ Физика](#-игровые-системы) | [physics.md](docs/physics.md) — типы тел, PhysicsShape, сцена из редактора; [physics_issues.md](docs/physics_issues.md) |
-| [🎨 Редактор сцен](#-основные-компоненты) | [sprite_editor.md](docs/sprite_editor.md) — редактор, spawn_scene, get_physics |
+| [📱 Mobile и Build](#-mobile-и-build) | [mobile_kivy.md](builds/mobile_kivy.md), [kivy_hybrid.md](builds/kivy_hybrid.md), [building_web.md](builds/building_web.md) |
+| [⚙️ Физика](#-игровые-системы) | [physics_guide.md](core/physics_guide.md) — типы тел, PhysicsShape, сцена из редактора; [physics_issues.md](editor/physics_issues.md) |
+| [🎨 Редактор сцен](#-основные-компоненты) | [sprite_editor.md](editor/sprite_editor.md) — редактор, spawn_scene, get_physics |
 | [🖼️ UI](#-ui-компоненты) | Button, Toggle, Slider, Text, TextInput, Layout, Pages, Bar |
 | [🎮 Игровые системы](#-игровые-системы) | Animation, Tween, Timer, Health, Particles, Builder, Networking |
 | [🔧 Утилиты](#-утилиты) | Save/Load, Surface, Color effects, ReadySprites |
@@ -31,7 +31,7 @@
 - Примеры использования
 - Ссылки на всю документацию
 
-### [docs/OVERVIEW.md](docs/OVERVIEW.md) 📋
+### [core/overview.md](core/overview.md) 📋
 **Краткий обзор SpritePro**
 - Layout, мультиплеер, основные подсистемы
 - Таблицы типов лейаутов, API
@@ -77,19 +77,19 @@
 - Профилирование и мониторинг
 - Бенчмарки и тесты
 
-### [docs/mobile.md](docs/mobile.md) 📱
+### [builds/mobile_kivy.md](builds/mobile_kivy.md) 📱
 **Мобильный запуск через Kivy**
 - `s.run(..., platform="kivy")`
 - touch-ввод и mobile host
 - список demo с запуском через `--kivy`
 
-### [docs/kivy_hybrid.md](docs/kivy_hybrid.md) 🧩
+### [builds/kivy_hybrid.md](builds/kivy_hybrid.md) 🧩
 **Hybrid Kivy UI + SpritePro**
 - `s.run_kivy_hybrid(...)`
 - `s.create_kivy_widget(...)`
 - меню, кнопки и layout на Kivy вокруг встроенной игровой области
 
-### [docs/building.md](docs/building.md) 📦
+### [builds/building_web.md](builds/building_web.md) 📦
 **Сборка библиотеки и игр**
 - wheel/sdist для SpritePro
 - desktop packaging
@@ -101,7 +101,7 @@
 
 ### Основные компоненты
 
-#### [docs/sprite.md](docs/sprite.md)
+#### [core/sprite.md](core/sprite.md)
 **Базовая система спрайтов**
 - Создание и управление спрайтами
 - Позиционирование и трансформации
@@ -109,7 +109,7 @@
 - Базовые методы отрисовки
 - Столкновения по маске: ensure_mask(), collide_mask(other), collides_with(other, use_mask=True)
 
-#### [docs/sprite_editor.md](docs/sprite_editor.md)
+#### [editor/sprite_editor.md](editor/sprite_editor.md)
 **Редактор спрайтов (Sprite Editor)** — один документ покрывает и редактор, и использование сцен в своём проекте.
 - **Редактор:** запуск (`python -m spritePro.cli --editor`), интерфейс (Viewport, Hierarchy, Inspector, Toolbar), инструменты (Select, Move, Rotate, Scale), типы спрайтов (Image, Rect/Circle/Ellipse), Drag & Drop, сохранение/загрузка JSON, координаты по центру объекта, Undo/Redo, камера.
 - **Использование сцены в игре:** `spawn_scene("level.json", scene=...)`, получение по имени (`rt.first("player")`, `rt.exact("name")`, `rt.startswith("enemy")`), `placement()` (pos = центр), `to_button`, `to_text_sprite`, `to_toggle`, `.Sprite(**kwargs)`.
@@ -119,25 +119,25 @@
 
 ### UI компоненты
 
-#### [docs/button.md](docs/button.md)
+#### [ui/button.md](ui/button.md)
 **Интерактивные кнопки**
 - Создание кнопок
 - Обработка событий
 - Стилизация и анимации
 
-#### [docs/toggle_button.md](docs/toggle_button.md)
+#### [ui/toggle_button.md](ui/toggle_button.md)
 **Переключатели**
 - Кнопки-переключатели
 - Состояния вкл/выкл
 - Группы переключателей
 
-#### [docs/slider.md](docs/slider.md)
+#### [ui/slider.md](ui/slider.md)
 **Слайдер**
 - Slider(Sprite), два режима: auto_register и ручная отрисовка
 - handle_event(), draw(screen), on_change
 - Примеры в сцене и вне игрового цикла
 
-#### [docs/text_input.md](docs/text_input.md)
+#### [ui/text_input.md](ui/text_input.md)
 **Поле ввода текста**
 - TextInput(Button), placeholder, value, max_length
 - **Типы поля:** input_type ("text" | "int" | "float"), min_val, max_val; для int/float — валидация и фильтрация при вставке
@@ -145,30 +145,30 @@
 - Парсинг чисел: модуль **spritePro.input_validation** (parse_input_value, can_add_char, filter_chars_for_paste)
 - activate/deactivate, handle_event
 
-#### [docs/text.md](docs/text.md)
+#### [ui/text.md](ui/text.md)
 **Система текста**
 - Рендеринг текста
 - Шрифты и стили
 - **Многострочный текст** — поддержка `\n` в TextSprite (рендер по строкам, отступ между строками)
 
-#### [docs/mouse_interactor.md](docs/mouse_interactor.md)
+#### [ui/mouse_interactor.md](ui/mouse_interactor.md)
 **Взаимодействие с мышью**
 - Обработка кликов
 - Hover эффекты
 - Drag & Drop
 
-#### [docs/draggable_sprite.md](docs/draggable_sprite.md)
+#### [ui/draggable_sprite.md](ui/draggable_sprite.md)
 **Drag-and-drop спрайт**
 - Перетаскивание объектов
 - Колбэки начала/конца
 - Возврат на место
 
-#### [docs/pages.md](docs/pages.md)
+#### [ui/pages_guide.md](ui/pages_guide.md)
 **Pages**
 - Страницы и менеджер страниц
 - Автовключение/выключение спрайтов
 
-#### [docs/layout.md](docs/layout.md)
+#### [ui/layout_ui.md](ui/layout_ui.md)
 **Layout**
 - Автолейаут: flex, сетка, окружность, линия
 - Контейнер — спрайт, rect или сам лейаут
@@ -177,37 +177,37 @@
 
 ### Игровые системы
 
-#### [docs/animation.md](docs/animation.md)
+#### [core/animation.md](core/animation.md)
 **Система анимации**
 - Покадровая анимация
 - Управление состояниями
 - Циклы и переходы
 
-#### [docs/tween.md](docs/tween.md)
+#### [core/tween_system.md](core/tween_system.md)
 **Плавные переходы**
 - Easing функции (EasingType, Ease)
 - Анимация свойств
 - Цепочки анимаций
 
-#### [docs/tween_presets.md](docs/tween_presets.md)
+#### [core/tween_presets.md](core/tween_presets.md)
 **Готовые твины и Fluent API**
 - Позиция, масштаб, поворот, цвет, прозрачность
 - **Fluent API** на Sprite: DoMove, DoScale, DoRotateBy, DoColor, DoFadeOut/In, SetEase, SetDelay, OnComplete, SetLoops, SetYoyo, Kill
 
-#### [docs/networking.md](docs/networking.md)
+#### [systems/networking_guide.md](systems/networking_guide.md)
 **Networking**
 - Минимальные TCP-хелперы, run(), MultiplayerContext
 - **Лобби (use_lobby=True):** подробная инструкция — запуск, сценарий для игрока (хост/клиент, «В игру», «Готов»), для разработчика (события start_game/ready, MultiplayerLobbyScene, очистка UI)
 - Файловые логи в spritepro_logs, net_log_to_overlay
 - Примеры мультиплеера
 
-#### [docs/timer.md](docs/timer.md)
+#### [docs/systems/timer_component.md](systems/timer_component.md)
 **Система времени**
 - Таймеры и задержки
 - Планирование событий
 - Игровое время
 
-#### [docs/physics.md](docs/physics.md)
+#### [docs/core/physics_guide.md](core/physics_guide.md)
 **Система физики (pymunk)**
 - Реализация на **pymunk**; формы коллайдеров задаются через **PhysicsShape** (AUTO, BOX, CIRCLE, LINE) или строки; поворот спрайта с физикой не синхронизируется (обновляется только позиция).
 - Глобальный мир: `s.physics`, `s.get_physics_world()` — физика всегда включена, мир один и уже зарегистрирован.
@@ -218,56 +218,56 @@
 - Коллизии через pymunk, колбэк on_collision, границы мира (set_bounds).
 - Демо: physics_demo, hoop_bounce_demo, ping_pong. Запуск: `python -m spritePro.demoGames.physics_demo`, `python -m spritePro.demoGames.hoop_bounce_demo`, `python -m spritePro.demoGames.ping_pong.main`.
 
-#### [docs/game_loop.md](docs/game_loop.md)
+#### [docs/systems/game_loop.md](systems/game_loop.md)
 **Игровой цикл и сцены**
 - Базовый цикл
 - Сцены и их жизненный цикл
 
-#### [docs/input.md](docs/input.md)
+#### [docs/systems/input_system.md](systems/input_system.md)
 **Ввод**
 - InputState (was_pressed, is_pressed, оси, мышь)
 - Сырые события pygame
 
-#### [docs/events.md](docs/events.md)
+#### [docs/systems/events_system.md](systems/events_system.md)
 **События (EventBus)**
 - EventBus: connect, send, disconnect, get_event
 - EventSignal: get_event(name).send(route="all", net=ctx, **payload) — тот же роутинг, что у events.send
 - GlobalEvents: QUIT, KEY_DOWN, KEY_UP, MOUSE_DOWN, MOUSE_UP, TICK
 - LocalEvent, роутинг и сеть (route, net)
 
-#### [docs/debug.md](docs/debug.md)
+#### [docs/utils/debug_overlay.md](utils/debug_overlay.md)
 **Debug Overlay**
 - Сетка мира и координаты камеры
 - Логи с тайм‑аутом
 
-#### [docs/particles.md](docs/particles.md)
+#### [core/particles_guide.md](core/particles_guide.md)
 **Частицы**
 - Время жизни (секунды или миллисекунды)
 - Гравитация, скорость и углы
 - Слои отрисовки (sorting_order)
 - Частицы на основе изображений, поворот и масштаб
 
-#### [docs/camera_and_particles.md](docs/camera_and_particles.md)
+#### [core/camera_and_particles.md](core/camera_and_particles.md)
 **Камера и частицы**
 - Управление камерой и режим слежения
 - Система частиц и их конфигурация
 - Примеры использования
 
-#### [docs/bar.md](docs/bar.md)
+#### [ui/bar.md](ui/bar.md)
 **Прогресс-бары**
 - Unity-style fillAmount функциональность
 - 4 направления заполнения (горизонтальные и вертикальные)
 - Плавная анимация изменений
 - Корректная работа с якорями
 
-#### [docs/bar_background.md](docs/bar_background.md)
+#### [ui/bar_background.md](ui/bar_background.md)
 **Прогресс-бары с фоном**
 - Отдельные изображения для фона и заполнения
 - Фоновое изображение всегда видимо
 - Заполнение обрезается по направлению
 - Все функции базового Bar класса
 
-#### [docs/health.md](docs/health.md)
+#### [docs/systems/health_component.md](systems/health_component.md)
 **Система здоровья**
 - Управление HP
 - Урон и лечение
@@ -275,26 +275,26 @@
 
 ### Утилиты
 
-#### [docs/surface.md](docs/surface.md)
+#### [docs/utils/surface.md](utils/surface.md)
 **Работа с поверхностями**
 - Создание и модификация поверхностей
 - Эффекты и фильтры
 - Оптимизация рендеринга
 
-#### [docs/color_effects.md](docs/color_effects.md)
+#### [docs/utils/color_effects.md](utils/color_effects.md)
 **Цветовые эффекты**
 - Динамические цвета
 - Градиенты и переходы
 - Анимированные эффекты
 
-#### [docs/save_load.md](docs/save_load.md) ✨
+#### [docs/utils/save_load.md](utils/save_load.md) ✨
 **Система сохранения/загрузки**
 - Сохранение игровых данных
 - Поддержка различных форматов
 - Автоматические резервные копии
 - Сериализация пользовательских классов
 
-#### [docs/builder.md](docs/builder.md)
+#### [docs/core/BUILDER_API.md](core/BUILDER_API.md)
 **Builder (Fluent API)**
 - SpriteBuilder: s.sprite(path).position().scale().color().crop().border_radius().mask().build() — build() возвращает Sprite (типизировано)
 - Обрезка (crop/clip), скругление (border_radius), маска коллизий (mask)
@@ -303,14 +303,14 @@
 
 ### Готовые компоненты
 
-#### [docs/readySprites.md](docs/readySprites.md)
+#### [docs/demo_games/readySprites.md](demo_games/readySprites.md)
 **Обзор готовых компонентов**
 - **Лобби мультиплеера** — run_multiplayer_lobby, MultiplayerLobbyScene, EVENT_START_GAME; использование через run(use_lobby=True) или вручную
 - Предварительно настроенные спрайты (Text_fps и др.)
 - Готовые к использованию элементы
 - Примеры интеграции
 
-#### [docs/text_fps.md](docs/text_fps.md)
+#### [docs/ui/text_fps.md](ui/text_fps.md)
 **Счетчик FPS**
 - Автоматическое отображение FPS
 - Настройка внешнего вида
@@ -351,42 +351,42 @@
 
 #### 🟢 Начинающий уровень
 - [README.md](README.md) - Начало работы
-- [docs/sprite.md](docs/sprite.md) - Основы спрайтов
-- [docs/button.md](docs/button.md) - Простые кнопки
-- [docs/text.md](docs/text.md) - Отображение текста
+- [docs/core/sprite.md](core/sprite.md) - Основы спрайтов
+- [docs/ui/button.md](ui/button.md) - Простые кнопки
+- [docs/ui/text.md](ui/text.md) - Отображение текста
 
 
 
 ### По категориям функций
 
 #### 🎨 Графика и рендеринг
-- [docs/sprite.md](docs/sprite.md)
-- [docs/surface.md](docs/surface.md)
-- [docs/color_effects.md](docs/color_effects.md)
-- [docs/animation.md](docs/animation.md)
-- [docs/tween.md](docs/tween.md) — плавные переходы, Fluent API (DoMove, DoScale, ...)
+- [docs/core/sprite.md](core/sprite.md)
+- [docs/utils/surface.md](utils/surface.md)
+- [docs/utils/color_effects.md](utils/color_effects.md)
+- [docs/core/animation.md](core/animation.md)
+- [docs/core/tween_system.md](core/tween_system.md) — плавные переходы, Fluent API (DoMove, DoScale, ...)
 
 
 
 #### 🖱️ Пользовательский интерфейс
-- [docs/button.md](docs/button.md)
-- [docs/toggle_button.md](docs/toggle_button.md)
-- [docs/slider.md](docs/slider.md)
-- [docs/text_input.md](docs/text_input.md)
-- [docs/text.md](docs/text.md)
-- [docs/layout.md](docs/layout.md)
-- [docs/mouse_interactor.md](docs/mouse_interactor.md)
-- [docs/draggable_sprite.md](docs/draggable_sprite.md)
+- [docs/ui/button.md](ui/button.md)
+- [docs/ui/toggle_button.md](ui/toggle_button.md)
+- [docs/ui/slider.md](ui/slider.md)
+- [docs/ui/text_input.md](ui/text_input.md)
+- [docs/ui/text.md](ui/text.md)
+- [docs/ui/layout_ui.md](ui/layout_ui.md)
+- [docs/ui/mouse_interactor.md](ui/mouse_interactor.md)
+- [docs/ui/draggable_sprite.md](ui/draggable_sprite.md)
 
 #### 🔧 Утилиты и инструменты
-- [docs/save_load.md](docs/save_load.md)
-- [docs/tween.md](docs/tween.md) — Tween, TweenManager, Fluent API
-- [docs/text_fps.md](docs/text_fps.md)
-- [docs/game_loop.md](docs/game_loop.md)
-- [docs/input.md](docs/input.md)
-- [docs/events.md](docs/events.md)
-- [docs/debug.md](docs/debug.md)
-- [docs/pages.md](docs/pages.md)
+- [docs/utils/save_load.md](utils/save_load.md)
+- [docs/core/tween_system.md](core/tween_system.md) — Tween, TweenManager, Fluent API
+- [docs/ui/text_fps.md](ui/text_fps.md)
+- [docs/systems/game_loop.md](systems/game_loop.md)
+- [docs/systems/input_system.md](systems/input_system.md)
+- [docs/systems/events_system.md](systems/events_system.md)
+- [docs/utils/debug_overlay.md](utils/debug_overlay.md)
+- [docs/ui/pages_guide.md](ui/pages_guide.md)
 
 #### 📋 Планирование и разработка
 - [ROADMAP.md](ROADMAP.md)
@@ -398,23 +398,23 @@
 
 ### Для новичков в SpritePro
 1. [README.md](README.md) - Общий обзор
-2. [docs/sprite.md](docs/sprite.md) - Основы спрайтов
-3. [docs/text.md](docs/text.md) - Отображение текста
-4. [docs/button.md](docs/button.md) - Интерактивность
+2. [docs/core/sprite.md](core/sprite.md) - Основы спрайтов
+3. [docs/ui/text.md](ui/text.md) - Отображение текста
+4. [docs/ui/button.md](ui/button.md) - Интерактивность
 5. [Простые демо](spritePro/demoGames/) - Практические примеры
 
 ### Для разработки игр
-1. [docs/sprite.md](docs/sprite.md) — Спрайты и игровые объекты
-2. [docs/physics.md](docs/physics.md) — Физика (pymunk), типы тел, сцена из редактора
-3. [docs/sprite_editor.md](docs/sprite_editor.md) — Редактор сцен, spawn_scene, get_physics
-4. [docs/animation.md](docs/animation.md) — Анимации
-5. [docs/tween.md](docs/tween.md) — Плавные переходы (Fluent API)
-6. [docs/timer.md](docs/timer.md) — Игровое время
-7. [docs/health.md](docs/health.md) — Здоровье
-8. [docs/save_load.md](docs/save_load.md) — Сохранения
+1. [docs/core/sprite.md](core/sprite.md) — Спрайты и игровые объекты
+2. [docs/core/physics_guide.md](core/physics_guide.md) — Физика (pymunk), типы тел, сцена из редактора
+3. [docs/editor/sprite_editor.md](editor/sprite_editor.md) — Редактор сцен, spawn_scene, get_physics
+4. [docs/core/animation.md](core/animation.md) — Анимации
+5. [docs/core/tween_system.md](core/tween_system.md) — Плавные переходы (Fluent API)
+6. [docs/systems/timer_component.md](systems/timer_component.md) — Игровое время
+7. [docs/systems/health_component.md](systems/health_component.md) — Здоровье
+8. [docs/utils/save_load.md](utils/save_load.md) — Сохранения
 
 ### Для продвинутых разработчиков
-1. [docs/layout.md](docs/layout.md) - Автолейауты
+1. [docs/ui/layout_ui.md](ui/layout_ui.md) - Автолейауты
 2. [TECHNICAL_SPECS.md](TECHNICAL_SPECS.md) - Архитектура
 3. [PERFORMANCE.md](PERFORMANCE.md) - Оптимизация
 4. [CONTRIBUTING.md](CONTRIBUTING.md) - Участие в разработке

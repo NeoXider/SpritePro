@@ -1,14 +1,8 @@
 # Эффекты камеры
 
-Модуль `camera_effects.py` предоставляет визуальные эффекты для камеры, включая shake (тряску), zoom, fade и другие эффекты, которые могут улучшить игровой опыт.
+Визуальные эффекты: shake, zoom, fade, flash.
 
-## Обзор
-
-Система эффектов камеры позволяет применять различные визуальные эффекты к камере сцены, создавая кинематографические переходы и обратную связь для игрока.
-
-## Основные компоненты
-
-### CameraEffects
+## CameraEffects
 
 ```python
 from spritePro.camera_effects import CameraEffects
@@ -16,230 +10,72 @@ from spritePro.camera_effects import CameraEffects
 effects = CameraEffects(camera)
 ```
 
-### Методы класса
+## Методы
 
-#### `shake(intensity=1.0, duration=0.3)`
+| Метод | Описание |
+|-------|----------|
+| `shake(intensity, duration)` | Тряска камеры |
+| `zoom(target, duration)` | Масштабирование |
+| `fade_in(duration, color)` | Появление |
+| `fade_out(duration, color)` | Затемнение |
+| `slide(pos, duration)` | Плавное перемещение |
+| `flash(intensity, color)` | Вспышка |
+| `pulse(scale, duration)` | Пульсация |
+| `roll(angle, duration)` | Вращение |
 
-Создает эффект тряски камеры.
-
-**Параметры:**
-- `intensity` (float) — интенсивность тряски (0.0-1.0)
-- `duration` (float) — продолжительность в секундах
-
-**Пример:**
-```python
-effects.shake(intensity=0.5, duration=0.5)
-```
-
-#### `zoom(target_zoom, duration=0.5, easing='ease_out')`
-
-Плавное масштабирование камеры.
-
-**Параметры:**
-- `target_zoom` (float) — целевой уровень масштаба (1.0 = нормальный)
-- `duration` (float) — продолжительность анимации
-- `easing` (str) — тип сглаживания
+## Параметры
 
 ```python
-effects.zoom(2.0, duration=1.0)  # Увеличить в 2 раза
-effects.zoom(0.5, duration=0.5)  # Уменьшить в 2 раза
-```
-
-#### `fade_in(duration=0.5, color=(0, 0, 0))`
-
-Плавное появление (убирание черного экрана).
-
-**Параметры:**
-- `duration` (float) — продолжительность
-- `color` (tuple) — цвет затемнения
-
-```python
-effects.fade_in(duration=1.0)  # Появление за 1 секунду
-effects.fade_out(duration=0.5, color=(255, 0, 0))  # Затемнение красным
-```
-
-#### `fade_out(duration=0.5, color=(0, 0, 0))`
-
-Плавное затемнение (появление черного экрана).
-
-```python
-effects.fade_out(duration=0.5)
-```
-
-#### `slide(target_position, duration=0.5, easing='ease_in_out')`
-
-Плавное перемещение камеры к целевой позиции.
-
-**Параметры:**
-- `target_position` (tuple) — координаты (x, y)
-- `duration` (float) — продолжительность
-- `easing` (str) — тип сглаживания
-
-```python
+effects.shake(intensity=0.5, duration=0.5)   # 0.0-1.0
+effects.zoom(2.0, duration=1.0)             # Увеличить в 2 раза
+effects.fade_in(duration=1.0)                # Появление за 1 сек
+effects.fade_out(duration=0.5, color=(255, 0, 0))  # Красное затемнение
 effects.slide((100, 200), duration=0.5)
+effects.flash(intensity=0.8)                 # Белая вспышка
+effects.pulse(scale=1.2, duration=0.3)
+effects.roll(45)                             # Повернуть на 45°
 ```
 
-#### `flash(intensity=1.0, color=(255, 255, 255))`
-
-Мгновенная вспышка экрана.
-
-**Параметры:**
-- `intensity` (float) — интенсивность вспышки
-- `color` (tuple) — цвет вспышки
+## Пример: урон игроку
 
 ```python
-effects.flash(intensity=0.8)  # Белая вспышка
-effects.flash(intensity=1.0, color=(255, 0, 0))  # Красная вспышка
+def on_player_hit(self):
+    self.camera_effects.shake(intensity=0.8, duration=0.3)
+    self.camera_effects.flash(color=(255, 0, 0))
 ```
 
-#### `pulse(scale=1.1, duration=0.3)`
-
-Эффект пульсации (приближение и отдаление).
-
-**Параметры:**
-- `scale` (float) — максимальный масштаб
-- `duration` (float) — продолжительность
+## Пример: переход между сценами
 
 ```python
-effects.pulse(scale=1.2, duration=0.2)
+def transition_to_scene(self, name):
+    self.camera_effects.fade_out(duration=0.5)
+    # ... загрузка сцены ...
+    self.camera_effects.fade_in(duration=0.5)
 ```
 
-#### `roll(angle, duration=0.5)`
-
-Вращение камеры вокруг точки фокуса.
+## Пример: взрыв
 
 ```python
-effects.roll(45)  # Повернуть на 45 градусов
-```
-
-#### `update(delta_time)`
-
-Обновление активных эффектов. Вызывается автоматически в игровом цикле.
-
-#### `stop()`
-
-Остановка всех активных эффектов.
-
-#### `stop_all()`
-
-Немедленная остановка всех эффектов и сброс камеры.
-
-```python
-effects.stop_all()
-```
-
-### Свойства
-
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `is_active` | bool | Есть ли активные эффекты |
-| `current_effects` | list | Список активных эффектов |
-
-## Практические примеры
-
-### Эффект при получении урона
-
-```python
-from spritePro import SpritePro
-from spritePro.camera_effects import CameraEffects
-
-class Game(SpritePro):
-    def on_ready(self):
-        self.camera_effects = CameraEffects(self.camera)
-        
-    def on_player_hit(self):
-        self.camera_effects.shake(intensity=0.8, duration=0.3)
-        self.camera_effects.flash(color=(255, 0, 0))
-```
-
-### Переход между сценами
-
-```python
-def transition_to_scene(self, scene_name):
-    self.camera_effects.fade_out(duration=0.5, color=(0, 0, 0))
-    
-    def after_fade():
-        self.load_scene(scene_name)
-        self.camera_effects.fade_in(duration=0.5)
-        
-    self.timer(0.5, after_fade)
-```
-
-###焦距变化
-
-```python
-def on_zoom_in(self):
-    self.camera_effects.zoom(2.0, duration=0.5, easing='ease_out')
-    
-def on_zoom_out(self):
-    self.camera_effects.zoom(1.0, duration=0.5, easing='ease_out')
-```
-
-### Кинематографический момент
-
-```python
-def play_cutscene(self):
-    self.camera_effects.fade_out(duration=1.0)
-    
-    def show_title():
-        self.camera_effects.fade_in(duration=1.0)
-        self.camera_effects.zoom(1.5, duration=2.0)
-        self.camera_effects.slide((400, 300), duration=2.0)
-        
-    self.timer(1.0, show_title)
-```
-
-### Взрывной эффект
-
-```python
-def on_explosion(self, position):
+def on_explosion(self):
     self.camera_effects.shake(intensity=1.0, duration=0.5)
     self.camera_effects.flash(intensity=1.0, color=(255, 100, 0))
     self.camera_effects.pulse(scale=1.3, duration=0.3)
 ```
 
-### Эффект при победе
+## Свойства
 
 ```python
-def on_victory(self):
-    self.camera_effects.fade_out(duration=0.5, color=(255, 215, 0))
-    
-    def celebrate():
-        self.camera_effects.zoom(1.5, duration=1.0)
-        self.camera_effects.flash(color=(255, 215, 0))
-        
-    self.timer(0.5, celebrate)
+effects.is_active          # Есть ли активные эффекты
+effects.current_effects   # Список активных
+effects.stop_all()       # Остановить все
 ```
 
-## Комбинирование эффектов
+## Рекомендации
 
-```python
-def dramatic_effect(self):
-    self.camera_effects.fade_out(duration=0.3)
-    
-    def phase_two():
-        self.camera_effects.shake(intensity=0.6, duration=0.4)
-        self.camera_effects.flash()
-        self.camera_effects.fade_in(duration=0.5)
-        self.camera_effects.zoom(1.2, duration=0.5)
-        
-    self.timer(0.3, phase_two)
-```
+- Не злоупотребляйте эффектами
+- Используйте для обратной связи (урон, победа)
+- Предоставляйте опцию отключения для доступности
 
-## Настройки по умолчанию
+## См. также
 
-```python
-effects = CameraEffects(
-    camera,
-    default_duration=0.5,
-    default_easing='ease_in_out',
-    shake_decay=0.9
-)
-```
-
-## Лучшие практики
-
-1. **Не злоупотребляйте эффектами** — частые тряски и вспышки могут утомить игрока
-2. **Используйте для обратной связи** — эффекты лучше работают как реакция на события
-3. **Комбинируйте умеренно** — слишком много эффектов одновременно выглядят хаотично
-4. **Учитывайте настройки доступности** — предоставляйте опцию отключения эффектов
+- [Camera](sprite.md)

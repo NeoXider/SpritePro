@@ -1,4 +1,4 @@
-# Hybrid Kivy + SpritePro
+# Kivy Hybrid
 
 Этот режим нужен, когда:
 
@@ -350,6 +350,6 @@ python spritePro/demoGames/kivy_hybrid_demo.py
 
 ## Связанные документы
 
-- [mobile.md](mobile.md)
-- [game_loop.md](game_loop.md)
-- [building.md](building.md)
+- [mobile_kivy.md](mobile_kivy.md)
+- [game_loop.md](../systems/game_loop.md)
+- [building_web.md](building_web.md)

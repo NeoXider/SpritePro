@@ -1,11 +1,11 @@
-# Сборка и билд SpritePro
+# Build (Сборка)
 
 Этот документ про два сценария:
 
 1. Как собрать саму библиотеку `SpritePro` в `wheel`/`sdist`
 2. Как собирать игры на `SpritePro` для `desktop`, `web` и `mobile`
 
-Если нужен только mobile runtime и запуск на телефоне, сначала посмотрите [mobile.md](mobile.md).
+Если нужен только mobile runtime и запуск на телефоне, сначала посмотрите [mobile_kivy.md](mobile_kivy.md).
 
 ---
 
@@ -687,9 +687,9 @@ iOS-сборка возможна через стек `kivy-ios`, но это о
 
 ## 6. Полезные документы
 
-- [mobile.md](mobile.md)
+- [mobile_kivy.md](mobile_kivy.md)
 - [pygame_to_web.md](pygame_to_web.md)
-- [game_loop.md](game_loop.md)
-- [networking.md](networking.md)
+- [game_loop.md](../systems/game_loop.md)
+- [networking.md](../systems/networking_guide.md)
 
 Если нужен краткий старт без деталей, вернитесь в [README.md](../README.md).

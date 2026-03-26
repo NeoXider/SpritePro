@@ -1,4 +1,4 @@
-# 📚 API Reference — SpritePro v3.4.0
+# 📚 API Reference — SpritePro v3.5
 
 **Полная справка по всем классам, функциям и методам библиотеки**
 
@@ -467,19 +467,19 @@ for msg in ctx.poll():  # Очередь входящих
 | Раздел | Файл |
 |--------|------|
 | Быстрый старт | [GETTING_STARTED.md](GETTING_STARTED.md) |
-| Физика | [guides/physics_guide.md](guides/physics_guide.md) |
-| UI & Layouts | [guides/ui_layouts.md](guides/ui_layouts.md) |
-| Анимации | [guides/animation_tweens.md](guides/animation_tweens.md) |
-| Mobile/Web | [guides/mobile_web.md](guides/mobile_web.md) |
-| Мультиплеер | [guides/multiplayer_guide.md](guides/multiplayer_guide.md) |
-| Редактор | [guides/editor_guide.md](guides/editor_guide.md) |
-| Демо-игры | [guides/demo_games.md](guides/demo_games.md) |
+| Физика | [core/physics_guide.md](core/physics_guide.md) |
+| UI & Layouts | [ui/layout_ui.md](ui/layout_ui.md) |
+| Анимации | [core/tween_system.md](core/tween_system.md) |
+| Mobile/Web | [builds/mobile_kivy.md](builds/mobile_kivy.md) |
+| Мультиплеер | [systems/networking_guide.md](systems/networking_guide.md) |
+| Редактор | [editor/sprite_editor.md](editor/sprite_editor.md) |
+| Демо-игры | [demo_games/demo_games.md](demo_games/demo_games.md) |
 
 ---
 
 <div align="center">
 
 **🎮 Готовы к практике?**  
-Изучите [GETTING_STARTED](GETTING_STARTED.md) или запустите [демо-игры](guides/demo_games.md)!
+Изучите [GETTING_STARTED](GETTING_STARTED.md) или запустите [демо-игры](demo_games/demo_games.md)!
 
 </div>

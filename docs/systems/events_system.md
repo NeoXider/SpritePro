@@ -1,146 +1,94 @@
-# События (EventBus и глобальные события)
+# EventBus (События)
 
-В SpritePro события обрабатываются через **EventBus** и набор **глобальных событий**. Игровой цикл каждый кадр получает события pygame и рассылает их подписчикам по именам.
+Подписка и отправка событий по именам.
 
-## Доступ к EventBus и глобальным событиям
+## Доступ
 
 ```python
 import spritePro as s
 
-# EventBus — подписка и отправка по имени события
 s.events.connect("my_event", handler)
 s.events.send("my_event", value=42)
-
-# Константы глобальных событий (строковые имена)
-s.globalEvents.QUIT       # "quit"
-s.globalEvents.KEY_DOWN   # "key_down"
-s.globalEvents.KEY_UP     # "key_up"
-s.globalEvents.MOUSE_DOWN # "mouse_down"
-s.globalEvents.MOUSE_UP   # "mouse_up"
-s.globalEvents.TICK       # "tick"
 ```
 
-## GlobalEvents — встроенные события
+## GlobalEvents
 
-Библиотека каждый кадр обрабатывает `pygame.event.get()` и отправляет в EventBus следующие события:
-
-| Событие | Когда вызывается | Payload (аргументы обработчика) |
-|---------|------------------|---------------------------------|
-| `QUIT` | Пользователь закрыл окно | `event` — объект pygame.QUIT |
-| `KEY_DOWN` | Нажата клавиша | `key` — код клавиши, `event` — объект pygame.KEYDOWN |
+| Событие | Когда | Payload |
+|---------|-------|---------|
+| `QUIT` | Закрытие окна | `event` |
+| `KEY_DOWN` | Нажата клавиша | `key`, `event` |
 | `KEY_UP` | Клавиша отпущена | `key`, `event` |
-| `MOUSE_DOWN` | Нажата кнопка мыши | `button`, `pos`, `event` |
-| `MOUSE_UP` | Кнопка мыши отпущена | `button`, `pos`, `event` |
-| `TICK` | Каждый кадр (дважды: в начале и после сцен) | `dt`, `frame_count`, `time_since_start` |
-
-Пример подписки на глобальные события:
+| `MOUSE_DOWN` | Кнопка мыши нажата | `button`, `pos`, `event` |
+| `MOUSE_UP` | Кнопка отпущена | `button`, `pos`, `event` |
+| `TICK` | Каждый кадр | `dt`, `frame_count`, `time_since_start` |
 
 ```python
-def on_quit(event):
-    print("Выход из игры")
-
-def on_key(key, event):
-    print("Клавиша:", key)
-
-def on_tick(dt, frame_count, time_since_start):
-    pass  # логика каждый кадр
-
-s.events.connect(s.globalEvents.QUIT, on_quit)
-s.events.connect(s.globalEvents.KEY_DOWN, on_key)
-s.events.connect(s.globalEvents.TICK, on_tick)
+s.events.connect(s.globalEvents.KEY_DOWN, lambda key, **_: print("Key:", key))
 ```
 
-## EventBus — API
-
-### Подписка и отписка
-
-- **connect(event_name, handler)** — подписать функцию на событие. Обработчик вызывается с `**payload` при `send(event_name, **payload)`.
-- **disconnect(event_name, handler=None)** — отписать один обработчик или, при `handler=None`, все подписчики этого события.
-- **get_event(event_name)** — получить объект `EventSignal` по имени. У сигнала те же методы: `connect(handler)`, `disconnect(handler=None)`, **send(route="local", net=None, include_local=None, **payload)** — в том числе с роутингом в сеть (см. ниже).
-- **clear(event_name=None)** / **disconnect_all(event_name=None)** — очистить подписки: для одного события или для всех (`event_name=None`).
-
-### Отправка
-
-- **send(event_name, route="local", net=None, include_local=None, **payload)** — отправить событие:
-  - локальным подписчикам (по умолчанию при `route="local"` или `"all"`);
-  - опционально в сеть (см. раздел «Роутинг и сеть»).
-
-Пример пользовательского события:
+## EventBus API
 
 ```python
-def on_damage(amount, source):
-    print(f"Урон {amount} от {source}")
-
-s.events.connect("damage", on_damage)
-s.events.send("damage", amount=10, source="enemy")
+s.events.connect(event_name, handler)        # Подписать
+s.events.disconnect(event_name, handler)    # Отписать
+s.events.send(event_name, **payload)       # Отправить
+s.events.get_event(event_name)             # Получить сигнал
+s.events.clear(event_name)                  # Очистить
 ```
 
-## LocalEvent — одно событие в переменной
+## LocalEvent
 
-Если нужно одно именованное событие без регистрации в общем шине:
+Одно событие в переменной:
 
 ```python
 from spritePro import LocalEvent
 
-damage_event = LocalEvent()
-
-def on_damage(amount):
-    print("Урон:", amount)
-
-damage_event.connect(on_damage)
-damage_event.send(amount=15)
-# или коротко:
-damage_event(amount=15)
+damage = LocalEvent()
+damage.connect(lambda amount: print("Damage:", amount))
+damage(amount=10)
+# или: damage.send(amount=10)
 ```
 
-У `LocalEvent` те же методы: `connect(handler)`, `disconnect(handler=None)`, `send(**payload)`, `__call__(**payload)`.
-
-## Роутинг и сеть
-
-При использовании мультиплеера можно отправлять события не только локально, но и в сеть. Параметры `send()`:
-
-- **route** — куда доставить:
-  - `"local"` — только локальные подписчики (по умолчанию);
-  - `"all"` — локальные подписчики + отправка в сеть;
-  - `"server"` / `"clients"` / `"net"` — только отправка в сеть (через объект `net` или `set_network_sender()`).
-- **net** — объект с методом `send(event: str, data: dict)` (например, `MultiplayerContext`). Если не передан, используется объект, заданный через **set_network_sender(net)**.
-- **include_local** — вызвать ли локальных подписчиков (по умолчанию для `"local"` и `"all"` — True, для остальных — False).
-
-Примеры:
+## Роутинг (мультиплеер)
 
 ```python
-# Через шину
-s.events.send("player_ready")
-s.events.send("shoot", route="all", net=ctx, x=100, y=200)
-s.events.send("hit", route="server", net=ctx, damage=5)
+s.events.send("shoot", route="all", net=ctx, x=100, y=200)  # Локально + сеть
+s.events.send("hit", route="server", net=ctx, damage=5)     # Только сервер
 
-# Через get_event — тот же роутинг (удобно держать ссылку на событие)
-start_game = s.events.get_event("start_game")
-start_game.send(route="all", net=ctx)
-start_game.send(route="all", net=ctx, level=1)  # с payload
-```
-
-Если задан **set_network_sender(ctx)** при инициализации мультиплеера, параметр `net` можно не передавать: `start_game.send(route="all")`.
-
-При получении сообщений из сети их обычно пробрасывают в EventBus без `route` и `net`, чтобы сработали только локальные подписчики:
-
-```python
+# Получение сетевых событий
 for msg in ctx.poll():
     s.events.send(msg.get("event"), **msg.get("data", {}))
 ```
 
-## Сырые события pygame
+## Роутинг
 
-Текущий список событий за кадр доступен в **spritePro.pygame_events** (обновляется в `s.update()`). Его используют, например, Slider и TextInput для обработки мыши и клавиш.
+- `local` — только локально (по умолчанию)
+- `server` — на сервер
+- `clients` — клиентам
+- `all` — локально + сеть
+
+## Сырые события pygame
 
 ```python
 for event in s.pygame_events:
-    if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+    if event.type == pygame.KEYDOWN:
         ...
 ```
 
-## Связанное
+## Input
 
-- [Input](input.md) — состояние клавиш и мыши (was_pressed, is_pressed, оси).
-- [Slider](slider.md) — слайдер, при необходимости ручная передача событий в `handle_event()`.
-- [TextInput](text_input.md) — поле ввода, использует `pygame_events`.
+```python
+if s.input.was_pressed(pygame.K_SPACE):    # Только что нажата
+if s.input.is_pressed(pygame.K_a):          # Удерживается
+if s.input.was_released(pygame.K_ESCAPE):  # Только что отпущена
+
+horizontal = s.input.get_axis(pygame.K_LEFT, pygame.K_RIGHT)
+
+s.input.mouse_pos      # Позиция мыши
+s.input.mouse_rel      # Смещение
+s.input.mouse_wheel    # Колёсико
+```
+
+## См. также
+
+- [Input](input_system.md)
