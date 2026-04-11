@@ -4,6 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Open%20Source-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-3.8.0-green.svg)](CHANGELOG.md)
 
 ![Demo](https://github.com/user-attachments/assets/db56e1fd-0db5-4353-945d-c4a31c6b9d7f)
 
@@ -33,13 +34,15 @@ pip install --upgrade spritepro
 |-------------------|-------------|
 | Ручной игровой цикл | `s.run(scene=...)` — сцена + auto-render |
 | Своя камера | Camera API, follow, zoom, shake |
-| UI с нуля | `Button`, `ToggleButton`, `TextSprite`, `Slider`, `Layout` |
+| UI с нуля | `Button`, `ToggleButton`, `TextSprite`, `Slider`, `TextInput`, `Layout` |
 | Физика отдельно | `pymunk`-интеграция, типы тел, коллизии |
 | Визуальный editor | Sprite Editor → JSON → `spawn_scene(...)` |
 | Сохранения парсить | `PlayerPrefs` → JSON |
+| Мультиплеер с нуля | TCP, лобби, ChatScene, синхронизация |
 | Mobile отдельно | `platform="kivy"` — та же логика |
+| Скроллируемый UI | `ScrollView` + `ClipMask` — готовый клиппинг |
 
-**SpritePro = pygame + физика, Layout, редактор сцен, мультиплеер, UI.**
+**SpritePro = pygame + физика, Layout, ScrollView, ClipMask, редактор сцен, мультиплеер, UI.**
 
 ---
 
@@ -65,12 +68,14 @@ s.run(scene=MainScene, size=(800, 600), title="My Game")
 
 ## Что внутри
 
-- **Sprite** — базовый класс с движением, эффектами
-- **UI**: Button, ToggleButton, Slider, TextSprite, Layout (flex/grid/circle/line)
+- **Sprite** — базовый класс с движением, эффектами, иерархией parent-child
+- **UI**: Button, ToggleButton, Slider, TextInput, TextSprite, Layout (flex/grid/circle/line)
+- **ClipMask** — маска обрезки для viewport, инвентарей, чатов
+- **ScrollView** — скроллируемый контент с колёсиком и drag-and-drop
 - **Физика**: pymunk, DYNAMIC/STATIC/KINEMATIC тела, коллизии
 - **Анимации**: Tween, Fluent API (`DoMove`, `DoScale`, `SetEase`...)
 - **Частицы**: ParticleEmitter, шаблоны, пулы
-- **Мультиплеер**: TCP, лобби, синхронизация
+- **Мультиплеер**: TCP, лобби, ChatScene, синхронизация
 - **Audio**: звук и музыка
 - **Save/Load**: PlayerPrefs в JSON
 - **Sprite Editor**: визуальная сборка сцен → JSON
@@ -96,6 +101,19 @@ player = rt.exact("player").Sprite(speed=5)
 
 ---
 
+## Мультиплеерный чат
+
+Готовая сцена чата с маской обрезки и скроллом:
+
+```python
+from spritePro.readyScenes import ChatScene, ChatStyle
+import spritePro as s
+
+s.run(scene=ChatScene, multiplayer=True, use_lobby=True, title="Chat")
+```
+
+---
+
 ## Сравнение
 
 | Функция | pygame | arcade | SpritePro |
@@ -105,6 +123,7 @@ player = rt.exact("player").Sprite(speed=5)
 | Физика (pymunk) | ❌ | ✅ | ✅ |
 | Layout (flex/grid) | ❌ | ❌ | ✅ |
 | Редактор сцен (JSON) | ❌ | ❌ | ✅ |
+| Маска обрезки / ScrollView | ❌ | ❌ | ✅ |
 | Мультиплеер (TCP) | ❌ | ❌ | ✅ |
 | PlayerPrefs | ❌ | ❌ | ✅ |
 
@@ -151,9 +170,11 @@ Web: [docs/builds/building_web.md](docs/builds/building_web.md)
 | Что | Где |
 |-----|-----|
 | Полный индекс | [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) |
+| API Reference | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) |
 | Для новичков | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) |
 | Физика | [docs/core/physics_guide.md](docs/core/physics_guide.md) |
 | UI/Layout | [docs/ui/layout_ui.md](docs/ui/layout_ui.md) |
+| ClipMask | [docs/ui/clip_mask.md](docs/ui/clip_mask.md) |
 | Мультиплеер | [docs/systems/networking_guide.md](docs/systems/networking_guide.md) |
 | Sprite Editor | [docs/editor/sprite_editor.md](docs/editor/sprite_editor.md) |
 | Mobile | [docs/builds/mobile_kivy.md](docs/builds/mobile_kivy.md) |

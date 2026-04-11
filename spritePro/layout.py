@@ -296,15 +296,15 @@ class Layout(Sprite):
             self._debug_overlay.active = True
             self._sync_debug_overlay()
             if self.container is None:
-                self.set_alpha(0)
                 self.set_rect_shape(size=tuple(self.rect.size), color=(0, 0, 0), width=0)
+                self.set_alpha(0)
                 self.sorting_order = -10
         else:
             if self._debug_overlay is not None:
                 self._debug_overlay.active = False
             if self.container is None:
-                self.set_alpha(0)
                 self.set_rect_shape(size=tuple(self.rect.size), color=(0, 0, 0), width=0)
+                self.set_alpha(0)
                 self.sorting_order = None
 
     def _sync_debug_overlay(self) -> None:

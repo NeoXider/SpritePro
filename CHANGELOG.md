@@ -5,6 +5,34 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.8.0]
+
+### Added
+- 🎭 **ClipMask: проверка alpha** — `_blit_one` проверяет `sprite._alpha` перед blitting; спрайты с `alpha=0` (контейнеры Layout) полностью пропускаются, не оставляя чёрных прямоугольников.
+- 🎭 **ClipMask: _update_image для скрытых спрайтов** — при `hide_content=True` вызов `_update_image()` перед blit гарантирует, что dirty-флаги (alpha, color, transform) применяются к surface, даже если sprite.active=False и обычный `update()` не вызывается.
+- 🎭 **ClipMask: BFS-сбор спрайтов** — `_collect_sprites` использует BFS для рекурсивного обхода иерархии `Sprite.children`, гарантируя правильный порядок отрисовки (от родителя к потомкам) и исключая дубликаты через `seen`-множество.
+- 🔄 **ClipMask: синхронизация позиций** — перед отрисовкой вызываются `_apply_parent_transform()` и `_update_children_world_positions()` для каждого спрайта, обеспечивая корректные позиции без лишних draw-вызовов.
+
+### Changed
+- 📐 **Sprite.set_position()** — добавлен вызов `_update_children_world_positions()`. Теперь при изменении позиции родителя дочерние спрайты корректно синхронизируют свои мировые координаты (аналогично `set_world_position()`). Критично для `ScrollView.apply_scroll()`.
+- 🎭 **ClipMask.draw()** — bg_color теперь опционален. Для ChatUI фон предоставляется отдельным `panel_bg` спрайтом со скруглёнными углами, а ClipMask только обрезает сообщения.
+
+### Fixed
+- 🐛 **Layout._apply_debug_style**: порядок `set_alpha(0)` / `set_rect_shape()` был инвертирован — `set_rect_shape` создавал новую surface и затирал ранее установленную alpha. Теперь alpha применяется **после** создания surface.
+- 🐛 **ChatUI: регистрация пузырей в маске** — восстановлен `_clip_mask.add(bubble)` для каждого нового сообщения и `_clip_mask.remove(bubble)` при перестройке. Без этого пузыри рисовались основным циклом без клиппинга.
+- 🐛 **ClipMask: сортировка с None** — `sorting_order=None` больше не вызывает `TypeError` при сортировке; используется `getattr(s, "sorting_order", 0) or 0`.
+
+---
+
+## [3.7.0]
+
+### Added
+- 🌐 **Мультиплеер: ChatScene** — готовая сцена мультиплеерного чата с ClipMask, ScrollView, Layout, полем ввода и кнопкой отправки.
+- 📜 **ScrollView** — компонент прокрутки контента с поддержкой колёсика мыши и перетаскивания.
+- 🎭 **ClipMask** — маска обрезки (`hide_content=True/False`) для ограничения видимости спрайтов прямоугольной областью.
+
+---
+
 ## [3.3.1]
 
 ### Added

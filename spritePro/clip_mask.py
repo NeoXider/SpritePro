@@ -339,6 +339,19 @@ class ClipMask:
         camera_y: float,
     ) -> None:
         """Рисует один спрайт на поверхности."""
+        # Пропускаем полностью прозрачные спрайты (например, Layout-контейнеры)
+        alpha = getattr(sprite, "_alpha", None)
+        if alpha is not None and alpha <= 0:
+            return
+
+        # Если спрайт скрыт (active=False), его _update_image не вызывался —
+        # нужно применить dirty-флаги (alpha, color, transform) к image.
+        if self.hide_content and hasattr(sprite, "_update_image"):
+            try:
+                sprite._update_image()
+            except Exception:
+                pass
+
         img = getattr(sprite, "image", None)
         if img is None:
             return

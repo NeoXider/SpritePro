@@ -1,4 +1,4 @@
-# 📚 API Reference — SpritePro v3.7.0
+# 📚 API Reference — SpritePro v3.8.0
 
 **Полная справка по всем классам, функциям и методам библиотеки**
 
@@ -26,6 +26,7 @@
 - **ParticleEmitter** — система частиц
 - **SceneManager**, **EventBus**, **InputState** — подсистемы
 - **ClipMask** — маска обрезки (клиппинг)
+- **ScrollView** — скроллируемая область
 
 ### Утилиты
 - **AudioManager** — звук и музыка
@@ -147,18 +148,27 @@ s.set_debug_grid_enabled(True) # Показать сетку мира
 Базовый визуальный объект с движением и эффектами.
 
 **Основные методы:**
-- `set_position(x, y)` — установить позицию
+- `set_position(x, y)` — установить позицию (обновляет дочерние спрайты)
 - `get_world_position()` — получить мировую позицию
+- `set_world_position(x, y)` — установить мировую позицию
 - `handle_keyboard_input()` — обработка WASD/стрелок
 - `move_towards(target, speed)` — движение к цели
 - `collides_with(other, use_mask=True)` — проверка коллизии
 - `set_collision_targets(targets)` — установить цели для коллизий
+- `set_parent(parent, keep_world_position=True)` — назначить родителя
 
 **Свойства:**
 - `rect` — прямоугольник спрайта
 - `size` — размер (ширина, высота)
 - `angle` — угол поворота
-- `alpha` — прозрачность (0-1)
+- `alpha` — прозрачность (0-255, где 255 = непрозрачный)
+- `active` — видимость и обновление спрайта
+- `children` — список дочерних спрайтов
+- `parent` — родительский спрайт
+
+> **Важно:** `set_position()` автоматически обновляет позиции всех дочерних
+> спрайтов через `_update_children_world_positions()`. Это гарантирует
+> корректную работу иерархий (Layout, ScrollView, ChatUI).
 
 #### **Button** (button.py)
 Интерактивная кнопка с анимациями.
@@ -201,7 +211,7 @@ s.set_debug_grid_enabled(True) # Показать сетку мира
 Текст с якорями позиционирования.
 
 **Параметры:**
-- `text` (`str`) — текст для отображения
+- `text` (`str`) — текст для отображения (поддерживает `\n`)
 - `anchor` (`Anchor`) — якорь (TOP_LEFT, CENTER, BOTTOM_RIGHT и др.)
 - `color` (`tuple[int, int, int]`) — цвет текста
 
@@ -214,9 +224,9 @@ s.set_debug_grid_enabled(True) # Показать сетку мира
 - `use_image` (`bool`) — использовать изображение или цвет
 
 #### **Layout** (layout.py)
-Автолейаут для групп спрайтов.
+Автолейаут для групп спрайтов. Наследует `Sprite` — можно перемещать и масштабировать.
 
-**Типы:**
+**Типы (LayoutDirection):**
 - `FLEX_ROW`, `FLEX_COLUMN` — гибкая раскладка с переносом
 - `HORIZONTAL`, `VERTICAL` — ряд/колонка
 - `GRID` — сетка (rows × cols)
@@ -224,31 +234,79 @@ s.set_debug_grid_enabled(True) # Показать сетку мира
 - `LINE` — элементы вдоль ломаной
 
 **Параметры:**
+- `container` — Sprite, tuple `(x, y, w, h)` или `None` (Layout сам контейнер)
 - `gap` / `padding` — отступы
 - `align_main` / `align_cross` — выравнивание
-- `container` (`Sprite | tuple`, optional) — контейнер для лейаута
+- `auto_apply` (`bool`) — авто-обновление при add/remove (по умолчанию True)
+- `size` / `pos` / `scene` — при `container=None`
+
+**Удобные функции:**
+```python
+layout = s.layout_vertical(None, [sprite1, sprite2], gap=10, pos=(400, 300), size=(200, 400))
+layout = s.layout_flex_row(None, items, gap=8, padding=12)
+layout = s.layout_grid(None, items, cols=4, gap=5)
+layout = s.layout_circle(None, items, radius=100)
+```
+
+**Методы:** `add()`, `add_children()`, `remove()`, `apply()`, `refresh()`, `set_size()`
+
+> **Заметка:** При `container=None`, Layout создаёт прозрачный спрайт-контейнер
+> (`alpha=0`). Дочерние спрайты привязываются через `set_parent()`.
 
 #### **ClipMask** (clip_mask.py)
-Маска обрезки для ограничения видимости спрайтов.
+Маска обрезки для ограничения видимости спрайтов прямоугольной областью.
 
 **Параметры:**
-- `pos` (`tuple[float, float]`) — позиция маски
+- `pos` (`tuple[float, float]`) — позиция маски (левый верхний угол)
 - `size` (`tuple[float, float]`) — размер маски
-- `bg_color` — цвет фона (`None` — прозрачный)
+- `bg_color` — цвет фона (`None` — прозрачный, фон от основного цикла)
 - `border_color` / `border_width` / `border_radius` — рамка
 - `hide_content` (`bool`) — скрыть спрайты из основной отрисовки
+
+**Режимы:**
+
+| Режим | `hide_content` | Описание |
+|-------|---------------|----------|
+| Ручной | `False` | Спрайты рисуются основным циклом + маска перерисовывает с обрезкой |
+| Автоматический | `True` | `active=False` на спрайтах; рисуются **только** через `mask.draw()` |
 
 **Методы:**
 ```python
 mask = s.ClipMask(pos=(50, 50), size=(300, 200), hide_content=True)
-mask.add(sprite1, sprite2)       # Добавить спрайты
-mask.remove(sprite1)             # Удалить
+mask.add(sprite1, sprite2)       # Добавить спрайты (рекурсивно с children)
+mask.remove(sprite1)             # Удалить (восстановит active=True)
+mask.clear()                     # Очистить все
 mask.draw(screen)                # Отрисовка с обрезкой
-mask.draw(screen, cam_x, cam_y)  # С камерой
+mask.draw(screen, cam_x, cam_y)  # С учётом камеры
 mask.contains(x, y)              # Точка внутри маски?
+mask.set_position((100, 100))    # Переместить маску
+mask.set_size((400, 300))        # Изменить размер
 ```
 
+> **Как работает `hide_content=True`:**
+> 1. `mask.add(sprite)` ставит `sprite.active = False` — основной цикл не рисует его
+> 2. `mask.draw()` собирает спрайты через BFS по `Sprite.children` (иерархически)
+> 3. Перед blitting вызывается `_update_image()` для применения dirty-флагов (alpha, color)
+> 4. Спрайты с `alpha=0` (контейнеры Layout) пропускаются
+> 5. `pygame.Surface.set_clip()` обрезает отрисовку по rect маски
+
 Подробнее: [ClipMask](ui/clip_mask.md)
+
+#### **ScrollView** (scroll.py)
+Скроллируемая область для длинного контента.
+
+**Параметры:**
+- `pos` (`tuple[float, float]`) — позиция viewport
+- `size` (`tuple[float, float]`) — размер viewport
+
+**Методы:**
+```python
+scroll = s.ScrollView(pos=(50, 100), size=(300, 400))
+scroll.set_content(layout)            # Установить контент (Layout)
+scroll.update_from_input(s.input)     # Обновить скролл из ввода (колёсико + drag)
+scroll.apply_scroll()                 # Применить текущий скролл к контенту
+scroll.scroll_to_bottom()             # Прокрутить к концу
+```
 
 #### **Animation** (components/animation.py)
 Покадровая анимация.
@@ -267,6 +325,7 @@ sprite.DoMove((100, 200)).SetDuration(1.0).SetEase(Ease.OUT_CUBIC).OnComplete(ca
 sprite.DoScale(1.5).SetLoops(3).SetYoyo(True).Start()
 sprite.DoRotateBy(360).SetDuration(2.0).Start()
 sprite.DoFadeOut().SetDuration(1.0).OnComplete(callback).Start()
+sprite.DoKill(complete=True)  # Остановить все твины спрайта
 ```
 
 **Easing функции:** `Ease.LINEAR`, `Ease.IN_QUAD`, `Ease.OUT_CUBIC`, `Ease.OUT_ELASTIC`, ...
@@ -461,6 +520,20 @@ for msg in ctx.poll():  # Очередь входящих
         remote_pos = msg.get("data", {}).get("pos")
 ```
 
+#### **Готовые сцены (readyScenes)**
+
+**ChatScene** — мультиплеерный чат с полем ввода, скроллом и маской обрезки:
+```python
+from spritePro.readyScenes import ChatScene, ChatStyle
+
+# Кастомизация стиля
+ChatStyle.color_bg = (18, 20, 28)
+ChatStyle.color_panel = (28, 32, 44)
+ChatStyle.font_size = 16
+
+s.run(scene=ChatScene, multiplayer=True, use_lobby=True)
+```
+
 ---
 
 ### 6. Вспомогательные функции
@@ -492,10 +565,10 @@ for msg in ctx.poll():  # Очередь входящих
 | Быстрый старт | [GETTING_STARTED.md](GETTING_STARTED.md) |
 | Физика | [core/physics_guide.md](core/physics_guide.md) |
 | UI & Layouts | [ui/layout_ui.md](ui/layout_ui.md) |
+| Маска обрезки | [ui/clip_mask.md](ui/clip_mask.md) |
 | Анимации | [core/tween_system.md](core/tween_system.md) |
 | Mobile/Web | [builds/mobile_kivy.md](builds/mobile_kivy.md) |
 | Мультиплеер | [systems/networking_guide.md](systems/networking_guide.md) |
-| Маска обрезки | [ui/clip_mask.md](ui/clip_mask.md) |
 | Редактор | [editor/sprite_editor.md](editor/sprite_editor.md) |
 | Демо-игры | [demo_games/demo_games.md](demo_games/demo_games.md) |
 

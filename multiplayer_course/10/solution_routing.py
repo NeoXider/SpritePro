@@ -7,7 +7,7 @@ PING_INTERVAL = 2.0
 
 
 class RoutingSolutionScene(s.Scene):
-    def __init__(self, net: s.NetClient, role: str) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.ctx = s.multiplayer_ctx
         self.ping_timer = 0.0
@@ -56,7 +56,7 @@ class RoutingSolutionScene(s.Scene):
 
 def multiplayer_main() -> None:
     s.run(
-        scene=lambda: RoutingSolutionScene(net, role),
+        scene=RoutingSolutionScene,
         size=(800, 600),
         title="Lesson 10 - Solution Routing",
         fill_color=(18, 18, 24),

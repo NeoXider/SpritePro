@@ -11,7 +11,7 @@ import spritePro as s
 
 
 class RoutingPracticeScene(s.Scene):
-    def __init__(self, net: s.NetClient, role: str) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.ctx = s.multiplayer_ctx
 
@@ -45,7 +45,7 @@ class RoutingPracticeScene(s.Scene):
 
 def multiplayer_main() -> None:
     s.run(
-        scene=lambda: RoutingPracticeScene(net, role),
+        scene=RoutingPracticeScene,
         size=(800, 600),
         title="Lesson 10 - Practice Routing",
         fill_color=(18, 18, 24),

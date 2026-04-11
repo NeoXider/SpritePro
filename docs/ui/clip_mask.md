@@ -25,15 +25,15 @@ ClipMask(pos=(0, 0), size=(200, 200), bg_color=None, border_color=None,
          border_width=0, border_radius=0, hide_content=False)
 ```
 
-| Параметр | Описание |
-|----------|----------|
-| `pos` | Позиция (x, y) левого верхнего угла маски |
-| `size` | Размер (width, height) области маски |
-| `bg_color` | Цвет фона внутри маски. `None` — прозрачный |
-| `border_color` | Цвет рамки. `None` — без рамки |
-| `border_width` | Толщина рамки |
-| `border_radius` | Скругление углов |
-| `hide_content` | Если `True` — скрывает спрайты из основной отрисовки |
+| Параметр | Тип | По умолчанию | Описание |
+|----------|-----|-------------|----------|
+| `pos` | `tuple[float, float]` | `(0, 0)` | Позиция (x, y) левого верхнего угла маски |
+| `size` | `tuple[float, float]` | `(200, 200)` | Размер (width, height) области маски |
+| `bg_color` | `tuple[int,int,int]` или `None` | `None` | Цвет фона внутри маски. `None` — прозрачный (видно что нарисовано под маской) |
+| `border_color` | `tuple[int,int,int]` или `None` | `None` | Цвет рамки. `None` — без рамки |
+| `border_width` | `int` | `0` | Толщина рамки |
+| `border_radius` | `int` | `0` | Скругление углов |
+| `hide_content` | `bool` | `False` | Если `True` — скрывает спрайты из основной отрисовки |
 
 ## Два режима работы
 
@@ -53,18 +53,20 @@ mask.add(sprite1)
 ```python
 mask = s.ClipMask(pos=(50, 50), size=(300, 200), hide_content=True)
 mask.add(sprite1)
-# sprite1.active = False → не рисуется основным циклом,
-# но update() продолжает обновлять позиции!
-# Видим только через mask.draw()
+# sprite1.active = False → не рисуется основным циклом
+# Видим только через mask.draw()!
 ```
 
 Идеально для **скроллируемого контента**, **чатов**, **инвентарей** — спрайты не вылезают за viewport.
 
+> **Важно:** При `hide_content=True` спрайты с `alpha=0` (например, Layout-контейнеры)
+> автоматически пропускаются при blitting — не оставляют визуальных артефактов.
+
 ## Методы
 
 ```python
-mask.add(sprite1, sprite2)      # Добавить спрайты
-mask.remove(sprite1)            # Удалить из маски
+mask.add(sprite1, sprite2)      # Добавить спрайты (рекурсивно с children!)
+mask.remove(sprite1)            # Удалить из маски (восстановит active=True)
 mask.clear()                    # Очистить все
 mask.set_position((100, 100))   # Переместить маску
 mask.set_size((400, 300))       # Изменить размер
@@ -102,7 +104,6 @@ class InventoryScene(s.Scene):
         self.mask = s.ClipMask(
             pos=(50, 100),
             size=(300, 400),
-            bg_color=(20, 20, 30),
             border_color=(80, 120, 200),
             border_width=2,
             border_radius=8,
@@ -120,11 +121,15 @@ class InventoryScene(s.Scene):
             item = s.Sprite("", (260, 40), (0, 0), scene=self)
             item.set_rect_shape(size=(260, 40), color=(40, 50, 70))
             self.items_layout.add(item)
-            self.mask.add(item)
+            self.mask.add(item)  # Каждый элемент регистрируется в маске!
 
     def draw(self, screen):
         self.mask.draw(screen)
 ```
+
+> **Заметка:** Необходимо вызывать `mask.add(item)` для каждого дочернего
+> элемента Layout, а не только для самого Layout. Это гарантирует, что
+> каждый элемент получит `active=False` и не будет рисоваться основным циклом.
 
 ### Маска с камерой
 
@@ -168,22 +173,52 @@ scroll.update_from_input(s.input)
 mask.draw(screen)
 ```
 
-## Как это работает
+### С отдельным фоном (как в ChatUI)
 
-1. Спрайты добавляются в маску через `add()`:
+Если нужен фон со скруглёнными углами, создайте отдельный спрайт-фон
+**вне маски**, а маску используйте только для клиппинга контента:
+
+```python
+# Фон панели — обычный спрайт (рисуется основным циклом)
+panel_bg = s.Sprite("", (view_w, view_h), (cx, cy), scene=self, sorting_order=-4)
+panel_bg.set_rect_shape(size=(view_w, view_h), color=(28, 32, 44), border_radius=12)
+
+# Маска — только для обрезки (без bg_color!)
+mask = s.ClipMask(pos=(view_x, view_y), size=(view_w, view_h), hide_content=True)
+mask.add(my_layout)
+```
+
+> **Почему не bg_color?** `bg_color` в ClipMask рисует прямоугольник с
+> **острыми** углами, перекрывая скруглённый фон. Для скруглённых панелей
+> используйте отдельный спрайт.
+
+## Как это работает (v3.8.0)
+
+1. **Добавление спрайтов** (`mask.add()`):
    - Если `hide_content=True`: ставится `sprite.active = False` → спрайт не рисуется основным циклом
-   - Позиции продолжают обновляться (Layout, parent-child трансформы)
+   - Позиции продолжают обновляться (через `set_position()` и parent-child иерархию)
 
-2. При вызове `mask.draw(screen)`:
-   - Заливается фон (`bg_color`)
+2. **Сбор спрайтов** (`_collect_sprites()`):
+   - BFS-обход по `Sprite.children` от каждого добавленного спрайта
+   - Дубликаты исключаются через `seen`-множество
+   - Результат: плоский список в иерархическом порядке (от родителя к потомкам)
+
+3. **Синхронизация позиций**:
+   - Перед blitting вызываются `_apply_parent_transform()` и `_update_children_world_positions()`
+   - Это обновляет мировые координаты без запуска полного `update()` цикла
+
+4. **Отрисовка** (`mask.draw()`):
+   - Заливается фон (`bg_color`) если задан
    - Устанавливается `screen.set_clip(rect)` — pygame обрезает отрисовку
-   - Каждый спрайт рисуется вручную (blit) внутри clip-области
-   - Привлекательная рамка рисуется поверх (`border_color`)
-   - Clip восстанавливается
-
-3. Дочерние спрайты (children) собираются **рекурсивно** — достаточно добавить в маску только родителя.
+   - Каждый спрайт рисуется вручную (blit), пропуская:
+     - Спрайты с `_alpha == 0` (контейнеры Layout)
+     - Спрайты без `image`
+   - Для скрытых спрайтов (`active=False`) вызывается `_update_image()` для применения dirty-флагов (alpha, color, transform)
+   - Рамка рисуется поверх (`border_color`)
+   - Clip восстанавливается (`set_clip(old_clip)`)
 
 ## См. также
 
 - [Layout](layout_ui.md) — автолейаут спрайтов
 - [ScrollView](layout_ui.md#scrollview-скролл) — скроллируемая область
+- [API Reference](../API_REFERENCE.md) — полная справка

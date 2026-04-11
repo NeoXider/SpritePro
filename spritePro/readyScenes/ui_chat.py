@@ -241,7 +241,6 @@ class ChatUI:
         self._clip_mask = ClipMask(
             pos=(view_x, view_y),
             size=(view_w, view_h),
-            bg_color=Style.color_panel,
             hide_content=True,
         )
         # Layout — корень контента, его children (пузыри) будут
