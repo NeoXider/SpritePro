@@ -5,7 +5,7 @@ SpritePro — высокоуровневый мультиплатформенн�
 для desktop, web и mobile-сценариев.
 
 Основные подсистемы:
-- Спрайты и UI: Sprite, Button, ToggleButton, Slider, TextInput, TextSprite, Bar, Layout.
+- Спрайты и UI: Sprite, Button, ToggleButton, Slider, TextInput, TextSprite, Bar, Layout, ClipMask.
 - Анимация: Animation (покадровая), Tween и TweenManager (плавные переходы), Fluent API (DoMove, DoScale, ...).
 - Физика: PhysicsWorld, PhysicsBody, PhysicsConfig, PhysicsShape, add_physics, add_static_physics, add_kinematic_physics.
 - Частицы: ParticleEmitter, ParticleConfig, шаблоны (template_sparks, template_fire, ...).
@@ -24,7 +24,7 @@ SpritePro — высокоуровневый мультиплатформенн�
 
 from __future__ import annotations
 
-__version__ = "3.5.0"
+__version__ = "3.7.0"
 
 import inspect
 import os
@@ -100,6 +100,7 @@ from .layout import (
     layout_line,
 )
 from .scroll import ScrollView
+from .clip_mask import ClipMask
 from .audio import AudioManager, Sound
 from .networking import NetServer, NetClient
 from . import networking
@@ -308,6 +309,7 @@ __all__ = [
     "layout_circle",
     "layout_line",
     "ScrollView",
+    "ClipMask",
     "AudioManager",
     "Sound",
     # Networking
@@ -1329,17 +1331,6 @@ def run(
                 def _wrapped_scene():
                     return _resolve_scene_value(scene, net, role)
 
-                # Если мы уже внутри Kivy-приложения (лобби / mobile),
-                # не запускаем run() повторно, а просто выполняем bootstrap
-                # в существующем контексте.
-                if os.environ.get("SPRITEPRO_IN_KIVY_APP") == "1":
-                    _run_bootstrap(
-                        _wrapped_setup if setup is not None else None,
-                        _wrapped_scene if scene is not None else None,
-                    )
-                    _emit_resize_event(force=True)
-                    return
-
                 run(
                     _wrapped_setup if setup is not None else None,
                     scene=_wrapped_scene if scene is not None else None,
@@ -1401,9 +1392,16 @@ def run(
         )
         _run_bootstrap(setup, scene)
         _emit_resize_event(force=True)
+        # Avoid blocking inside nested run calls if we already have an event loop going
+        # In pygame, this is fine because we'll just process nested events.
         while True:
             update(fps=fps, fill_color=fill_color)
     elif platform_normalized == "kivy":
+        if os.environ.get("SPRITEPRO_IN_KIVY_APP") == "1":
+            _run_bootstrap(setup, scene)
+            _emit_resize_event(force=True)
+            return
+
         from .mobile import run_kivy_app
 
         def bootstrap() -> None:

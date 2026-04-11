@@ -96,8 +96,8 @@ class GameScene(s.Scene):
         self.player.set_position(pos)
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
-    s.multiplayer.init_context(net, role)
+def multiplayer_main() -> None:
+    s.multiplayer_ctx
 
     def setup() -> None:
         s.scene.add_scene("menu", MenuScene)

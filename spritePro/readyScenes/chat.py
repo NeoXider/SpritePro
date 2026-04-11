@@ -69,7 +69,12 @@ class ChatScene(s.Scene):
 
     def draw(self, screen: pygame.Surface) -> None:
         ctx = self.context
-        if ctx is None or not hasattr(ctx, "game"):
+        if ctx is None:
+            try:
+                ctx = s.get_context()
+            except Exception:
+                return
+        if not hasattr(ctx, "game"):
             return
         game = ctx.game
         try:

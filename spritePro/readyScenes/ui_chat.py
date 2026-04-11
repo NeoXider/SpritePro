@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, List, Optional
 import pygame
 
 import spritePro as s
+from spritePro.clip_mask import ClipMask
 from spritePro.constants import Anchor
 from spritePro.layout import Layout, LayoutAlignMain, LayoutAlignCross
 from spritePro.scroll import ScrollView
@@ -74,6 +75,7 @@ class ChatUI:
         self._focus: str = "message"
         self._scroll_drag_prev_y: Optional[float] = None
         self._on_send: Optional[Callable[[], None]] = None
+        self._clip_mask: Optional[ClipMask] = None
 
     @property
     def style(self) -> type:
@@ -234,6 +236,18 @@ class ChatUI:
         self._scroll.apply_scroll()
         self._scroll.scroll_y = 0
 
+        # ClipMask скрывает пузыри из основного цикла (active=False)
+        # и рисует их только внутри viewport.
+        self._clip_mask = ClipMask(
+            pos=(view_x, view_y),
+            size=(view_w, view_h),
+            bg_color=Style.color_panel,
+            hide_content=True,
+        )
+        # Layout — корень контента, его children (пузыри) будут
+        # собраны рекурсивно при отрисовке.
+        self._clip_mask.add(messages_container)
+
         input_h = 40
         btn_w = 100
         gap = 10
@@ -325,11 +339,19 @@ class ChatUI:
         )
         txt.set_parent(bubble, keep_world_position=False)
         txt.local_position = (pad, pad)
+        # Маска скроет спрайт из основного цикла (active=False)
+        # и нарисует только внутри viewport через ClipMask.draw().
+        if self._clip_mask is not None:
+            self._clip_mask.add(bubble)
         return bubble, txt
 
     def rebuild_message_rows(self, messages: List[Dict[str, Any]], my_id: int) -> None:
         if self._layout_messages is None or self._scroll is None:
             return
+        # Удаляем старые спрайты из маски
+        if self._clip_mask is not None:
+            for bubble in self._message_sprites:
+                self._clip_mask.remove(bubble)
         for bubble in self._message_sprites:
             bubble.set_scene(None, unregister_when_none=True)
             for c in getattr(bubble, "children", [])[:]:
@@ -363,58 +385,10 @@ class ChatUI:
         self._scroll.scroll_y = self._scroll.scroll_max
         self._scroll.apply_scroll()
 
-    def _content_sprites(self) -> List[Any]:
-        """Список спрайтов контента скролла (layout + все потомки) для отрисовки на view_surf."""
-        if self._scroll is None or self._scroll._content is None:
-            return []
-        root = self._scroll._content
-        out: List[Any] = []
-        stack = [root]
-        while stack:
-            node = stack.pop()
-            out.append(node)
-            stack.extend(getattr(node, "children", []))
-        return out
-
-    def _blit_sprite(
-        self,
-        surface: pygame.Surface,
-        sprite: Any,
-        camera_x: float,
-        camera_y: float,
-        offset_x: float = 0,
-        offset_y: float = 0,
-    ) -> None:
-        if getattr(sprite, "screen_space", False):
-            surface.blit(sprite.image, (sprite.rect.x - offset_x, sprite.rect.y - offset_y))
-        else:
-            x = int(sprite.rect.x - camera_x - offset_x)
-            y = int(sprite.rect.y - camera_y - offset_y)
-            surface.blit(sprite.image, (x, y))
-
     def draw(self, screen: pygame.Surface, game: Any, camera_x: float, camera_y: float) -> None:
-        if self._scroll is None or self._scroll._content is None:
-            game.draw(screen)
+        if self._clip_mask is None:
             return
-        view_rect = self._scroll.view_rect
-        vw, vh = int(view_rect.width), int(view_rect.height)
-        if vw <= 0 or vh <= 0:
-            game.draw(screen)
-            return
-
-        content_list = self._content_sprites()
-        content_set = {s for s in content_list}
-
-        for sprite in game.all_sprites:
-            if sprite in content_set:
-                continue
-            self._blit_sprite(screen, sprite, camera_x, camera_y, 0, 0)
-
-        old_clip = screen.get_clip()
-        screen.set_clip(view_rect)
-        for sprite in content_list:
-            self._blit_sprite(screen, sprite, camera_x, camera_y, 0, 0)
-        screen.set_clip(old_clip)
+        self._clip_mask.draw(screen, camera_x, camera_y)
 
     def update_focus_by_click(self, mx: int, my: int) -> None:
         if self._name_bg is not None and self._name_bg.rect.collidepoint(mx, my):

@@ -1,4 +1,4 @@
-# 📚 API Reference — SpritePro v3.5.0
+# 📚 API Reference — SpritePro v3.7.0
 
 **Полная справка по всем классам, функциям и методам библиотеки**
 
@@ -25,6 +25,7 @@
 - **Animation**, **Tween**, **Timer** — игровые системы
 - **ParticleEmitter** — система частиц
 - **SceneManager**, **EventBus**, **InputState** — подсистемы
+- **ClipMask** — маска обрезки (клиппинг)
 
 ### Утилиты
 - **AudioManager** — звук и музыка
@@ -226,6 +227,28 @@ s.set_debug_grid_enabled(True) # Показать сетку мира
 - `gap` / `padding` — отступы
 - `align_main` / `align_cross` — выравнивание
 - `container` (`Sprite | tuple`, optional) — контейнер для лейаута
+
+#### **ClipMask** (clip_mask.py)
+Маска обрезки для ограничения видимости спрайтов.
+
+**Параметры:**
+- `pos` (`tuple[float, float]`) — позиция маски
+- `size` (`tuple[float, float]`) — размер маски
+- `bg_color` — цвет фона (`None` — прозрачный)
+- `border_color` / `border_width` / `border_radius` — рамка
+- `hide_content` (`bool`) — скрыть спрайты из основной отрисовки
+
+**Методы:**
+```python
+mask = s.ClipMask(pos=(50, 50), size=(300, 200), hide_content=True)
+mask.add(sprite1, sprite2)       # Добавить спрайты
+mask.remove(sprite1)             # Удалить
+mask.draw(screen)                # Отрисовка с обрезкой
+mask.draw(screen, cam_x, cam_y)  # С камерой
+mask.contains(x, y)              # Точка внутри маски?
+```
+
+Подробнее: [ClipMask](ui/clip_mask.md)
 
 #### **Animation** (components/animation.py)
 Покадровая анимация.
@@ -472,6 +495,7 @@ for msg in ctx.poll():  # Очередь входящих
 | Анимации | [core/tween_system.md](core/tween_system.md) |
 | Mobile/Web | [builds/mobile_kivy.md](builds/mobile_kivy.md) |
 | Мультиплеер | [systems/networking_guide.md](systems/networking_guide.md) |
+| Маска обрезки | [ui/clip_mask.md](ui/clip_mask.md) |
 | Редактор | [editor/sprite_editor.md](editor/sprite_editor.md) |
 | Демо-игры | [demo_games/demo_games.md](demo_games/demo_games.md) |
 

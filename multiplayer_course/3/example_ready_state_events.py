@@ -16,9 +16,9 @@ import spritePro as s
 START_DELAY = 3.0  # сколько секунд показывать «Start» перед автостартом
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
+def multiplayer_main() -> None:
     s.get_screen((800, 600), "Lesson 3 - Ready State (EventBus)")
-    ctx = s.multiplayer.init_context(net, role)
+    ctx = s.multiplayer_ctx
 
     is_ready = False
     game_started = False

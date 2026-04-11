@@ -229,9 +229,9 @@ class ResultScene(s.Scene):
             s.scene.set_scene_by_name("menu", recreate=True)
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
+def multiplayer_main() -> None:
     # Инициализация контекста.
-    s.multiplayer.init_context(net, role)
+    s.multiplayer_ctx
 
     # Настройка сцен.
     def setup() -> None:

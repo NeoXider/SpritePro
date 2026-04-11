@@ -8,10 +8,10 @@ import pygame
 import spritePro as s
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
+def multiplayer_main() -> None:
     s.get_screen((800, 600), "Lesson 2 - Sync Positions")
     # Контекст даёт ctx.send(), ctx.poll(), ctx.is_host и т.д.
-    ctx = s.multiplayer.init_context(net, role)
+    ctx = s.multiplayer_ctx
 
     # Два спрайта: «я» слева, «другой» справа.
     me = s.Sprite("", (40, 40), (200, 300))

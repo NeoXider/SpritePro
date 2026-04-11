@@ -26,7 +26,7 @@
 
 ## Рекомендуемый запуск в `SpritePro 3.x`
 - `s.run(..., multiplayer=True)` — основной app-level вход для современных multiplayer-примеров.
-- `multiplayer_main(net, role)` можно оставлять как учебную entry-функцию и передавать через `multiplayer_entry=...`.
+- `multiplayer_main()` можно оставлять как учебную entry-функцию и передавать через `multiplayer_entry=...`.
 - `s.networking.run(...)` — низкоуровневый runner, если урок специально объясняет transport/bootstrap отдельно.
 - Если урок про кастомное лобби, отдельно поясните разницу между low-level решением и встроенным `s.run(..., multiplayer_use_lobby=True)`.
 

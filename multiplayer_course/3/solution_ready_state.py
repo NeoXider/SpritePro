@@ -10,9 +10,9 @@ import spritePro as s
 START_DELAY = 1.0
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
+def multiplayer_main() -> None:
     s.get_screen((800, 600), "Lesson 3 - Solution")
-    ctx = s.multiplayer.init_context(net, role)
+    ctx = s.multiplayer_ctx
 
     is_ready = False
     game_started = False

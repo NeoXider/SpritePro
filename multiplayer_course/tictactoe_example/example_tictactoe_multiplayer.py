@@ -387,8 +387,8 @@ class TicTacToeScene(s.Scene):
 # -----------------------------------------------------------------------------
 # Точка входа
 # -----------------------------------------------------------------------------
-def multiplayer_main(net: s.NetClient, role: str) -> None:
-    s.multiplayer.init_context(net, role)
+def multiplayer_main() -> None:
+    s.multiplayer_ctx
 
     def setup() -> None:
         s.scene.add_scene("game", TicTacToeScene)

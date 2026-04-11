@@ -8,9 +8,9 @@ import pygame
 import spritePro as s
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
+def multiplayer_main() -> None:
     s.get_screen((800, 600), "Lesson 6 - Score Zone")
-    ctx = s.multiplayer.init_context(net, role)
+    ctx = s.multiplayer_ctx
 
     me = s.Sprite("", (40, 40), (200, 300))
     other = s.Sprite("", (40, 40), (600, 300))

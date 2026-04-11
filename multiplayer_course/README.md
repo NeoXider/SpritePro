@@ -50,7 +50,7 @@ python multiplayer_course/2/example_sync_positions.py --net_debug
 Также в уроках показано, когда удобнее использовать `EventBus` для игровых событий,
 а когда лучше отправлять частые сообщения напрямую через `net.send()`/`send_every()`.
 
-В курсе сохранена учебная функция `multiplayer_main(net, role)`, но сама точка входа теперь уже такая:
+В курсе сохранена учебная функция `multiplayer_main()`, но сама точка входа теперь уже такая:
 
 ```python
 if __name__ == "__main__":
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 То есть:
 
 - `s.run(..., multiplayer=True)` отвечает и за app-level запуск, и за multiplayer bootstrap
-- `multiplayer_main(net, role)` остаётся удобной учебной entry-функцией
+- `multiplayer_main()` остаётся удобной учебной entry-функцией
 - `s.networking.run(...)` можно использовать отдельно, если нужен низкоуровневый ручной runner
 
 ## Структура курса по темам

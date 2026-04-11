@@ -8,12 +8,12 @@ import pygame
 import spritePro as s
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
+def multiplayer_main() -> None:
     # Окно и базовая сцена.
     s.get_screen((800, 600), "Lesson 2 - Practice")
 
     # Глобальный контекст мультиплеера.
-    ctx = s.multiplayer.init_context(net, role)
+    ctx = s.multiplayer_ctx
 
     # Создаем спрайты игроков.
     me = s.Sprite("", (40, 40), (200, 300))

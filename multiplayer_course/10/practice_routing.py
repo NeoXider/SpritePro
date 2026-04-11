@@ -13,7 +13,7 @@ import spritePro as s
 class RoutingPracticeScene(s.Scene):
     def __init__(self, net: s.NetClient, role: str) -> None:
         super().__init__()
-        self.ctx = s.multiplayer.init_context(net, role)
+        self.ctx = s.multiplayer_ctx
 
         # TODO 1: добавьте таймер ping_interval (2 сек) и по истечении — s.events.send("ping", route="server", net=ctx).
         # TODO 1: по нажатию клавиши (например E) — s.events.send("emoji", route="all", net=ctx, symbol="👋").
@@ -43,7 +43,7 @@ class RoutingPracticeScene(s.Scene):
             s.events.send(ev, **data)
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
+def multiplayer_main() -> None:
     s.run(
         scene=lambda: RoutingPracticeScene(net, role),
         size=(800, 600),

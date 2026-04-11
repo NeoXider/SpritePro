@@ -74,7 +74,7 @@ class PhysicsConfig:
     """
 
     mass: float = 1.0
-    gravity: float = 980.0
+    gravity: Optional[float] = None
     friction: float = 0.98
     bounce: float = 0.5
     body_type: BodyType = BodyType.DYNAMIC
@@ -214,6 +214,16 @@ class PhysicsBody:
         self._body = pymunk.Body(mass, moment, body_type=pt)
         self._body.position = (float(cx), float(cy))
         self._body._physics_body = self
+
+        if pt == pymunk.Body.DYNAMIC and getattr(self.config, "gravity", None) is not None:
+            def custom_velocity_func(b, gravity, damping, dt):
+                pb = getattr(b, "_physics_body", None)
+                if pb is not None and getattr(pb.config, "gravity", None) is not None:
+                    pymunk.Body.update_velocity(b, (0, pb.config.gravity), damping, dt)
+                else:
+                    pymunk.Body.update_velocity(b, gravity, damping, dt)
+            self._body.velocity_func = custom_velocity_func
+
 
         if shape_kind == "circle":
             rad = self._effective_radius()

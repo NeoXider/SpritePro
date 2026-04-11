@@ -350,7 +350,24 @@ class SceneManager:
             dt (float): Время кадра в секундах.
         """
         for scene in self._get_sorted_active_scenes():
-            scene.update(dt)
+            if not hasattr(scene, "_accepts_dt"):
+                try:
+                    sig = inspect.signature(scene.update)
+                    params = list(sig.parameters.values())
+                    scene._accepts_dt = (
+                        any(
+                            p.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+                            for p in params
+                        )
+                        or len(params) >= 1
+                    )
+                except (TypeError, ValueError):
+                    scene._accepts_dt = True
+
+            if scene._accepts_dt:
+                scene.update(dt)
+            else:
+                scene.update()
 
     def draw(self, screen: pygame.Surface) -> None:
         """Рисует активные сцены в порядке order.

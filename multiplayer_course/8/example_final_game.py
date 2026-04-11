@@ -220,8 +220,8 @@ class ResultScene(s.Scene):
             s.scene.set_scene_by_name("menu", recreate=True)
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
-    s.multiplayer.init_context(net, role)
+def multiplayer_main() -> None:
+    s.multiplayer_ctx
 
     def setup() -> None:
         s.scene.add_scene("menu", MenuScene)

@@ -13,7 +13,7 @@ import spritePro as s
 class RoutingScene(s.Scene):
     def __init__(self, net: s.NetClient, role: str) -> None:
         super().__init__()
-        self.ctx = s.multiplayer.init_context(net, role)
+        self.ctx = s.multiplayer_ctx
 
         self.local_ping_count = 0
         self.local_emoji_count = 0
@@ -70,7 +70,7 @@ class RoutingScene(s.Scene):
             s.events.send(ev, **data)
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
+def multiplayer_main() -> None:
     s.run(
         scene=lambda: RoutingScene(net, role),
         size=(800, 600),

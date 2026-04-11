@@ -12,9 +12,9 @@ def _display_name(pid: int) -> str:
     return "Host" if pid == 0 else f"Player {pid}"
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
-    s.get_screen((800, 600), f"Lesson 4 - Practice [{role}]")
-    ctx = s.multiplayer.init_context(net, role)
+def multiplayer_main() -> None:
+    s.get_screen((800, 600), f"Lesson 4 - Practice [{s.multiplayer_ctx.role}]")
+    ctx = s.multiplayer_ctx
 
     player_ids: set[int] = set()
     roster: list[int] = []

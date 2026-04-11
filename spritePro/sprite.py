@@ -484,6 +484,7 @@ class Sprite(pygame.sprite.Sprite):
         self._set_world_center(Vector2(self.rect.center))
         if self.parent:
             self.local_offset = self.get_world_position() - self.parent.get_world_position()
+        self._update_children_world_positions()
         return self
 
     def get_position(self) -> Tuple[int, int]:
