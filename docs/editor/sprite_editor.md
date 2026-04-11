@@ -1,518 +1,87 @@
 # Sprite Editor (Редактор сцен)
 
-Встроенный редактор спрайтов в стиле Unity для визуального создания игровых сцен.
-Редактор поддерживает модульные окна/страницы, выпадающие меню `File` / `GameObject` / `Tools` / `View`, интерактивный Inspector, настройку камеры/сетки через слайдеры и рамку предпросмотра камеры в viewport.
-
-**Что описано в этом документе:** 1) сам редактор — запуск, интерфейс, инструменты, сохранение/загрузка; 2) **использование созданных в редакторе сцен в своей игре** — загрузка JSON, `spawn_scene`, получение объектов по имени (см. [Интеграция с SpritePro](#интеграция-с-spritepro)).
-
-## Содержание
-
-- [Быстрый старт](#быстрый-старт)
-- [Запуск](#запуск)
-- [Интерфейс](#интерфейс)
-- [Инструменты](#инструменты)
-- [Управление](#управление)
-- [Сохранение и загрузка](#сохранение-и-загрузка)
-- [Формат JSON](#формат-json)
-- [Координаты в редакторе](#координаты-в-редакторе)
-- [Горячие клавиши](#горячие-клавиши)
-- [Интеграция с SpritePro](#интеграция-с-spritepro) — использование сцены в своей игре
-- [Экспорт сцены из кода в JSON](#экспорт-сцены-из-кода-в-json) — round-trip: код → JSON → редактор → игра
-
----
-
-## Быстрый старт
-
-### Установка
-
-Редактор входит в состав SpritePro 3.x. Убедитесь, что у вас установлена последняя версия:
-
-```bash
-pip install spritepro
-```
-
-### Запуск
-
-```bash
-# Через CLI
-python -m spritePro.cli --editor
-
-# Или короткий вариант
-python -m spritePro.cli -e
-
-# Как отдельный модуль editor
-python -m spritePro.editor
-
-# Напрямую
-python -m spritePro.editor
-```
-
-### Первая сцена
-
-1. Запустите редактор
-2. Перетащите изображения (PNG, JPG, BMP) из проводника на сцену
-3. Спрайты появятся в центре viewport
-4. Перетаскивайте спрайты для расстановки
-5. При необходимости создайте `Text` через `GameObject -> New Text`
-6. Настройте Zoom/Grid слайдерами или текстовыми полями в нижней панели
-7. Сохраните сцену (Ctrl+S или через `File -> Save`)
-8. Запустите игру через `Run` или `F5` - редактор ищет `main.py` рядом со сценой и поднимается вверх по папкам проекта
-
----
+Визуальный редактор игровых сцен в стиле Unity. Поддерживает модульные окна, drag-and-drop, Inspector, настройку камеры/сетки.
 
 ## Запуск
 
-### Способы запуска
-
-| Способ | Команда |
-|--------|---------|
-| CLI | `python -m spritePro.cli --editor` |
-| CLI (короткий) | `python -m spritePro.cli -e` |
-| Editor module | `python -m spritePro.editor` |
-| Напрямую | `python -m spritePro.editor` |
-| Из Python | `import spritePro as s; s.editor.launch_editor()` |
-
-### Параметры при запуске
-
-Можно передать размер окна:
-
-```python
-import spritePro as s
-from spritePro.editor.editor import SpriteEditor
-
-# Вариант 1: простой запуск
-s.editor.launch_editor()
-
-# Вариант 2: если нужен кастомный размер окна
-editor = SpriteEditor(size=(1280, 720))
-editor.run()
+```bash
+python -m spritePro.cli --editor
+python -m spritePro.cli -e
+python -m spritePro.editor
 ```
-
----
 
 ## Интерфейс
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  File  GameObject  Tools  View                          Scene Name * │
-├────────┬────────────────────────────────────────────┬────────────────────┤
-│Objects │                                            │ Properties          │
-│        │                                            │                     │
-│  ● Player     │         Viewport                    │ Name: Player       │
-│  ● Ground     │         (область редактирования)    │                    │
-│  ○ Label      │                                    │ Position           │
-│        │     ┌──────────┐                          │ X: [100] Y: [200]  │
-│        │     │  Sprite  │                          │ Rotation: [0]      │
-│        │     └──────────┘                          │ Scale X: [1.0]    │
-│        │                                            │ Scale Y: [1.0]    │
-│        │                                            │                    │
-│        │                                            │ Sprite: player.png │
-│        │                                            │ Sorting Order: 0   │
-├────────┴────────────────────────────────────────────┴────────────────────┤
-│  X: 100  Y: 200  │  Zoom: 100%  │  Grid: 10px  │  Snap: ON            │
-└─────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  File  GameObject  Tools  View                    Scene *   │
+├────────┬───────────────────────────────┬────────────────────┤
+│Objects │                               │ Properties          │
+│  ● Player│       Viewport              │ Name: Player       │
+│  ● Ground│   ┌──────────┐              │ Position X: [100] │
+│  ○ Label │   │  Sprite  │              │ Scale X: [1.0]   │
+│          │   └──────────┘              │ Sprite: player.png│
+├────────┴───────────────────────────────┴────────────────────┤
+│  X: 100  Y: 200  │  Zoom: 100%  │  Grid: 10px  │  Snap: ON │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### Основные области
 
-#### Toolbar (Верхняя панель)
-
-- **File**: `New Scene`, `Open...`, `Save`, `Save As...`
-- **Run**: запуск ближайшего `main.py` (`F5`) в отдельном процессе
-- **GameObject**: `New Image...`, `New Text`, `New Rectangle`, `New Circle`, `New Ellipse`
-- **Tools**: `Select`, `Move`, `Rotate`, `Scale`
-- **View**: `Grid`, `Grid Labels`, `Snap to Grid`, `Settings...`
-- **Название сцены**: отображается в центре
-- **Индикатор изменений**: `*` означает несохранённые изменения
-
-#### Hierarchy (Левая панель)
-
-Список всех объектов сцены:
-- ● - объект активен
-- ○ - объект скрыт
-- Мини-превью слева помогает быстрее находить объект не только по имени, но и по внешнему виду
-- Клик - выделить объект
-- ПКМ по объекту - контекстное меню `Дублировать` / `Удалить`
-
-#### Inspector (Правая панель)
-
-Свойства выделенного объекта:
-- **Name** - имя объекта
-- **Position X/Y** - позиция в мировых координатах (редактируется кнопками +/-)
-- **Rotation** - угол поворота в градусах (редактируется)
-- **Scale X/Y** - масштаб по осям (редактируется раздельно)
-- **Image Size** - реальный размер исходного файла в пикселях
-- **Size X/Y** - фактический размер объекта на сцене (редактируется раздельно)
-- **Sprite** - путь к файлу изображения
-- **Sprite Type** — выпадающий список: `Image`, `Text`, `Rectangle`, `Circle`, `Ellipse`.
-- **Text** — содержимое текста для типа `Text`.
-- **Font Size** — размер шрифта для типа `Text`.
-- **Sprite** — путь к изображению (только для типа Image).
-- **Color R / G / B** — цвет примитива или текста.
-- **Sorting Order** — слой отрисовки (редактируется).
-- **Screen Space** — переключатель ON/OFF: при включении объект в игре не зависит от камеры и зума (фиксирован к экрану).
-- **Active / Locked** — флаги объекта (переключатели ON/OFF).
-
-#### Viewport (Центральная область)
-
-Область редактирования с:
-- Сеткой (включается/выключается кнопкой Grid в тулбаре)
-- Подписями координат на сетке (включаются/выключаются кнопкой Labels в статусбаре или в Settings → Scene). Плотность подписей зависит от зума: при отдалении камеры подписи реже.
-- Спрайтами
-- Gizmo выделения с подписями: текущий инструмент, угол поворота, координаты перемещения и размер при scale
-- Рамкой предпросмотра камеры `800x600` (что увидит игрок при стандартном запуске)
-
-#### Statusbar (Нижняя панель)
-
-- **X, Y** - координаты мыши в мировых координатах
-- **Zoom** - текущий масштаб
-- **Grid** - размер клетки сетки
-- **Snap** - включена ли привязка к сетке
-- **Labels** - показывать ли подписи координат на сетке (зум-адаптивная плотность)
-- **Слайдеры** - прямое управление Zoom и Grid
-- **Поля ввода** - точный ввод Zoom (%) и Grid (px). Тип поля (текст / целое / дробное) задаётся автоматически; в числовых полях нельзя ввести некорректные символы. Значение применяется по **Enter** или при **клике вне поля**. В активном поле **Ctrl+V** вставляет из буфера (с фильтрацией по типу), **Ctrl+C** копирует содержимое поля.
-- **Status toast** - короткие сообщения (`Saved`, `Loaded`, `Invalid input`, ошибки) показываются поверх viewport в отдельной заметной плашке и не конфликтуют с нижней панелью.
-
----
-
-## Поля ввода в редакторе
-
-Все текстовые поля (Inspector и Statusbar) работают единообразно:
-
-- **Типы**: **text** (имя объекта и содержимое `Text`-объекта), **int** (целые: Sorting Order, Color R/G/B, Grid, Font Size), **float** (дробные: Position, Scale, Mass, Friction, Bounce, Zoom). Для int не допускается точка; для float — только одна десятичная точка и минус в начале.
-- **Применение**: введённое значение применяется при нажатии **Enter** или при **клике в другое место** (в т.ч. по другому полю или по сцене). При невалидном вводе показывается сообщение «Invalid input».
-- **Буфер обмена**: в активном поле **Ctrl+V** (Cmd+V на Mac) вставляет текст из буфера с фильтрацией по типу поля; **Ctrl+C** (Cmd+C) копирует содержимое поля в буфер. В режиме фокуса в поле эти комбинации не дублируют объекты сцены.
-
----
+| Область | Описание |
+|---------|----------|
+| **Toolbar** | File, GameObject, Tools, View, Run (F5) |
+| **Hierarchy** | Список объектов (● активен, ○ скрыт) |
+| **Inspector** | Свойства выделенного объекта |
+| **Viewport** | Область редактирования с сеткой |
+| **Statusbar** | Координаты мыши, Zoom, Grid, Snap |
 
 ## Инструменты
 
-### Select (V)
-
-Выделение объектов.
-
-**Использование:**
-- Клик по спрайту - выделить один объект
-- Shift + клик - добавить к выделению
-- Клик по пустому пространству - снять выделение
-
-### Move (G)
-
-Перемещение объектов.
-
-**Использование:**
-1. Выберите инструмент Move (G)
-2. Перетаскивайте выделенные объекты мышью
-
-**Особенности:**
-- Работает с несколькими выделенными объектами
-- Поддерживается привязка к сетке
-
-### Rotate (R)
-
-Вращение объектов.
-
-**Использование:**
-1. Выберите инструмент Rotate (R)
-2. Перетаскивайте мышь влево/вправо для вращения
-
-**Особенности:**
-- Положительное значение - вращение по часовой стрелке
-- Отрицательное значение - вращение против часовой
-- По умолчанию поворот привязан к шагу `15°`
-- `Ctrl` временно отключает привязку и позволяет вращать свободно
-
-### Scale (T)
-
-Масштабирование объектов.
-
-**Использование:**
-1. Выберите инструмент Scale (T)
-2. Перетаскивайте мышь для изменения масштаба
-
-**Особенности:**
-- По умолчанию изменяет `Scale X` и `Scale Y` раздельно
-- Shift - пропорциональное масштабирование
-- По умолчанию изменение размера привязано к шагу сетки
-- `Ctrl` временно отключает привязку и позволяет менять размер свободно
-- Минимальный масштаб: 0.05
-
----
+| Клавиша | Инструмент | Описание |
+|---------|-----------|----------|
+| V | Select | Выделение объектов |
+| G | Move | Перемещение |
+| R | Rotate | Вращение (шаг 15°) |
+| T | Scale | Масштабирование |
 
 ## Управление
 
-### Работа с камерой
-
 | Действие | Управление |
 |----------|-----------|
-| Zoom (приближение/отдаление) | Колесо мыши |
-| Pan (перемещение вида) | Средняя кнопка мыши (зажать и тянуть) |
-| Точный Zoom | Слайдер или ввод значения в `%` (от `1` до `1000`) |
-| Размер сетки | Слайдер или ввод значения в `px` |
-
-### Работа с объектами
-
-| Действие | Управление |
-|----------|-----------|
-| Выделить объект | Левый клик по спрайту |
-| Добавить к выделению | Shift + левый клик |
-| Снять выделение | Клик по пустому пространству |
-| Переместить | Drag мышью (инструмент Move) |
-| Удалить | Delete или Backspace |
-| Копировать объекты | Ctrl + C (вне полей ввода) |
-| Вставить объекты | Ctrl + V (вне полей ввода) |
-| В поле ввода: копировать/вставить текст поля | Ctrl + C / Ctrl + V |
+| Zoom | Колесо мыши |
+| Pan | Средняя кнопка мыши |
+| Выделить | Левый клик |
+| Добавить к выделению | Shift + клик |
+| Удалить | Delete / Backspace |
 | Отменить | Ctrl + Z |
 | Повторить | Ctrl + Y |
+| Сохранить | Ctrl + S |
 | Запустить игру | F5 |
-| Временное отключение snap для move/rotate/scale | Удерживать Ctrl |
 
-### Drag & Drop
+## Типы спрайтов
 
-Перетаскивание файлов из проводника:
+- **Image** — изображение из файла
+- **Rectangle** — прямоугольник (кнопка Rect)
+- **Circle** — круг (кнопка Circle)
+- **Ellipse** — эллипс (кнопка Ellipse)
 
-1. Найдите изображение в проводнике (PNG, JPG, JPEG, BMP, GIF)
-2. Перетащите файл в viewport редактора
-3. Спрайт автоматически добавится на сцену в позицию курсора
+## Drag & Drop
 
----
+Перетащите PNG/JPG/BMP/GIF из проводника в viewport — спрайт добавится в позицию курсора.
 
 ## Сохранение и загрузка
 
-### Сохранение сцены
-
 ```python
-# В редакторе нажмите Ctrl+S
-# Сцена сохранится в файл scene_name.json
-```
-
-При сохранении, загрузке и ошибках редактор показывает заметный status-toast поверх viewport, поэтому сообщения не перекрываются нижней панелью.
-
-### Загрузка сцены
-
-```python
+# Сохранение: Ctrl+S в редакторе → scene_name.json
+# Загрузка в игру
 from spritePro.editor.scene import Scene
-
-# Загрузка из файла
-scene = Scene.load("my_scene.json")
-
-# Создание редактора с загруженной сценой
-import spritePro as s
-s.editor.launch_editor()
-```
-
-### Запуск игры из редактора
-
-- Кнопка `Run` и горячая клавиша `F5` запускают игру в отдельном процессе через текущий Python-интерпретатор.
-- Перед запуском редактор автоматически сохраняет текущую сцену, если в ней есть несохранённые изменения.
-- Поиск entrypoint идёт от папки сохранённой сцены вверх по родительским каталогам; первый найденный `main.py` считается точкой входа.
-- Это удобно для структуры вроде `main.py` + `scenes/level.json`: сцену можно хранить в подпапке, а запускать проект прямо из редактора без ручного выбора файла.
-
-### Программное создание сцены
-
-```python
-from spritePro.editor.scene import Scene, SceneObject, Transform
-
-# Создание сцены
-scene = Scene(name="My Game")
-scene.grid_size = 10
-scene.snap_to_grid = True
-
-# Добавление объектов
-player = SceneObject(
-    name="Player",
-    sprite_path="assets/player.png",
-    transform=Transform(x=100, y=200),
-    z_index=10
-)
-scene.add_object(player)
-
-# Сохранение
-scene.save("level1.json")
-```
-
----
-
-## Формат JSON
-
-Сохранённая сцена имеет следующую структуру:
-
-```json
-{
-    "version": "1.0",
-    "name": "My Scene",
-    "camera": {
-        "x": 0,
-        "y": 0,
-        "zoom": 1.0
-    },
-    "objects": [
-        {
-            "id": "abc12345",
-            "name": "Player",
-            "sprite_path": "assets/player.png",
-            "sprite_shape": "image",
-            "transform": {
-                "x": 100.0,
-                "y": 200.0,
-                "rotation": 0.0,
-                "scale_x": 1.0,
-                "scale_y": 1.0
-            },
-            "z_index": 10,
-            "active": true,
-            "locked": false,
-            "custom_data": {}
-        }
-    ],
-    "grid_size": 10,
-    "grid_visible": true,
-    "snap_to_grid": true
-}
-```
-
-### Поля объекта
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `id` | str | Уникальный идентификатор |
-| `name` | str | Отображаемое имя |
-| `sprite_path` | str | Путь к файлу изображения |
-| `sprite_shape` | str | Тип объекта: `image`, `text`, `rectangle`, `circle`, `ellipse` |
-| `transform.x` | float | Центр объекта по X |
-| `transform.y` | float | Центр объекта по Y |
-| `transform.rotation` | float | Угол поворота в градусах |
-| `transform.scale_x` | float | Масштаб по X |
-| `transform.scale_y` | float | Масштаб по Y |
-| `z_index` | int | Слой отрисовки |
-| `active` | bool | Активность объекта в editor/runtime |
-| `locked` | bool | Защита от редактирования |
-| `custom_data` | dict | Пользовательские данные (`text`, `font_size`, `width`, `height` и т.д.) |
-
-Для обратной совместимости загрузчик понимает и старое поле `visible`, но новые сохранения пишутся уже как `active`.
-
-Для `Text`-объектов текст и размер шрифта хранятся в `custom_data`, например:
-
-```json
-{
-    "name": "Title",
-    "sprite_shape": "text",
-    "sprite_color": [255, 255, 255],
-    "custom_data": {
-        "text": "New Text",
-        "font_size": 28
-    }
-}
-```
-
----
-
-## Координаты в редакторе
-
-В редакторе **позиция объекта** (`transform.x`, `transform.y`) хранится как **центр** спрайта. При отрисовке и при перетаскивании используется центр; при экспорте из игры в JSON также записывается центр. Это согласовано с якорем CENTER по умолчанию у Sprite/Button/TextSprite в SpritePro.
-
----
-
-## Горячие клавиши
-
-### Инструменты
-
-| Клавиша | Действие |
-|---------|----------|
-| V | Инструмент Select (выделение) |
-| G | Инструмент Move (перемещение) |
-| R | Инструмент Rotate (вращение) |
-| T | Инструмент Scale (масштаб) |
-
-### Редактирование
-
-| Клавиша | Действие |
-|---------|----------|
-| Delete | Удалить выделенные объекты |
-| Backspace | Удалить выделенные объекты |
-| Ctrl + Z | Отменить действие (Undo) |
-| Ctrl + Y | Повторить действие (Redo) |
-| Ctrl + C | Копировать выделенные объекты (в поле ввода — копировать текст поля) |
-| Ctrl + V | Вставить скопированные объекты (в поле ввода — вставить в поле) |
-| Ctrl + N | Новая сцена |
-| Ctrl + O | Открыть сцену |
-| Ctrl + S | Сохранить сцену |
-| Ctrl + Shift + S | Сохранить сцену как... |
-| Escape | Снять выделение |
-| F1 | Открыть/скрыть окно Settings |
-
-### Навигация
-
-| Клавиша | Действие |
-|---------|----------|
-| Колесо мыши | Zoom (приближение/отдаление) |
-| Средняя кнопка | Pan (перемещение камеры) |
-
----
-
-## Интеграция с SpritePro
-
-### Загрузка сцены в игру
-
-```python
-import spritePro as s
-from spritePro.editor.scene import Scene
-
-# Загружаем сцену
 scene = Scene.load("level1.json")
-
-
-class ManualLoadedScene(s.Scene):
-    def __init__(self):
-        super().__init__()
-        self.sprites_map = {}  # id -> s.Sprite
-
-        for obj in scene.objects:
-            if not obj.active:
-                continue
-
-            image = s.pygame.image.load(obj.sprite_path).convert_alpha()
-            native_w, native_h = image.get_size()
-            final_size = (
-                max(1, int(native_w * obj.transform.scale_x)),
-                max(1, int(native_h * obj.transform.scale_y)),
-            )
-
-            sprite = s.Sprite(
-                obj.sprite_path,
-                final_size,
-                (obj.transform.x, obj.transform.y),
-                scene=self,
-            )
-
-            if obj.transform.rotation:
-                sprite.angle = obj.transform.rotation
-
-            sprite.sorting_order = obj.z_index
-            self.sprites_map[obj.id] = sprite
-
-
-s.run(scene=ManualLoadedScene, size=(800, 600), title="My Game", fill_color=(20, 20, 30))
 ```
 
-### Активность и callbacks
+## Интеграция с игрой
 
-`SceneObject` теперь использует поле `active` и предоставляет единый API:
-
-```python
-obj.set_active(False)
-obj.add_active_changed_callback(lambda scene_obj, active: print(scene_obj.name, active))
-```
-
-В `spawn_scene()` созданный `SpawnedObject` тоже синхронизирует это состояние со `Sprite`:
-
-```python
-spawned = runtime_scene.first("enemy")
-spawned.add_active_changed_callback(lambda so, active: print("runtime active:", active))
-spawned.set_active(False)
-```
-
-### Короткий путь (рекомендуется): spawn_scene и RuntimeScene
+### Рекомендуемый способ: spawn_scene
 
 ```python
 import spritePro as s
@@ -522,227 +91,80 @@ class LevelScene(s.Scene):
     def __init__(self):
         super().__init__()
         self.rt = spawn_scene("level1.json", scene=self, apply_camera=True)
-
-        # По имени (без учёта регистра) или точное имя
-        self.player = self.rt.first("player")      # первый с именем "player"
-        self.obj = self.rt.exact("Player")         # точное совпадение имени
-        self.enemies = self.rt.startswith("enemy") # все, чьё имя начинается с "enemy"
+        
+        self.player = self.rt.first("player")
+        self.enemies = self.rt.startswith("enemy")
 
 
-s.run(scene=LevelScene, size=(800, 600), title="My Game")
+s.run(scene=LevelScene, size=(800, 600))
 ```
 
-**Размещение из сцены:** `placement()` возвращает данные из сцены: **pos (центр)**, size, angle, sorting_order, screen_space, scene. Этим пользуются хелперы ниже; позиция — центр объекта (как в редакторе).
-
-**Превращение заготовки в кнопку/текст/переключатель:**
+### Превращение в UI-компоненты
 
 ```python
-# Спрайт из сцены — только применить доп. параметры (speed, цвет уже из JSON)
-mover = rt.exact("mover").Sprite(speed=1)
+# Спрайт → кнопка
+btn = rt.exact("button").to_button(text="Click", on_click=callback)
 
-# Прямоугольник из сцены → кнопка (размер/позиция из сцены, в коде — текст и колбэк)
-btn = rt.exact("button").to_button(text="Click me", on_click=my_callback)
+# Спрайт → текст
+label = rt.exact("label").to_text_sprite(text="Hello", font_size=32)
 
-# → текстовый спрайт
-label = rt.exact("label").to_text_sprite(text="Hello", font_size=32, color=(255,255,255))
-
-# → переключатель
-toggle = rt.exact("toggle").to_toggle(text_on="ON", text_off="OFF", on_toggle=my_toggle)
+# Спрайт → переключатель
+toggle = rt.exact("toggle").to_toggle(text_on="ON", text_off="OFF")
 ```
 
-Алиасы: `to_button` = `Button()`, `to_text_sprite` = `TextSprite()`, `to_toggle` = `Toggle()`.
+### Физика из редактора
 
-**Текст из редактора:** если объект в сцене сохранён как `sprite_shape = "text"`, `spawn_scene(...)` создаст для него `TextSprite` автоматически. Это удобно для заголовков, HUD-подписей и простых лейблов прямо из редактора, без дополнительного `to_text_sprite(...)`.
+Если в Inspector у объекта выставлен тип Physics (Static/Kinematic/Dynamic), при загрузке через `spawn_scene` тело создаётся автоматически. Настройки: Mass, Friction, Bounce.
 
-**Физика:** если в Inspector у объекта выставлен тип физики (Physics: None / Static / Kinematic / Dynamic), при загрузке сцены через `spawn_scene` таким объектам автоматически создаётся тело и они добавляются в глобальный мир `s.physics`. Отдельно вызывать `s.physics.add(...)` не нужно. Для объектов с физикой в Inspector доступны поля: **Mass**, **Friction**, **Bounce**; опционально — **Collision Category** и **Collision Mask** (битовые маски; по умолчанию не заданы — тело сталкивается со всеми). Эти значения сохраняются в JSON сцены и передаются в `PhysicsConfig` при спавне. Угол поворота (Rotation) в редакторе задаёт только визуальный поворот спрайта при загрузке; с физикой поворот не синхронизируется (коллайдеры остаются без поворота). **В коде** тело можно получить через `s.get_physics(sprite)` и донастроить: `body.set_bounce(0)`, `body.velocity.x = 200`, `body.velocity.y = -400` (прыжок) и т.д. Подробнее и пример: [physics_guide.md](../core/physics_guide.md) (раздел «Получение и настройка физики из сцены редактора»).
-
-Полные примеры: `spritePro/demoGames/editor_scene_runtime_demo.py`, **Scenes Demo (editor)** — `spritePro/demoGames/scenes_demo editor.py` (сцена загружается из JSON, логика вешается в коде).
-
-### Создание редактора внутри игры
-
-```python
-# Можно запустить редактор как отдельное окно
-# и затем загрузить результат в игру
-import spritePro as s
-from spritePro.editor.scene import Scene
-
-# Редактирование
-s.editor.launch_editor()
-
-# После выхода - редактор сохранит сцену в scene.name.json
-# Загружаем в игру
-game_scene = Scene.load("Level 1.json")
-```
-
----
-
-## Экспорт сцены из кода в JSON
-
-Чтобы править в редакторе сцену, изначально собранную в коде, её можно один раз экспортировать в JSON. Дальше: правки в редакторе → сохранение → загрузка в игре из JSON.
-
-**API:**
+## Экспорт сцены из кода
 
 ```python
 from spritePro.editor.scene import Scene as EditorScene
 
-# Вариант 1: из экземпляра сцены (после set_scene_by_name)
-EditorScene.export_from_runtime(s.scene.current_scene, "scene_a.json")
-
-# Вариант 2: передать класс сцены (создаётся временный экземпляр для экспорта)
-EditorScene.export_from_runtime(SceneA, "scene_a.json")
+# Экспорт: код → JSON → редактор
+EditorScene.export_from_runtime(MyScene, "scene_a.json")
 ```
 
-**Что попадает в JSON:** имена объектов = имена атрибутов сцены (например `mover`, `button`, `label`). Позиция — центр спрайта; размер, цвет, путь к картинке — из самих спрайтов. Учитываются только корневые спрайты (без parent). После экспорта можно открыть файл в редакторе, изменить layout и сохранить; в игре загружать сцену через `spawn_scene("scene_a.json", scene=self)` и вешать логику через `rt.exact("mover").Sprite(speed=1)`, `rt.exact("button").to_button(...)` и т.д.
+Полный цикл: `spritePro/demoGames/scenes_demo editor.py`
 
-Пример полного цикла (код → JSON → редактор → загрузка из JSON в игре): `spritePro/demoGames/scenes_demo editor.py`.
+## Формат JSON
 
----
+```json
+{
+    "version": "1.0",
+    "name": "My Scene",
+    "objects": [
+        {
+            "id": "abc12345",
+            "name": "Player",
+            "sprite_path": "assets/player.png",
+            "sprite_shape": "image",
+            "transform": {"x": 100.0, "y": 200.0, "rotation": 0.0, "scale_x": 1.0, "scale_y": 1.0},
+            "z_index": 10,
+            "active": true,
+            "custom_data": {}
+        }
+    ]
+}
+```
 
-## Окна и страницы
+## Горячие клавиши
 
-Редактор использует модульную систему окон (`spritePro/editor/ui/windows.py`):
+| Клавиша | Действие |
+|---------|----------|
+| V | Select |
+| G | Move |
+| R | Rotate |
+| T | Scale |
+| F1 | Settings |
+| Ctrl+Z | Отменить |
+| Ctrl+Y | Повторить |
+| Ctrl+S | Сохранить |
+| F5 | Запустить игру |
 
-- `Settings` - отдельное окно с вкладками `Scene`, `View`, `Theme`, `Files`
-- `Scene` - Grid Visible, Grid Labels, Snap To Grid, default Grid Size
-- `View` - Camera Preview, Hierarchy Previews, Viewport Tool Badge, preview width/height
-- `Theme` - размер обычного и bold-текста UI, базовые editor-цвета (`ui_text`, `ui_accent`, `selection`, `background`)
-- `Files` - `Save`, `Reload`, `Import`, `Export`, `Reset to defaults` для editor-настроек
-- вкладки расширяются в отдельном модуле без правок основного цикла редактора
-- кнопка `Settings` и горячая клавиша `F1` открывают/закрывают окно
-- editor-настройки сохраняются в отдельный JSON-файл и могут импортироваться/экспортироваться для переноса на другие проекты или другим разработчикам
-
-### Добавление новой страницы в Settings
-
-1. Откройте `spritePro/editor/ui/windows.py`
-2. Добавьте имя вкладки в `SettingsWindow(... page_titles=[...])`
-3. Добавьте рендер новой страницы в `SettingsWindow.render(...)`
-4. Вынесите логику страницы в `_render_<page>_page(...)`
-
----
-
-## Переезд редактора в пакет
-
-Начиная с текущей версии, основной код редактора находится внутри пакета `spritePro`:
-
-- `spritePro/editor/editor.py` — основной цикл и инструменты редактора
-- `spritePro/editor/file_actions.py` — сохранение/загрузка сцен и диалоги файлов
-- `spritePro/editor/object_actions.py` — создание/копирование/удаление объектов сцены
-- `spritePro/editor/ui/windows.py` — модуль окон/вкладок (`Settings`)
-- `spritePro/editor/scene.py` — модель данных сцены
-- `spritePro/editor/runtime.py` — запуск сцены в рантайме (`spawn_scene`)
-
-Папка `tools/sprite_editor` оставлена только для обратной совместимости (тонкие реэкспорты).
-
----
-
-## Ограничения и известные проблемы
-
-### Текущие ограничения
-
-1. **Нет выделения рамкой** — только клик/Shift+клик
-2. **Нет слоёв/папок** — все объекты в одном списке
-3. **Ограниченные форматы изображений** — PNG, JPG, BMP, GIF
-
-### Планируемые функции
-
-- [ ] Создание/удаление объектов из UI
-- [ ] Множественное выделение (рамкой)
-- [ ] Слои/папки для организации
-- [ ] Preview (запуск игры)
-- [ ] Экспорт в код SpritePro
-
----
-
-## Примеры использования
-
-### Типы спрайтов (Sprite Type)
-
-В редакторе объект может быть:
-
-- **Image** — отображается картинка по пути `sprite_path` (добавление через Add или перетаскивание файла).
-- **Rectangle** — примитив «прямоугольник». Размер в Inspector: Size X, Size Y (пиксели). Цвет: Color R, G, B (0–255). В тулбаре: кнопка **Rect**.
-- **Circle** — примитив «круг». Размер и цвет так же в Inspector. В тулбаре: кнопка **Circle**.
-- **Ellipse** — примитив «эллипс». В тулбаре: кнопка **Ellipse**.
-
-В Inspector выпадающий список **Sprite Type** переключает тип (Image → Rectangle → Circle → Ellipse → Image). Для примитивов размер хранится в `custom_data` (width, height), цвет — в `sprite_color`. В игре при загрузке сцены через `spawn_scene` примитивы создаются как спрайты с соответствующими формами.
-
-### Создание платформера
-
-Уровень можно собрать в редакторе: кнопки **Rect** / **Circle** для платформ и игрока, задать имена (например `Player`, `Platform`), размеры и цвета в Inspector, сохранить в JSON. Запуск демо:
+## Демо
 
 ```bash
 python -m spritePro.demoGames.platformer_demo
+python -m spritePro.demoGames.editor_scene_runtime_demo
 ```
-
-Программное создание сцены с примитивами:
-
-```python
-from spritePro.editor.scene import Scene, SceneObject, Transform
-
-scene = Scene(name="platformer_level1")
-
-# Платформа как примитив (rectangle)
-obj = SceneObject(
-    name="Platform",
-    sprite_path="",
-    sprite_shape="rectangle",
-    sprite_color=(70, 200, 70),
-    transform=Transform(x=400, y=580),
-    custom_data={"width": 800, "height": 20},
-)
-scene.add_object(obj)
-
-# Игрок — примитив
-player = SceneObject(
-    name="Player",
-    sprite_path="",
-    sprite_shape="rectangle",
-    sprite_color=(255, 80, 80),
-    transform=Transform(x=400, y=200),
-    custom_data={"width": 40, "height": 60},
-    z_index=10,
-)
-scene.add_object(player)
-
-scene.save("level1.json")
-```
-
----
-
-## Технические детали
-
-### Требования
-
-- Python 3.7+
-- Pygame 2.0+
-
-### Структура проекта
-
-```
-spritePro/editor/
-├── __init__.py          # launch_editor, spawn_scene и экспорт API
-├── __main__.py          # запуск: python -m spritePro.editor
-├── editor.py            # главный цикл/инструменты редактора
-├── scene.py             # модель Scene/SceneObject/Transform/Camera
-├── sprite_types.py      # типы спрайтов: Image, Rectangle, Circle, Ellipse (примитивы)
-├── runtime.py           # spawn_scene(...) для рантайма
-└── ui/
-    ├── __init__.py
-    └── windows.py       # модуль окон/страниц редактора
-
-tools/sprite_editor/
-├── __init__.py          # совместимость со старыми импортами
-├── editor.py            # совместимость (реэкспорт из spritePro.editor.editor)
-├── scene.py             # совместимость (реэкспорт из spritePro.editor.scene)
-└── ui/
-    ├── __init__.py      # совместимость
-    └── windows.py       # совместимость
-```
-
-### Архитектура
-
-- **Scene** - контейнер объектов, камеры, настроек сетки
-- **SceneObject** — объект с трансформацией, путём к спрайту (Image), типом примитива (sprite_shape: rectangle/circle/ellipse) и цветом (sprite_color)
-- **Transform** - позиция, вращение, масштаб
-- **SpriteEditor** - главный класс с игровым циклом и обработкой событий
-- **ToolType** - перечисление инструментов (Select, Move, Rotate, Scale)

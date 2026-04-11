@@ -1,4 +1,4 @@
-# 🚀 Getting Started — SpritePro v3.5
+# 🚀 Getting Started — SpritePro v3.5.0
 
 **Быстрый старт для новичков: установка, первая игра, базовые концепции**
 

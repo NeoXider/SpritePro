@@ -1,552 +1,156 @@
 # Networking (Сетевое взаимодействие)
 
-Минимальный сетевой слой SpritePro для прототипов мультиплеера.  
-Основан на TCP и протоколе «одна строка JSON = одно сообщение».
-
-## Когда это использовать
-
-- Быстрые прототипы, локальные и небольшие онлайн‑демо.
-- Простая синхронизация позиций, состояний, событий.
-- Когда важнее скорость разработки, чем продвинутая сетевой архитектура.
+Минимальный сетевой слой SpritePro для прототипов мультиплеера. Основан на TCP и протоколе «одна строка JSON = одно сообщение».
 
 ## Базовые понятия
 
-Сообщение — это JSON‑объект с двумя полями:
+Сообщение — JSON-объект с двумя полями:
 
 ```json
 {"event": "pos", "data": {"x": 10, "y": 20}}
 ```
 
-- `event` — строковый идентификатор события.
-- `data` — словарь произвольных данных.
+- `event` — строковый идентификатор события
+- `data` — словарь произвольных данных (числа, строки, списки, словари, bool, None)
+
+## Быстрый старт
+
+```bash
+python spritePro/demoGames/local_multiplayer_demo.py --quick
+```
+
+## Рекомендуемый запуск
+
+```python
+import spritePro as s
+
+class MultiplayerScene(s.Scene):
+    def __init__(self, net, role):
+        super().__init__()
+        s.multiplayer.init_context(net, role)
+        self.ctx = s.multiplayer_ctx
+        self.me = s.Sprite("", (40, 40), (200, 300), scene=self)
+        self.me.set_color((220, 70, 70) if self.ctx.is_host else (70, 120, 220))
+
+    def update(self, dt):
+        pos = self.me.get_world_position()
+        self.ctx.send_every("pos", {"pos": list(pos)}, 1.0 / 60.0)
+
+
+if __name__ == "__main__":
+    s.run(scene=MultiplayerScene, size=(800, 600), title="My Multiplayer",
+          fps=60, fill_color=(20, 20, 25), multiplayer=True)
+```
 
 ## Компоненты
 
 ### NetServer
 
-TCP‑сервер, который принимает клиентов и по умолчанию пересылает сообщения всем.
+TCP-сервер, принимает клиентов и пересылает сообщения всем.
 
-- `NetServer(host="0.0.0.0", port=5050, relay=True, debug=None, name="server")`
-- `start()` — запуск сервера в отдельном потоке.
-- `poll(max_messages=100)` — забирает входящие сообщения.
-- `broadcast(event, data)` — отправляет сообщение всем клиентам.
-- `stop()` — останавливает сервер.
+- `NetServer(host="0.0.0.0", port=5050, relay=True)`
+- `start()` / `stop()` — запуск/остановка
+- `poll(max_messages=100)` — забирает входящие сообщения
+- `broadcast(event, data)` — отправляет всем
 
 ### NetClient
 
-TCP‑клиент, который отправляет сообщения и получает их через очередь.
+TCP-клиент.
 
-- `NetClient(host, port=5050, debug=None, name="client")`
-- `connect()` — подключение к серверу.
-- `send(event, data)` — отправка сообщения.
-- `poll(max_messages=100)` — забирает входящие сообщения.
-- `close()` — закрывает соединение.
+- `NetClient(host, port=5050)`
+- `connect()` — подключение
+- `send(event, data)` — отправка
+- `poll(max_messages=100)` — получение
 
-### Системные события
+### MultiplayerContext
 
-При использовании `MultiplayerContext` (рекомендуется), хост автоматически получает события о подключении/отключении клиентов через `ctx.poll()`:
+Глобальный контекст после `s.multiplayer.init_context(net, role)`:
 
-- `client_connected` — новый клиент подключился
-  - `data.client_id` — ID клиента (0, 1, 2...)
-  - `data.peer` — адрес клиента (например, "127.0.0.1:54321")
-- `client_disconnected` — клиент отключился
-  - `data.client_id` — ID клиента
+| Поле | Описание |
+|------|----------|
+| `ctx.client_id` | ID участника (0 = хост) |
+| `ctx.role` | `"host"` или `"client"` |
+| `ctx.is_host` | `True` если хост |
+| `ctx.send(event, data)` | Отправка |
+| `ctx.poll()` | Получение сообщений |
+| `ctx.send_every(event, data, interval)` | Отправка не чаще interval секунд |
 
-```python
-class MyScene(s.Scene):
-    def __init__(self, net, role):
-        super().__init__()
-        s.multiplayer.init_context(net, role)
-        self.ctx = s.multiplayer_ctx
-
-    def update(self, dt):
-        for msg in self.ctx.poll():
-            if msg.get("event") == "client_connected":
-                client_id = msg["data"]["client_id"]
-                print(f"Подключился клиент: {client_id}")
-            elif msg.get("event") == "client_disconnected":
-                client_id = msg["data"]["client_id"]
-                print(f"Отключился клиент: {client_id}")
-```
-
-### Рекомендуемый запуск: `s.run(..., multiplayer=True)`
-
-Для новых игр удобнее использовать один вход через `s.run(...)`, а multiplayer
-включать флагом `multiplayer=True`.
+## Режимы запуска
 
 ```python
-import spritePro as s
-
-
-class MultiplayerScene(s.Scene):
-    def __init__(self, net: s.NetClient, role: str):
-        super().__init__()
-        s.multiplayer.init_context(net, role)
-        self.ctx = s.multiplayer_ctx
-        self.me = s.Sprite("", (40, 40), (200, 300), scene=self)
-        self.me.set_color((220, 70, 70) if self.ctx.is_host else (70, 120, 220))
-
-    def update(self, dt):
-        pos = self.me.get_world_position()
-        self.ctx.send_every("pos", {"pos": list(pos)}, 1.0 / 60.0)
-
-
-if __name__ == "__main__":
-    s.run(
-        scene=MultiplayerScene,
-        size=(800, 600),
-        title="My Multiplayer",
-        fps=60,
-        fill_color=(20, 20, 25),
-        multiplayer=True,
-    )
+s.run(scene=Scene, multiplayer=True)                    # быстрый режим (хост + клиент)
+s.run(scene=Scene, multiplayer=True, multiplayer_use_lobby=True)  # с лобби
+s.networking.run(...)                                  # низкоуровневый запуск
 ```
 
-Что это даёт:
+### Аргументы командной строки
 
-- один и тот же `s.run(...)` для singleplayer и multiplayer
-- `scene` и `setup` могут принимать `net` и `role`, если они нужны
-- те же terminal-аргументы `--quick`, `--server`, `--host_mode`, `--host`, `--port`, `--clients` работают без отдельного вызова `s.networking.run(...)`
-- `--kivy` и `--pygame` тоже можно передавать в тот же запуск
+- `--quick` — быстрый запуск (хост + клиент)
+- `--server` — только сервер
+- `--host_mode` — сервер + клиент в одном процессе
+- `--host` / `--port` — адрес и порт
+- `--clients N` — общее число окон
+- `--net_debug` — сетевой debug в консоль
 
-Если нужен quick-режим на 3 окна прямо из кода:
+## Системные события
+
+При использовании `MultiplayerContext`:
+
+- `client_connected` — клиент подключился (`data.client_id`, `data.peer`)
+- `client_disconnected` — клиент отключился (`data.client_id`)
 
 ```python
-s.run(
-    scene=MultiplayerScene,
-    multiplayer=True,
-    multiplayer_clients=3,
-    multiplayer_client_spawn_delay=2,
-)
+for msg in self.ctx.poll():
+    if msg.get("event") == "client_connected":
+        print(f"Клиент: {msg['data']['client_id']}")
 ```
-
-### Низкоуровневый запуск: `s.networking.run(...)`
-
-Утилита запуска для быстрого мультиплеера с автозапуском клиента/серверов.
-
-```python
-s.networking.run(
-    argv=None,
-    entry="multiplayer_main",
-    host="127.0.0.1",
-    port=5050,
-    clients=2,
-    net_debug=False,
-    client_spawn_delay=0.0,
-    use_lobby=False,
-)
-```
-
-- **По умолчанию** (`use_lobby=False`): без аргументов запускается быстрый режим (два окна — хост и клиент). Удобно для разработки.
-- **С лобби** (`use_lobby=True`): одно окно. Сначала экран настройки: имя, выбор «Хост» / «Клиент», порт (и для клиента — IP). После подключения — список игроков (roster). У хоста: кнопки «Назад» и «В игру»; у клиента: кнопка «Назад». «Назад» отключает соединение и возвращает к настройке. По нажатию «В игру» вызывается ваша `multiplayer_main(net, role)`. Для нового кода удобнее использовать `s.run(..., multiplayer=True, multiplayer_use_lobby=True)`, а `s.networking.run(use_lobby=True)` оставить как low-level вариант.
-
-Важно: `run()` нужно вызывать из файла, а не из REPL.
-
-Можно задать число клиентов прямо из кода (в `--quick` это общее число окон: хост + клиенты):
-
-```python
-s.networking.run(clients=3)  # 3 окна: host + 2 клиента
-```
-
-Окна в режимах `--host_mode` и `--quick` автоматически разводятся по экрану.
-Если нужно вручную — установите переменную окружения:
-
-```bash
-SPRITEPRO_WINDOW_POS=100,100
-```
-
-## Быстрый старт (в 2 окна)
-
-1. Запустить демо в быстрый режим:
-
-```bash
-python spritePro/demoGames/local_multiplayer_demo.py --quick --host 127.0.0.1 --port 5050
-```
-
-1. Появится окно хоста и окно второго клиента.
-
-## Минимальный пример: сервер и клиент
-
-### Сервер
-
-```python
-import spritePro as s
-
-server = s.NetServer(host="0.0.0.0", port=5050)
-server.start()
-
-while True:
-    for msg in server.poll():
-        print("server msg:", msg)
-```
-
-### Клиент
-
-```python
-import spritePro as s
-
-net = s.NetClient("127.0.0.1", 5050)
-net.connect()
-
-net.send("hello", {"name": "player"})
-for msg in net.poll():
-    if msg.get("event") == "hello":
-        print("client msg:", msg.get("data"))
-```
-
-## Пример: синхронизация позиции
-
-```python
-import pygame
-import spritePro as s
-
-net = s.NetClient("127.0.0.1", 5050)
-net.connect()
-
-my_color = (220, 70, 70)
-other_color = (70, 120, 220)
-me = s.Sprite("", (40, 40), (200, 300))
-me.set_color(my_color)
-other = s.Sprite("", (40, 40), (600, 300))
-other.set_color(other_color)
-remote_pos = [600.0, 300.0]
-
-while True:
-    s.update(fill_color=(20, 20, 25))
-    dt = s.dt
-
-    dx = s.input.get_axis(pygame.K_a, pygame.K_d)
-    dy = s.input.get_axis(pygame.K_w, pygame.K_s)
-    pos = me.get_world_position()
-    pos.x += dx * 240.0 * dt
-    pos.y += dy * 240.0 * dt
-    me.set_position(pos)
-
-    net.send("pos", {"x": pos.x, "y": pos.y})
-    for msg in net.poll():
-        if msg.get("event") == "pos":
-            data = msg.get("data", {})
-            remote_pos[:] = [float(data.get("x", remote_pos[0])), float(data.get("y", remote_pos[1]))]
-    other.set_position(remote_pos)
-```
-
-## Интеграция через `s.networking.run()`
-
-Если нужен старый или более явный low-level flow, можно оставить отдельную entry-функцию:
-
-```python
-import pygame
-import spritePro as s
-
-class MultiplayerScene(s.Scene):
-    def __init__(self, net: s.NetClient, role: str):
-        super().__init__()
-        s.multiplayer.init_context(net, role)
-        self.ctx = s.multiplayer_ctx
-        self.me = s.Sprite("", (40, 40), (200, 300), scene=self)
-        self.me.set_color((220, 70, 70) if self.ctx.is_host else (70, 120, 220))
-
-    def update(self, dt):
-        pos = self.me.get_world_position()
-        self.ctx.send_every("pos", {"pos": list(pos)}, 1.0 / 60.0)
-
-
-def multiplayer_main(net: s.NetClient, role: str):
-    s.run(
-        scene=lambda: MultiplayerScene(net, role),
-        size=(800, 600),
-        title="My Multiplayer",
-        fps=60,
-        fill_color=(20, 20, 25),
-    )
-
-s.networking.run()
-```
-
-Если функция называется иначе:
-
-```python
-s.networking.run(entry="module:function")
-```
-
-## Подробная инструкция: лобби (use_lobby=True)
-
-Лобби — готовый экран настройки мультиплеера: один запуск приложения, выбор «Хост» или «Клиент», ввод порта и IP, подключение, список игроков и переход в игру.
-
-### Запуск с лобби
-
-В коде замените вызов на:
-
-```python
-if __name__ == "__main__":
-    s.run(
-        multiplayer=True,
-        multiplayer_entry=multiplayer_main,
-        multiplayer_use_lobby=True,
-    )
-```
-
-Либо запустите демо с флагом:
-
-```bash
-python spritePro/demoGames/local_multiplayer_demo.py --lobby
-```
-
-### Сценарий для игрока (desktop / pygame)
-
-1. **Один экземпляр (хост)**  
-   - Открыть приложение.  
-   - Ввести имя (по желанию), оставить **Роль: Хост**, указать порт (по умолчанию 5050).  
-   - Нажать **«Запустить сервер»**.  
-   - Появится экран «В лобби»: список игроков (сначала только Host), у хоста кнопки **«Назад»** и **«В игру»**.
-
-2. **Второй экземпляр (клиент)**  
-   - Запустить приложение ещё раз (второе окно).  
-   - Выбрать **Роль: Клиент**, ввести **IP сервера** (например `127.0.0.1`) и порт (тот же, что у хоста).  
-   - Нажать **«Подключиться»**.  
-   - Появится экран «В лобби»: список игроков (Host, Player 1), у клиента кнопка **«Назад»**.
-
-3. **Старт игры**  
-   - Хост нажимает **«В игру»**.  
-   - У **обоих** игроков закрывается лобби и запускается игра (`multiplayer_main(net, role)`).
-
-### Сценарий для игрока (mobile / Kivy)
-
-- Запуск через `s.run(..., platform="kivy", multiplayer=True, multiplayer_use_lobby=True)` или Kivy-билд.
-- Окно лобби и сама игра работают внутри одного Kivy-приложения (SpritePro рендерится в Kivy-виджет).
-- Каждый процесс/билд даёт **одного** игрока; для локальных тестов мультиплеера используйте несколько устройств/эмуляторов (по одному клиенту на процесс) **или автоспавн процессов по `clients` (см. ниже)**.
-
-Если указать `multiplayer_clients=1`, такой запуск можно рассматривать как «build‑режим» (один экземпляр клиента, без автоспавна дополнительных окон).
-
-### Для разработчика
-
-- **События лобби:** хост рассылает `start_game` при нажатии «В игру»; клиент при получении `start_game` тоже переходит в игру. Кнопка «Назад» закрывает соединение и возвращает к экрану настройки.
-- **Очистка UI:** лобби реализовано как `MultiplayerLobbyScene(s.Scene)` и обновляется через `update()`. При выходе из лобби вызывается `on_exit()`: все спрайты лобби (кнопки, поля ввода, текст, в том числе дочерние `text_sprite`) снимаются с регистрации, в игре не остаётся элементов лобби.
-- **Использование без run():** можно вызвать лобби вручную после `get_screen()` и передать колбэк перехода в игру:
-
-```python
-from spritePro.readyScenes import run_multiplayer_lobby
-
-# pygame / desktop
-s.get_screen((480, 540), "Лобби")
-run_multiplayer_lobby(lambda net, role: your_multiplayer_main(net, role))
-
-# Kivy / mobile
-run_multiplayer_lobby(
-    lambda net, role: your_multiplayer_main(net, role),
-    window_size=(480, 540),
-    title="Лобби",
-    platform="kivy",
-)
-```
-
-Если игра уже запускается через `s.run(...)`, то для нового кода обычно удобнее перейти на `s.run(..., multiplayer=True)` и использовать `s.networking.run(...)` только как низкоуровневый runner.
-
-- **Константа события:** `from spritePro.readyScenes import EVENT_START_GAME` — имя события `"start_game"` для согласования с своей логикой.
-
-## Режимы запуска run()
-
-- **use_lobby=True** (в коде)  
-  - desktop / pygame: одно окно с лобби: настройка (имя, хост/клиент, порт, IP), подключение, roster; у хоста кнопки «Назад» и «В игру», у клиента «Назад».  
-  - mobile / Kivy: одно окно с лобби внутри Kivy-приложения; `size` из `s.run(...)` переиспользуется для окна лобби.
-  - если `platform="kivy"` и `multiplayer_clients>1`, SpritePro поднимает несколько процессов Kivy с лобби (по одному игроку на процесс) — удобно для локального теста мультиплеера на ПК.
-- `--server` — только сервер.
-- `--host_mode` — сервер + клиент в одном процессе.
-- `--quick` — быстрый запуск (хост + второй клиент).
-- `--host` / `--port` — адрес и порт.
-- `--clients` — общее число окон в quick (хост + клиенты).
-- `--entry` — функция входа (`multiplayer_main` или `module:function`).
-- `--tick_rate` — тикрейт сервера (только для режима `--server`, по умолчанию 30).
-- `--net_debug` — сетевой debug в консоль.
-- `--client_spawn_delay` — задержка (сек) перед запуском каждого клиента в `--quick`.
-
-Пример изменения тикрейта сервера:
-
-```bash
-python your_game.py --server --tick_rate 20
-```
-
-## Типовая схема работы
-
-1. Клиент отправляет входные данные или состояние (`event="input"` или `event="pos"`).
-1. Сервер принимает и пересылает сообщения всем участникам (relay).
-1. Клиенты применяют обновления в своей игровой логике.
-
-Рекомендуется:
-
-- Отправлять сообщения 10–20 раз в секунду, а не каждый кадр.
-- Использовать `poll()` в каждом игровом тике, чтобы не копить очередь.
-- Отдельно синхронизировать события (`shoot`, `hit`, `start`) и состояние.
-
-## Частые ошибки и советы
-
-- `host="0.0.0.0"` — только для сервера (bind), клиент должен подключаться к IP.
-- Не забывайте вызывать `net.connect()` до `send()`.
-- `run()` не работает в интерактивной консоли — нужен файл.
-- Если `poll()` не вызывается, сообщения копятся в очереди.
 
 ## Лучшие практики
 
-### Что можно отправлять по сети (примитивы JSON)
+### Что отправлять
 
-Сообщения сериализуются в **JSON**. В `data` можно передавать только то, что умеет JSON:
+JSON-примитивы: числа, строки, списки, словари, bool, None. Объекты (Vector2, спрайты) — конвертировать: `list(pos)` → `[x, y]`.
 
-- **Числа** — `int`, `float`
-- **Строки** — `str`
-- **Списки и словари** — вложенные структуры из перечисленного
-- **Булевы** — `True` / `False`
-- **Пусто** — `None` (в JSON будет `null`)
-
-Объекты вроде `Vector2`, спрайтов, классов — **нельзя** отправлять как есть. Конвертируйте в примитивы: позиция → `list(pos)` или `[pos.x, pos.y]`, состояние → `dict` с полями. На приёме вы получаете уже числа/списки/словари — приводить к `float()` не нужно.
-
-### Позиция удалённого игрока: один список, обновление на месте
-
-Один список на удалённую позицию и обновление через срез — не пересоздаём объект и не теряем ссылку для `set_position()`. Позицию удобно отправлять списком: на приёме одно присваивание. `get_world_position()` возвращает `Vector2`; он итерируем, поэтому подойдёт `list(pos)`:
+### Позиция удалённого игрока
 
 ```python
-# Отправка: pos — Vector2 из get_world_position(), list(pos) → [x, y]
+# Отправка
 ctx.send_every("pos", {"pos": list(pos)}, 0.05)
 
-# Приём: один буфер, обновляем на месте
-remote_pos = [x0, y0]
+# Приём — один буфер, обновление на месте
+remote_pos = [600.0, 300.0]
 for msg in ctx.poll():
     if msg.get("event") == "pos":
-        data = msg.get("data", {})
-        remote_pos[:] = data.get("pos", [0, 0])
+        remote_pos[:] = msg.get("data", {}).get("pos", remote_pos)
 other.set_position(remote_pos)
 ```
 
-По умолчанию при отсутствии ключа можно подставить предыдущее значение: `data.get("pos", remote_pos)` — тогда при пропуске пакета позиция не дёрнется. Вариант с полями `{"x": pos.x, "y": pos.y}` тоже допустим; на приёме тогда `remote_pos[:] = [data.get("x", 0), data.get("y", 0)]`.
+### Детерминированный рандом
 
-### Данные из JSON — уже нужные типы
+```python
+s.multiplayer.init_context(net, role, seed=42)
+ctx = s.multiplayer_ctx
+value = ctx.random.randint(1, 10)
+```
 
-После `json.loads` поля приходят как числа, строки, списки, словари. Приводить к `float()` или `int()` вручную не нужно — используйте значения как есть: `data.get("x", 0)`, `data.get("sender_id")`.
-
-### Значения по умолчанию при разборе payload
-
-- `data.get("key", default)` — если ключа нет или событие пришло без поля, подставится `default`. Для позиции удобны `0` или текущее значение (`remote_pos[0]`).
-- Для вложенных структур: `data.get("scores", self.scores)` — не перезаписываем локальное состояние, если в сообщении пусто.
-- Если вы сами всегда отправляете полный payload (например, `pos` с `x`, `y`, `sender_id`), на приёме можно не проверять на `None` — присваивайте `other_id = data.get("sender_id")` и при отображении обработайте `other_id is None` (например, показать «?»).
-
-### Троттлинг позиции
-
-Используйте `ctx.send_every("pos", {"pos": list(pos)}, interval)` вместо `ctx.send("pos", ...)` в каждом кадре — так вы ограничите частоту отправки (например, 20 раз/сек при `interval=0.05`) и снизите нагрузку на сеть.
-
-## Debug‑режим мультиплеера (консоль)
-
-Включите вывод отправки/получения сообщений:
+## Debug-режим
 
 ```python
 server = s.NetServer(debug=True)
 client = s.NetClient("127.0.0.1", 5050, debug=True)
 ```
 
-Или при запуске:
-
-```bash
-python your_game.py --net_debug
-```
-
-Логи выводятся в консоль. Дополнительно при использовании `run()` или при заданной переменной окружения `SPRITEPRO_NET_LOG_TAG` сетевые сообщения пишутся в файлы в каталоге **spritepro_logs/** (создаётся рядом со скриптом): `debug_net_<tag>.log` с тегами `host`, `client_0`, `client_1` и т.д. В строках лога указывается callsite. Критические ошибки (FATAL) дублируются в этот файл и в `s.debug_log_error`. Вывод в оверлей — через `net_log_to_overlay()`.
-
-## MultiplayerContext (глобальный контекст)
-
-Чтобы не создавать вручную глобальные переменные `NET/ROLE`,
-используйте контекст:
-
-```python
-import spritePro as s
-
-def multiplayer_main(net: s.NetClient, role: str):
-    _ = s.multiplayer.init_context(net, role, debug=False)
-    ctx = s.multiplayer_ctx
-    # ctx.send("ready", {...})
-    # for msg in ctx.poll(): ...
-
-s.run(multiplayer=True, multiplayer_entry=multiplayer_main)
-```
-
-### Кто такой «этот процесс» (наш компьютер)
-
-Код `multiplayer_main` выполняется **в одном из процессов** — в том же окне, что открылось при запуске. Этот процесс и есть «наш компьютер»: мы не «получаем» его с сервера, мы в нём уже находимся. Чтобы понять, хост мы или клиент и какой у нас номер, используйте поля контекста после `init_context()`.
-
-### Поля контекста и возможные значения
-
-| Поле / метод | За что отвечает | Возможные значения |
-|--------------|-----------------|--------------------|
-| `ctx.client_id` | Числовой ID этого участника. Уникален в сессии. | `0` — хост; `1`, `2`, … — клиенты (назначаются сервером по порядку подключения). |
-| `ctx.role` | Роль процесса в сети. | `"host"` — процесс с поднятым сервером (одно окно); `"client"` — обычный клиент; `"server"` — только сервер без игры (контекст не создаётся). |
-| `ctx.is_host` | Является ли этот процесс хостом. | `True` — мы хост, `False` — мы клиент. Удобно для ветвления логики («если хост — рассылаю roster»). |
-| `ctx.state` | Произвольный словарь для глобального состояния. | Любой dict, общий на весь процесс. |
-| `ctx.seed` / `ctx.random` | Детерминированный рандом для мультиплеера. | См. раздел «Детерминированный рандом». |
-| `ctx.send(event, data)` | Отправка сообщения в сеть. | — |
-| `ctx.poll()` | Получение входящих сообщений. | Список dict с полями `event`, `data`. |
-| `ctx.send_every(event, data, interval)` | Отправка не чаще чем раз в `interval` секунд. | — |
-
-Роль задаётся при запуске: `run()` передаёт в `multiplayer_main` аргумент `role` в зависимости от режима (`--host_mode`, `--quick`, `--server`). Контекст только отражает уже выбранную роль.
-
-### Отображаемое имя участника (name)
-
-В примерах часто встречается переменная вроде `name = "host" if ctx.is_host else f"client_{client_index + 1}"`. Это локально выбранное имя для этого процесса.
-
-Если используете встроенное лобби (`use_lobby=True`), то имя из поля в лобби отправляется в сеть через `join`, а хост включает его в `roster`. После получения `roster` в `MultiplayerContext` заполняются:
-- `ctx.get_player_ids()` (или `ctx.state["player_ids"]`)
-- `ctx.players` / `ctx.state["players"]` (словарь `id -> данные`), где вы обычно храните `{"name": ...}`.
-
-### Как отличить своего игрока от чужих (цвет, камера)
-
-«Наш» экземпляр игры — это **этот процесс**: мы не получаем его по сети, мы в нём. В этом процессе один спрайт обновляется от **локального ввода** (клавиатура, мышь) и его позиция **отправляется** в сеть — это «я». Остальные спрайты обновляются из `ctx.poll()` — это «другие». Цвет задаём в коде: свой — один (например синий), чужие — другой (красный).
-
-```python
-ctx = s.multiplayer_ctx
-me = s.Sprite("", (40, 40), (200, 300))    # двигаем мы, шлём позицию в сеть
-other = s.Sprite("", (40, 40), (600, 300)) # позицию получаем из ctx.poll()
-
-# В этом процессе «я» всегда один и тот же — тот, кого мы контролируем.
-MY_COLOR = (70, 120, 220)    # синий
-OTHER_COLOR = (220, 70, 70)  # красный
-me.set_color(MY_COLOR)
-other.set_color(OTHER_COLOR)
-
-# В игровом цикле: движение me от s.input, отправка ctx.send("pos", ...);
-# other.set_position(...) из данных, пришедших в ctx.poll().
-```
-
-У каждого участника в своём окне «я» синий, «другие» красные — так и задумано: в своём экземпляре игры свой персонаж выделен. Для нескольких чужих игроков храните словарь `others[client_id]` и задайте им один цвет «чужой» или разные по `client_id`.
-
-### Детерминированный рандом
-
-По умолчанию контекст использует фиксированный сид `1337`, чтобы у всех клиентов
-случайные значения совпадали.
-
-Если нужно задать свой сид:
-
-```python
-_ = s.multiplayer.init_context(net, role, seed=42)
-ctx = s.multiplayer_ctx
-
-# или позже
-s.multiplayer.set_seed(42)
-
-rng = s.multiplayer.get_random()
-value = rng.randint(1, 10)
-```
-
-### Что такое send_every
-
-`send_every(event, data, interval)` — это встроенный лимитер отправки.
-Он гарантирует, что событие не будет отправляться чаще, чем раз в `interval` секунд.
-Удобно для позиции:
-
-```python
-ctx.send_every("pos", {"x": pos.x, "y": pos.y}, 0.05)
-```
+Или флаг: `python your_game.py --net_debug`
 
 ## Ограничения
 
-- Нет предсказания, компенсации лагов и валидации на сервере.
-- Нет шифрования, авторизации и защиты от читов.
-- Модель relay подходит для прототипов, но не для боевых игр.
+- Нет предсказания, компенсации лагов и валидации на сервере
+- Нет шифрования и авторизации
+- Подходит для прототипов, не для боевых игр
 
-Для более сложных проектов используйте собственный сетевой слой
-или расширяйте текущий с авторитетным сервером и валидацией.
+## Демо
+
+```bash
+python -m spritePro.demoGames.local_multiplayer_demo --quick
+python -m spritePro.demoGames.three_clients_move_demo --quick
+```

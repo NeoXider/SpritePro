@@ -18,9 +18,7 @@ import spritePro as s
 from spritePro.readyScenes import ChatScene, ChatStyle
 
 
-def multiplayer_main(net: s.NetClient, role: str) -> None:
-    s.multiplayer.init_context(net, role)
-
+def multiplayer_main() -> None:
     def setup() -> None:
         s.scene.add_scene("chat", ChatScene)
         s.scene.set_scene_by_name("chat", recreate=True)

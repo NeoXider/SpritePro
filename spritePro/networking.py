@@ -493,6 +493,12 @@ def run(
         net.connect()
         func = _find_entry(entry)
         try:
+            try:
+                import spritePro.multiplayer as _mp
+                _mp.init_context(net, role)
+            except Exception:
+                pass
+
             _call_entry(func, net, role, color)
         except Exception as e:
             tag = os.environ.get("SPRITEPRO_NET_LOG_TAG", "net")
@@ -587,20 +593,26 @@ def run(
 
         platform_env = os.environ.get("SPRITEPRO_PLATFORM", "pygame")
 
-        # Для Kivy + use_lobby и clients>1 поднимаем несколько процессов с лобби
+        # Для use_lobby и clients>1 поднимаем несколько процессов с лобби
         # (как для quick-режима), но без назначения ролей заранее.
         if (
-            platform_env.lower().strip() == "kivy"
-            and clients > 1
+            clients > 1
             and not os.environ.get("SPRITEPRO_LOBBY_SPAWNED")
         ):
             script = _get_script_path()
             base_env = os.environ.copy()
             base_env["SPRITEPRO_LOBBY_SPAWNED"] = "1"
-            base_env["SPRITEPRO_PLATFORM"] = "kivy"
             for idx in range(clients - 1):
                 env_child = base_env.copy()
                 env_child["SPRITEPRO_NET_LOG_TAG"] = f"lobby_client_{idx}"
+                # Spread out lobby windows if using Pygame/desktop
+                if platform_env.lower().strip() in {"pygame", "desktop"}:
+                    positions = [
+                        "520,40",  # client 1 (next to parent at 40,40)
+                        "980,40",  # client 2
+                        "520,600", # client 3
+                    ]
+                    env_child["SPRITEPRO_WINDOW_POS"] = positions[idx % len(positions)]
                 subprocess.Popen([sys.executable, str(script)], env=env_child)
             os.environ["SPRITEPRO_LOBBY_SPAWNED"] = "1"
 

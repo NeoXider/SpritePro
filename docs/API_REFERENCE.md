@@ -1,4 +1,4 @@
-# 📚 API Reference — SpritePro v3.5
+# 📚 API Reference — SpritePro v3.5.0
 
 **Полная справка по всем классам, функциям и методам библиотеки**
 

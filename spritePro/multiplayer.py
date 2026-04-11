@@ -116,16 +116,36 @@ class MultiplayerContext:
         self.send(event, data, group=group)
         return True
 
-    def poll(self, max_messages: int = 100) -> Iterable[NetMessage]:
+    def poll(self, max_messages: int = 100, ignore_local: bool = True) -> Iterable[NetMessage]:
+        """Возвращает список входящих сообщений из очереди.
+        
+        Args:
+            max_messages (int): Максимальное число сообщений за один вызов.
+            ignore_local (bool): Если True (по умолчанию), отфильтровывает собственные пакеты клиента.
+                Это особенно полезно для Хоста, который получает свои же пакеты обратно от локального сервера.
+        """
         messages = list(self.net.poll(max_messages))
         if self.server is not None:
             server_msgs = self.server.poll(max_messages)
-            for _, msg in server_msgs:
+            for msg in server_msgs:
                 messages.append(msg)
+                
+        result = []
         for msg in messages:
             self._handle_internal(msg)
             self.debug.log("traffic", "recv", msg.get("event"), msg.get("data", {}))
-        return messages
+            
+            data = msg.get("data")
+            is_local = False
+            if isinstance(data, dict):
+                sender_id = data.get("sender_id")
+                if sender_id is not None and sender_id == self.client_id:
+                    is_local = True
+                    
+            if not (ignore_local and is_local):
+                result.append(msg)
+                
+        return result
 
     def _handle_internal(self, msg: NetMessage) -> None:
         event = msg.get("event")

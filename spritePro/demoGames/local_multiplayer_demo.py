@@ -44,9 +44,8 @@ import spritePro as s  # noqa: E402
 
 
 class LocalMultiplayerScene(s.Scene):
-    def __init__(self, net: s.NetClient, role: str) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        s.multiplayer.init_context(net, role)
         self.ctx = s.multiplayer_ctx
         self.speed = 240.0
         self.tick_rate = 60
@@ -95,9 +94,9 @@ class LocalMultiplayerScene(s.Scene):
         self.other_label.set_position((other_pos.x, other_pos.y - 40))
 
 
-def main(net: s.NetClient, role: str) -> None:
+def main() -> None:
     s.run(
-        scene=lambda: LocalMultiplayerScene(net, role),
+        scene=LocalMultiplayerScene,
         size=(800, 600),
         title="SpritePro Multiplayer Demo",
         fps=60,
@@ -106,11 +105,8 @@ def main(net: s.NetClient, role: str) -> None:
 
 
 if __name__ == "__main__":
-    lobby_enabled = "--lobby" in sys.argv
-    filtered_argv = [arg for arg in sys.argv[1:] if arg != "--lobby"]
     s.run(
         multiplayer=True,
         multiplayer_entry=main,
-        multiplayer_argv=filtered_argv,
-        multiplayer_use_lobby=lobby_enabled,
+        multiplayer_use_lobby=False,
     )

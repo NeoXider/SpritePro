@@ -36,7 +36,7 @@ class TextSprite(Sprite):
 
     def __init__(
         self,
-        text: str,
+        text: str = "",
         font_size: int = 24,
         color: Tuple[int, int, int] = (255, 255, 255),
         pos: Tuple[int, int] = (0, 0),

@@ -11,7 +11,7 @@
     },
     "objects": [
         {
-            "id": "6307fe70",
+            "id": "1d2a2b5f",
             "name": "anim_sprite",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -43,7 +43,7 @@
             }
         },
         {
-            "id": "caaa1702",
+            "id": "3ad542be",
             "name": "mover",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -75,7 +75,7 @@
             }
         },
         {
-            "id": "ef30c6fd",
+            "id": "91a0045a",
             "name": "toggle_obj",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -107,7 +107,7 @@
             }
         },
         {
-            "id": "14ad5bab",
+            "id": "ef38ab00",
             "name": "button",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -139,7 +139,7 @@
             }
         },
         {
-            "id": "eed14b69",
+            "id": "5cb2b2da",
             "name": "hint",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -171,7 +171,7 @@
             }
         },
         {
-            "id": "84938b6a",
+            "id": "555e2dc7",
             "name": "label",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -203,7 +203,7 @@
             }
         },
         {
-            "id": "c34083b8",
+            "id": "2fd4d182",
             "name": "timer_label",
             "sprite_path": "",
             "sprite_shape": "rectangle",
@@ -235,7 +235,7 @@
             }
         },
         {
-            "id": "92ce3cf6",
+            "id": "7a923fe0",
             "name": "toggle",
             "sprite_path": "",
             "sprite_shape": "rectangle",

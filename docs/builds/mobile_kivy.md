@@ -1,98 +1,24 @@
 # Mobile (Мобильная разработка)
 
-`SpritePro` сам управляет кадром и сам отрисовывает игру, поэтому для `Kivy` важнее не переписать игру, а просто дать движку другой render target и другой host loop. Теперь это встроено в API.
-
 ## Главная идея
 
-Одна и та же игра может запускаться так:
+Одна и та же игра запускается на desktop и mobile:
 
 ```python
-s.run(scene=MyScene, platform="pygame")
-s.run(scene=MyScene, platform="kivy")
+s.run(scene=MyScene, platform="pygame")   # Desktop
+s.run(scene=MyScene, platform="kivy")     # Mobile
 ```
 
-То есть `Kivy` стал способом запуска, а не отдельной ручной интеграцией.
-
-## Новый простой API
-
-- `spritePro.run(...)` — единая точка входа для desktop и `Kivy`
-- `spritePro.run_kivy(...)` — короткий алиас для `Kivy`
-- `spritePro.run_kivy_hybrid(...)` — high-level запуск hybrid-приложения: Kivy UI + встроенная область игры
-- `spritePro.create_kivy_widget(...)` — создать SpritePro как обычный `Kivy`-виджет
-- `spritePro.attach_surface(surface)` — подключение внешней поверхности
-- `spritePro.update_embedded(...)` — один кадр без `pygame.display.update()`
-- `spritePro.mobile.run_kivy_app(...)` — низкоуровневый запуск, если нужна ручная настройка host-приложения
-
-## Установка mobile-зависимостей
-
-Если вы ставите библиотеку из `pip`:
+## Установка
 
 ```bash
 pip install "spritepro[kivy]"
 ```
 
-Если вы работаете из исходников:
-
-```bash
-pip install -e ".[kivy]"
-```
-
-## Full-screen по умолчанию
-
-Сейчас режим по умолчанию для `Kivy` остаётся простым:
-
-```python
-s.run(scene=MyScene, platform="kivy")
-```
-
-То есть вся игра занимает приложение целиком.
-
-## Ориентация экрана
-
-Для desktop-preview ориентация обычно проверяется просто размерами окна:
-
-- portrait: `360x640`, `412x915`, `800x1280`
-- landscape: `640x360`, `1280x720`
-
-Для Android APK ориентация задаётся на уровне `buildozer.spec` или через CLI:
-
-```bash
-python -m spritePro.cli --android . --android-orientation landscape
-python -m spritePro.cli --android . --android-orientation portrait
-python -m spritePro.cli --android . --android-orientation auto
-```
-
-Что это значит:
-
-- `landscape` — режим по умолчанию
-- `portrait` — фиксированный портретный режим
-- `auto` — автоповорот устройства
-
-Технически `auto` в Android-конфиге записывается как `orientation = all`.
-
-## Hybrid режим: Kivy UI + встроенная игра
-
-Если нужен верхний бар, кнопка `Back`, меню на `Kivy` и отдельная игровая область, используйте:
-
-```python
-s.run_kivy_hybrid(...)
-```
-
-или:
-
-```python
-game_widget = s.create_kivy_widget(...)
-```
-
-Подробная документация и примеры:
-
-- [kivy_hybrid.md](kivy_hybrid.md)
-
-## Минимум строк для Scene-игры
+## Минимальный пример
 
 ```python
 import spritePro as s
-
 
 class MyScene(s.Scene):
     def __init__(self):
@@ -100,312 +26,68 @@ class MyScene(s.Scene):
         player = s.Sprite("", (80, 80), (200, 200), scene=self)
         player.set_rect_shape((80, 80), (80, 220, 255), border_radius=24)
 
-
-s.run(
-    scene=MyScene,
-    title="My SpritePro Game",
-    fill_color=(20, 20, 30),
-    platform="kivy",
-)
+s.run(scene=MyScene, title="My Game", fill_color=(20, 20, 30), platform="kivy")
 ```
 
-## Минимум строк для setup-игры без Scene
+## Полноэкранный запуск
 
 ```python
-import spritePro as s
-
-
-def setup():
-    player = s.Sprite("", (90, 90), s.WH_C)
-    player.set_rect_shape((90, 90), (255, 180, 80), border_radius=24)
-
-
-s.run(
-    setup,
-    title="My SpritePro Game",
-    fill_color=(20, 20, 30),
-    platform="kivy",
-)
+s.run(scene=MyScene, platform="kivy")
 ```
 
-## Как перевести старую игру
+## Hybrid: Kivy UI + игра
 
-Было:
+Если нужен верхний бар, кнопка Back, меню:
 
 ```python
-s.get_screen((800, 600), "Game")
-s.set_scene(MyScene())
-
-while True:
-    s.update(fill_color=(20, 20, 30))
+s.run_kivy_hybrid(scene=MyScene, root_builder=build_root, ...)
 ```
 
-Стало:
+Подробнее: [kivy_hybrid.md](kivy_hybrid.md)
 
-```python
-s.run(
-    scene=MyScene,
-    size=(800, 600),
-    title="Game",
-    fill_color=(20, 20, 30),
-    platform="kivy",
-)
-```
+## Пути к ассетам
 
-Для desktop достаточно заменить `platform="kivy"` на `platform="pygame"` или просто не указывать его.
-
-## Мобильное управление
-
-Самый простой вариант — экранные `Button` в `screen_space`:
-
-```python
-left = s.Button("", (110, 110), (110, s.WH.y - 110), text="LEFT", scene=self)
-left.set_screen_space(True)
-
-if left.rect.collidepoint(s.input.mouse_pos) and s.input.is_mouse_pressed(1):
-    player.rect.x -= 6
-```
-
-Это работает и мышью на desktop, и касанием внутри `Kivy`.
-
-## Пути к ассетам: делайте явно через `Path(__file__)`
-
-Если игра должна одинаково работать в `pygame` и `kivy`, не полагайтесь на текущую рабочую папку и не пишите пути вроде `"spritePro\\demoGames\\Sprites\\hero.png"` или `"assets/player.png"` как "магическую" строку без привязки к файлу.
-
-Правильный и явный вариант:
+Используйте `Path(__file__)` для корректных путей:
 
 ```python
 from pathlib import Path
-import spritePro as s
-
-
-ASSETS_DIR = Path(__file__).resolve().parent / "assets" / "images"
-
-
-def asset_path(name: str) -> str:
-    return str((ASSETS_DIR / name).resolve())
-
-
-class MyScene(s.Scene):
-    def __init__(self):
-        super().__init__()
-        self.player = s.Sprite(
-            asset_path("player.png"),
-            (96, 96),
-            s.WH_C,
-            scene=self,
-        )
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+player = s.Sprite(str(ASSETS_DIR / "player.png"), (96, 96), s.WH_C, scene=self)
 ```
 
-Почему именно так:
-
-- путь считается от текущего `.py` файла, а не от папки, из которой вы запустили Python
-- один и тот же код стабильно работает в `pygame`, `kivy` и в будущей упаковке проекта
-- это особенно важно для mobile/hybrid-сценариев, где host-приложение может запускать игру не из той директории, на которую вы рассчитывали
-
-Рекомендуемое правило:
-
-- для изображений, звуков, JSON-сцен и шрифтов используйте `Path(__file__).resolve()`
-- передавайте в `SpritePro` уже нормализованный путь через `str(...)`
-
-## Как тестировать на разных экранах
-
-До сборки на телефон полезно прогнать игру на нескольких размерах окна прямо на ПК.
-
-Самый быстрый путь теперь через CLI:
+## Preview на разных экранах
 
 ```bash
 python -m spritePro.cli --preview main.py --platform kivy --screen phone-portrait
-python -m spritePro.cli --preview main.py --platform kivy --screen phone-tall
 python -m spritePro.cli --preview main.py --platform kivy --screen tablet-landscape
-python -m spritePro.cli --preview main.py --platform pygame --size 412x915
 python -m spritePro.cli --list-screen-presets
 ```
 
-Что делает `--preview`:
-
-- запускает указанный `main.py` или папку проекта с `main.py`
-- временно подменяет размер окна
-- может быстро переключать `pygame` / `kivy` для игр на `s.run(...)`
-- добавляет в title подпись вида `[kivy 360x640]`, чтобы не путать окна
-
-Это полезно и для обычной desktop-разработки, если вы не хотите каждый раз открывать слишком большое окно:
-
-- mobile-сцену не нужно проверять только в "нативном" размере устройства
-- для первого прохода обычно достаточно логических окон `360x640`, `412x915`, `640x360`, `1280x720`
-- так легче тестировать layout даже на `Full HD` мониторе, где неудобно держать огромные portrait-окна
-- после этого уже можно свериться с реальным телефоном и понять, не выглядит ли игра слишком мелко на большом дисплее
-
-Важно:
-
-- переключение платформы через CLI рассчитано на современные игры, которые запускаются через `s.run(...)`
-- если проект использует старый ручной цикл с `s.get_screen(...)`, override размера сработает, но автоматическое переключение на `kivy` через CLI не гарантируется
-
-Что происходит при resize в `Kivy`:
-
-- `s.WH` и `s.WH_C` обновляются под новый размер окна/виджета
-- но уже созданные спрайты, панели и текст не перестраиваются автоматически только потому, что когда-то были созданы через `s.WH` или `s.WH_C`
-- если нужен настоящий adaptive layout, пересчитывайте позиции и размеры от текущих `s.WH` / `s.WH_C` после resize
-
-Минимальный пример:
-
-```python
-import spritePro as s
-
-
-class MainScene(s.Scene):
-    def __init__(self):
-        super().__init__()
-        self.player = s.Sprite("", (96, 96), s.WH_C, scene=self)
-        self.player.set_rect_shape((96, 96), (90, 210, 255), border_radius=24)
-
-
-s.run(
-    scene=MainScene,
-    size=(360, 640),
-    title="Mobile Preview",
-    fill_color=(20, 20, 30),
-    platform="kivy",
-)
-```
-
-Полезные размеры для быстрой проверки:
-
-- `size=(360, 640)` — маленький portrait
-- `size=(412, 915)` — высокий portrait
-- `size=(640, 360)` — compact landscape
-- `size=(1280, 720)` — большой landscape / tablet preview
-
-Практика:
-
-- сначала прогоните игру в `platform="pygame"`
-- потом те же размеры прогоните в `platform="kivy"`
-- сравните layout, размер кнопок, позиционирование и touch-friendly UI
-- не ограничивайтесь только одним большим fullscreen-preview, потому что на реальном устройстве при высокой плотности пикселей элементы могут восприниматься мельче
-
-Что проверять:
-
-- опирается ли UI на `s.WH` и `s.WH_C` корректно
-- не обрезаются ли панели, текст и кнопки
-- удобны ли hitbox для пальца
-- не выглядят ли ассеты слишком мелкими или слишком крупными
-- нормально ли игра переживает portrait/landscape-сценарии
-- не осталось ли объектов, которые были один раз выставлены в `__init__` от старого `s.WH_C` и больше не обновляются
-
-## Готовое демо
+## Android сборка
 
 ```bash
-python -m spritePro.demoGames.mobile_orb_collector_demo --pygame
+python -m spritePro.cli --android .
+```
+
+Или вручную:
+
+```bash
+pip install buildozer "cython==0.29.33"
+buildozer init
+buildozer android debug
+```
+
+### buildozer.spec
+
+```ini
+requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
+android.archs = arm64-v8a
+orientation = landscape
+```
+
+## Демо
+
+```bash
 python -m spritePro.demoGames.mobile_orb_collector_demo --kivy
 python spritePro/demoGames/kivy_hybrid_demo.py
 ```
-
-## Демо с `--kivy`
-
-Сейчас в репозитории уже можно запускать через `Kivy` как минимум эти demo:
-
-- `spritePro.demoGames.mobile_orb_collector_demo`
-- `spritePro.demoGames.drag_drop_demo`
-- `spritePro.demoGames.slider_textinput_demo`
-- `spritePro.demoGames.pages_demo`
-- `spritePro.demoGames.builder_demo`
-- `spritePro.demoGames.particle_pool_demo`
-- `spritePro.demoGames.three_clients_move_demo`
-
-Для отдельного hybrid-сценария с внешним `Kivy` UI смотрите:
-
-- `spritePro.demoGames.kivy_hybrid_demo`
-
-Для быстрой Android-сборки через CLI и ручного `Buildozer` смотрите:
-
-- [building_web.md](building_web.md)
-
-## Проверенная Android-конфигурация
-
-Если игра использует `SpritePro` вместе с `pygame` и вы собираете `apk` через `Buildozer`, ориентируйтесь на проверенную связку:
-
-```ini
-requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
-android.archs = arm64-v8a
-```
-
-Коротко почему:
-
-- `python-for-android` с `pygame` заметно стабильнее на `Python 3.10.12`
-- сборка из `WSL/Linux home`, а не из `/mnt/c/...`, уменьшает количество проблем с правами и toolchain
-- для деталей и полного пошагового flow смотрите [building_web.md](building_web.md)
-
-Если вы собираете APK не из опубликованного `spritepro`, а из локальных свежих правок библиотеки, заранее убедитесь, что Android build реально упаковывает актуальный код:
-
-- либо сначала соберите/установите свежий локальный пакет
-- либо явно включите папку `spritePro/` в проект игры перед сборкой
-
-Если APK установился, но поведение на телефоне отличается от desktop-preview, первым делом снимите `adb logcat` и проверьте, нет ли обычного Python traceback внутри mobile-host. Это быстрее, чем пересобирать вслепую.
-
-## Два варианта Android-проверки
-
-Для mobile-разработки полезно держать в голове два разных режима проверки.
-
-### Вариант A. Проверка локальных правок `SpritePro`
-
-Используйте этот путь, если вы меняете саму библиотеку и хотите проверить APK на свежем коде до публикации.
-
-Коротко:
-
-```bash
-pip install -e ".[kivy]"
-python -m build
-```
-
-После этого для Android не полагайтесь только на собранный wheel: надёжнее синхронизировать актуальную папку `spritePro/` прямо в проект игры перед `buildozer android debug`.
-
-Пример:
-
-```bash
-rsync -a --delete /mnt/d/GIT/_fork/SpritePro/spritePro/ ~/MyGame/spritePro/
-cd ~/MyGame
-buildozer android debug
-```
-
-Когда это полезно:
-
-- вы чините Android/Kivy/runtime-баги
-- тестируете непубликованные изменения
-- хотите исключить ситуацию, где APK собрался на старой версии `spritepro`
-
-### Вариант B. Проверка через `pip`
-
-Используйте этот путь, если хотите проверить обычный пользовательский сценарий: игра зависит от опубликованного пакета.
-
-Локальная проверка:
-
-```bash
-pip install "spritepro[kivy]"
-python -m spritePro.cli --preview main.py --platform kivy --screen phone-portrait
-```
-
-Android-проверка:
-
-```ini
-requirements = python3==3.10.12,hostpython3==3.10.12,kivy==2.3.0,pyjnius==1.5.0,pygame,pymunk,spritepro
-android.archs = arm64-v8a
-```
-
-```bash
-cd ~/MyGame
-buildozer android debug
-```
-
-Когда это полезно:
-
-- проверяете релизную версию пакета
-- воспроизводите install-flow пользователя
-- хотите убедиться, что `requirements = ...,spritepro` собираются без локального vendoring
-
-### Что лучше на практике
-
-- для ежедневной разработки библиотеки лучше вариант A
-- для финальной проверки релиза полезно прогнать вариант B
-- если баг проявляется только на телефоне, после сборки сразу снимайте `adb logcat`
-
-Полный пошаговый flow для обоих сценариев: [building.md](building.md)

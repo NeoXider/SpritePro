@@ -89,7 +89,7 @@ class Sprite(pygame.sprite.Sprite):
 
     def __init__(
         self,
-        sprite: str,
+        sprite: str = "",
         size: VectorInput = (50, 50),
         pos: VectorInput = (0, 0),
         speed: float = 0,
