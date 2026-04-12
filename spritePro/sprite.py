@@ -1319,10 +1319,9 @@ class Sprite(pygame.sprite.Sprite):
 
             self._transformed_image = img  # cache the transformed image
 
-            anchor_attr = Anchor.MAP.get(str(self.anchor_key), "center")
-            anchor_pos = getattr(self.rect, anchor_attr)
+            old_center = self.rect.center
             self.rect = self._transformed_image.get_rect()
-            setattr(self.rect, anchor_attr, anchor_pos)
+            self.rect.center = old_center
 
             self._transform_dirty = False
             self._color_dirty = True  # Force color update after transform

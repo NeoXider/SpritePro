@@ -299,7 +299,10 @@ class PhysicsBody:
         is_static = self.config.body_type == BodyType.STATIC
         enabled = getattr(sprite, "visible", getattr(sprite, "active", True))
         scale = getattr(sprite, "scale", 1.0)
-        current_size = (r.width, r.height)
+        # Use the sprite's original (unrotated) size to avoid detecting
+        # size changes caused solely by visual rotation.
+        original_size = getattr(sprite, "size", (r.width, r.height))
+        current_size = (original_size[0], original_size[1])
         position_changed = self._last_center != current_center
         enabled_changed = self.enabled != enabled
         size_changed = self._last_rect_size != current_size or self._last_scale != scale
