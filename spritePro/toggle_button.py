@@ -1,17 +1,12 @@
-import sys
-from pathlib import Path
 import pygame
+from pathlib import Path
 from typing import Tuple, Optional, Callable, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from spritePro.constants import Anchor
+    from .constants import Anchor
 
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent
-sys.path.append(str(parent_dir))
-
-from spritePro.button import Button
-from spritePro.sprite import SpriteSceneInput
+from .button import Button
+from .sprite import SpriteSceneInput
 import spritePro
 
 

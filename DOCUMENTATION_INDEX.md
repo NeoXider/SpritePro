@@ -198,6 +198,7 @@
 **Networking**
 - Минимальные TCP-хелперы, run(), MultiplayerContext
 - **Лобби (use_lobby=True):** подробная инструкция — запуск, сценарий для игрока (хост/клиент, «В игру», «Готов»), для разработчика (события start_game/ready, MultiplayerLobbyScene, очистка UI)
+- **Декораторы (Mirror-style):** `@Command`, `@ClientRpc`, `@NetEvent` и работа с `ctx.get_players()`
 - Файловые логи в spritepro_logs, net_log_to_overlay
 - Примеры мультиплеера
 

@@ -154,3 +154,56 @@ client = s.NetClient("127.0.0.1", 5050, debug=True)
 python -m spritePro.demoGames.local_multiplayer_demo --quick
 python -m spritePro.demoGames.three_clients_move_demo --quick
 ```
+
+## Декораторы (Mirror-style API)
+
+В SpritePro включена система декораторов, вдохновленная Unity Mirror, которая автоматически отправляет и вызывает сетевые функции. Для её работы **обязательно** вызывать `poll()` каждый кадр в основном цикле, так как декораторы регистрируют функции глобально. SpritePro делает это автоматически внутри `s.run()`.
+
+```python
+from spritePro.net_decorators import Command, ClientRpc, NetEvent
+import spritePro as s
+
+# @Command: Вызывается ВЕЗДЕ, но выполняется ТОЛЬКО НА ХОСТЕ.
+@Command
+def request_spawn_bullet(data: dict):
+    # Код выполняется только на сервере. Здесь хост может проверить
+    # есть ли у игрока патроны и т.д.
+    print("Хост получил команду на спавн пули!", data["pos"])
+    
+    # Теперь Хост командует ВСЕМ клиентам отобразить пулю
+    do_spawn_bullet(data)
+
+# @ClientRpc: Вызывается ТОЛЬКО ХОСТОМ, но выполняется У ВСЕХ (включая самого хоста).
+@ClientRpc
+def do_spawn_bullet(data: dict):
+    # Этот код сработает на каждом компьютере
+    print("Создаем спрайт пули на экране в точке:", data["pos"])
+    # s.Sprite(....)
+
+# @NetEvent: Простое событие - рассылается всем, выполняется у всех.
+@NetEvent("player_jumped")
+def on_player_jumped(data: dict):
+    print(f"Игрок прыгнул в точке {data['pos']}")
+
+# Пример отправки:
+# Клиент нажимает ЛКМ и просит хоста выстрелить:
+request_spawn_bullet({"pos": [10, 20]})
+
+# Только Хост должен вызывать ClientRpc, но даже если Клиент попытается вызвать её напрямую,
+# декоратор защитит от ошибки и просто проигнорирует вызов.
+# do_spawn_bullet({"pos": [10, 20]})  # У клиента это будет проигнорировано!
+```
+
+### Дополнительные возможности лобби и `ctx`
+
+Контекст `s.multiplayer_ctx` хранит полезную информацию о подключенных игроках (если вы используете лобби):
+
+```python
+ctx = s.multiplayer_ctx
+if ctx:
+    # Получение всех готовых игроков из лобби в виде словаря:
+    # { client_id(int): {"name": "Player 1", "role": "host", "ready": True, "ip": "127.0.0.1"} }
+    players = ctx.get_players()
+    for pid, pdata in players.items():
+        print(f"[{pid}] {pdata['name']} (Хост: {pdata['role'] == 'host'})")
+```

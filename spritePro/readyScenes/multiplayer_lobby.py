@@ -412,6 +412,19 @@ class MultiplayerLobbyScene(s.Scene):
         self._btn_start_game.set_active(False)
         self._btn_back.set_active(False)
 
+    def _perform_start_game(self) -> None:
+        log_dir = os.environ.get("SPRITEPRO_LOG_DIR", "spritepro_logs")
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+        except OSError:
+            pass
+        tag = "host" if self.role == "host" else "client"
+        s.set_debug_log_file(path=os.path.join(log_dir, f"debug_{tag}.log"), enabled=True)
+        if s.multiplayer_ctx is not None and s.multiplayer_ctx.is_host:
+            s.multiplayer_ctx.send(EVENT_START_GAME)
+        self.on_exit()
+        self._on_start_game(self.net, self.role)
+
     def _show_lobby(self) -> None:
         for sp in self._setup_children:
             sp.set_active(False)
@@ -424,20 +437,7 @@ class MultiplayerLobbyScene(s.Scene):
         self._btn_back.set_active(True)
         self._btn_start_game.set_active(True)
 
-        def _go_game() -> None:
-            log_dir = os.environ.get("SPRITEPRO_LOG_DIR", "spritepro_logs")
-            try:
-                os.makedirs(log_dir, exist_ok=True)
-            except OSError:
-                pass
-            tag = "host" if self.role == "host" else "client"
-            s.set_debug_log_file(path=os.path.join(log_dir, f"debug_{tag}.log"), enabled=True)
-            if s.multiplayer_ctx is not None and s.multiplayer_ctx.is_host:
-                s.multiplayer_ctx.send(EVENT_START_GAME)
-            self.on_exit()
-            self._on_start_game(self.net, self.role)
-
-        self._btn_start_game.on_click(_go_game)
+        self._btn_start_game.on_click(self._perform_start_game)
         self._btn_back.on_click(self._go_back)
 
     def update(self, _dt: float) -> None:
@@ -474,8 +474,7 @@ class MultiplayerLobbyScene(s.Scene):
             event = msg.get("event")
             data = msg.get("data", {})
             if event == EVENT_START_GAME:
-                self.on_exit()
-                self._on_start_game(self.net, self.role)
+                self._perform_start_game()
                 return
             if event == "join":
                 pid = data.get("sender_id")

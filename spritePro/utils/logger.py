@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Callable
 
+_logger = logging.getLogger("spritePro")
+
 
 def _get_spritepro_logger(method_name: str) -> Callable[[str], None] | None:
     try:
@@ -22,8 +24,7 @@ def log_info(*message: object) -> None:
     if handler:
         handler(text)
         return
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    logging.info(text)
+    _logger.info(text)
 
 
 def log_warning(*message: object) -> None:
@@ -33,8 +34,7 @@ def log_warning(*message: object) -> None:
     if handler:
         handler(text)
         return
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    logging.warning(text)
+    _logger.warning(text)
 
 
 def log_error(*message: object) -> None:
@@ -44,5 +44,4 @@ def log_error(*message: object) -> None:
     if handler:
         handler(text)
         return
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    logging.error(text)
+    _logger.error(text)

@@ -1,19 +1,14 @@
 # text_sprite.py
 
 import pygame
-from typing import Tuple, Optional, Union, TYPE_CHECKING
-import sys
 from pathlib import Path
-
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
+from typing import Tuple, Optional, Union, TYPE_CHECKING
 
 import spritePro
-from spritePro.sprite import Sprite, SpriteSceneInput
+from ..sprite import Sprite, SpriteSceneInput
 
 if TYPE_CHECKING:
-    from spritePro.constants import Anchor
+    from ..constants import Anchor
 
 
 _FONT_CACHE: dict[tuple[str | None, int], pygame.font.Font] = {}

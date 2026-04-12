@@ -4,22 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spritepro"
-version = "3.8.0"
+version = "3.9.0"
 authors = [
   { name="NeoXider", email="neoxider@gmail.com" },
 ]
 description = "A high-level cross-platform 2D game framework for Python with desktop, web, and mobile workflows."
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -47,7 +44,7 @@ spritepro = "spritePro.cli:main"
 include = ["spritePro*"]
 
 [tool.ruff]
-target-version = "py37"
+target-version = "py310"
 line-length = 100
 
 [tool.ruff.lint]

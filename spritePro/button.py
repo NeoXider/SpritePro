@@ -1,22 +1,15 @@
-import sys
-from pathlib import Path
 import pygame
+from pathlib import Path
 from typing import Tuple, Optional, Callable, Union, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from spritePro.constants import Anchor
+    from .constants import Anchor
 
-
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent
-sys.path.append(str(parent_dir))
-
-from spritePro.sprite import Sprite, SpriteSceneInput
-from spritePro.components.text import TextSprite
-from spritePro.components.mouse_interactor import MouseInteractor
-from spritePro.constants import Anchor
+from .sprite import Sprite, SpriteSceneInput
+from .components.text import TextSprite
+from .components.mouse_interactor import MouseInteractor
+from .constants import Anchor
 import spritePro
-import random
 
 
 class Button(Sprite):

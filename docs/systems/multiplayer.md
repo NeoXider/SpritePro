@@ -153,11 +153,60 @@ mp.on_player_left = on_player_left
 mp.on_data_received = on_data_received
 ```
 
-## Практические примеры
+## Сетевые декораторы (Mirror-style)
 
-### Простая сетевая игра
+Начиная с версии 3.9.0, в SpritePro внедрена система сетевых декораторов, которая позволяет максимально упростить написание мультиплеерного кода. Эта система вдохновлена Unity Mirror.
+
+Больше не нужно вручную читать `self.ctx.poll()` и писать длинные пакеты `if msg.get("event") == ...`.
+
+### 1. @s.Command
+Указывает, что функция вызывается на Клиенте, но отправляется и **исполняется только на Сервере (Хосте)**. 
+Это идеальное место для проверки правил игры (спавн пули, покупка предмета).
 
 ```python
+import spritePro as s
+
+@s.Command
+def request_spawn_bullet(sender_id, pos, direction):
+    # sender_id 자동으로 подставляется системой (это ID клиента)
+    print(f"Клиент {sender_id} хочет выстрелить из {pos}")
+    # Сервер решает, что можно стрелять, и говорит всем клиентам:
+    do_spawn_bullet_rpc(pos, direction)
+```
+
+### 2. @s.ClientRpc
+Указывает, что функция вызывается на Сервере (Хосте), но отправляется и **исполняется на всех Клиентах**.
+Служит для визуальных эффектов: создание пули, проигрывание звука, обновление счета у всех на экранах.
+
+```python
+@s.ClientRpc
+def do_spawn_bullet_rpc(pos, direction):
+    # Этот код сработает на каждом компьютере
+    bullet = s.Sprite("bullet.png", pos=pos)
+    bullet.velocity = direction
+```
+
+### 3. @s.NetEvent
+Универсальный слушатель. Перехватывает любые сообщения с указанным именем (отправленные через `ctx.send_every` или `ctx.net.send`).
+Обычно используется для частых обновлений, вроде координат.
+
+```python
+@s.NetEvent("sync_pos")
+def on_player_move(sender_id, pos):
+    print(f"Игрок {sender_id} передвинулся в {pos}")
+```
+
+### Доступ к лобби (ctx.players)
+При подключении сервер автоматически ведет список всех игроков. Получить доступ к информации об игроках можно через `s.multiplayer_ctx.players`.
+Это словарь, где ключ — `client_id` (int), а значение — словарь с информацией (например, `name`).
+```python
+# Если мы Хост, выведем список всех, кто в лобби
+if s.multiplayer_ctx.is_host:
+    for cid, info in s.multiplayer_ctx.players.items():
+        print(f"ID: {cid}, Ник: {info.get('name')}")
+```
+
+## Практические примеры
 from spritePro import SpritePro
 from spritePro.multiplayer import MultiplayerManager, NetworkPlayer
 

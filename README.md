@@ -2,9 +2,9 @@
 
 Высокоуровневый 2D game framework на Python (поверх pygame). Desktop, web и mobile из одной кодовой базы.
 
-[![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Open%20Source-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-3.8.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-3.9.0-green.svg)](CHANGELOG.md)
 
 ![Demo](https://github.com/user-attachments/assets/db56e1fd-0db5-4353-945d-c4a31c6b9d7f)
 

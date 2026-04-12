@@ -606,6 +606,18 @@ class GameContext:
             perf_stages["events"] += (time.perf_counter_ns() - stage_started_ns) / 1_000_000.0
 
         stage_started_ns = time.perf_counter_ns()
+        try:
+            import spritePro as s
+            if getattr(s, "multiplayer_ctx", None):
+                s.multiplayer_ctx.update_frame()
+            from .net_decorators import dispatch_net_events
+            dispatch_net_events()
+        except ImportError:
+            pass
+        if perf_enabled and perf_stages is not None:
+            perf_stages["network"] = (time.perf_counter_ns() - stage_started_ns) / 1_000_000.0
+
+        stage_started_ns = time.perf_counter_ns()
         for obj in update_objects:
             self.game.register_update_object(obj)
 

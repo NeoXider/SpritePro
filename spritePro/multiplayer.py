@@ -116,25 +116,27 @@ class MultiplayerContext:
         self.send(event, data, group=group)
         return True
 
-    def poll(self, max_messages: int = 100, ignore_local: bool = True) -> Iterable[NetMessage]:
-        """Возвращает список входящих сообщений из очереди.
-        
-        Args:
-            max_messages (int): Максимальное число сообщений за один вызов.
-            ignore_local (bool): Если True (по умолчанию), отфильтровывает собственные пакеты клиента.
-                Это особенно полезно для Хоста, который получает свои же пакеты обратно от локального сервера.
-        """
-        messages = list(self.net.poll(max_messages))
+    def update_frame(self) -> None:
+        """Считывает сообщения из сети один раз за кадр.
+        Позволяет и декораторам, и ручному ctx.poll() читать сообщения без конфликтов."""
+        messages = list(self.net.poll(500))
         if self.server is not None:
-            server_msgs = self.server.poll(max_messages)
+            server_msgs = self.server.poll(500)
             for msg in server_msgs:
                 messages.append(msg)
                 
-        result = []
+        self._frame_messages = []
         for msg in messages:
             self._handle_internal(msg)
             self.debug.log("traffic", "recv", msg.get("event"), msg.get("data", {}))
-            
+            self._frame_messages.append(msg)
+
+    def poll(self, max_messages: int = 500, ignore_local: bool = True) -> Iterable[NetMessage]:
+        """Возвращает сообщения текущего кадра. Больше не уничтожает их при чтении,
+        позволяя и декораторам, и скриптам читать одни и те же пакеты.
+        """
+        result = []
+        for msg in getattr(self, "_frame_messages", []):
             data = msg.get("data")
             is_local = False
             if isinstance(data, dict):

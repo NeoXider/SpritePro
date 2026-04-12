@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import socket
 import threading
@@ -40,8 +39,6 @@ def _net_log_callsite() -> str:
 
 def _net_log(*message: object) -> None:
     text = " ".join(str(part) for part in message)
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    logging.info(text)
     tag = os.environ.get("SPRITEPRO_NET_LOG_TAG", "net")
     callsite = _net_log_callsite()
     line = f"[{tag}] {text}{callsite}"
@@ -172,19 +169,21 @@ class NetServer:
                 thread.start()
 
     def _handle_client(self, conn: socket.socket) -> None:
-        buffer = ""
+        buffer = bytearray()
         peer = _safe_peer(conn)
         try:
             while self._running:
                 try:
-                    data = conn.recv(1024)
+                    data = conn.recv(4096)
                 except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError, OSError):
                     break
                 if not data:
                     break
-                buffer += data.decode("utf-8", errors="ignore")
-                while "\n" in buffer:
-                    line, buffer = buffer.split("\n", 1)
+                buffer.extend(data)
+                while b"\n" in buffer:
+                    idx = buffer.index(b"\n")
+                    line = buffer[:idx].decode("utf-8", errors="ignore")
+                    buffer = buffer[idx + 1:]
                     msg = _decode_message(line.strip())
                     if msg is None:
                         continue
@@ -194,7 +193,7 @@ class NetServer:
                         )
                     self._queue.put((conn, msg))
                     if self.relay:
-                        self._broadcast_raw(data, exclude=conn)
+                        self._broadcast_raw(line.encode("utf-8") + b"\n", exclude=conn)
                         if self._debug:
                             _net_log(
                                 f"[NetServer:{self._name}] relay from={peer} {_format_message(msg)}"
@@ -313,19 +312,21 @@ class NetClient:
         thread.start()
 
     def _recv_loop(self) -> None:
-        buffer = ""
+        buffer = bytearray()
         assert self._sock is not None
         try:
             while self._running:
                 try:
-                    data = self._sock.recv(1024)
+                    data = self._sock.recv(4096)
                 except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError, OSError):
                     break
                 if not data:
                     break
-                buffer += data.decode("utf-8", errors="ignore")
-                while "\n" in buffer:
-                    line, buffer = buffer.split("\n", 1)
+                buffer.extend(data)
+                while b"\n" in buffer:
+                    idx = buffer.index(b"\n")
+                    line = buffer[:idx].decode("utf-8", errors="ignore")
+                    buffer = buffer[idx + 1:]
                     msg = _decode_message(line.strip())
                     if msg is not None:
                         if self._debug:

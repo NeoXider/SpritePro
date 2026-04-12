@@ -1,12 +1,6 @@
 # spritePro/mouse_interactor.py
 import pygame
 from typing import Callable, Optional, List
-import sys
-from pathlib import Path
-
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
 import spritePro
 
 

@@ -1,17 +1,11 @@
 from typing import Dict, List, Optional, Callable, Sequence, Union
 import math
-import sys
-from pathlib import Path
 
 import pygame
 
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
-
 import spritePro  # noqa: E402
-from spritePro.sprite import SpriteSceneInput  # noqa: E402
-from spritePro.components.tween import TweenManager, EasingType  # noqa: E402
+from ..sprite import SpriteSceneInput  # noqa: E402
+from .tween import TweenManager, EasingType  # noqa: E402
 
 
 def _is_scene_active(scene: SpriteSceneInput) -> bool:

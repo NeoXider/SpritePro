@@ -1,13 +1,7 @@
 from typing import Optional
-import sys
-from pathlib import Path
-
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
 
 import spritePro
-from spritePro.sprite import Sprite
+from ..sprite import Sprite
 
 
 class Page:

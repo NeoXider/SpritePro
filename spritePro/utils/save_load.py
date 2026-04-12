@@ -31,8 +31,6 @@ from datetime import datetime
 import logging
 from .logger import log_info
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -316,6 +314,10 @@ class SaveLoadManager:
 
     def _load_pickle(self, filepath: Path) -> Any:
         """Загружает данные из формата Pickle.
+
+        .. warning::
+            pickle.load() может выполнять произвольный код.
+            Не загружайте pickle-файлы из ненадёжных источников.
 
         Args:
             filepath (Path): Путь к файлу для загрузки.

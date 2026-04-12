@@ -44,6 +44,8 @@ class _SignalBase:
             try:
                 handler(**payload)
             except Exception:
+                import traceback
+                traceback.print_exc()
                 continue
 
     def __call__(self, **payload: Any) -> None:

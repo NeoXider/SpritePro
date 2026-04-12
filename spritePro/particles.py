@@ -83,8 +83,8 @@ class ParticleConfig:
     # Image rotation options (degrees)
     align_rotation_to_velocity: bool = False
     image_rotation_range: Optional[Tuple[float, float]] = None
-    angular_velocity_range: Optional[Tuple[float, float]] = (None,)  # deg/sec
-    scale_velocity_range: Optional[Tuple[float, float]] = (None,)  # scale factor per second
+    angular_velocity_range: Optional[Tuple[float, float]] = None  # deg/sec
+    scale_velocity_range: Optional[Tuple[float, float]] = None  # scale factor per second
 
 
 class Particle(spritePro.Sprite):

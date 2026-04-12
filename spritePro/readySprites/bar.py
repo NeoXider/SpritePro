@@ -5,14 +5,8 @@
 Unity's Image.fillAmount.
 """
 
-import sys
 from pathlib import Path
 from typing import Tuple, Optional, Union
-
-# Add parent directory to path for imports
-current_dir = Path(__file__).parent
-parent_dir = current_dir.parent.parent
-sys.path.append(str(parent_dir))
 
 import pygame
 import spritePro as s

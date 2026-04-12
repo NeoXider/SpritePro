@@ -60,7 +60,7 @@ def register_player_serialization():
         player = Player(data["name"], data["level"])
         player.experience = data["experience"]
         player.inventory = data["inventory"]
-        player.position = data["position"]
+        player.position = tuple(data["position"])
         player.stats = data["stats"]
         return player
 
@@ -96,7 +96,7 @@ def demo_basic_operations():
     match = simple_data == loaded_data
     s.debug_log_info(f"   Данные совпадают: {'[OK] Да' if match else '[FAIL] Нет'}")
 
-    s.debug_log_info()
+    s.debug_log_info("")
 
 
 def demo_different_formats():
@@ -142,7 +142,7 @@ move_right=D
         f"   Binary: Сохранено {len(binary_data)} байт, загружено {len(loaded_binary)}"
     )
 
-    s.debug_log_info()
+    s.debug_log_info("")
 
 
 def demo_custom_classes():
@@ -180,7 +180,7 @@ def demo_custom_classes():
     )
     s.debug_log_info(f"   Атрибуты совпадают: {'[OK] Да' if attrs_match else '[FAIL] Нет'}")
 
-    s.debug_log_info()
+    s.debug_log_info("")
 
 
 def demo_advanced_features():
@@ -224,7 +224,7 @@ def demo_advanced_features():
     result = manager.load("nonexistent_file.json", default_value=default_value)
     s.debug_log_info(f"   Результат для несуществующего файла: {result}")
 
-    s.debug_log_info()
+    s.debug_log_info("")
 
 
 def demo_spritepro_objects():
@@ -272,7 +272,7 @@ def demo_spritepro_objects():
     except Exception as e:
         s.debug_log_info(f"   [WARN] Ошибка при работе со спрайтами: {e}")
 
-    s.debug_log_info()
+    s.debug_log_info("")
 
 
 def demo_error_handling():
@@ -298,7 +298,7 @@ def demo_error_handling():
     except s.utils.SaveLoadError as e:
         s.debug_log_info("   [OK] Корректно обработана ошибка доступа")
 
-    s.debug_log_info()
+    s.debug_log_info("")
 
 
 def cleanup_demo_files():
@@ -323,14 +323,14 @@ def cleanup_demo_files():
                 cleaned += 1
 
     s.debug_log_info(f"Очищено файлов: {cleaned}")
-    s.debug_log_info()
+    s.debug_log_info("")
 
 
 def main():
     """Главная функция демонстрации."""
     s.debug_log_info("SpritePro Save/Load System Demo")
     s.debug_log_info("=" * 50)
-    s.debug_log_info()
+    s.debug_log_info("")
 
     try:
         # Запуск всех демонстраций
@@ -342,7 +342,7 @@ def main():
         demo_error_handling()
 
         s.debug_log_info("All demos finished successfully.")
-        s.debug_log_info()
+        s.debug_log_info("")
 
         # Спросить пользователя о очистке (только если явно включено)
         interactive = os.environ.get("SPRITEPRO_DEMO_INTERACTIVE") == "1"

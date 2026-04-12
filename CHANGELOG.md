@@ -5,6 +5,28 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.0]
+
+### Fixed
+- 🐛 **BUG-1: NetServer relay** — сервер пересылал сырой TCP-chunk вместо разобранного сообщения. Теперь ретрансляция строит корректный `line.encode("utf-8") + b"\n"`.
+- 🐛 **BUG-2: ParticleConfig** — `angular_velocity_range` и `scale_velocity_range` имели default `(None,)` вместо `None`, что вызывало `TypeError` при распаковке.
+- 🐛 **BUG-5: EventSignal.send()** — ошибки в обработчиках подписчиков теперь логируются через `traceback.print_exc()` вместо молчаливого `pass`.
+- 🐛 **BUG-6: save_load_demo** — вызовы `s.debug_log_info()` без аргумента заменены на `s.debug_log_info("")`.
+
+### Changed
+- 🔧 **ARCH-1: Удалён `sys.path.append()`** из 8 модулей: `button.py`, `toggle_button.py`, `text.py`, `animation.py`, `mouse_interactor.py`, `pages.py`, `text_fps.py`, `bar.py`. Все импорты переведены на относительные.
+- 🔧 **ARCH-2: Python ≥ 3.10** — `requires-python` обновлён с `>=3.7` до `>=3.10`; удалены классификаторы для Python 3.7–3.9; `ruff target-version` обновлён до `py310`.
+- 🔧 **ARCH-4**: Удалён неиспользуемый `import random` из `button.py`.
+- 🔧 **ARCH-8: logging.basicConfig** — удалён из `save_load.py`, `networking.py`, `utils/logger.py`. Библиотечный код не должен конфигурировать logging.
+
+### Improved
+- ⚡ **OPT-3+OPT-4: Сетевой буфер** — `recv(1024)` → `recv(4096)`, строковая конкатенация → `bytearray.extend()` (O(1) вместо O(n²)) для `NetServer` и `NetClient`.
+
+### Security
+- 🔒 **ARCH-7**: Добавлено предупреждение в docstring `_load_pickle()` о риске произвольного выполнения кода через `pickle.load()`.
+
+---
+
 ## [3.8.0]
 
 ### Added
