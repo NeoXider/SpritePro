@@ -1169,9 +1169,23 @@ class Sprite(pygame.sprite.Sprite):
     def kill(self) -> None:
         """Удаляет спрайт из игры и освобождает все связанные ресурсы.
 
-        Отменяет регистрацию спрайта, удаляет все дочерние спрайты и вызывает
-        родительский метод kill().
+        Отменяет регистрацию спрайта, удаляет физические тела из мира физики,
+        удаляет все дочерние спрайты и вызывает родительский метод kill().
         """
+        # Удаляем физические тела из мира физики
+        bodies = getattr(self, "_physics_bodies", None)
+        if bodies:
+            try:
+                world = spritePro.get_physics_world()
+                for body in list(bodies):
+                    try:
+                        world.remove(body)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            bodies.clear()
+
         if self._game_registered:
             spritePro.unregister_sprite(self)
             self._game_registered = False
