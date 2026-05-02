@@ -5,6 +5,16 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.3]
+
+### Added
+- 📷 **README** — баннер проекта `assets/spritepro-banner.png` в шапке документации.
+
+### Changed
+- 🔧 **Версия библиотеки** — релиз обновлён до `3.9.3`; `spritePro.__version__` синхронизирован с `pyproject.toml`.
+
+---
+
 ## [3.9.2]
 
 ### Fixed
