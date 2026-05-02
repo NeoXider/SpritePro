@@ -44,4 +44,4 @@ s.scene.add_scene("chat", chat)
 ## Связанное
 
 - [Networking](../systems/networking_guide.md) — сетевое взаимодействие
-- [UI](../ui/) — UI компоненты
+- [Layout и UI](../ui/layout_ui.md) — автолейаут и связанные компоненты

@@ -158,11 +158,11 @@ SpritePro автоматически запустит 3 процесса: хос
 
 ## 5. Как устроен автоматический roster
 
-В SpritePro `MultiplayerContext` автоматически поддерживает `ctx.players` — словарь вида `{id: name}`. Его заполняет событие `roster` от сервера. Если вы используете встроенное лобби (`use_lobby=True`), roster обновляется автоматически:
+В SpritePro `MultiplayerContext` автоматически поддерживает `ctx.players` — словарь вида `{id: name}`. Его заполняет событие `roster` от сервера. Если вы используете встроенное лобби (`multiplayer_use_lobby=True`), roster обновляется автоматически:
 
 ```python
 # С встроенным лобби:
-s.run(scene=GameScene, multiplayer=True, use_lobby=True)
+s.run(scene=GameScene, multiplayer=True, multiplayer_use_lobby=True)
 # ctx.players уже заполнен именами из UI лобби
 ```
 

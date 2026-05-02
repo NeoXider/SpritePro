@@ -95,4 +95,4 @@ Button и ToggleButton уже используют MouseInteractor внутри,
 ## См. также
 
 - [Button](button.md)
-- [Sprite](sprite.md)
+- [Sprite](../core/sprite.md)

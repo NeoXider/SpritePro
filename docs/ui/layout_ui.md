@@ -146,4 +146,4 @@ layout.set_debug_borders(False)
 
 ## См. также
 
-- [Sprite](sprite.md)
+- [Sprite](../core/sprite.md)

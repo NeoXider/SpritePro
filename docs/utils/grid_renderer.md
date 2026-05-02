@@ -82,4 +82,4 @@ class CollisionGrid:
 
 ## См. также
 
-- [Sprite](sprite.md)
+- [Sprite](../core/sprite.md)

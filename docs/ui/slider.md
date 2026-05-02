@@ -112,4 +112,4 @@ slider.draw(screen)
 
 - [Button](button.md) — кнопки UI.
 - [TextInput](text_input.md) — поле ввода текста.
-- [Sprite](sprite.md) — базовый класс и параметр `auto_register`.
+- [Sprite](../core/sprite.md) — базовый класс и параметр `auto_register`.

@@ -66,5 +66,5 @@ color = hsv_to_rgb(hue=0.5, saturation=1.0, value=1.0)
 
 ## Связанное
 
-- [Sprite](sprite.md) — использование цветов
-- [Text](text.md) — цвет текста
+- [Sprite](../core/sprite.md) — использование цветов
+- [Text](../ui/text.md) — цвет текста

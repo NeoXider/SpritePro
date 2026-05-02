@@ -223,7 +223,7 @@ from spritePro.readyScenes import MultiplayerLobbyScene
 s.run(
     scene=GameScene,
     multiplayer=True,
-    use_lobby=True,   # ← Встроенное лобби
+    multiplayer_use_lobby=True,   # ← встроенное лобби
     title="My Game",
 )
 ```

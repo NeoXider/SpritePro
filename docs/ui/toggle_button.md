@@ -169,4 +169,4 @@ toggle = s.ToggleButton(
 ## Связанное
 
 - [Button](button.md) — базовый класс
-- [Sprite](sprite.md) — базовый класс
+- [Sprite](../core/sprite.md) — базовый класс

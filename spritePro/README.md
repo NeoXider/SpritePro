@@ -1,4 +1,6 @@
-# SpritePro Level Editor Documentation
+# SpritePro Level Editor (legacy README)
+
+> **Актуальный Sprite Editor** описан в репозитории: [docs/editor/sprite_editor.md](../docs/editor/sprite_editor.md). Ниже — старый текст про отдельный grid-based level editor; интерфейс CLI-редактора и `spawn_scene` см. в документации по ссылке.
 
 ## Overview
 SpritePro Level Editor is a powerful tool for creating and managing game levels by placing sprites on a grid-based layout.

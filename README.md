@@ -109,7 +109,7 @@ player = rt.exact("player").Sprite(speed=5)
 from spritePro.readyScenes import ChatScene, ChatStyle
 import spritePro as s
 
-s.run(scene=ChatScene, multiplayer=True, use_lobby=True, title="Chat")
+s.run(scene=ChatScene, multiplayer=True, multiplayer_use_lobby=True, title="Chat")
 ```
 
 ---
@@ -170,6 +170,7 @@ Web: [docs/builds/building_web.md](docs/builds/building_web.md)
 | Что | Где |
 |-----|-----|
 | Полный индекс | [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) |
+| Оглавление папки `docs/` | [docs/README.md](docs/README.md) |
 | API Reference | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) |
 | Для новичков | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) |
 | Физика | [docs/core/physics_guide.md](docs/core/physics_guide.md) |

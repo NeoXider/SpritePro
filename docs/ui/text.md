@@ -185,5 +185,5 @@ text.set_text("Новый текст!")
 ## Связанное
 
 - [Button](button.md) — текст в кнопках
-- [Sprite](sprite.md) — базовый класс
-- [Animation](animation.md) — анимация текста
+- [Sprite](../core/sprite.md) — базовый класс
+- [Animation](../core/animation.md) — анимация текста

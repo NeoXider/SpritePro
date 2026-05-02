@@ -92,4 +92,4 @@ scroll.set_content_height(len(items) * 50)
 
 ## См. также
 
-- [Layout](layout_ui.md)
+- [Layout](../ui/layout_ui.md)

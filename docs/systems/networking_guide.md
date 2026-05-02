@@ -207,3 +207,11 @@ if ctx:
     for pid, pdata in players.items():
         print(f"[{pid}] {pdata['name']} (Хост: {pdata['role'] == 'host'})")
 ```
+
+---
+
+## См. также
+
+- [Пошаговый курс](../../multiplayer_course/README.md) — уроки 1–11 и пример «крестики-нолики».
+- [Готовые сцены (лобби, чат)](../demo_games/readySprites.md).
+- [Справка по модулю `multiplayer`](multiplayer.md) — низкоуровневые типы; основной сценарий — этот гайд.

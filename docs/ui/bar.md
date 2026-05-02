@@ -94,5 +94,5 @@ python -m spritePro.demoGames.bar_demo
 
 ## См. также
 
-- [Sprite](sprite.md)
+- [Sprite](../core/sprite.md)
 - [Bar с фоном](bar_background.md)

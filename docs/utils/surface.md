@@ -122,5 +122,5 @@ rounded = RoundedSprite("button.png", radius=8)
 
 ## См. также
 
-- [Sprite](sprite.md)
-- [Button](button.md)
+- [Sprite](../core/sprite.md)
+- [Button](../ui/button.md)

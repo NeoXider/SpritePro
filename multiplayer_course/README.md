@@ -1,12 +1,12 @@
 # Курс по мультиплееру на SpritePro 3.8
 
-Курс из 10 уроков: от базового сетевого обмена до полноценной мультиплеерной мини-игры с лобби, счётом и результатами.
+Курс из **11** уроков (папки `1`–`11`): от базового сетевого обмена до полноценной мини-игры, лобби, декораторов `@Command` / `@NetEvent` и продвинутых тем в уроке 10.
 
 Обновлён под **SpritePro 3.8.0**: рекомендуемый запуск через `s.run(..., multiplayer=True)`.
 
 ## Как проходить
 
-1. Идите по порядку: папки `1` → `10`.
+1. Идите по порядку: папки `1` → `11` (урок 10 — продвинутые темы, 11 — сетевые декораторы).
 2. В каждом уроке сначала прочитайте `lesson.md`.
 3. Запустите `example_*.py` — увидите эталонный пример.
 4. Выполните задания в `practice_*.py`.
@@ -43,7 +43,7 @@ python multiplayer_course/2/example_sync_positions.py --net_debug
 | Уровень | Что изучается | Уроки |
 |---------|-------------|-------|
 | **Low-level** | `NetServer`, `NetClient`, `ctx.send()`, `poll()`, JSON | 1–4 |
-| **App-level** | `Scene`, `Button`, `s.run()`, архитектура проекта | 5–10 |
+| **App-level** | `Scene`, `Button`, `s.run()`, архитектура проекта, декораторы | 5–11 |
 
 Ручной цикл `while True: s.update(...)` допустим в учебных low-level примерах. Для полноценных игр используйте `s.run(...)`.
 
@@ -61,6 +61,7 @@ python multiplayer_course/2/example_sync_positions.py --net_debug
 | **8** | Структура проекта | `game_config.py`, модули, хелперы |
 | **9** | Финальный мини-экзамен | Всё вместе: лобби → игра → результат |
 | **10** | Продвинутые темы | LERP, роутинг, снапшоты, dedicated server |
+| **11** | Сетевые декораторы | `@s.NetEvent`, `@s.Command`, `@s.ClientRpc` |
 
 ## Ключевые API
 
@@ -103,7 +104,7 @@ python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py --q
 s.run(
     scene=GameScene,
     multiplayer=True,
-    use_lobby=True,      # Готовый UI лобби
+    multiplayer_use_lobby=True,  # готовый UI лобби
     title="My Game",
 )
 ```

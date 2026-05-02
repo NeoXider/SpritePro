@@ -78,4 +78,4 @@ effects.stop_all()       # Остановить все
 
 ## См. также
 
-- [Camera](sprite.md)
+- [Камера и частицы](../core/camera_and_particles.md)

@@ -51,7 +51,7 @@ from spritePro.layout import (
 - `layout_demo.py` — все 7 типов лейаутов
 - `menu_shop_demo.py` — меню и инвентарь на flex/grid
 
-Подробнее: [layout.md](../ui/layout_ui.md)
+Подробнее: [layout_ui.md](../ui/layout_ui.md)
 
 ---
 
@@ -130,7 +130,7 @@ class MultiplayerScene(s.Scene):
 
 ### Курс по мультиплееру
 
-В `multiplayer_course/` — 10 уроков: обмен сообщениями → синхронизация → лобби → меню → результаты → финальная сборка.
+В `multiplayer_course/` — 11 уроков: обмен сообщениями → синхронизация → лобби → меню → результаты → финальная сборка → продвинутые темы и декораторы.
 
 Подробнее: [networking_guide.md](../systems/networking_guide.md)
 
@@ -177,8 +177,8 @@ class MultiplayerScene(s.Scene):
 |-----|-----|
 | Layout | [docs/ui/layout_ui.md](../ui/layout_ui.md) |
 | Tween, Fluent API | [docs/core/tween_system.md](tween_system.md), [docs/core/tween_presets.md](tween_presets.md) |
-| Networking | [systems/networking_guide.md](systems/networking_guide.md) |
-| Курс мультиплеера | [multiplayer_course/README.md](../multiplayer_course/README.md) |
+| Networking | [networking_guide.md](../systems/networking_guide.md) |
+| Курс мультиплеера | [multiplayer_course/README.md](../../multiplayer_course/README.md) |
 | Демо Layout | `spritePro/demoGames/layout_demo.py` |
 | Демо Fluent Tween | `spritePro/demoGames/fluent_tween_demo.py` |
 | Демо меню/инвентарь | `spritePro/demoGames/menu_shop_demo.py` |

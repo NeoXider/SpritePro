@@ -506,7 +506,7 @@ TCP клиент.
 **Сценарий лобби:**
 ```python
 # Хост
-s.run(scene=MainScene, multiplayer=True, use_lobby=True)
+s.run(scene=MainScene, multiplayer=True, multiplayer_use_lobby=True)
 # Клиент
 s.run(scene=MainScene, multiplayer=True, host="127.0.0.1", port=5050)
 ```
@@ -531,7 +531,7 @@ ChatStyle.color_bg = (18, 20, 28)
 ChatStyle.color_panel = (28, 32, 44)
 ChatStyle.font_size = 16
 
-s.run(scene=ChatScene, multiplayer=True, use_lobby=True)
+s.run(scene=ChatScene, multiplayer=True, multiplayer_use_lobby=True)
 ```
 
 ---

@@ -106,5 +106,5 @@ class FormScene(s.Scene):
 
 - [Button](button.md) — базовая кнопка.
 - [Slider](slider.md) — слайдер.
-- [Input](input.md) — состояние клавиш и мыши.
+- [Ввод (InputState)](../systems/input_system.md) — состояние клавиш и мыши.
 - Модуль **spritePro.input_validation** — `InputType`, `can_add_char`, `filter_chars_for_paste`, `parse_input_value` для типизированного ввода и парсинга (используется TextInput и редактором сцен).

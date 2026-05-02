@@ -74,4 +74,4 @@ for pattern in dangerous_patterns:
 
 ## См. также
 
-- [Input](input_system.md)
+- [Input](../systems/input_system.md)
