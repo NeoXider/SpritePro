@@ -11,6 +11,26 @@ class BuilderDemoScene(s.Scene):
         super().__init__()
         s.enable_debug()
 
+        self.sprite = (
+            s.sprite(r"C:\Git\SpritePro\spritePro\demoGames\Sprites\amogus.png")
+            .size(100,100)
+            .border_radius(20)
+            .alpha(200)
+            .position(0,0)
+            .speed(2)
+            .build()
+        )
+
+        self.hat = (
+            s.sprite(r"")
+            .size(100,10)
+            .border_radius(20)
+            .alpha(200)
+            .position(0,-40)
+            .parent(self.sprite)
+            .build()
+        )
+
         self.player = (
             s.sprite("examples/images/player.png")
             .position(100, 300)
@@ -37,8 +57,8 @@ class BuilderDemoScene(s.Scene):
 
         self.emitter = (
             s.particles()
-            .amount(30)
-            .lifetime(1.0)
+            .amount(1)
+            .lifetime(2.0)
             .speed(100, 300)
             .angle(0, 360)
             .colors([(255, 200, 50), (255, 100, 0), (255, 255, 100)])
@@ -46,12 +66,21 @@ class BuilderDemoScene(s.Scene):
             .gravity(0, 100)
             .position(400, 400)
             .auto_emit(True)
+            .image(r"C:\Git\SpritePro\spritePro\demoGames\Sprites\amogus.png")
             .build()
         )
+        #self.emitter.config.image_scale_range = (0.03, 0.08)
+        self.emitter.config.angular_velocity_range = (-150, 150)
+
 
         s.debug_log_info("All builders demo complete!")
 
     def update(self, dt: float) -> None:
+        self.sprite.handle_keyboard_input()
+        self.hat.color = s.utils.ColorEffects.rainbow(3, )
+        if s.input.was_pressed(s.pygame.K_r):
+            self.sprite.active = not self.sprite.active
+
         if s.input.was_pressed(pygame.K_SPACE):
             particles = self.emitter.emit()
             for p in particles:

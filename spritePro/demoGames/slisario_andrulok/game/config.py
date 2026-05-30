@@ -1,0 +1,41 @@
+from pathlib import Path
+
+import pygame
+
+GAME_ROOT = Path(__file__).resolve().parent.parent
+BG_IMAGE = GAME_ROOT / "images" / "bg.jpg"
+
+WINDOW_SIZE = (1024, 768)
+FPS = 60
+TITLE = "Слизарио"
+FILL_COLOR = (15, 15, 25)
+
+WORLD_WIDTH = 3000
+WORLD_HEIGHT = 3000
+WORLD_RECT = pygame.Rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
+
+HEAD_SIZE = 28
+SEGMENT_SIZE = 22
+SEGMENT_SPACING = 4
+SNAKE_SPEED = 280.0
+INITIAL_LENGTH = 3
+
+FOOD_COUNT = 80
+FOOD_SIZE = 10
+FOOD_COLORS = [
+    (255, 50, 50),
+    (50, 255, 50),
+    (50, 50, 255),
+    (255, 255, 50),
+    (255, 50, 255),
+    (50, 255, 255),
+    (255, 150, 50),
+    (150, 50, 255),
+]
+
+BOT_COUNT = 3
+BOT_SPEED = 220.0
+BOT_INITIAL_LENGTH = 3
+BOT_UPDATE_INTERVAL = 0.15
+BOT_AVOID_WALL_DIST = 150
+BOT_RESPAWN_DELAY = 3.0
