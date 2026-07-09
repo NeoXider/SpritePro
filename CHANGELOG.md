@@ -5,6 +5,23 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.10.0]
+
+### Added
+- 🌐 **Web-поддержка `s.run(...)`** — в браузере (pygbag/wasm, `sys.platform == "emscripten"`)
+  `run()` больше не блокирует вкладку: игровой цикл выполняется кооперативно
+  (`await asyncio.sleep(0)` каждый кадр). `run()` возвращает awaitable (Task или корутину);
+  рекомендуемая форма — `await s.run(...)`, но при уже запущенном event loop (стандартный
+  случай под pygbag) игра стартует и без await. Scene-API теперь работает одним и тем же
+  исходником на desktop и в web.
+
+### Changed
+- 🚧 **Multiplayer в браузере** — `s.run(multiplayer=True)` на web даёт понятный
+  `RuntimeError` (WebAssembly не поддерживает TCP-сокеты) вместо зависания.
+- 🔧 **Версия библиотеки** — релиз обновлён до `3.10.0`.
+
+---
+
 ## [3.9.3]
 
 ### Added
