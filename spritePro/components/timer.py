@@ -138,12 +138,23 @@ class Timer:
         Если неактивен, просто очищает флаг done.
         """
         if self.active:
+            self._elapsed = 0.0
             now = time.monotonic()
             self._start_time = now
             self._next_fire = now + self.duration
         else:
             # неактивный — просто сбросить done
             self.done = False
+
+    def kill(self) -> None:
+        """Останавливает таймер и удаляет его из глобального реестра обновлений."""
+        self.stop()
+        try:
+            import spritePro
+
+            spritePro.unregister_update_object(self)
+        except (ImportError, AttributeError):
+            pass
 
     def update(self, dt: Optional[float] = None) -> None:
         """Обновляет состояние таймера, должен вызываться каждый кадр.

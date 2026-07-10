@@ -632,7 +632,6 @@ class GameContext:
 
         stage_started_ns = time.perf_counter_ns()
         self.game.update(self.screen, dt=self.dt, wh_c=self.WH_C)
-        self.game.draw(self.screen)
         self.scene_manager.draw(self.screen)
         if perf_enabled and perf_stages is not None:
             perf_stages["sprites"] += (time.perf_counter_ns() - stage_started_ns) / 1_000_000.0

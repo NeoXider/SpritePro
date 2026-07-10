@@ -27,9 +27,11 @@ class AssetWatcher:
         """
         self.poll_interval = poll_interval
         self._watched_paths: Dict[str, Dict[str, Any]] = {}
-        self._last_modified: Dict[str, float] = {}
+        # watcher_id -> {путь файла: mtime}
+        self._last_modified: Dict[str, Dict[str, float]] = {}
         self._running = False
         self._callbacks: Dict[str, List[Callable]] = {}
+        self._elapsed = 0.0
 
     def watch(
         self,
@@ -78,9 +80,7 @@ class AssetWatcher:
         """
         self._watched_paths.pop(watcher_id, None)
         self._callbacks.pop(watcher_id, None)
-        for key in list(self._last_modified.keys()):
-            if key.startswith(watcher_id):
-                del self._last_modified[key]
+        self._last_modified.pop(watcher_id, None)
 
     def _scan_files(self, watcher_id: str) -> None:
         """Сканирует файлы и обновляет времена модификации."""
@@ -97,22 +97,32 @@ class AssetWatcher:
 
         pattern = "**/*" if recursive else "*"
 
+        mtimes: Dict[str, float] = {}
         for file_path in path.glob(pattern):
             if file_path.is_file():
                 if extensions and file_path.suffix.lower() not in extensions:
                     continue
-                key = f"{watcher_id}:{file_path}"
                 try:
-                    self._last_modified[key] = file_path.stat().st_mtime
+                    mtimes[str(file_path)] = file_path.stat().st_mtime
                 except OSError:
                     pass
+        self._last_modified[watcher_id] = mtimes
 
     def update(self, dt: Optional[float] = None) -> None:
-        """Проверяет изменения файлов.
+        """Проверяет изменения файлов (не чаще, чем раз в poll_interval секунд).
 
         Args:
-            dt (Optional[float], optional): Delta time (не используется).
+            dt (Optional[float], optional): Delta time. Если None — берется spritePro.dt.
         """
+        if dt is None:
+            try:
+                dt = float(spritePro.dt)
+            except Exception:
+                dt = 0.0
+        self._elapsed += dt
+        if self._elapsed < self.poll_interval:
+            return
+        self._elapsed = 0.0
         for watcher_id in list(self._watched_paths.keys()):
             self._check_changes(watcher_id)
 
@@ -132,6 +142,7 @@ class AssetWatcher:
         pattern = "**/*" if recursive else "*"
         changed = False
 
+        previous = self._last_modified.get(watcher_id, {})
         current_files: Dict[str, float] = {}
 
         for file_path in path.glob(pattern):
@@ -139,24 +150,22 @@ class AssetWatcher:
                 if extensions and file_path.suffix.lower() not in extensions:
                     continue
 
-                key = f"{watcher_id}:{file_path}"
+                key = str(file_path)
                 try:
                     mtime = file_path.stat().st_mtime
                     current_files[key] = mtime
 
-                    if key not in self._last_modified:
+                    if key not in previous or previous[key] < mtime:
                         changed = True
-                    elif self._last_modified[key] < mtime:
-                        changed = True
-                        self._last_modified[key] = mtime
                 except OSError:
                     pass
 
-        removed_keys = set(self._last_modified.keys()) - set(current_files.keys())
-        for key in removed_keys:
-            if key.startswith(watcher_id):
-                changed = True
-                del self._last_modified[key]
+        if set(previous.keys()) - set(current_files.keys()):
+            changed = True
+
+        # Всегда фиксируем актуальное состояние, чтобы новые/удаленные файлы
+        # не вызывали reload на каждой проверке.
+        self._last_modified[watcher_id] = current_files
 
         if changed:
             self._reload(watcher_id)

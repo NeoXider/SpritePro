@@ -249,16 +249,22 @@ def build_web_archive(
         RuntimeError: Если pygbag завершился с ошибкой.
     """
     out = build_web(project_dir, output_dir=output_dir, config=config)
+    timeout_s = 900
     try:
         proc = subprocess.run(
             [sys.executable, "-m", "pygbag", "--build", "--archive", str(out)],
             capture_output=True,
             text=True,
-            timeout=300,
+            timeout=timeout_s,
         )
     except FileNotFoundError as e:
         raise FileNotFoundError(
             "Для сборки архива нужен pygbag. Установите: pip install spritepro[web]"
+        ) from e
+    except subprocess.TimeoutExpired as e:
+        raise RuntimeError(
+            f"pygbag не завершился за {timeout_s} сек. Первая сборка может быть долгой "
+            "(скачивание шаблонов) — проверьте сеть и повторите попытку."
         ) from e
     if proc.returncode != 0:
         raise RuntimeError(

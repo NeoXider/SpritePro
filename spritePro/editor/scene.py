@@ -22,7 +22,7 @@ class Transform:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Transform":
-        return cls(**data)
+        return cls(**{k: data[k] for k in ("x", "y", "rotation", "scale_x", "scale_y") if k in data})
 
     def copy(self) -> "Transform":
         return Transform(
@@ -52,6 +52,7 @@ class SceneObject:
     physics_bounce: float = 0.5
     physics_collision_category: Optional[int] = None
     physics_collision_mask: Optional[int] = None
+    parent: Optional[str] = None
     custom_data: Dict[str, Any] = field(default_factory=dict)
     _active_callbacks: List[Callable[["SceneObject", bool], None]] = field(
         default_factory=list,
@@ -122,6 +123,7 @@ class SceneObject:
             "physics_bounce": self.physics_bounce,
             "physics_collision_category": self.physics_collision_category,
             "physics_collision_mask": self.physics_collision_mask,
+            "parent": self.parent,
             "custom_data": self.custom_data,
         }
 
@@ -152,6 +154,7 @@ class SceneObject:
             physics_bounce=float(data.get("physics_bounce", 0.5)),
             physics_collision_category=data.get("physics_collision_category"),
             physics_collision_mask=data.get("physics_collision_mask"),
+            parent=data.get("parent"),
             custom_data=data.get("custom_data", {}),
         )
 
@@ -172,6 +175,7 @@ class SceneObject:
             physics_bounce=self.physics_bounce,
             physics_collision_category=self.physics_collision_category,
             physics_collision_mask=self.physics_collision_mask,
+            parent=self.parent,
             custom_data=self.custom_data.copy(),
         )
 
@@ -252,9 +256,16 @@ class Scene:
         self._sort_by_z_index()
 
     def remove_object(self, obj_id: str) -> Optional[SceneObject]:
+        """Удаляет объект. Дети удалённого объекта остаются в сцене и освобождаются
+        от родителя (parent сбрасывается) — координаты хранятся в мировых, поэтому
+        они остаются на своих местах."""
         for i, obj in enumerate(self.objects):
             if obj.id == obj_id:
-                return self.objects.pop(i)
+                removed = self.objects.pop(i)
+                for child in self.objects:
+                    if child.parent == obj_id:
+                        child.parent = None
+                return removed
         return None
 
     def get_object(self, obj_id: str) -> Optional[SceneObject]:
@@ -262,6 +273,32 @@ class Scene:
             if obj.id == obj_id:
                 return obj
         return None
+
+    def get_children(self, parent_id: str) -> List[SceneObject]:
+        """Прямые дети объекта (по полю parent)."""
+        return [obj for obj in self.objects if obj.parent == parent_id]
+
+    def get_descendants(self, obj_id: str) -> List[SceneObject]:
+        """Все потомки объекта (рекурсивно), с защитой от циклов."""
+        out: List[SceneObject] = []
+        seen = {obj_id}
+        stack = [obj_id]
+        while stack:
+            current = stack.pop()
+            for obj in self.objects:
+                if obj.parent == current and obj.id not in seen:
+                    seen.add(obj.id)
+                    out.append(obj)
+                    stack.append(obj.id)
+        return out
+
+    def can_set_parent(self, child_id: str, parent_id: Optional[str]) -> bool:
+        """Проверяет, что назначение родителя не создаёт цикл."""
+        if parent_id is None:
+            return True
+        if child_id == parent_id:
+            return False
+        return all(obj.id != parent_id for obj in self.get_descendants(child_id))
 
     def _sort_by_z_index(self) -> None:
         self.objects.sort(key=lambda o: o.z_index)

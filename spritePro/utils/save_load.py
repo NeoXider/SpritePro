@@ -153,6 +153,7 @@ class SaveLoadManager:
         default_file: str = "game_data.json",
         auto_backup: bool = True,
         compression: bool = False,
+        max_backups: int = 5,
     ):
         """Инициализирует SaveLoadManager.
 
@@ -160,10 +161,12 @@ class SaveLoadManager:
             default_file (str, optional): Имя файла по умолчанию для операций сохранения. По умолчанию "game_data.json".
             auto_backup (bool, optional): Создавать ли резервную копию перед перезаписью файлов. По умолчанию True.
             compression (bool, optional): Использовать ли сжатие gzip для файлов. По умолчанию False.
+            max_backups (int, optional): Максимальное число хранимых резервных копий (старые удаляются). По умолчанию 5.
         """
         self.default_file = Path(default_file)
         self.auto_backup = auto_backup
         self.compression = compression
+        self.max_backups = max(1, int(max_backups))
         self._lock = threading.Lock()
 
         # Ensure directory exists
@@ -210,10 +213,27 @@ class SaveLoadManager:
         try:
             shutil.copy2(filepath, backup_path)
             logger.info(f"Created backup: {backup_path}")
+            self._rotate_backups(filepath)
             return backup_path
         except Exception as e:
             logger.warning(f"Failed to create backup: {e}")
             return None
+
+    def _rotate_backups(self, filepath: Path) -> None:
+        """Удаляет самые старые резервные копии сверх лимита max_backups.
+
+        Args:
+            filepath (Path): Путь к основному файлу, для которого хранятся копии.
+        """
+        try:
+            backup_pattern = f"{filepath.stem}.backup_*{filepath.suffix}"
+            backups = sorted(filepath.parent.glob(backup_pattern))
+            excess = len(backups) - self.max_backups
+            for old_backup in backups[:max(0, excess)]:
+                old_backup.unlink()
+                logger.info(f"Removed old backup: {old_backup}")
+        except Exception as e:
+            logger.warning(f"Failed to rotate backups: {e}")
 
     def _save_json(self, data: Any, filepath: Path) -> None:
         """Сохраняет данные в формате JSON.
@@ -639,6 +659,7 @@ class PlayerPrefs:
 
     _instance = None
     _initialized = False
+    _cache: Optional[Dict[str, Any]] = None  # in-memory кеш данных файла настроек
 
     def __new__(cls, *args, **kwargs):
         """Создает или возвращает единый экземпляр класса."""
@@ -677,22 +698,31 @@ class PlayerPrefs:
     def _load_data(cls) -> Dict[str, Any]:
         """Загружает данные настроек.
 
+        Файл читается с диска один раз, далее используется in-memory кеш,
+        который обновляется после каждого set/delete/clear.
+
         Returns:
             Dict[str, Any]: Словарь с данными настроек.
         """
+        if cls._cache is not None:
+            return dict(cls._cache)
         data = cls._get_instance()._manager.load(default_value={})
-        if isinstance(data, dict):
-            return dict(data)
-        return {}
+        if not isinstance(data, dict):
+            data = {}
+        cls._cache = dict(data)
+        return dict(data)
 
     @classmethod
     def _save_data(cls, data: Dict[str, Any]) -> None:
         """Сохраняет данные настроек.
 
+        Запись на диск выполняется сразу (надёжность), кеш обновляется.
+
         Args:
             data (Dict[str, Any]): Данные для сохранения.
         """
         cls._get_instance()._manager.save(data)
+        cls._cache = dict(data)
 
     @classmethod
     def _get_value(cls, key: str, default: Any) -> Any:

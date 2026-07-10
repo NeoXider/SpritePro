@@ -20,7 +20,7 @@ if str(project_root) not in sys.path:
 import spritePro as s
 
 
-SCENE_PATH = project_root / "tools" / "sprite_editor" / "assets" / "New Scene.json"
+SCENE_PATH = project_root / "spritePro" / "editor" / "assets" / "New Scene.json"
 
 
 class RuntimeSceneDemo(s.Scene):

@@ -259,11 +259,9 @@ def handle_click(editor, pos) -> bool:
         editor._update_active_slider(pos.x)
         return True
     if snap_rect and snap_rect.collidepoint(pos.x, pos.y):
-        editor._toggle_scene_setting("snap_to_grid")
-        editor._save_state()
+        editor._toggle_snap()
         return True
     if labels_rect and labels_rect.collidepoint(pos.x, pos.y):
-        editor._toggle_scene_setting("grid_labels_visible")
-        editor._save_state()
+        editor._toggle_grid_labels()
         return True
     return False

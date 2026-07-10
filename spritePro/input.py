@@ -77,7 +77,12 @@ class InputState:
                     self.mouse_pos = (int(event.pos[0]), int(event.pos[1]))
                     saw_mouse_event = True
                 if hasattr(event, "rel"):
-                    self.mouse_rel = (int(event.rel[0]), int(event.rel[1]))
+                    # Аккумулируем: за кадр может прийти несколько MOUSEMOTION,
+                    # перезапись оставила бы только последнюю дельту
+                    self.mouse_rel = (
+                        self.mouse_rel[0] + int(event.rel[0]),
+                        self.mouse_rel[1] + int(event.rel[1]),
+                    )
             elif event.type == pygame.MOUSEWHEEL:
                 self.mouse_wheel = (event.x, event.y)
 

@@ -15,6 +15,7 @@ PERF_STAGE_ORDER = (
     "input",
     "events",
     "plugins",
+    "network",
     "scenes",
     "sprites",
     "debug",
@@ -67,6 +68,9 @@ class SpriteProGame:
         self.camera_target: pygame.sprite.Sprite | None = None
         self.camera_offset = Vector2()
         self.update_objects: list = []
+        # id() зарегистрированных объектов для O(1)-проверки в
+        # register_update_object (вызывается каждый кадр из _run_frame)
+        self._update_object_ids: set = set()
         self.camera_shake = CameraShake(self)
         self.register_update_object(self.camera_shake)
         self.physics_world = PhysicsWorld(gravity=980.0)
@@ -370,10 +374,11 @@ class SpriteProGame:
         Args:
             obj: Объект для обновления (TweenManager, Animation, Timer и т.д.).
         """
-        if any(getattr(entry, "obj", entry) is obj for entry in self.update_objects):
+        if id(obj) in self._update_object_ids:
             return
         supports_dt = self._detect_update_signature(obj)
         self.update_objects.append(_UpdateEntry(obj=obj, supports_dt=supports_dt))
+        self._update_object_ids.add(id(obj))
 
     def unregister_update_object(self, obj) -> None:
         """Отменяет регистрацию объекта для автоматического обновления.
@@ -385,6 +390,7 @@ class SpriteProGame:
             entry_obj = getattr(entry, "obj", entry)
             if entry_obj is obj:
                 self.update_objects.remove(entry)
+        self._update_object_ids.discard(id(obj))
 
     def get_sprites_by_class(self, sprite_class: type, active_only: bool = True) -> List:
         """Получает список всех спрайтов указанного класса.
@@ -427,23 +433,19 @@ class SpriteProGame:
             except (AttributeError, NameError):
                 dt = None
 
-        for entry in self.update_objects:
+        # Копия списка: твины/таймеры могут снять себя с регистрации прямо
+        # внутри update(), мутация во время итерации пропускала бы соседей.
+        # Сигнатура (supports_dt) уже определена при регистрации — ловить
+        # TypeError нельзя: он маскировал бы ошибки в теле update().
+        for entry in list(self.update_objects):
             obj = getattr(entry, "obj", entry)
             supports_dt = getattr(entry, "supports_dt", False)
             if not hasattr(obj, "update"):
                 continue
-            try:
-                if supports_dt and dt is not None:
-                    obj.update(dt)
-                else:
-                    obj.update()
-            except TypeError:
-                try:
-                    obj.update(dt)
-                except TypeError:
-                    import spritePro
-
-                    spritePro.debug_log_error(f"Error update object {obj}")
+            if supports_dt and dt is not None:
+                obj.update(dt)
+            else:
+                obj.update()
 
         self.all_sprites.update(*args, **kwargs)
 
@@ -805,18 +807,14 @@ class SpriteProGame:
         dt_value = 0.0 if dt is None else float(dt)
         self._update_debug_logs(dt_value)
 
-        logs_changed = bool(self._debug_logs)
-        if logs_changed:
-            self._debug_needs_redraw = True
+        # Экран заливается каждый кадр, поэтому overlay рисуется каждый кадр:
+        # прежняя флаговая «оптимизация» приводила к исчезновению маркера
+        # камеры и логов после первого кадра
+        self._ensure_debug_fonts()
+        self._draw_camera_marker(surface, wh_c)
 
-        if self._debug_needs_redraw:
-            self._ensure_debug_fonts()
-            self._draw_camera_marker(surface, wh_c)
-
-            if self.debug_logs_enabled:
-                self._draw_debug_logs(surface)
-
-            self._debug_needs_redraw = False
+        if self.debug_logs_enabled:
+            self._draw_debug_logs(surface)
 
     def draw_debug(self, surface: pygame.Surface, wh_c: Vector2, dt: float | None = None) -> None:
         """Рисует полный debug overlay (сетка + маркеры + логи)."""

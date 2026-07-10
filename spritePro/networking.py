@@ -10,6 +10,14 @@ from typing import Any, Dict, Optional, Tuple, List
 
 NetMessage = Dict[str, Any]
 
+# Позиции окон клиентов в quick-режиме (client 0..3).
+_CLIENT_WINDOW_POSITIONS = [
+    "980,40",  # client 0 (top-right)
+    "40,640",  # client 1 (bottom-left)
+    "980,640",  # client 2 (bottom-right)
+    "510,340",  # client 3 (center-ish)
+]
+
 
 def _is_debug_enabled(value: Optional[bool]) -> bool:
     if value is None:
@@ -19,21 +27,25 @@ def _is_debug_enabled(value: Optional[bool]) -> bool:
 
 def _net_log_callsite() -> str:
     """Источник вызова для сетевого лога (файл:строка функция), как в debug_log."""
-    import inspect
+    import sys
 
-    stack = inspect.stack()
     try:
-        for frame_info in stack[2:]:
-            filename = frame_info.filename
+        frame = sys._getframe(2)
+    except ValueError:
+        return ""
+    try:
+        while frame is not None:
+            filename = frame.f_code.co_filename
             if (
                 os.path.sep + "spritePro" + os.path.sep in filename
                 or "networking" in os.path.basename(filename)
             ):
+                frame = frame.f_back
                 continue
             basename = os.path.basename(filename)
-            return f" ({basename}:{frame_info.lineno} {frame_info.function})"
+            return f" ({basename}:{frame.f_lineno} {frame.f_code.co_name})"
     finally:
-        del stack
+        del frame
     return ""
 
 
@@ -82,6 +94,14 @@ def _safe_peer(conn: socket.socket) -> str:
         return "unknown"
 
 
+def _enable_nodelay(sock: socket.socket) -> None:
+    """Отключает алгоритм Нейгла (TCP_NODELAY) — критично для мелких игровых пакетов."""
+    try:
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    except OSError:
+        pass
+
+
 def _encode_message(event: str, data: Optional[Dict[str, Any]] = None) -> bytes:
     payload = {"event": event, "data": data or {}}
     return (json.dumps(payload) + "\n").encode("utf-8")
@@ -122,10 +142,46 @@ class NetServer:
         self._server: Optional[socket.socket] = None
         self._clients: List[socket.socket] = []
         self._client_ids: Dict[socket.socket, int] = {}
-        self._next_client_id = 0
+        # id 0 зарезервирован за хостом (MultiplayerContext хоста всегда
+        # использует client_id=0 и игнорирует assign_id), поэтому подключающимся
+        # клиентам выдаются id начиная с 1 — коллизия с хостом невозможна
+        # независимо от порядка подключения.
+        self._next_client_id = 1
         self._lock = threading.Lock()
+        self._send_locks: Dict[socket.socket, threading.Lock] = {}
         self._queue: "Queue[Tuple[Optional[socket.socket], NetMessage]]" = Queue()
         self._running = False
+        self._stats_lock = threading.Lock()
+        self._messages_sent = 0
+        self._messages_received = 0
+        self._bytes_sent = 0
+        self._bytes_received = 0
+
+    @property
+    def clients_count(self) -> int:
+        """Количество подключенных клиентов."""
+        with self._lock:
+            return len(self._clients)
+
+    def _count_sent(self, nbytes: int, messages: int = 1) -> None:
+        with self._stats_lock:
+            self._messages_sent += messages
+            self._bytes_sent += nbytes
+
+    def _count_received(self, nbytes: int, messages: int = 0) -> None:
+        with self._stats_lock:
+            self._messages_received += messages
+            self._bytes_received += nbytes
+
+    def get_stats(self) -> Dict[str, int]:
+        """Возвращает счётчики трафика сервера (потокобезопасно)."""
+        with self._stats_lock:
+            return {
+                "messages_sent": self._messages_sent,
+                "messages_received": self._messages_received,
+                "bytes_sent": self._bytes_sent,
+                "bytes_received": self._bytes_received,
+            }
 
     def start(self) -> None:
         """Запускает сервер в отдельном потоке."""
@@ -146,11 +202,13 @@ class NetServer:
                     conn, _ = server.accept()
                 except OSError:
                     break
+                _enable_nodelay(conn)
                 with self._lock:
                     self._clients.append(conn)
                     client_id = self._next_client_id
                     self._next_client_id += 1
                     self._client_ids[conn] = client_id
+                    self._send_locks[conn] = threading.Lock()
                 self._send_to(conn, "assign_id", {"id": client_id})
                 self._queue.put(
                     (
@@ -179,6 +237,7 @@ class NetServer:
                     break
                 if not data:
                     break
+                self._count_received(len(data))
                 buffer.extend(data)
                 while b"\n" in buffer:
                     idx = buffer.index(b"\n")
@@ -186,6 +245,13 @@ class NetServer:
                     buffer = buffer[idx + 1:]
                     msg = _decode_message(line.strip())
                     if msg is None:
+                        continue
+                    self._count_received(0, messages=1)
+                    if msg.get("event") == "_ping":
+                        # Служебный пинг: отвечаем напрямую отправителю и не
+                        # ретранслируем остальным клиентам.
+                        ping_data = msg.get("data") or {}
+                        self._send_to(conn, "_pong", {"t": ping_data.get("t")})
                         continue
                     if self._debug:
                         _net_log(
@@ -203,6 +269,7 @@ class NetServer:
                 if conn in self._clients:
                     self._clients.remove(conn)
                 client_id = self._client_ids.pop(conn, None)
+                self._send_locks.pop(conn, None)
             if client_id is not None:
                 self._queue.put(
                     (None, {"event": "client_disconnected", "data": {"client_id": client_id}})
@@ -219,20 +286,38 @@ class NetServer:
         data: Optional[Dict[str, Any]] = None,
     ) -> None:
         raw = _encode_message(event, data)
+        with self._lock:
+            send_lock = self._send_locks.get(conn)
         try:
-            conn.sendall(raw)
+            if send_lock is not None:
+                with send_lock:
+                    conn.sendall(raw)
+            else:
+                conn.sendall(raw)
+            self._count_sent(len(raw))
         except OSError:
             pass
 
     def _broadcast_raw(self, raw: bytes, exclude: Optional[socket.socket] = None) -> None:
+        # Под общим lock только копируем список клиентов; сам sendall делаем
+        # вне общего lock, но под per-socket lock, чтобы конкурентные записи
+        # в один сокет не перемешивали JSON-строки.
         with self._lock:
-            for client in list(self._clients):
-                if client is exclude:
-                    continue
-                try:
+            targets = [
+                (client, self._send_locks.get(client))
+                for client in self._clients
+                if client is not exclude
+            ]
+        for client, send_lock in targets:
+            try:
+                if send_lock is not None:
+                    with send_lock:
+                        client.sendall(raw)
+                else:
                     client.sendall(raw)
-                except OSError:
-                    pass
+                self._count_sent(len(raw))
+            except OSError:
+                pass
 
     def broadcast(self, event: str, data: Optional[Dict[str, Any]] = None) -> None:
         """Отправляет событие всем подключенным клиентам."""
@@ -259,11 +344,21 @@ class NetServer:
         return messages
 
     def stop(self) -> None:
-        """Останавливает сервер и закрывает сокет."""
+        """Останавливает сервер и закрывает сокет (включая клиентские)."""
         self._running = False
         if self._server is not None:
             try:
                 self._server.close()
+            except OSError:
+                pass
+        with self._lock:
+            clients = list(self._clients)
+            self._clients.clear()
+            self._client_ids.clear()
+            self._send_locks.clear()
+        for conn in clients:
+            try:
+                conn.close()
             except OSError:
                 pass
 
@@ -293,20 +388,72 @@ class NetClient:
         self._sock: Optional[socket.socket] = None
         self._queue: "Queue[NetMessage]" = Queue()
         self._running = False
+        self._stats_lock = threading.Lock()
+        self._messages_sent = 0
+        self._messages_received = 0
+        self._bytes_sent = 0
+        self._bytes_received = 0
 
-    def connect(self) -> None:
-        """Подключается к серверу и запускает поток приема."""
+    @property
+    def connected(self) -> bool:
+        """True, пока соединение активно и поток приема работает."""
+        return self._running and self._sock is not None
+
+    def _count_sent(self, nbytes: int, messages: int = 1) -> None:
+        with self._stats_lock:
+            self._messages_sent += messages
+            self._bytes_sent += nbytes
+
+    def _count_received(self, nbytes: int, messages: int = 0) -> None:
+        with self._stats_lock:
+            self._messages_received += messages
+            self._bytes_received += nbytes
+
+    def get_stats(self) -> Dict[str, int]:
+        """Возвращает счётчики трафика клиента (потокобезопасно)."""
+        with self._stats_lock:
+            return {
+                "messages_sent": self._messages_sent,
+                "messages_received": self._messages_received,
+                "bytes_sent": self._bytes_sent,
+                "bytes_received": self._bytes_received,
+            }
+
+    def connect(self, max_attempts: int = 10, retry_delay: float = 0.3) -> None:
+        """Подключается к серверу и запускает поток приема.
+
+        При ConnectionRefusedError/TimeoutError повторяет попытку
+        (в quick-режиме клиенты могут стартовать раньше сервера).
+        """
         if self._running:
             return
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self._sock.connect((self.host, self.port))
-        except OSError as e:
-            _net_log(
-                f"[NetClient:{self._name}] Ошибка подключения к {self.host}:{self.port}: {e}. "
-                "Запустите с --quick (хост+клиенты) или сначала сервер: --server."
-            )
-            raise
+        import time
+
+        for attempt in range(1, max(1, max_attempts) + 1):
+            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                self._sock.connect((self.host, self.port))
+                _enable_nodelay(self._sock)
+                break
+            except (ConnectionRefusedError, TimeoutError) as e:
+                try:
+                    self._sock.close()
+                except OSError:
+                    pass
+                self._sock = None
+                if attempt >= max(1, max_attempts):
+                    _net_log(
+                        f"[NetClient:{self._name}] Ошибка подключения к {self.host}:{self.port}: {e}. "
+                        "Запустите с --quick (хост+клиенты) или сначала сервер: --server."
+                    )
+                    raise
+                time.sleep(retry_delay)
+            except OSError as e:
+                _net_log(
+                    f"[NetClient:{self._name}] Ошибка подключения к {self.host}:{self.port}: {e}. "
+                    "Запустите с --quick (хост+клиенты) или сначала сервер: --server."
+                )
+                raise
         self._running = True
         thread = threading.Thread(target=self._recv_loop, daemon=True)
         thread.start()
@@ -322,6 +469,7 @@ class NetClient:
                     break
                 if not data:
                     break
+                self._count_received(len(data))
                 buffer.extend(data)
                 while b"\n" in buffer:
                     idx = buffer.index(b"\n")
@@ -329,6 +477,7 @@ class NetClient:
                     buffer = buffer[idx + 1:]
                     msg = _decode_message(line.strip())
                     if msg is not None:
+                        self._count_received(0, messages=1)
                         if self._debug:
                             _net_log(f"[NetClient:{self._name}] recv {_format_message(msg)}")
                         self._queue.put(msg)
@@ -345,7 +494,9 @@ class NetClient:
         if not self._sock:
             return
         try:
-            self._sock.sendall(_encode_message(event, data))
+            raw = _encode_message(event, data)
+            self._sock.sendall(raw)
+            self._count_sent(len(raw))
             if self._debug:
                 _net_log(
                     f"[NetClient:{self._name}] send {_format_message({'event': event, 'data': data or {}})}"
@@ -424,7 +575,7 @@ def run(
             )
         return func
 
-    def _call_entry(func, net, role: str, color: str) -> None:
+    def _call_entry(func, net, role: str) -> None:
         params = list(inspect.signature(func).parameters.values())
         if len(params) >= 2:
             func(net, role)
@@ -466,13 +617,9 @@ def run(
                 index = 0
         else:
             index = 0
-        positions = [
-            "980,40",  # client 0 (top-right)
-            "40,640",  # client 1 (bottom-left)
-            "980,640",  # client 2 (bottom-right)
-            "510,340",  # client 3 (center-ish)
+        os.environ["SPRITEPRO_WINDOW_POS"] = _CLIENT_WINDOW_POSITIONS[
+            index % len(_CLIENT_WINDOW_POSITIONS)
         ]
-        os.environ["SPRITEPRO_WINDOW_POS"] = positions[index % len(positions)]
 
     def _run_worker(
         role: str, bind_host: str, connect_host: str, color: str, debug_enabled: bool
@@ -500,7 +647,7 @@ def run(
             except Exception:
                 pass
 
-            _call_entry(func, net, role, color)
+            _call_entry(func, net, role)
         except Exception as e:
             tag = os.environ.get("SPRITEPRO_NET_LOG_TAG", "net")
             fatal_msg = f"FATAL {type(e).__name__}: {e}"
@@ -551,13 +698,9 @@ def run(
         env["SPRITEPRO_NET_LOG_TAG"] = f"client_{index}"
         env["SPRITEPRO_LOG_DIR"] = str(script.parent / "spritepro_logs")
         if "SPRITEPRO_WINDOW_POS" not in env:
-            positions = [
-                "980,40",  # client 0 (top-right)
-                "40,640",  # client 1 (bottom-left)
-                "980,640",  # client 2 (bottom-right)
-                "510,340",  # client 3 (center-ish)
+            env["SPRITEPRO_WINDOW_POS"] = _CLIENT_WINDOW_POSITIONS[
+                index % len(_CLIENT_WINDOW_POSITIONS)
             ]
-            env["SPRITEPRO_WINDOW_POS"] = positions[index % len(positions)]
         subprocess.Popen([sys.executable, str(script)], env=env)
 
     env_role = os.environ.get("SPRITEPRO_NET_ROLE")
@@ -588,7 +731,7 @@ def run(
 
         def _on_lobby_start(net_client: NetClient, role_str: str) -> None:
             func = _find_entry(entry)
-            _call_entry(func, net_client, role_str, "red")
+            _call_entry(func, net_client, role_str)
 
         from spritePro.readyScenes.multiplayer_lobby import run_multiplayer_lobby
 
@@ -665,6 +808,11 @@ def run(
         server = NetServer(host=host, port=port, debug=net_debug, name="server")
         server.start()
         while True:
+            # Дренируем очередь сообщений сервера, чтобы она не росла бесконечно.
+            drained = server.poll()
+            if net_debug:
+                for msg in drained:
+                    _net_log(f"[NetServer:server] drained {_format_message(msg)}")
             time.sleep(1.0 / server_tick_rate)
 
     script = _get_script_path()

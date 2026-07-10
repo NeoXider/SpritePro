@@ -93,7 +93,8 @@ def update_move(editor: "SpriteEditor") -> None:
     dx = editor.mouse_world_pos.x - editor.drag_start.x
     dy = editor.mouse_world_pos.y - editor.drag_start.y
 
-    for obj in editor.selected_objects:
+    # В стартовых позициях есть и потомки выделенных объектов — они двигаются той же дельтой.
+    for obj in editor.scene.objects:
         if obj.locked:
             continue
         start = editor._drag_object_starts.get(obj.id)
@@ -145,7 +146,7 @@ def update_scale(editor: "SpriteEditor") -> None:
         start = editor._drag_object_starts.get(obj.id)
         if start is None:
             continue
-        if editor_sprite_types.is_primitive(getattr(obj, "sprite_shape", "image")):
+        if editor_sprite_types.uses_pixel_size(getattr(obj, "sprite_shape", "image")):
             if uniform:
                 scale = max(0.04, 1.0 + delta)
                 new_w = start["width"] * scale
@@ -198,7 +199,12 @@ def update_active_slider(editor: "SpriteEditor", mouse_x: float) -> None:
 
 def capture_drag_state(editor: "SpriteEditor") -> None:
     editor._drag_object_starts = {}
+    targets = list(editor.selected_objects)
     for obj in editor.selected_objects:
+        targets.extend(editor.scene.get_descendants(obj.id))
+    for obj in targets:
+        if obj.id in editor._drag_object_starts:
+            continue
         data = {
             "x": obj.transform.x,
             "y": obj.transform.y,
@@ -206,7 +212,7 @@ def capture_drag_state(editor: "SpriteEditor") -> None:
             "scale_x": obj.transform.scale_x,
             "scale_y": obj.transform.scale_y,
         }
-        if editor_sprite_types.is_primitive(getattr(obj, "sprite_shape", "image")):
+        if editor_sprite_types.uses_pixel_size(getattr(obj, "sprite_shape", "image")):
             data["width"] = float(obj.custom_data.get("width", 100))
             data["height"] = float(obj.custom_data.get("height", 100))
         editor._drag_object_starts[obj.id] = data

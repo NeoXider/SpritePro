@@ -71,9 +71,33 @@ TCP-клиент.
 | `ctx.client_id` | ID участника (0 = хост) |
 | `ctx.role` | `"host"` или `"client"` |
 | `ctx.is_host` | `True` если хост |
+| `ctx.is_connected` | `True` если соединение активно |
 | `ctx.send(event, data)` | Отправка |
 | `ctx.poll()` | Получение сообщений |
 | `ctx.send_every(event, data, interval)` | Отправка не чаще interval секунд |
+| `ctx.ping_ms` | Сглаженный RTT в мс (среднее по последним 5 замерам) |
+| `ctx.last_ping_ms` | Последний замер RTT в мс |
+| `ctx.get_net_stats()` | Словарь сетевой статистики (см. ниже) |
+
+### Пинг и статистика
+
+Пинг измеряется автоматически: раз в `ping_interval` секунд (по умолчанию 1.0,
+настраивается через `init_context(net, role, ping_interval=...)`) клиент шлёт
+служебное сообщение `_ping`, сервер отвечает напрямую отправителю. Служебные
+`_ping`/`_pong` не попадают в `ctx.poll()` и обработчики декораторов.
+
+```python
+ctx = s.multiplayer_ctx
+print(f"ping: {ctx.ping_ms:.0f} ms")
+
+stats = ctx.get_net_stats()
+# {'ping_ms': 20.6, 'last_ping_ms': 20.5, 'client_id': 1, 'is_host': False,
+#  'connected': True, 'clients_count': 2, 'messages_sent': 21,
+#  'messages_received': 21, 'bytes_sent': 1375, 'bytes_received': 1039}
+```
+
+На всех сокетах включён `TCP_NODELAY` — мелкие игровые сообщения уходят без
+задержки Nagle-алгоритма.
 
 ## Режимы запуска
 

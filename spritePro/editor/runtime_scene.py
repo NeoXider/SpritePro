@@ -156,11 +156,24 @@ class SpawnedObject:
             callback(self, value)
 
     def to_button(self, **kwargs) -> s.Button:
+        """Возвращает Button объекта, переопределяя ТОЛЬКО явно переданные параметры.
+
+        Если объект создан в редакторе как кнопка (настоящий spritePro.Button),
+        кнопка настраивается на месте; без аргументов возвращается как есть.
+        Иначе (legacy) спрайт-заглушка заменяется новым Button.
+        """
+        sprite = self.sprite
+        if isinstance(sprite, s.Button):
+            self._apply_button_overrides(sprite, kwargs)
+            return sprite
         p = self.placement()
         pos = kwargs.pop("pos", p["pos"])
         size = kwargs.pop("size", p["size"])
         scene = kwargs.pop("scene", p["scene"])
         sorting_order = kwargs.pop("sorting_order", p["sorting_order"])
+        cd = self.data.custom_data or {}
+        if "text" not in kwargs and cd.get("text"):
+            kwargs["text"] = str(cd["text"])
         btn = s.Button("", size, pos, scene=scene, sorting_order=sorting_order, **kwargs)
         btn.screen_space = p["screen_space"]
         if hasattr(self.sprite, "set_active"):
@@ -168,7 +181,60 @@ class SpawnedObject:
         self.sprite = btn
         return btn
 
+    def _apply_button_overrides(self, btn: s.Button, kwargs: dict) -> None:
+        if "on_click" in kwargs:
+            btn.on_click(kwargs.pop("on_click"))
+        label = btn.text_sprite
+        if "text" in kwargs:
+            label.set_text(str(kwargs.pop("text")))
+        text_size = kwargs.pop("text_size", None)
+        font_name = kwargs.pop("font_name", None)
+        if text_size is not None or font_name is not None:
+            label.set_font(
+                font_name if font_name is not None else label.font_path,
+                int(text_size) if text_size is not None else label.font_size,
+            )
+        if "text_color" in kwargs:
+            label.set_color(kwargs.pop("text_color"))
+        if "base_color" in kwargs:
+            btn.set_base_color(kwargs.pop("base_color"))
+            btn.current_color = btn.base_color
+        if "pos" in kwargs:
+            btn.set_position(kwargs.pop("pos"))
+        if "size" in kwargs:
+            btn.set_size(kwargs.pop("size"))
+        if "sorting_order" in kwargs:
+            btn.set_sorting_order(int(kwargs.pop("sorting_order")))
+        for key, value in kwargs.items():
+            setattr(btn, key, value)
+
     def to_text_sprite(self, **kwargs) -> s.TextSprite:
+        """Возвращает TextSprite объекта, переопределяя ТОЛЬКО явно переданные параметры.
+
+        Если объект создан в редакторе как текст (настоящий spritePro.TextSprite),
+        текст настраивается на месте; без аргументов возвращается как есть.
+        Иначе (legacy) спрайт-заглушка заменяется новым TextSprite.
+        """
+        sprite = self.sprite
+        if isinstance(sprite, s.TextSprite):
+            if "text" in kwargs:
+                sprite.set_text(str(kwargs.pop("text")))
+            font_size = kwargs.pop("font_size", None)
+            font_name = kwargs.pop("font_name", None)
+            if font_size is not None or font_name is not None:
+                sprite.set_font(
+                    font_name if font_name is not None else sprite.font_path,
+                    int(font_size) if font_size is not None else sprite.font_size,
+                )
+            if "color" in kwargs:
+                sprite.set_color(kwargs.pop("color"))
+            if "pos" in kwargs:
+                sprite.set_position(kwargs.pop("pos"))
+            if "sorting_order" in kwargs:
+                sprite.set_sorting_order(int(kwargs.pop("sorting_order")))
+            for key, value in kwargs.items():
+                setattr(sprite, key, value)
+            return sprite
         p = self.placement()
         pos = kwargs.pop("pos", p["pos"])
         scene = kwargs.pop("scene", p["scene"])
@@ -194,6 +260,10 @@ class SpawnedObject:
             self.sprite.set_active(False)
         self.sprite = toggle
         return toggle
+
+    def get(self) -> s.Sprite:
+        """Возвращает спрайт как есть, с настройками из редактора (без переопределений)."""
+        return self.sprite
 
     def Sprite(self, **kwargs) -> s.Sprite:
         for key, value in kwargs.items():
@@ -235,6 +305,35 @@ class RuntimeScene:
             if obj.data.name == name:
                 return obj
         return None
+
+    def _require(self, name: str) -> SpawnedObject:
+        spawned_obj = self.exact(name) or self.first(name)
+        if spawned_obj is None:
+            raise KeyError(f"Scene object not found: {name!r}")
+        return spawned_obj
+
+    def get(self, name: str) -> Optional[s.Sprite]:
+        """Возвращает спрайт объекта как есть, без переопределения настроек редактора."""
+        spawned_obj = self.exact(name) or self.first(name)
+        return spawned_obj.sprite if spawned_obj else None
+
+    def Sprite(self, name: str, **kwargs) -> s.Sprite:
+        """Спрайт по имени; переопределяются только явно переданные атрибуты."""
+        return self._require(name).Sprite(**kwargs)
+
+    def TextSprite(self, name: str, **kwargs) -> s.TextSprite:
+        """TextSprite по имени; без аргументов — как настроено в редакторе."""
+        return self._require(name).TextSprite(**kwargs)
+
+    def Button(self, name: str, **kwargs) -> s.Button:
+        """Button по имени; без аргументов — как настроено в редакторе.
+
+        Пример: scene.Button("play_btn", on_click=start_game)
+        """
+        return self._require(name).Button(**kwargs)
+
+    def Toggle(self, name: str, **kwargs) -> s.ToggleButton:
+        return self._require(name).Toggle(**kwargs)
 
     def startswith(self, prefix: str) -> List[SpawnedObject]:
         p = prefix.lower()

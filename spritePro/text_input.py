@@ -198,6 +198,12 @@ class TextInput(Button):
     def update(self, screen: pygame.Surface = None):
         import spritePro as s
 
+        # Скрытое поле не должно принимать ввод (согласованно с Button.update)
+        if not self.active:
+            return
+        if self.scene is not None and not s.scene.is_scene_active(self.scene):
+            return
+
         for ev in getattr(s, "pygame_events", []):
             self.handle_event(ev)
         if self.is_active:

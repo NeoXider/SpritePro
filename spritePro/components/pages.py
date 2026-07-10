@@ -94,14 +94,22 @@ class PageManager:
             page.set_active(False)
 
     def set_active_page(self, page_type: str):
-        """Активирует страницу по имени и деактивирует остальные."""
+        """Активирует страницу по имени и деактивирует остальные.
+
+        Raises:
+            KeyError: Если страницы с таким именем нет (проверяется до деактивации).
+        """
+        if page_type not in self.pages:
+            raise KeyError(
+                f"Page '{page_type}' does not exist. Available pages: {list(self.pages.keys())}"
+            )
         self.deactivate_all_pages()
         self.active_pageType = page_type
-        self.get_active_page().set_active(True)
+        self.pages[page_type].set_active(True)
 
     def get_active_page(self) -> Optional[Page]:
         """Возвращает активную страницу (если есть)."""
-        return self.pages[self.active_pageType]
+        return self.pages.get(self.active_pageType)
 
     def get_page(self, page_type: str) -> Page:
         """Возвращает страницу по имени."""
@@ -110,7 +118,9 @@ class PageManager:
     def update(self):
         """Обновляет активную страницу."""
         if self.active_pageType:
-            self.get_active_page().update()
+            page = self.get_active_page()
+            if page is not None:
+                page.update()
 
     def set_scene(self, scene) -> None:
         """Назначает сцену для всех страниц менеджера."""

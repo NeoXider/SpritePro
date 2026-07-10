@@ -12,6 +12,19 @@ if TYPE_CHECKING:
     from .editor import SpriteEditor
 
 
+def _shift_descendants(editor: "SpriteEditor", moves) -> None:
+    """Смещает потомков перемещённых объектов на ту же дельту (координаты — мировые)."""
+    selected_ids = {obj.id for obj in editor.selected_objects}
+    shifted: set[str] = set()
+    for obj, dx, dy in moves:
+        for child in editor.scene.get_descendants(obj.id):
+            if child.id in selected_ids or child.id in shifted or child.locked:
+                continue
+            shifted.add(child.id)
+            child.transform.x += dx
+            child.transform.y += dy
+
+
 def adjust_selected_property(editor: "SpriteEditor", prop: str, delta: float) -> None:
     if editor.camera_selected:
         cam = editor.scene.camera
@@ -36,14 +49,17 @@ def adjust_selected_property(editor: "SpriteEditor", prop: str, delta: float) ->
         return
 
     changed = False
+    moves = []
     for obj in editor.selected_objects:
         if obj.locked and prop not in ("active", "locked"):
             continue
         if prop == "x":
             obj.transform.x += delta
+            moves.append((obj, delta, 0.0))
             changed = True
         elif prop == "y":
             obj.transform.y += delta
+            moves.append((obj, 0.0, delta))
             changed = True
         elif prop == "rotation":
             obj.transform.rotation += delta
@@ -64,7 +80,7 @@ def adjust_selected_property(editor: "SpriteEditor", prop: str, delta: float) ->
             obj.z_index += int(delta)
             changed = True
         elif prop in ("width", "height"):
-            if editor_sprite_types.is_primitive(getattr(obj, "sprite_shape", "image")):
+            if editor_sprite_types.uses_pixel_size(getattr(obj, "sprite_shape", "image")):
                 w = obj.custom_data.get("width", 100) + (delta if prop == "width" else 0)
                 h = obj.custom_data.get("height", 100) + (delta if prop == "height" else 0)
                 obj.custom_data["width"] = max(1, int(w))
@@ -92,6 +108,12 @@ def adjust_selected_property(editor: "SpriteEditor", prop: str, delta: float) ->
             c = getattr(obj, "sprite_color", (255, 255, 255))
             obj.sprite_color = (c[0], c[1], max(0, min(255, int(c[2] + delta))))
             changed = True
+        elif prop in ("text_color_r", "text_color_g", "text_color_b"):
+            channel = ("text_color_r", "text_color_g", "text_color_b").index(prop)
+            c = list((obj.custom_data or {}).get("text_color") or (0, 0, 0))
+            c[channel] = max(0, min(255, int(c[channel] + delta)))
+            obj.custom_data["text_color"] = c
+            changed = True
         elif prop == "physics_mass":
             obj.physics_mass = max(0.01, obj.physics_mass + delta)
             changed = True
@@ -107,6 +129,8 @@ def adjust_selected_property(editor: "SpriteEditor", prop: str, delta: float) ->
             if current_font_size != new_font_size:
                 obj.custom_data["font_size"] = new_font_size
                 changed = True
+    if moves:
+        _shift_descendants(editor, moves)
     if changed:
         editor.scene._sort_by_z_index()
         editor._save_state()
@@ -156,6 +180,18 @@ def cycle_inspector_dropdown(editor: "SpriteEditor", prop: str) -> None:
                     obj.custom_data["text"] = "New Text"
                 if "font_size" not in obj.custom_data:
                     obj.custom_data["font_size"] = 28
+            elif obj.sprite_shape == editor_sprite_types.SHAPE_BUTTON:
+                obj.sprite_path = ""
+                defaults = {
+                    "text": editor_sprite_types.BUTTON_DEFAULT_TEXT,
+                    "font_size": editor_sprite_types.BUTTON_DEFAULT_FONT_SIZE,
+                    "text_color": list(editor_sprite_types.BUTTON_DEFAULT_TEXT_COLOR),
+                    "width": editor_sprite_types.BUTTON_DEFAULT_SIZE[0],
+                    "height": editor_sprite_types.BUTTON_DEFAULT_SIZE[1],
+                }
+                for key, default_value in defaults.items():
+                    if key not in obj.custom_data:
+                        obj.custom_data[key] = default_value
     elif prop == "physics_type":
         for obj in editor.selected_objects:
             if getattr(obj, "locked", False):
@@ -283,15 +319,18 @@ def set_selected_property_value(editor: "SpriteEditor", prop: str, value: float)
         return
 
     changed = False
+    moves = []
     for obj in editor.selected_objects:
         if obj.locked and prop not in ("active", "locked"):
             continue
         if prop == "x":
             if abs(obj.transform.x - value) > 1e-9:
+                moves.append((obj, value - obj.transform.x, 0.0))
                 obj.transform.x = value
                 changed = True
         elif prop == "y":
             if abs(obj.transform.y - value) > 1e-9:
+                moves.append((obj, 0.0, value - obj.transform.y))
                 obj.transform.y = value
                 changed = True
         elif prop == "rotation":
@@ -326,7 +365,7 @@ def set_selected_property_value(editor: "SpriteEditor", prop: str, value: float)
                 obj.z_index = new_value
                 changed = True
         elif prop in ("width", "height"):
-            if editor_sprite_types.is_primitive(getattr(obj, "sprite_shape", "image")):
+            if editor_sprite_types.uses_pixel_size(getattr(obj, "sprite_shape", "image")):
                 v = max(1, int(value))
                 if prop == "width" and obj.custom_data.get("width") != v:
                     obj.custom_data["width"] = v
@@ -364,6 +403,14 @@ def set_selected_property_value(editor: "SpriteEditor", prop: str, value: float)
             if c[2] != v:
                 obj.sprite_color = (c[0], c[1], v)
                 changed = True
+        elif prop in ("text_color_r", "text_color_g", "text_color_b"):
+            channel = ("text_color_r", "text_color_g", "text_color_b").index(prop)
+            c = list((obj.custom_data or {}).get("text_color") or (0, 0, 0))
+            v = max(0, min(255, int(round(value))))
+            if c[channel] != v:
+                c[channel] = v
+                obj.custom_data["text_color"] = c
+                changed = True
         elif prop == "physics_mass":
             v = max(0.01, float(value))
             if getattr(obj, "physics_mass", 1.0) != v:
@@ -385,6 +432,8 @@ def set_selected_property_value(editor: "SpriteEditor", prop: str, value: float)
             if current_font_size != v:
                 obj.custom_data["font_size"] = v
                 changed = True
+    if moves:
+        _shift_descendants(editor, moves)
     if changed:
         editor.scene._sort_by_z_index()
         editor._save_state()

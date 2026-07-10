@@ -28,11 +28,11 @@ def multiplayer_main() -> None:
 
     # EventBus: обработчики — функции, которые автобус вызовет при send(имя_события, ...).
     # **payload для каждого события — см. комментарии ниже.
-    def on_ready(**payload):
+    def on_ready(**data):
         # **payload: id (str), value (bool), sender_id (int) — все поля, приходящие при событии "ready".
-        pid = payload.get("id")
+        pid = data.get("pos")
         if pid in ready_map:
-            ready_map[pid] = bool(payload.get("value", False))
+            ready_map[pid] = bool(data.get("value", False))
 
     def on_start(**payload):
         # **payload: sender_id (int) — от ctx.send(); других параметров нет.
@@ -99,7 +99,7 @@ def multiplayer_main() -> None:
 
         # EventBus: хост отправляет "start" тем же способом — send("start", route="all", net=ctx). Локально сработает on_start, в сеть уйдёт сообщение для клиентов.
         if ctx.is_host and not game_started and both_ready and both_ready_timer >= START_DELAY:
-            s.events.send("start", route="all", net=ctx)
+            s.events.send("start", route="all", net=ctx, pos = [0,0], hp = 50)
             game_started = True
             state.set_text("State: game")
             start_label.set_active(False)

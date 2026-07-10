@@ -65,6 +65,18 @@ python -m spritePro.editor
 - **Rectangle** — прямоугольник (кнопка Rect)
 - **Circle** — круг (кнопка Circle)
 - **Ellipse** — эллипс (кнопка Ellipse)
+- **Button** — кнопка (GameObject → New Button или Ctrl+Shift+B): текст, размер шрифта, цвет текста и фона, размер в пикселях. При загрузке через `spawn_scene` создаётся настоящий `spritePro.Button`.
+
+## Иерархия (вложенность объектов)
+
+Как в Unity: объекты можно класть внутрь других объектов.
+
+- Перетащите элемент в панели иерархии **на другой элемент** — он станет ребёнком (дети рисуются с отступом под родителем).
+- Перетащите на пустое место панели — объект освобождается от родителя.
+- Перемещение родителя (инструмент Move или правка X/Y в инспекторе) двигает всех потомков.
+- При удалении родителя дети остаются в сцене и освобождаются от него.
+- В JSON у ребёнка хранится ссылка `parent` (id родителя), координаты — мировые. Старые сцены без поля работают как раньше.
+- В рантайме `spawn_scene` автоматически вызывает `set_parent(..., keep_world_position=True)`.
 
 ## Drag & Drop
 
@@ -99,7 +111,22 @@ class LevelScene(s.Scene):
 s.run(scene=LevelScene, size=(800, 600))
 ```
 
-### Превращение в UI-компоненты
+### Два пайплайна доступа к объектам
+
+```python
+rt = spawn_scene("scene.json", scene=self)
+
+# 1) Как есть — параметры из редактора не переопределяются
+btn = rt.get("play_btn")            # объект или None
+label = rt.TextSprite("label")      # текст/шрифт/цвет — из редактора
+
+# 2) С переопределением — меняется ТОЛЬКО явно переданное
+btn = rt.Button("play_btn", on_click=start)      # текст/цвета из редактора
+label = rt.TextSprite("label", text="Changed")   # font_size/color из редактора
+spr = rt.Sprite("panel", speed=5)
+```
+
+### Превращение в UI-компоненты (legacy)
 
 ```python
 # Спрайт → кнопка
@@ -142,6 +169,7 @@ EditorScene.export_from_runtime(MyScene, "scene_a.json")
             "transform": {"x": 100.0, "y": 200.0, "rotation": 0.0, "scale_x": 1.0, "scale_y": 1.0},
             "z_index": 10,
             "active": true,
+            "parent": null,
             "custom_data": {}
         }
     ]
@@ -160,6 +188,9 @@ EditorScene.export_from_runtime(MyScene, "scene_a.json")
 | Ctrl+Z | Отменить |
 | Ctrl+Y | Повторить |
 | Ctrl+S | Сохранить |
+| Ctrl+C / Ctrl+V | Копировать / вставить (со смещением) |
+| Ctrl+D | Дублировать |
+| Ctrl+Shift+B | Новая кнопка |
 | F5 | Запустить игру |
 
 ## Демо

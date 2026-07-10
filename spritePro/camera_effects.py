@@ -69,9 +69,10 @@ class CameraShake:
         if self._game.camera_target is None:
             base = self._base_position
         else:
+            # При активном follow камера уже перезаписана
+            # _update_camera_follow БЕЗ прошлого смещения — вычитать
+            # _last_offset нельзя, иначе центр дрожания уезжает
             base = Vector2(self._game.camera.x, self._game.camera.y)
-            if self._last_offset.length_squared() > 0:
-                base -= self._last_offset
 
         self._game.camera.update(base + offset)
         self._last_offset = offset

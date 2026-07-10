@@ -60,6 +60,7 @@ class Slider(Sprite):
         self.thumb_color = thumb_color
         self.dragging = False
         self._game_registered = auto_register
+        self._render_key = None
         self.set_value(self.value, emit=False)
 
     def set_rect(self, rect: pygame.Rect | Tuple[int, int, int, int]) -> "Slider":
@@ -147,17 +148,27 @@ class Slider(Sprite):
             return
         try:
             import spritePro as s
-
+        except Exception:
+            s = None
+        if s is not None:
             for ev in getattr(s, "pygame_events", []):
                 if self.handle_event(ev):
                     break
-        except Exception:
-            pass
-        surf = self._render_image()
-        self.original_image = surf
-        self._transformed_image = surf
-        self._transform_dirty = False
-        self._color_dirty = True
+        # Перерисовываем только при изменении значения/размера/цветов
+        render_key = (
+            tuple(self.size),
+            self.value,
+            self.track_color,
+            self.fill_color,
+            self.thumb_color,
+        )
+        if render_key != self._render_key:
+            self._render_key = render_key
+            surf = self._render_image()
+            self.original_image = surf
+            self._transformed_image = surf
+            self._transform_dirty = False
+            self._color_dirty = True
         super().update(screen)
 
     def draw(self, screen: pygame.Surface) -> None:

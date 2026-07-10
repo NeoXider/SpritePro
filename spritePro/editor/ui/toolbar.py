@@ -30,6 +30,7 @@ def _menu_specs(editor):
             "items": (
                 {"label": "New Image...", "shortcut": "", "action": editor._add_sprite_dialog},
                 {"label": "New Text", "shortcut": "Ctrl+Shift+T", "action": editor.add_text},
+                {"label": "New Button", "shortcut": "Ctrl+Shift+B", "action": editor.add_button},
                 {
                     "label": "New Rectangle",
                     "shortcut": "",
@@ -288,11 +289,6 @@ def render(editor) -> None:
 
 def render_overlay(editor) -> None:
     _render_open_menu(editor)
-
-
-def get_tools(editor):
-    """Список (tool_type, key, name) — задаётся редактором во избежание циклического импорта."""
-    return getattr(editor, "_toolbar_tools_list", ())
 
 
 def handle_click(editor, pos) -> bool:

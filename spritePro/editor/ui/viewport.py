@@ -65,6 +65,27 @@ def _render_grid(editor, viewport: pygame.Rect) -> None:
     )
 
 
+# Кеш трансформированных (scale+rotate) поверхностей: пересчёт каждый кадр дорог.
+_TRANSFORM_CACHE_LIMIT = 256
+_TRANSFORM_CACHE: dict = {}
+
+
+def _get_transformed_surface(
+    sprite: pygame.Surface, scaled_w: int, scaled_h: int, rotation: float
+) -> pygame.Surface:
+    key = (id(sprite), scaled_w, scaled_h, round(rotation, 2))
+    cached = _TRANSFORM_CACHE.get(key)
+    if cached is not None:
+        return cached
+    if len(_TRANSFORM_CACHE) > _TRANSFORM_CACHE_LIMIT:
+        _TRANSFORM_CACHE.clear()
+    surface = pygame.transform.scale(sprite, (scaled_w, scaled_h))
+    if rotation != 0:
+        surface = pygame.transform.rotate(surface, -rotation)
+    _TRANSFORM_CACHE[key] = surface
+    return surface
+
+
 def _render_sprite(editor, obj) -> None:
     sprite = editor._get_sprite_image(obj)
     display_w, display_h = editor._get_object_display_size(obj)
@@ -78,10 +99,9 @@ def _render_sprite(editor, obj) -> None:
     w = display_w * editor.zoom
     h = display_h * editor.zoom
     scaled_w, scaled_h = max(1, int(w)), max(1, int(h))
-    scaled = pygame.transform.scale(sprite, (scaled_w, scaled_h))
-    if obj.transform.rotation != 0:
-        angle = -obj.transform.rotation
-        scaled = pygame.transform.rotate(scaled, angle)
+    rotation = obj.transform.rotation
+    scaled = _get_transformed_surface(sprite, scaled_w, scaled_h, rotation)
+    if rotation != 0:
         new_w, new_h = scaled.get_size()
         offset_x, offset_y = (new_w - w) // 2, (new_h - h) // 2
     else:

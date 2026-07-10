@@ -159,8 +159,11 @@ class ToggleButton(Button):
         self.text_sprite.set_text(new_text)
 
         # Update colors
+        # Важно: присваиваем base_color, а не set_color(), иначе Button.update()
+        # каждый кадр перезапишет цвет обратно старым base_color
         base_color = self.color_on if self.is_on else self.color_off
-        self.set_color(base_color)
+        self.base_color = base_color
+        self.current_color = base_color
         self.hover_color = self._adjust_brightness(base_color, self.hover_brightness)
         self.press_color = self._adjust_brightness(base_color, self.press_brightness)
 

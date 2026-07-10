@@ -8,7 +8,7 @@ _CONTEXT_MENU_ITEMS = (
     {
         "id": "duplicate",
         "label": "Дублировать",
-        "shortcut": "Ctrl+C",
+        "shortcut": "Ctrl+C/V",
         "text_color": None,
         "hover_text_color": None,
     },
@@ -24,6 +24,12 @@ _CONTEXT_MENU_ITEMS = (
 _PREVIEW_SIZE = 16
 _PREVIEW_LEFT = 12
 _TEXT_LEFT = _PREVIEW_LEFT + _PREVIEW_SIZE + 8
+_INDENT_STEP = 14
+_DRAG_THRESHOLD = 6
+
+# Кеш превью: smoothscale + set_alpha каждый кадр для каждого элемента списка дороги.
+_PREVIEW_CACHE_LIMIT = 256
+_PREVIEW_CACHE: dict = {}
 
 
 def _fit_text_to_width(text: str, max_width: int, font: pygame.font.Font) -> str:
@@ -43,6 +49,38 @@ def _fit_text_to_width(text: str, max_width: int, font: pygame.font.Font) -> str
     return best
 
 
+def build_display_list(editor) -> list:
+    """Плоский список (объект, глубина) для отображения дерева: дети под родителем с отступом."""
+    objects = editor.scene.objects
+    ids = {obj.id for obj in objects}
+    children: dict = {}
+    roots = []
+    for obj in objects:
+        pid = getattr(obj, "parent", None)
+        if pid and pid in ids and pid != obj.id:
+            children.setdefault(pid, []).append(obj)
+        else:
+            roots.append(obj)
+    out = []
+    visited = set()
+
+    def walk(obj, depth):
+        if obj.id in visited:
+            return
+        visited.add(obj.id)
+        out.append((obj, depth))
+        for child in children.get(obj.id, []):
+            walk(child, depth + 1)
+
+    for root in roots:
+        walk(root, 0)
+    # Объекты, недостижимые из корней (цикл parent-ссылок), показываем на верхнем уровне
+    for obj in objects:
+        if obj.id not in visited:
+            walk(obj, 0)
+    return out
+
+
 def _clamp_scroll(editor) -> None:
     total_items = 1 + len(editor.scene.objects)
     cap = max(1, getattr(editor, "_hierarchy_visible_capacity", 1))
@@ -50,9 +88,9 @@ def _clamp_scroll(editor) -> None:
     editor.hierarchy_scroll = max(0, min(editor.hierarchy_scroll, max_scroll))
 
 
-def _render_preview(editor, obj, item_rect: pygame.Rect, is_active: bool) -> None:
+def _render_preview(editor, obj, item_rect: pygame.Rect, is_active: bool, indent: int = 0) -> None:
     preview_rect = pygame.Rect(
-        item_rect.x + _PREVIEW_LEFT - 5,
+        item_rect.x + _PREVIEW_LEFT - 5 + indent,
         item_rect.y + (item_rect.height - _PREVIEW_SIZE) // 2,
         _PREVIEW_SIZE,
         _PREVIEW_SIZE,
@@ -73,18 +111,24 @@ def _render_preview(editor, obj, item_rect: pygame.Rect, is_active: bool) -> Non
         )
         return
 
-    scale = min(
-        (preview_rect.width - 4) / max(1, sprite.get_width()),
-        (preview_rect.height - 4) / max(1, sprite.get_height()),
-    )
-    scaled_size = (
-        max(1, int(round(sprite.get_width() * scale))),
-        max(1, int(round(sprite.get_height() * scale))),
-    )
-    preview = pygame.transform.smoothscale(sprite, scaled_size)
-    if not is_active:
-        preview = preview.copy()
-        preview.set_alpha(150)
+    cache_key = (id(obj), id(sprite), is_active)
+    preview = _PREVIEW_CACHE.get(cache_key)
+    if preview is None:
+        if len(_PREVIEW_CACHE) > _PREVIEW_CACHE_LIMIT:
+            _PREVIEW_CACHE.clear()
+        scale = min(
+            (preview_rect.width - 4) / max(1, sprite.get_width()),
+            (preview_rect.height - 4) / max(1, sprite.get_height()),
+        )
+        scaled_size = (
+            max(1, int(round(sprite.get_width() * scale))),
+            max(1, int(round(sprite.get_height() * scale))),
+        )
+        preview = pygame.transform.smoothscale(sprite, scaled_size)
+        if not is_active:
+            preview.set_alpha(150)
+        _PREVIEW_CACHE[cache_key] = preview
+    scaled_size = preview.get_size()
     blit_pos = (
         preview_rect.x + (preview_rect.width - scaled_size[0]) // 2,
         preview_rect.y + (preview_rect.height - scaled_size[1]) // 2,
@@ -122,6 +166,7 @@ def render(editor) -> None:
     editor._hierarchy_visible_capacity = max(1, list_height // theme.HIERARCHY_ITEM_HEIGHT)
     _clamp_scroll(editor)
 
+    display_list = build_display_list(editor)
     start_index = editor.hierarchy_scroll
     end_index = min(total_items, start_index + editor._hierarchy_visible_capacity)
     mouse_pos = pygame.mouse.get_pos()
@@ -130,16 +175,18 @@ def render(editor) -> None:
     for i in range(start_index, end_index):
         text_rect = pygame.Rect(5, y, left_w - 10, theme.HIERARCHY_ITEM_HEIGHT)
         is_hovered = text_rect.collidepoint(mouse_pos)
+        indent = 0
         if i == 0:
             is_selected = editor.camera_selected
             label = "Camera"
             is_active = True
         else:
-            obj = editor.scene.objects[i - 1]
+            obj, depth = display_list[i - 1]
+            indent = depth * _INDENT_STEP
             is_selected = obj in editor.selected_objects
             is_active = obj.active
             state_icon = "●" if obj.active else "○"
-            max_name_width = left_w - _TEXT_LEFT - 10
+            max_name_width = left_w - _TEXT_LEFT - indent - 10
             label = _fit_text_to_width(f"{state_icon} {obj.name}", max_name_width, font)
         if is_selected:
             pygame.draw.rect(screen, colors["ui_accent"], text_rect, border_radius=3)
@@ -149,14 +196,16 @@ def render(editor) -> None:
             color = (150, 150, 160) if not is_active else colors["ui_text"]
         else:
             color = (115, 115, 125) if not is_active else colors["ui_text"]
-        text_x = _TEXT_LEFT if (i != 0 and getattr(editor, "hierarchy_previews_enabled", True)) else 15
-        if i != 0 and getattr(editor, "hierarchy_previews_enabled", True):
-            _render_preview(editor, obj, text_rect, is_active)
+        show_preview = i != 0 and getattr(editor, "hierarchy_previews_enabled", True)
+        text_x = (_TEXT_LEFT if show_preview else 15) + indent
+        if show_preview:
+            _render_preview(editor, obj, text_rect, is_active, indent)
         text = font.render(label, True, color)
         screen.blit(text, (text_x, y + 3))
         y += theme.HIERARCHY_ITEM_HEIGHT
 
     _render_scrollbar(editor, list_top, list_bottom)
+    _render_drag_overlay(editor, list_top, list_bottom)
     _render_context_menu(editor)
 
 
@@ -220,8 +269,72 @@ def handle_click(editor, pos) -> object:
     if index == 0:
         return "__camera__"
     if 1 <= index < total_items:
-        return editor.scene.objects[index - 1]
+        return build_display_list(editor)[index - 1][0]
     return None
+
+
+def start_drag(editor, obj, pos) -> None:
+    """Запоминает начало перетаскивания элемента иерархии."""
+    editor._hierarchy_drag = {"object": obj, "start": (float(pos.x), float(pos.y))}
+
+
+def cancel_drag(editor) -> None:
+    editor._hierarchy_drag = None
+
+
+def _drag_moved(drag, pos) -> bool:
+    sx, sy = drag["start"]
+    return abs(pos[0] - sx) + abs(pos[1] - sy) >= _DRAG_THRESHOLD
+
+
+def finish_drag(editor, pos) -> bool:
+    """Завершает drag&drop в иерархии: сброс на объект делает его родителем,
+    сброс на пустое место панели убирает родителя. Возвращает True при изменении."""
+    drag = getattr(editor, "_hierarchy_drag", None)
+    editor._hierarchy_drag = None
+    if not drag or not _drag_moved(drag, (pos.x, pos.y)):
+        return False
+    if pos.x > theme.UI_LEFT_WIDTH:
+        return False
+    dragged = drag["object"]
+    if dragged not in editor.scene.objects:
+        return False
+    target = handle_click(editor, pos)
+    if target is dragged:
+        return False
+    new_parent = target.id if target not in (None, "__camera__") else None
+    if new_parent == dragged.parent:
+        return False
+    if not editor.scene.can_set_parent(dragged.id, new_parent):
+        editor._set_status("Cannot parent object to its own child")
+        return False
+    dragged.parent = new_parent
+    if new_parent is None:
+        editor._set_status(f"'{dragged.name}' unparented")
+    else:
+        editor._set_status(f"'{dragged.name}' → child of '{target.name}'")
+    editor._save_state()
+    return True
+
+
+def _render_drag_overlay(editor, list_top: int, list_bottom: int) -> None:
+    drag = getattr(editor, "_hierarchy_drag", None)
+    if not drag or not pygame.mouse.get_pressed()[0]:
+        return
+    mouse_pos = pygame.mouse.get_pos()
+    if not _drag_moved(drag, mouse_pos):
+        return
+    dragged = drag["object"]
+    if mouse_pos[0] <= theme.UI_LEFT_WIDTH and list_top <= mouse_pos[1] <= list_bottom:
+        index = int((mouse_pos[1] - list_top) // theme.HIERARCHY_ITEM_HEIGHT)
+        row_y = list_top + index * theme.HIERARCHY_ITEM_HEIGHT
+        row_rect = pygame.Rect(5, row_y, theme.UI_LEFT_WIDTH - 10, theme.HIERARCHY_ITEM_HEIGHT)
+        pygame.draw.rect(editor.screen, editor.colors["ui_accent"], row_rect, 2, border_radius=3)
+    label = editor.font.render(f"Move: {dragged.name}", True, editor.colors["ui_text"])
+    bg = pygame.Rect(mouse_pos[0] + 12, mouse_pos[1] + 8, label.get_width() + 8, label.get_height() + 4)
+    pygame.draw.rect(editor.screen, (36, 36, 42), bg, border_radius=3)
+    pygame.draw.rect(editor.screen, theme.COLORS["ui_input_border"], bg, 1, border_radius=3)
+    editor.screen.blit(label, (bg.x + 4, bg.y + 2))
 
 
 def close_context_menu(editor) -> None:

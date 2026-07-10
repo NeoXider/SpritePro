@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import pygame
 from pygame.math import Vector2
 
+from . import object_actions
 from .ui import hierarchy as ui_hierarchy
 from .ui import input_handling as ui_input
 from .ui import inspector as ui_inspector
@@ -70,14 +71,21 @@ def handle_keydown(editor: "SpriteEditor", event: pygame.event.Event) -> None:
             editor.redo()
             return
         if event.key == pygame.K_c:
-            editor.copy_selected()
+            object_actions.copy_selected_to_clipboard(editor)
             return
         if event.key == pygame.K_v:
+            object_actions.paste_from_clipboard(editor)
+            return
+        if event.key == pygame.K_d:
             editor.copy_selected()
             return
         if event.key == pygame.K_t and shift_pressed:
             editor.add_text()
             editor._set_status("Text object created")
+            return
+        if event.key == pygame.K_b and shift_pressed:
+            editor.add_button()
+            editor._set_status("Button created")
             return
         if event.key == pygame.K_s:
             if shift_pressed:
@@ -154,6 +162,7 @@ def handle_mousedown(editor: "SpriteEditor", event: pygame.event.Event) -> None:
                     editor.select_object(
                         obj, add_to_selection=keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
                     )
+                    ui_hierarchy.start_drag(editor, obj, editor.mouse_pos)
                 return
 
         viewport = editor._get_viewport_rect()
@@ -201,6 +210,7 @@ def handle_mousedown(editor: "SpriteEditor", event: pygame.event.Event) -> None:
 
 def handle_mouseup(editor: "SpriteEditor", event: pygame.event.Event) -> None:
     if event.button == 1:
+        ui_hierarchy.finish_drag(editor, Vector2(event.pos))
         if editor._active_slider is not None:
             editor._active_slider = None
             editor._save_state()

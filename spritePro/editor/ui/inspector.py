@@ -198,10 +198,8 @@ def _render_numeric_property_row(
     dec_step: float,
     inc_step: float,
     prop: str,
-    fmt: str,
     *,
     target_camera: bool = False,
-    is_percent: bool = False,
     value_type: str = "float",
 ) -> int:
     right_w = theme.UI_RIGHT_WIDTH
@@ -282,8 +280,6 @@ def _render_dropdown_row(
 
 
 def _format_camera_for_input(prop: str, value: float) -> str:
-    if prop in ("scene_zoom", "game_zoom"):
-        return f"{value * 100:.1f}"
     return f"{value:.2f}".rstrip("0").rstrip(".") or "0"
 
 
@@ -302,7 +298,6 @@ def _render_camera_inspector(editor, x: int) -> None:
         -50.0,
         50.0,
         "game_x",
-        "{:.1f}",
         target_camera=True,
     )
     y = _render_numeric_property_row(
@@ -314,7 +309,6 @@ def _render_camera_inspector(editor, x: int) -> None:
         -50.0,
         50.0,
         "game_y",
-        "{:.1f}",
         target_camera=True,
     )
     y = _render_numeric_property_row(
@@ -326,9 +320,7 @@ def _render_camera_inspector(editor, x: int) -> None:
         -10.0,
         10.0,
         "game_zoom_pct",
-        "{:.0f}%",
         target_camera=True,
-        is_percent=True,
     )
     y += 8
     copy_btn = editor.font.render("Copy scene → game", True, theme.COLORS["camera_frame"])
@@ -395,20 +387,26 @@ def render(editor) -> None:
     shape = getattr(obj, "sprite_shape", "image")
     is_image = shape == sprite_types.SHAPE_IMAGE
     is_text = shape == sprite_types.SHAPE_TEXT
+    is_button = shape == sprite_types.SHAPE_BUTTON
     y = top + 40
     y = _render_name_row(editor, x, y, obj.name)
     if is_text:
         y = _render_section_header(editor, x, y + 2, "Text")
         y = _render_text_row(editor, x, y, str((obj.custom_data or {}).get("text", "New Text")))
+    elif is_button:
+        y = _render_section_header(editor, x, y + 2, "Button")
+        y = _render_text_row(
+            editor, x, y, str((obj.custom_data or {}).get("text", sprite_types.BUTTON_DEFAULT_TEXT))
+        )
     y = _render_section_header(editor, x, y + 2, "Transform")
     y = _render_numeric_property_row(
-        editor, x, y, "Position X", obj.transform.x, -10.0, 10.0, "x", "{:.1f}"
+        editor, x, y, "Position X", obj.transform.x, -10.0, 10.0, "x"
     )
     y = _render_numeric_property_row(
-        editor, x, y, "Position Y", obj.transform.y, -10.0, 10.0, "y", "{:.1f}"
+        editor, x, y, "Position Y", obj.transform.y, -10.0, 10.0, "y"
     )
     y = _render_numeric_property_row(
-        editor, x, y, "Rotation", obj.transform.rotation, -5.0, 5.0, "rotation", "{:.1f} deg"
+        editor, x, y, "Rotation", obj.transform.rotation, -5.0, 5.0, "rotation"
     )
     if is_image or is_text:
         y = _render_numeric_property_row(
@@ -420,7 +418,6 @@ def render(editor) -> None:
             -10.0,
             10.0,
             "scale_x_percent",
-            "{:.0f}%",
             value_type="int",
         )
         y = _render_numeric_property_row(
@@ -432,15 +429,14 @@ def render(editor) -> None:
             -10.0,
             10.0,
             "scale_y_percent",
-            "{:.0f}%",
             value_type="int",
         )
     else:
         y = _render_numeric_property_row(
-            editor, x, y, "Scale X", obj.transform.scale_x, -0.1, 0.1, "scale_x", "{:.2f}"
+            editor, x, y, "Scale X", obj.transform.scale_x, -0.1, 0.1, "scale_x"
         )
         y = _render_numeric_property_row(
-            editor, x, y, "Scale Y", obj.transform.scale_y, -0.1, 0.1, "scale_y", "{:.2f}"
+            editor, x, y, "Scale Y", obj.transform.scale_y, -0.1, 0.1, "scale_y"
         )
     native_w, native_h = editor._get_object_native_size(obj)
     size_x, size_y = editor._get_object_display_size(obj)
@@ -449,10 +445,8 @@ def render(editor) -> None:
         y = _render_property_row(editor, x, y, "Image Size (px)", f"{native_w} x {native_h}")
     elif is_text:
         y = _render_property_row(editor, x, y, "Text Size (px)", f"{native_w} x {native_h}")
-    y = _render_numeric_property_row(editor, x, y, "Size X", size_x, -8.0, 8.0, "width", "{:.1f}px")
-    y = _render_numeric_property_row(
-        editor, x, y, "Size Y", size_y, -8.0, 8.0, "height", "{:.1f}px"
-    )
+    y = _render_numeric_property_row(editor, x, y, "Size X", size_x, -8.0, 8.0, "width")
+    y = _render_numeric_property_row(editor, x, y, "Size Y", size_y, -8.0, 8.0, "height")
     y = _render_section_header(editor, x, y + 2, "Appearance")
     y = _render_dropdown_row(editor, x, y, "Sprite Type", shape, "sprite_shape")
     if shape == "image":
@@ -481,7 +475,6 @@ def render(editor) -> None:
             -1.0,
             1.0,
             "font_size",
-            "{:.0f}px",
             value_type="int",
         )
         y = _render_property_row(editor, x, y, "Font Family", "Default")
@@ -489,25 +482,61 @@ def render(editor) -> None:
         y = _render_section_header(editor, x, y + 2, "Text Color")
         color = getattr(obj, "sprite_color", (255, 255, 255))
         y = _render_numeric_property_row(
-            editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", "{:.0f}", value_type="int"
+            editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", value_type="int"
         )
         y = _render_numeric_property_row(
-            editor, x, y, "Color G", float(color[1]), -10, 10, "color_g", "{:.0f}", value_type="int"
+            editor, x, y, "Color G", float(color[1]), -10, 10, "color_g", value_type="int"
         )
         y = _render_numeric_property_row(
-            editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", "{:.0f}", value_type="int"
+            editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", value_type="int"
+        )
+    elif is_button:
+        y = _render_section_header(editor, x, y + 2, "Font")
+        font_size = int((obj.custom_data or {}).get("font_size", sprite_types.BUTTON_DEFAULT_FONT_SIZE))
+        y = _render_numeric_property_row(
+            editor,
+            x,
+            y,
+            "Font Size",
+            float(font_size),
+            -1.0,
+            1.0,
+            "font_size",
+            value_type="int",
+        )
+        y = _render_section_header(editor, x, y + 2, "Text Color")
+        text_color = (obj.custom_data or {}).get("text_color") or sprite_types.BUTTON_DEFAULT_TEXT_COLOR
+        y = _render_numeric_property_row(
+            editor, x, y, "Color R", float(text_color[0]), -10, 10, "text_color_r", value_type="int"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Color G", float(text_color[1]), -10, 10, "text_color_g", value_type="int"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Color B", float(text_color[2]), -10, 10, "text_color_b", value_type="int"
+        )
+        y = _render_section_header(editor, x, y + 2, "Background")
+        color = getattr(obj, "sprite_color", sprite_types.BUTTON_DEFAULT_BG_COLOR)
+        y = _render_numeric_property_row(
+            editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", value_type="int"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Color G", float(color[1]), -10, 10, "color_g", value_type="int"
+        )
+        y = _render_numeric_property_row(
+            editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", value_type="int"
         )
     else:
         y = _render_section_header(editor, x, y + 2, "Color")
         color = getattr(obj, "sprite_color", (255, 255, 255))
         y = _render_numeric_property_row(
-            editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", "{:.0f}", value_type="int"
+            editor, x, y, "Color R", float(color[0]), -10, 10, "color_r", value_type="int"
         )
         y = _render_numeric_property_row(
-            editor, x, y, "Color G", float(color[1]), -10, 10, "color_g", "{:.0f}", value_type="int"
+            editor, x, y, "Color G", float(color[1]), -10, 10, "color_g", value_type="int"
         )
         y = _render_numeric_property_row(
-            editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", "{:.0f}", value_type="int"
+            editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", value_type="int"
         )
     y = _render_section_header(editor, x, y + 2, "Scene")
     y = _render_numeric_property_row(
@@ -519,7 +548,6 @@ def render(editor) -> None:
         -1.0,
         1.0,
         "z_index",
-        "{:.0f}",
         value_type="int",
     )
     y = _render_toggle_property_row(editor, x, y, "Screen Space", obj.screen_space, "screen_space")
@@ -533,13 +561,13 @@ def render(editor) -> None:
         friction = getattr(obj, "physics_friction", 0.98)
         bounce = getattr(obj, "physics_bounce", 0.5)
         y = _render_numeric_property_row(
-            editor, x, y, "Mass", float(mass), -0.5, 0.5, "physics_mass", "{:.2f}"
+            editor, x, y, "Mass", float(mass), -0.5, 0.5, "physics_mass"
         )
         y = _render_numeric_property_row(
-            editor, x, y, "Friction", float(friction), -0.05, 0.05, "physics_friction", "{:.2f}"
+            editor, x, y, "Friction", float(friction), -0.05, 0.05, "physics_friction"
         )
         y = _render_numeric_property_row(
-            editor, x, y, "Bounce", float(bounce), -0.1, 0.1, "physics_bounce", "{:.2f}"
+            editor, x, y, "Bounce", float(bounce), -0.1, 0.1, "physics_bounce"
         )
     y = _render_section_header(editor, x, y + 2, "State")
     y = _render_toggle_property_row(editor, x, y, "Active", obj.active, "active")

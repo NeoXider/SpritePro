@@ -185,15 +185,21 @@ class AudioManager:
 
     def stop_music(self) -> None:
         """Остановить воспроизведение музыки."""
+        if pygame.mixer.get_init() is None:
+            return
         pygame.mixer.music.stop()
         self.current_music = None
 
     def pause_music(self) -> None:
         """Приостановить воспроизведение музыки."""
+        if pygame.mixer.get_init() is None:
+            return
         pygame.mixer.music.pause()
 
     def unpause_music(self) -> None:
         """Возобновить воспроизведение музыки."""
+        if pygame.mixer.get_init() is None:
+            return
         if self.music_enabled:
             pygame.mixer.music.unpause()
 
@@ -207,6 +213,8 @@ class AudioManager:
             >>> audio.set_music_volume(0.3)
         """
         self.music_volume = max(0.0, min(1.0, volume))
+        if pygame.mixer.get_init() is None:
+            return
         pygame.mixer.music.set_volume(self.music_volume)
 
     def set_sfx_volume(self, volume: float) -> None:

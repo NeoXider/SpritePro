@@ -46,6 +46,8 @@ def undo(editor: "SpriteEditor") -> None:
     editor.redo_stack.append(current)
     prev = editor.undo_stack[-1]
     restore_state(editor, prev)
+    # Данные в памяти после undo отличаются от файла
+    editor.modified = True
 
 
 def redo(editor: "SpriteEditor") -> None:
@@ -54,16 +56,23 @@ def redo(editor: "SpriteEditor") -> None:
     next_state = editor.redo_stack.pop()
     editor.undo_stack.append(next_state)
     restore_state(editor, next_state)
+    editor.modified = True
 
 
 def restore_state(editor: "SpriteEditor", state: EditorState) -> None:
+    selected_ids = {obj.id for obj in editor.selected_objects}
     editor.scene.objects = [SceneObject.from_dict(obj) for obj in state.objects]
     editor.scene.camera = Camera.from_dict(state.camera)
-    editor.camera.x = editor.scene.camera.x
-    editor.camera.y = editor.scene.camera.y
-    editor.zoom = editor.scene.camera.zoom
+    # Камеру редактора (scene_*) не восстанавливаем из снапшота — вид не должен
+    # прыгать при undo/redo; game_* настройки берутся из снапшота.
+    editor.scene.camera.scene_x = editor.camera.x
+    editor.scene.camera.scene_y = editor.camera.y
+    editor.scene.camera.scene_zoom = editor.zoom
     editor.scene.grid_size = state.grid_size
     editor.scene.grid_visible = state.grid_visible
     editor.scene.grid_labels_visible = state.grid_labels_visible
     editor.scene.snap_to_grid = state.snap_to_grid
-    editor.selected_objects.clear()
+    # Сохраняем выделение для объектов, которые ещё существуют
+    editor.selected_objects[:] = [
+        obj for obj in editor.scene.objects if obj.id in selected_ids
+    ]

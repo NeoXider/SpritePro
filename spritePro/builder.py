@@ -401,7 +401,10 @@ class SpriteBuilder:
                 border_radius=min(self._border_radius, w // 2, h // 2),
             )
             out = img.copy()
-            out.convert_alpha()
+            try:
+                out = out.convert_alpha()
+            except pygame.error:
+                pass
             out.blit(mask_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
             sprite.set_image(out)
 

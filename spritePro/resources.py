@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 from collections import OrderedDict
 from pathlib import Path
 from typing import Optional
 
 import pygame
+
+_log = logging.getLogger("spritePro.resources")
 
 
 class ResourceCache:
@@ -73,11 +76,16 @@ class ResourceCache:
         try:
             surface = pygame.image.load(key)
             surface = self._prepare_loaded_surface(surface)
-            self._textures[key] = surface
+        except (pygame.error, FileNotFoundError, OSError) as exc:
+            # Кешируем и неудачу: иначе каждый повторный вызов с тем же
+            # путём заново ходит на диск. Кеш сбрасывается clear_textures().
+            _log.warning("load_texture failed for %s: %s", key, exc)
+            self._textures[key] = None
             self._evict(self._textures, self.max_textures)
-            return surface
-        except Exception:
             return None
+        self._textures[key] = surface
+        self._evict(self._textures, self.max_textures)
+        return surface
 
     def load_sound(self, path: str | Path) -> Optional[pygame.mixer.Sound]:
         """Загружает звук с кэшированием.
@@ -94,11 +102,14 @@ class ResourceCache:
             return self._sounds[key]
         try:
             sound = pygame.mixer.Sound(key)
-            self._sounds[key] = sound
+        except (pygame.error, FileNotFoundError, OSError) as exc:
+            _log.warning("load_sound failed for %s: %s", key, exc)
+            self._sounds[key] = None
             self._evict(self._sounds, self.max_sounds)
-            return sound
-        except Exception:
             return None
+        self._sounds[key] = sound
+        self._evict(self._sounds, self.max_sounds)
+        return sound
 
     def clear_textures(self) -> None:
         """Очищает кэш текстур."""

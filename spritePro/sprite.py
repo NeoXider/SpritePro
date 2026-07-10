@@ -1,3 +1,4 @@
+import logging
 from typing import Tuple, Optional, Union, Sequence, List, TYPE_CHECKING
 import pygame
 from pygame.math import Vector2
@@ -27,6 +28,8 @@ from .tween_presets import (
 
 if TYPE_CHECKING:
     from .scenes import Scene
+
+_log = logging.getLogger("spritePro.sprite")
 
 SpriteSceneInput = Union["Scene", str, None]
 
@@ -116,6 +119,9 @@ class Sprite(pygame.sprite.Sprite):
         self.start_pos_vector = _coerce_vector2(pos, (0, 0))
         self.start_pos = _vector2_to_int_tuple(self.start_pos_vector)
         self.velocity = pygame.math.Vector2(0, 0)
+        # Дробный остаток перемещения по velocity (rect целочисленный,
+        # без аккумулятора скорость < 1 px/кадр терялась бы полностью)
+        self._vel_carry = pygame.math.Vector2(0, 0)
         self.speed = speed
         self._active = True
         self._game_registered = False
@@ -159,7 +165,7 @@ class Sprite(pygame.sprite.Sprite):
                 try:
                     spritePro.get_game().set_sprite_layer(self, int(self.sorting_order))
                 except Exception:
-                    pass
+                    _log.warning("set_sprite_layer failed in Sprite.__init__", exc_info=True)
             self._game_registered = True
 
     @property
@@ -364,7 +370,7 @@ class Sprite(pygame.sprite.Sprite):
         try:
             spritePro.get_game().set_sprite_layer(self, self.sorting_order)
         except Exception:
-            pass
+            _log.warning("set_sprite_layer failed in set_sorting_order", exc_info=True)
         return self
 
     def set_screen_space(self, locked: bool = True) -> "Sprite":
@@ -482,6 +488,8 @@ class Sprite(pygame.sprite.Sprite):
         setattr(rect, anchors[anchor_key], (int(vec.x), int(vec.y)))
         self.rect = rect
         self._set_world_center(Vector2(self.rect.center))
+        self.start_pos_vector = Vector2(self.rect.center)
+        self.start_pos = (self.rect.centerx, self.rect.centery)
         if self.parent:
             self.local_offset = self.get_world_position() - self.parent.get_world_position()
         self._update_children_world_positions()
@@ -912,10 +920,12 @@ class Sprite(pygame.sprite.Sprite):
         return self
 
     def _set_world_center(self, position: Vector2) -> None:
-        """Устанавливает центр спрайта в мировых координатах."""
+        """Устанавливает центр спрайта в мировых координатах.
+
+        Не трогает start_pos: стартовая позиция обновляется только в
+        __init__ и set_position, иначе reset_sprite() превращается в no-op.
+        """
         self.rect.center = (int(position.x), int(position.y))
-        self.start_pos_vector = Vector2(self.rect.center)
-        self.start_pos = (self.rect.centerx, self.rect.centery)
         self._sync_physics_position()
 
     def _sync_physics_position(self) -> None:
@@ -1169,9 +1179,13 @@ class Sprite(pygame.sprite.Sprite):
     def kill(self) -> None:
         """Удаляет спрайт из игры и освобождает все связанные ресурсы.
 
-        Отменяет регистрацию спрайта, удаляет физические тела из мира физики,
-        удаляет все дочерние спрайты и вызывает родительский метод kill().
+        Отменяет регистрацию спрайта, останавливает все его твины, удаляет
+        физические тела из мира физики, отвязывает дочерние спрайты и
+        вызывает родительский метод kill().
         """
+        # Останавливаем твины, иначе бесконечные/yoyo-твины навсегда
+        # остаются в update_objects и держат ссылку на мёртвый спрайт
+        self.DoKill(complete=False)
         # Удаляем физические тела из мира физики
         bodies = getattr(self, "_physics_bodies", None)
         if bodies:
@@ -1181,9 +1195,9 @@ class Sprite(pygame.sprite.Sprite):
                     try:
                         world.remove(body)
                     except Exception:
-                        pass
+                        _log.warning("failed to remove physics body in kill()", exc_info=True)
             except Exception:
-                pass
+                _log.warning("failed to access physics world in kill()", exc_info=True)
             bodies.clear()
 
         if self._game_registered:
@@ -1216,16 +1230,20 @@ class Sprite(pygame.sprite.Sprite):
                 manager = spritePro.get_context().scene_manager
             except Exception:
                 manager = None
-            if isinstance(self.scene, str):
-                is_active = manager.is_scene_active(self.scene) if manager is not None else False
-            else:
-                is_active = manager.is_scene_active(self.scene) if manager is not None else False
+            is_active = manager.is_scene_active(self.scene) if manager is not None else False
             if not is_active:
                 return
-        # Apply velocity
-        if self.velocity.length() > 0:
-            cx, cy = self.rect.center
-            self.rect.center = (int(cx + self.velocity.x), int(cy + self.velocity.y))
+        # Apply velocity (с накоплением дробного остатка, чтобы медленные
+        # спрайты со скоростью < 1 px/кадр не «замерзали» из-за int-усечения)
+        if self.velocity.x != 0 or self.velocity.y != 0:
+            self._vel_carry += self.velocity
+            dx = int(self._vel_carry.x)
+            dy = int(self._vel_carry.y)
+            if dx or dy:
+                self._vel_carry.x -= dx
+                self._vel_carry.y -= dy
+                cx, cy = self.rect.center
+                self.rect.center = (cx + dx, cy + dy)
 
         # Resolve collisions automatically if targets are set
         if self.collision_targets is not None:
@@ -1318,8 +1336,10 @@ class Sprite(pygame.sprite.Sprite):
     def _update_image(self):
         """Updates the sprite image with all visual effects applied."""
         if self._transform_dirty:
-            # Create a transformed surface and cache it
-            img = self.original_image.copy()
+            # Create a transformed surface and cache it.
+            # Каждый pygame.transform.* возвращает новую поверхность, поэтому
+            # копируем исходник только если ни одна трансформация не применилась.
+            img = self.original_image
             if self.flipped_h or self.flipped_v:
                 img = pygame.transform.flip(img, self.flipped_h, self.flipped_v)
             if self._scale != 1.0:
@@ -1330,6 +1350,8 @@ class Sprite(pygame.sprite.Sprite):
                 img = pygame.transform.scale(img, new_size)
             if self._angle != 0:
                 img = pygame.transform.rotate(img, self._angle)
+            if img is self.original_image:
+                img = self.original_image.copy()
 
             self._transformed_image = img  # cache the transformed image
 
@@ -1348,7 +1370,7 @@ class Sprite(pygame.sprite.Sprite):
             shape_fill = self._shape_fill_color
             if shape_fill is not None and self._color == shape_fill:
                 pass
-            elif self._color != (255, 255, 255):
+            elif self._color is not None and self._color != (255, 255, 255):
                 self.image.fill(self._color, special_flags=pygame.BLEND_RGBA_MULT)
 
             self._zoom_cache_zoom = None
@@ -1518,23 +1540,28 @@ class Sprite(pygame.sprite.Sprite):
         Returns:
             Sprite: self для цепочек вызовов.
         """
-        self.rect.center = self.start_pos
+        self._set_world_center(Vector2(self.start_pos))
         self.velocity = pygame.math.Vector2(0, 0)
+        self._vel_carry = pygame.math.Vector2(0, 0)
         self.state = "idle"
         return self
 
     def move(self, dx: float, dy: float) -> "Sprite":
-        """Перемещает спрайт на указанное расстояние.
+        """Перемещает спрайт на dx/dy, умноженные на self.speed.
+
+        Если speed не задан (равен 0), перемещение выполняется в пикселях
+        без умножения, чтобы move() работал «из коробки».
 
         Args:
-            dx (float): Расстояние перемещения по оси X.
-            dy (float): Расстояние перемещения по оси Y.
+            dx (float): Смещение по оси X (пиксели или доли speed).
+            dy (float): Смещение по оси Y (пиксели или доли speed).
 
         Returns:
             Sprite: self для цепочек вызовов.
         """
+        step = self.speed if self.speed else 1.0
         cx, cy = self.rect.center
-        self.rect.center = (int(cx + dx * self.speed), int(cy + dy * self.speed))
+        self.rect.center = (int(cx + dx * step), int(cy + dy * step))
         return self
 
     def move_towards(

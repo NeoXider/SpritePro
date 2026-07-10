@@ -80,24 +80,24 @@ class PluginManager:
         """
 
         def decorator(func):
-            # Извлекаем хуки из функции (если они есть)
-            if hasattr(func, "_hooks"):
-                plugin = PluginInfo(
-                    name=name,
-                    version=version,
-                    author=author,
-                    hooks=dict(func._hooks),
-                    metadata=getattr(func, "_metadata", {}),
-                )
-                self._plugins[name] = plugin
+            # Плагин регистрируем всегда; хуки добавляем, если они есть
+            hooks = dict(getattr(func, "_hooks", {}))
+            plugin = PluginInfo(
+                name=name,
+                version=version,
+                author=author,
+                hooks=hooks,
+                metadata=getattr(func, "_metadata", {}),
+            )
+            self._plugins[name] = plugin
 
-                # Регистрируем хуки в глобальном реестре
-                for hook_name, hook_func in func._items.items():
-                    self._replace_global_with_plugin(hook_name, name, hook_func)
-                    if not any(p == name for p, _ in self._hook_registry.get(hook_name, [])):
-                        if hook_name not in self._hook_registry:
-                            self._hook_registry[hook_name] = []
-                        self._hook_registry[hook_name].append((name, hook_func))
+            # Регистрируем хуки в глобальном реестре
+            for hook_name, hook_func in hooks.items():
+                self._replace_global_with_plugin(hook_name, name, hook_func)
+                if not any(p == name for p, _ in self._hook_registry.get(hook_name, [])):
+                    if hook_name not in self._hook_registry:
+                        self._hook_registry[hook_name] = []
+                    self._hook_registry[hook_name].append((name, hook_func))
             return func
 
         return decorator
@@ -122,9 +122,7 @@ class PluginManager:
         def decorator(func: Callable):
             if not hasattr(func, "_hooks"):
                 func._hooks = {}
-                func._items = {}
             func._hooks[hook_name] = func
-            func._items[hook_name] = func
             if hook_name not in self._hook_registry:
                 self._hook_registry[hook_name] = []
             self._hook_registry[hook_name].append(("_global", func))

@@ -315,6 +315,7 @@ class Tween:
         self.is_paused = False
         self.pause_time = 0
         self.direction = 1  # 1 для движения вперед, -1 для движения назад
+        self._inactive_since: Optional[float] = None  # момент, когда сцена стала неактивной
 
         # Автоматическая регистрация для обновления
         if auto_register:
@@ -336,7 +337,14 @@ class Tween:
         if not self.is_playing or self.is_paused:
             return self.current_value
         if not _is_scene_active(self.scene):
+            # Сцена неактивна: запоминаем момент паузы, чтобы твин не «прокручивался»
+            if self._inactive_since is None:
+                self._inactive_since = time.time()
             return self.current_value
+        if self._inactive_since is not None:
+            # Сдвигаем start_time на время, проведённое в неактивной сцене
+            self.start_time += time.time() - self._inactive_since
+            self._inactive_since = None
 
         if dt is None:
             try:
@@ -696,10 +704,11 @@ class TweenManager:
                 dt = None
 
         for name in list(self.tweens.keys()):
-            value = self.tweens[name].update(dt)
-            if value is None:
-                # del self.tweens[name]
-                pass
+            tween = self.tweens[name]
+            value = tween.update(dt)
+            if value is None and not tween.is_playing:
+                # Удаляем завершённые (не зацикленные) твины, чтобы словарь не рос вечно
+                del self.tweens[name]
 
     def get_tween(self, name: str) -> Optional[Tween]:
         """Получает переход по имени.
@@ -827,6 +836,8 @@ class FrameTween:
         self.on_update = on_update
         self.on_complete = on_complete
         self.loop = loop
+        # -1 = бесконечно, 0 = без повтора, 1+ = столько проходов (как в DOTween)
+        self.loop_count: int = -1 if loop else 0
         self.yoyo = yoyo
         self._direction = 1
         self._loops_done = 0
@@ -850,11 +861,13 @@ class FrameTween:
         self.current_frame += 1
 
         if self.current_frame >= self.total_frames:
-            if self.loop:
+            self._loops_done += 1
+            finished = not self.loop or (
+                self.loop_count >= 0 and self._loops_done >= self.loop_count
+            )
+            if not finished:
                 if self.yoyo:
                     self._direction *= -1
-                    if self._direction == -1:
-                        self._loops_done += 1
                     self.start_value, self.end_value = self.end_value, self.start_value
                 self.current_frame = 0
             else:
@@ -919,7 +932,9 @@ class FrameTweenHandle:
         return self
 
     def SetLoops(self, count: int) -> "FrameTweenHandle":
-        self._tween.loop = count < 0 or count > 0
+        """Устанавливает количество повторов (отрицательное значение = бесконечно, как в DOTween)."""
+        self._tween.loop = count != 0
+        self._tween.loop_count = -1 if count < 0 else count
         return self
 
     def SetYoyo(self, yoyo: bool = True) -> "FrameTweenHandle":

@@ -254,8 +254,12 @@ class ColorEffects:
         Returns:
             Tuple[int, int, int]: Кортеж RGB цвета.
         """
-        # Normalize value to 0-1 range
-        normalized = max(0, min(1, (value - min_temp) / (max_temp - min_temp)))
+        # Normalize value to 0-1 range (защита от деления на ноль при min_temp == max_temp)
+        temp_range = max_temp - min_temp
+        if temp_range == 0:
+            normalized = 0.0
+        else:
+            normalized = max(0, min(1, (value - min_temp) / temp_range))
 
         # Interpolate between cold and hot colors
         r = int(cold_color[0] + (hot_color[0] - cold_color[0]) * normalized)
@@ -288,7 +292,11 @@ class ColorEffects:
         Returns:
             Tuple[int, int, int]: Кортеж RGB цвета.
         """
-        health_percent = max(0, min(1, health / max_health))
+        # Защита от деления на ноль/отрицательного максимума
+        if max_health <= 0:
+            health_percent = 0.0
+        else:
+            health_percent = max(0, min(1, health / max_health))
 
         if health_percent > warning_threshold:
             # Interpolate between healthy and warning

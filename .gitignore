@@ -171,3 +171,8 @@ events.py
 player_prefs.json
 reactive_example.py
 reactive_variables.md
+# Артефакты демо save/load
+demo_*.json
+demo_*.json.gz
+demo_config.txt
+demo_image.bin

@@ -23,11 +23,11 @@ def can_add_char(
         return ch.isprintable() or ch in " \t"
     if input_type == "int":
         if ch == "-":
-            return not current or current == "-"
+            return not current
         return ch in "0123456789"
     if input_type == "float":
         if ch == "-":
-            return not current or current == "-"
+            return not current
         if ch in ".,":
             return "." not in current.replace("-", "")
         return ch in "0123456789"

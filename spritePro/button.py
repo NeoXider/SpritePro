@@ -229,10 +229,16 @@ class Button(Sprite):
 
         # Плавная анимация масштаба
         if self.animated:
-            delta = (self._target_scale - self.scale) * self.anim_speed
-            self.set_scale(self.scale + delta, False)
+            if abs(self._target_scale - self.scale) < 0.001:
+                # «Прилипание» к цели, чтобы не дёргать трансформацию каждый кадр
+                if self.scale != self._target_scale:
+                    self.set_scale(self._target_scale, False)
+            else:
+                delta = (self._target_scale - self.scale) * self.anim_speed
+                self.set_scale(self.scale + delta, False)
         else:
-            self.set_scale(self._target_scale, False)
+            if self.scale != self._target_scale:
+                self.set_scale(self._target_scale, False)
 
     def set_sorting_order(self, order: int) -> "Button":
         """Устанавливает порядок отрисовки и синхронизирует его с текстом.
@@ -309,6 +315,8 @@ class Button(Sprite):
 
 
 if __name__ == "__main__":
+    import random
+
     from spritePro.utils.surface import round_corners
     from spritePro import debug_log
 

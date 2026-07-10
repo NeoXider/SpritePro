@@ -98,9 +98,10 @@ class SpriteEditor:
         self.project_root = project_root
         self.assets_folder = os.path.join(project_root, "assets")
         if not os.path.exists(self.assets_folder):
-            self.assets_folder = os.path.join(editor_dir, "assets")
-        if not os.path.exists(self.assets_folder):
-            self.assets_folder = "assets"
+            editor_assets = os.path.join(editor_dir, "assets")
+            if os.path.exists(editor_assets):
+                self.assets_folder = editor_assets
+            # иначе оставляем абсолютный путь от корня проекта
 
         # Камера
         self.camera = Vector2(0, 0)
@@ -118,6 +119,9 @@ class SpriteEditor:
         # Инструменты
         self.current_tool = ToolType.SELECT
         self.selected_objects: List[SceneObject] = []
+
+        # Буфер обмена редактора (сериализованные объекты для Ctrl+C/Ctrl+V)
+        self._clipboard: List[dict] = []
 
         self.ui_left_width = ui_theme.UI_LEFT_WIDTH
         self.ui_right_width = ui_theme.UI_RIGHT_WIDTH
@@ -171,6 +175,7 @@ class SpriteEditor:
         self._last_hierarchy_click_time = 0.0
         self._last_hierarchy_click_obj = None
         self._hierarchy_context_menu = None
+        self._hierarchy_drag = None
 
         # Окна/страницы
         self.window_manager = WindowManager()
@@ -188,10 +193,7 @@ class SpriteEditor:
         # Восстановление последней сцены
         last_path = self._get_last_scene_path()
         if last_path:
-            try:
-                self._load_scene(last_path)
-            except Exception:
-                pass
+            self._load_scene(last_path)
 
         # Запуск
         self._save_state(mark_modified=False)
@@ -257,6 +259,10 @@ class SpriteEditor:
         """Добавляет текстовый объект на сцену."""
         return object_actions.add_text(self, text, world_pos)
 
+    def add_button(self, text: str = "Button", world_pos: Optional[Vector2] = None) -> SceneObject:
+        """Добавляет кнопку на сцену."""
+        return object_actions.add_button(self, text, world_pos)
+
     def delete_selected(self) -> None:
         """Удаляет выделенные объекты"""
         object_actions.delete_selected(self)
@@ -311,35 +317,50 @@ class SpriteEditor:
             font_size = max(8, int(cd.get("font_size") or 28))
             color = getattr(obj, "sprite_color", (255, 255, 255))
             return editor_sprite_types.render_text_surface(text, font_size, color)
+        if shape == editor_sprite_types.SHAPE_BUTTON:
+            cd = getattr(obj, "custom_data", None) or {}
+            w, h = self._get_object_native_size(obj)
+            text = str(cd.get("text") or editor_sprite_types.BUTTON_DEFAULT_TEXT)
+            font_size = max(8, int(cd.get("font_size") or editor_sprite_types.BUTTON_DEFAULT_FONT_SIZE))
+            text_color = cd.get("text_color") or editor_sprite_types.BUTTON_DEFAULT_TEXT_COLOR
+            bg_color = getattr(obj, "sprite_color", editor_sprite_types.BUTTON_DEFAULT_BG_COLOR)
+            return editor_sprite_types.render_button_surface(
+                w, h, tuple(bg_color), text, font_size, tuple(text_color)
+            )
         if not obj.sprite_path:
             return None
 
+        # Кеш по сырому пути: резолвинг (много Path.exists) выполняем только при промахе.
+        raw_path = obj.sprite_path
+        if raw_path in self.image_cache:
+            return self.image_cache[raw_path]
+
         resolved_path = resolve_sprite_path(
-            obj.sprite_path,
+            raw_path,
             scene_path=self.filepath,
             project_root=self.project_root,
             assets_folder=self.assets_folder,
         )
-        cache_key = str(resolved_path) if resolved_path is not None else obj.sprite_path
-
-        if cache_key in self.image_cache:
-            return self.image_cache[cache_key]
-
+        img: Optional[pygame.Surface] = None
         if resolved_path is not None:
             try:
                 img = pygame.image.load(str(resolved_path)).convert_alpha()
-                self.image_cache[cache_key] = img
-                return img
-            except Exception:
-                pass
+            except Exception as exc:
+                self._set_status(f"Failed to load sprite '{raw_path}': {exc}", ttl=4.0)
+        else:
+            self._set_status(f"Sprite not found: {raw_path}", ttl=4.0)
 
-        cd = getattr(obj, "custom_data", None) or {}
-        w = max(1, int(cd.get("width") or cd.get("w") or 64))
-        h = max(1, int(cd.get("height") or cd.get("h") or 64))
-        fallback = editor_sprite_types.render_primitive_surface(
-            editor_sprite_types.SHAPE_RECTANGLE, w, h, (255, 255, 255)
-        )
-        return fallback
+        if img is None:
+            # Отрицательный результат тоже кешируем (fallback-поверхность),
+            # чтобы не резолвить/грузить с диска каждый кадр.
+            cd = getattr(obj, "custom_data", None) or {}
+            w = max(1, int(cd.get("width") or cd.get("w") or 64))
+            h = max(1, int(cd.get("height") or cd.get("h") or 64))
+            img = editor_sprite_types.render_primitive_surface(
+                editor_sprite_types.SHAPE_RECTANGLE, w, h, (255, 255, 255)
+            )
+        self.image_cache[raw_path] = img
+        return img
 
     def _snap_to_grid(self, value: float) -> float:
         return transform_actions.snap_to_grid(self, value)
@@ -404,9 +425,15 @@ class SpriteEditor:
         ui_toolbar.render_overlay(self)
 
     def _get_object_native_size(self, obj: SceneObject) -> Tuple[int, int]:
-        if editor_sprite_types.is_primitive(getattr(obj, "sprite_shape", "image")):
-            w = obj.custom_data.get("width", 100)
-            h = obj.custom_data.get("height", 100)
+        shape = getattr(obj, "sprite_shape", "image")
+        if editor_sprite_types.uses_pixel_size(shape):
+            default_w, default_h = (
+                editor_sprite_types.BUTTON_DEFAULT_SIZE
+                if shape == editor_sprite_types.SHAPE_BUTTON
+                else (100, 100)
+            )
+            w = obj.custom_data.get("width", default_w)
+            h = obj.custom_data.get("height", default_h)
             return (max(1, int(w)), max(1, int(h)))
         sprite = self._get_sprite_image(obj)
         if sprite is None:
@@ -414,7 +441,7 @@ class SpriteEditor:
         return sprite.get_width(), sprite.get_height()
 
     def _get_object_display_size(self, obj: SceneObject) -> Tuple[float, float]:
-        if editor_sprite_types.is_primitive(getattr(obj, "sprite_shape", "image")):
+        if editor_sprite_types.uses_pixel_size(getattr(obj, "sprite_shape", "image")):
             return self._get_object_native_size(obj)
         native_w, native_h = self._get_object_native_size(obj)
         return native_w * obj.transform.scale_x, native_h * obj.transform.scale_y

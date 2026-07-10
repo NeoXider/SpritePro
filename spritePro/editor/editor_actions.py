@@ -64,12 +64,16 @@ def resolve_run_script_path(editor: "SpriteEditor") -> Optional[Path]:
     candidates: list[Path] = []
     seen_dirs: set[Path] = set()
 
-    def add_dir_chain(start_dir: Path) -> None:
+    def add_dir_chain(start_dir: Path, max_levels: int = 3) -> None:
+        # Ограничиваем подъём max_levels уровнями и останавливаемся на маркерах
+        # границы проекта, чтобы не подхватить посторонний main.py выше по ФС.
         current = start_dir
-        while True:
+        for _ in range(max_levels + 1):
             if current not in seen_dirs:
                 seen_dirs.add(current)
                 candidates.append(current / "main.py")
+            if (current / ".git").exists() or (current / "pyproject.toml").exists():
+                break
             if current.parent == current:
                 break
             current = current.parent
@@ -182,6 +186,7 @@ def browse_sprite_path_for_selected(editor: "SpriteEditor") -> None:
     if getattr(obj, "sprite_shape", "image") != "image":
         return
     if not editor.TKINTER_AVAILABLE:
+        set_status(editor, "File dialog unavailable: tkinter is not installed", ttl=4.0)
         return
     try:
         import tkinter as tk
@@ -195,17 +200,24 @@ def browse_sprite_path_for_selected(editor: "SpriteEditor") -> None:
             initialdir=editor.assets_folder,
         )
         root.destroy()
-        if filepath:
-            obj.sprite_path = normalize_sprite_path(
-                filepath,
-                source_scene_path=editor.filepath,
-                target_scene_path=editor.filepath,
-                project_root=editor.project_root,
-                assets_folder=editor.assets_folder,
-            )
-            editor._save_state()
-    except Exception:
-        pass
+    except Exception as exc:
+        set_status(editor, f"File dialog failed: {exc}", ttl=4.0)
+        return
+    if not filepath:
+        return
+    try:
+        obj.sprite_path = normalize_sprite_path(
+            filepath,
+            source_scene_path=editor.filepath,
+            target_scene_path=editor.filepath,
+            project_root=editor.project_root,
+            assets_folder=editor.assets_folder,
+        )
+        # sprite_path изменился — сбрасываем кеш изображений
+        editor.image_cache.clear()
+        editor._save_state()
+    except Exception as exc:
+        set_status(editor, f"Failed to apply sprite path: {exc}", ttl=4.0)
 
 
 def render_windows(editor: "SpriteEditor") -> None:

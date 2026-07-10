@@ -235,20 +235,24 @@ class Animation:
 
         now = pygame.time.get_ticks()
         if now - self.last_update > self.frame_duration:
-            self.current_frame = (self.current_frame + 1) % len(self.frames)
             self.last_update = now
 
-            # Set new frame
-            if self.frames:
+            if self.loop:
+                self.current_frame = (self.current_frame + 1) % len(self.frames)
                 self.owner.set_image(self.frames[self.current_frame])
-
-            if self.on_frame:
-                self.on_frame(self.current_frame)
-
-            if self.current_frame == 0 and not self.loop:
-                self.is_playing = False
-                if self.on_complete:
-                    self.on_complete()
+                if self.on_frame:
+                    self.on_frame(self.current_frame)
+            else:
+                # Незацикленная анимация: доигрываем до последнего кадра и останавливаемся на нём
+                if self.current_frame < len(self.frames) - 1:
+                    self.current_frame += 1
+                    self.owner.set_image(self.frames[self.current_frame])
+                    if self.on_frame:
+                        self.on_frame(self.current_frame)
+                if self.current_frame >= len(self.frames) - 1:
+                    self.is_playing = False
+                    if self.on_complete:
+                        self.on_complete()
 
         # Update parallel animations
         for anim in self.parallel_animations:
@@ -283,6 +287,14 @@ class Animation:
             loop (bool): Зациклить ли анимацию.
         """
         self.loop = loop
+
+    def kill(self) -> None:
+        """Останавливает анимацию и удаляет её из глобального реестра обновлений."""
+        self.stop()
+        try:
+            spritePro.unregister_update_object(self)
+        except (ImportError, AttributeError):
+            pass
 
     def _normalize_frames(
         self,

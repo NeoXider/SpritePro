@@ -47,7 +47,11 @@ class ScrollView:
             pos: Позиция левого верхнего угла (если задаётся вместе с size).
             size: Ширина и высота viewport (если задаётся вместе с pos).
             scroll_speed: Пикселей за «шаг» колёсика мыши (по обеим осям).
-            use_mask: Если True, контент за границами viewport не отображается (клиппинг).
+            use_mask: Флаг-подсказка, что контент за границами viewport должен
+                обрезаться. Сам ScrollView клиппинг не выполняет: он сохраняет
+                значение в публичном атрибуте ``use_mask``, а фактическая обрезка
+                выполняется связкой с ClipMask (см. spritePro.clip_mask),
+                которому передаётся view_rect.
         """
         self._view_rect = _rect_from_args(view_rect, pos=pos, size=size)
         self._content: Optional[Layout] = None

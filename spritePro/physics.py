@@ -311,6 +311,25 @@ class PhysicsBody:
 
         self.enabled = enabled
 
+        # Выключенное тело убираем из pymunk.Space (иначе невидимый спрайт
+        # продолжает падать и сталкиваться), включённое — возвращаем
+        if enabled_changed and self._space is not None:
+            if enabled:
+                try:
+                    self._space.add(self._body, *self._shapes)
+                except Exception:
+                    pass
+            else:
+                for sh in self._shapes:
+                    try:
+                        self._space.remove(sh)
+                    except Exception:
+                        pass
+                try:
+                    self._space.remove(self._body)
+                except Exception:
+                    pass
+
         if not size_changed and not shape_changed:
             if is_static and position_changed:
                 self._body.position = (float(current_center[0]), float(current_center[1]))
@@ -322,7 +341,17 @@ class PhysicsBody:
             self._last_rect_size = current_size
             self._last_center = current_center
             self._last_scale = scale
-            if self._space is not None:
+            # Сохраняем динамику: пересборка body не должна обнулять
+            # скорость (например, при твине масштаба)
+            old_body = self._body
+            saved_velocity = None
+            saved_angular = None
+            saved_angle = None
+            if old_body is not None and old_body.body_type != pymunk.Body.STATIC:
+                saved_velocity = (old_body.velocity.x, old_body.velocity.y)
+                saved_angular = old_body.angular_velocity
+                saved_angle = old_body.angle
+            if self._space is not None and self.enabled:
                 for sh in self._shapes:
                     try:
                         self._space.remove(sh)
@@ -333,7 +362,11 @@ class PhysicsBody:
                 except Exception:
                     pass
             self._build_body_and_shapes()
-            if self._space is not None:
+            if saved_velocity is not None and self._body.body_type != pymunk.Body.STATIC:
+                self._body.velocity = saved_velocity
+                self._body.angular_velocity = saved_angular
+                self._body.angle = saved_angle
+            if self._space is not None and self.enabled:
                 self._space.add(self._body, *self._shapes)
 
     def set_velocity(self, x: float, y: float) -> "PhysicsBody":
@@ -513,9 +546,9 @@ class PhysicsWorld:
             dt = getattr(spritePro, "dt", 1 / 60) or 1 / 60
         dt = max(0.0, min(float(dt), MAX_PHYSICS_DT))
 
+        # sync вызывается и для выключенных тел: только внутри него
+        # пересчитывается body.enabled, иначе тело нельзя включить обратно
         for body in self._all_bodies:
-            if not body.enabled:
-                continue
             body.sync_from_sprite(body.sprite)
 
         step_dt = dt / self.substeps

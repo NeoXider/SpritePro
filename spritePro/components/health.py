@@ -372,11 +372,12 @@ class HealthComponent:
         Сравнение: здоровье < other. Сравнивается текущее HP.
         При сравнении с bool: True трактуется как 1, False как 0.
         """
-        if isinstance(other, (int, float)):
-            return self._current_health < other
-        elif isinstance(other, bool):
+        # bool проверяем ДО (int, float), т.к. bool — подкласс int
+        if isinstance(other, bool):
             # Сравниваем текущее HP с 1.0 для True и 0.0 для False
             return self._current_health < float(other)
+        elif isinstance(other, (int, float)):
+            return self._current_health < other
         elif isinstance(other, HealthComponent):
             return self._current_health < other.current_health
         return NotImplemented  # Возвращаем NotImplemented для обработки других типов
@@ -386,10 +387,11 @@ class HealthComponent:
         Сравнение: здоровье <= other. Сравнивается текущее HP.
         При сравнении с bool: True трактуется как 1, False как 0.
         """
-        if isinstance(other, (int, float)):
-            return self._current_health <= other
-        elif isinstance(other, bool):
+        # bool проверяем ДО (int, float), т.к. bool — подкласс int
+        if isinstance(other, bool):
             return self._current_health <= float(other)
+        elif isinstance(other, (int, float)):
+            return self._current_health <= other
         elif isinstance(other, HealthComponent):
             return self._current_health <= other.current_health
         return NotImplemented
@@ -399,10 +401,11 @@ class HealthComponent:
         Сравнение: здоровье > other. Сравнивается текущее HP.
         При сравнении с bool: True трактуется как 1, False как 0.
         """
-        if isinstance(other, (int, float)):
-            return self._current_health > other
-        elif isinstance(other, bool):
+        # bool проверяем ДО (int, float), т.к. bool — подкласс int
+        if isinstance(other, bool):
             return self._current_health > float(other)
+        elif isinstance(other, (int, float)):
+            return self._current_health > other
         elif isinstance(other, HealthComponent):
             return self._current_health > other.current_health
         return NotImplemented
@@ -412,10 +415,11 @@ class HealthComponent:
         Сравнение: здоровье >= other. Сравнивается текущее HP.
         При сравнении с bool: True трактуется как 1, False как 0.
         """
-        if isinstance(other, (int, float)):
-            return self._current_health >= other
-        elif isinstance(other, bool):
+        # bool проверяем ДО (int, float), т.к. bool — подкласс int
+        if isinstance(other, bool):
             return self._current_health >= float(other)
+        elif isinstance(other, (int, float)):
+            return self._current_health >= other
         elif isinstance(other, HealthComponent):
             return self._current_health >= other.current_health
         return NotImplemented
@@ -426,16 +430,20 @@ class HealthComponent:
         При сравнении с числом: сравнивается текущее HP.
         При сравнении с bool: сравнивается состояние живости (is_alive).
         """
-        if isinstance(other, (int, float)):
-            # Используем небольшую дельту для сравнения float
-            return abs(self._current_health - other) < 1e-9
-        elif isinstance(other, bool):
+        # bool проверяем ДО (int, float), т.к. bool — подкласс int
+        if isinstance(other, bool):
             # Сравниваем состояние живости с булевым значением
             return self._is_alive == other
+        elif isinstance(other, (int, float)):
+            # Используем небольшую дельту для сравнения float
+            return abs(self._current_health - other) < 1e-9
         elif isinstance(other, HealthComponent):
             # Сравниваем текущее HP двух компонентов
             return abs(self._current_health - other.current_health) < 1e-9
         return NotImplemented  # Возвращаем NotImplemented для обработки других типов
+
+    # Определение __eq__ сбрасывает __hash__ — восстанавливаем хеш по идентичности
+    __hash__ = object.__hash__
 
     def __ne__(self, other: Union[float, int, bool, "HealthComponent"]) -> bool:
         """

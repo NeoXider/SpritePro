@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -21,27 +22,48 @@ def save_scene(editor: "SpriteEditor", filepath: Optional[str] = None) -> None:
             return
     filepath = str(Path(filepath).expanduser())
     editor._sync_scene_camera()
-    for obj in editor.scene.objects:
+    # Нормализуем пути в КОПИИ данных сцены; реальные объекты мутируем
+    # только после успешной записи файла.
+    scene_data = editor.scene.to_dict()
+    normalized_paths: dict[str, str] = {}
+    image_sizes: dict[str, tuple[int, int]] = {}
+    for obj, obj_data in zip(editor.scene.objects, scene_data["objects"]):
         if getattr(obj, "sprite_shape", "") == editor_sprite_types.SHAPE_IMAGE:
-            obj.sprite_path = normalize_sprite_path(
+            normalized = normalize_sprite_path(
                 obj.sprite_path,
                 source_scene_path=editor.filepath,
                 target_scene_path=filepath,
                 project_root=editor.project_root,
                 assets_folder=editor.assets_folder,
             )
+            obj_data["sprite_path"] = normalized
+            normalized_paths[obj.id] = normalized
             img = editor._get_sprite_image(obj)
             if img is not None:
-                if obj.custom_data is None:
-                    obj.custom_data = {}
-                obj.custom_data["width"] = img.get_width()
-                obj.custom_data["height"] = img.get_height()
+                custom_data = dict(obj_data.get("custom_data") or {})
+                custom_data["width"] = img.get_width()
+                custom_data["height"] = img.get_height()
+                obj_data["custom_data"] = custom_data
+                image_sizes[obj.id] = (img.get_width(), img.get_height())
     try:
-        editor.scene.save(filepath)
+        path = Path(filepath)
+        if path.parent and not path.parent.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(scene_data, f, indent=4, ensure_ascii=False)
     except Exception as exc:
         editor._set_status(f"Save failed: {exc}", ttl=4.0)
         return
+    for obj in editor.scene.objects:
+        if obj.id in normalized_paths:
+            obj.sprite_path = normalized_paths[obj.id]
+        if obj.id in image_sizes:
+            if obj.custom_data is None:
+                obj.custom_data = {}
+            obj.custom_data["width"], obj.custom_data["height"] = image_sizes[obj.id]
     editor.filepath = filepath
+    # filepath/sprite_path изменились — кеш изображений по сырым путям недействителен
+    editor.image_cache.clear()
     editor.scene.name = os.path.splitext(os.path.basename(filepath))[0]
     editor.modified = False
     save_last_scene_path(filepath)
@@ -103,7 +125,8 @@ def load_scene(editor: "SpriteEditor", filepath: Optional[str] = None) -> None:
 
 def show_save_dialog(editor: "SpriteEditor") -> Optional[str]:
     if not editor.TKINTER_AVAILABLE:
-        return f"{editor.scene.name}.json"
+        editor._set_status("Save dialog unavailable: tkinter is not installed", ttl=4.0)
+        return None
     try:
         import tkinter as tk
         from tkinter import filedialog
@@ -119,8 +142,9 @@ def show_save_dialog(editor: "SpriteEditor") -> Optional[str]:
         )
         root.destroy()
         return filepath if filepath else None
-    except Exception:
-        return f"{editor.scene.name}.json"
+    except Exception as exc:
+        editor._set_status(f"Save dialog failed: {exc}", ttl=4.0)
+        return None
 
 
 def show_open_dialog(editor: "SpriteEditor") -> Optional[str]:

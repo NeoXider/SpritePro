@@ -14,6 +14,36 @@ from pygame.math import Vector2
 from .constants import Anchor
 
 import spritePro
+
+# Атрибуты, которые при эмиссии по шаблону задаются явно и не должны
+# копироваться из инстанс-словаря шаблона
+_TEMPLATE_SKIP_ATTRS = frozenset(
+    {
+        "image",
+        "rect",
+        "velocity",
+        "spawn_time",
+        "lifetime",
+        "fade_speed",
+        "gravity",
+        "screen_space",
+        "sorting_order",
+        "angular_velocity",
+        "scale_velocity",
+        "scale",
+        "angle",
+        "alpha",
+        "color",
+        "update",
+        "kill",
+        "active",
+        "position",
+        "x",
+        "y",
+        "width",
+        "height",
+    }
+)
 from .resources import resource_cache
 
 VectorRange = Tuple[float, float]
@@ -127,6 +157,9 @@ class Particle(spritePro.Sprite):
         super().__init__(
             image, size=image.get_size(), pos=Vector2(pos), sorting_order=sorting_order
         )
+        # Позиция во float: rect целочисленный, и без аккумулятора частицы
+        # со скоростью < 1 px/кадр не двигались бы вовсе
+        self._fpos = Vector2(pos)
         self.velocity = velocity
         self.spawn_time = pygame.time.get_ticks()
         self.lifetime = lifetime_ms
@@ -156,6 +189,7 @@ class Particle(spritePro.Sprite):
         self.set_image(image)
         if sorting_order is not None:
             self.set_sorting_order(sorting_order)
+        self._fpos = Vector2(pos[0], pos[1])
         self.rect.center = (int(pos[0]), int(pos[1]))
         self.velocity = velocity
         self.spawn_time = pygame.time.get_ticks()
@@ -182,8 +216,9 @@ class Particle(spritePro.Sprite):
         """
         dt = spritePro.dt
         self.velocity += Vector2(self.gravity) * dt
-        self.rect.centerx += self.velocity.x * dt
-        self.rect.centery += self.velocity.y * dt
+        self._fpos.x += self.velocity.x * dt
+        self._fpos.y += self.velocity.y * dt
+        self.rect.center = (round(self._fpos.x), round(self._fpos.y))
         # Apply continuous rotation if set
         if self.angular_velocity != 0.0:
             self.rotate_by(self.angular_velocity * dt)
@@ -231,7 +266,10 @@ class Particle(spritePro.Sprite):
                 else:
                     scaled_w = max(1, int(w * zoom))
                     scaled_h = max(1, int(h * zoom))
-                    scaled = pygame.transform.smoothscale(self.image, (scaled_w, scaled_h))
+                    # transform.scale вместо smoothscale: изображение частицы
+                    # меняется каждый кадр (fade), кеш невозможен, а smoothscale
+                    # на сотнях частиц при зуме съедает кадровое время
+                    scaled = pygame.transform.scale(self.image, (scaled_w, scaled_h))
                     screen.blit(scaled, (int(screen_x), int(screen_y)))
 
 
@@ -369,6 +407,25 @@ class ParticleEmitter:
         """Останавливает авто-эмиссию."""
         self.auto_emit = False
 
+    def destroy(self) -> None:
+        """Останавливает эмиттер и снимает его с глобального обновления.
+
+        Без вызова destroy() авторегистрированный эмиттер навсегда остаётся
+        в spritePro.update_objects (утечка). Уже выпущенные частицы доживают
+        своё время жизни самостоятельно.
+        """
+        self.stop_auto_emit()
+        try:
+            spritePro.unregister_update_object(self)
+        except (ImportError, AttributeError):
+            pass
+        for particle in self._pool:
+            try:
+                particle.kill()
+            except Exception:
+                pass
+        self._pool.clear()
+
     def update(self, dt: Optional[float] = None) -> None:
         """Обновляет авто-эмиссию (по времени и/или по шагам расстояния)."""
         if not self.auto_emit:
@@ -500,7 +557,8 @@ class ParticleEmitter:
             if cfg.image_factory is not None:
                 image = cfg.image_factory(index)
             elif cfg.image is not None:
-                image = cfg.image.copy()
+                # Без copy(): Sprite.set_image сам копирует Surface
+                image = cfg.image
             else:
                 size = random.randint(*cfg.size_range)
                 color = random.choice(cfg.colors)
@@ -547,40 +605,18 @@ class ParticleEmitter:
                 particle.angle = template.angle
                 particle.alpha = template.alpha
                 particle.color = template.color
-                # Копируем любые дополнительные атрибуты, которые могут быть в пользовательских подклассах
-                for attr_name in dir(template):
-                    if not attr_name.startswith("_") and attr_name not in [
-                        "image",
-                        "rect",
-                        "velocity",
-                        "spawn_time",
-                        "lifetime",
-                        "fade_speed",
-                        "gravity",
-                        "screen_space",
-                        "sorting_order",
-                        "angular_velocity",
-                        "scale_velocity",
-                        "scale",
-                        "angle",
-                        "alpha",
-                        "color",
-                        "update",
-                        "kill",
-                        "active",
-                        "position",
-                        "x",
-                        "y",
-                        "width",
-                        "height",
-                    ]:
-                        try:
-                            if hasattr(template, attr_name) and not callable(
-                                getattr(template, attr_name, None)
-                            ):
-                                setattr(particle, attr_name, getattr(template, attr_name))
-                        except (AttributeError, TypeError):
-                            pass
+                # Копируем дополнительные атрибуты пользовательских подклассов.
+                # vars() вместо dir(): только инстанс-атрибуты, без обхода
+                # всех методов Sprite на каждую частицу
+                for attr_name, attr_value in vars(template).items():
+                    if attr_name.startswith("_") or attr_name in _TEMPLATE_SKIP_ATTRS:
+                        continue
+                    if callable(attr_value):
+                        continue
+                    try:
+                        setattr(particle, attr_name, attr_value)
+                    except (AttributeError, TypeError):
+                        pass
             else:
                 particle_cls: Type[Particle] = cfg.particle_class or Particle  # type: ignore[assignment]
                 if self.use_pool and particle_cls is Particle and self._pool:

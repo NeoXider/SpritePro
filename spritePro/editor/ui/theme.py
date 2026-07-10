@@ -17,26 +17,12 @@ TOOLBAR_PADDING_TOP = 5
 TOOLBAR_PADDING_BOTTOM = 10
 TOOLBAR_PADDING_RIGHT = 10
 TOOLBAR_BUTTON_GAP = 10
-TOOLBAR_RIGHT_BUTTON_HEIGHT = 24
-TOOLBAR_RIGHT_BUTTON_GAP = 6
 TOOLBAR_MENU_BUTTON_HEIGHT = 24
 TOOLBAR_MENU_ITEM_HEIGHT = 24
 TOOLBAR_MENU_MIN_WIDTH = 180
 TOOLBAR_MENU_BUTTON_PADDING_X = 12
 TOOLBAR_MENU_ITEM_PADDING_X = 10
 TOOLBAR_MENU_SHORTCUT_GAP = 36
-TOOLBAR_RIGHT_BUTTONS = [
-    ("settings", "Settings", 72),
-    ("grid", "Grid", 52),
-    ("new", "New", 45),
-    ("load", "Load", 45),
-    ("save", "Save", 50),
-    ("save_as", "Save As...", 78),
-    ("add", "Add", 45),
-    ("rect", "Rect", 40),
-    ("circle", "Circle", 45),
-    ("ellipse", "Ellipse", 48),
-]
 
 # Статусбар
 STATUSBAR_TOP_PADDING = 5
@@ -91,20 +77,4 @@ COLORS = {
     "camera_frame": (255, 210, 80),
     "camera_info_bg": (20, 20, 24),
     "camera_info_border": (80, 70, 30),
-}
-
-# Кнопки тулбара (специфичные цвета по ключу)
-TOOLBAR_BUTTON_COLORS = {
-    "add": {"normal": (40, 60, 40), "hover": (50, 100, 50)},
-    "load": {"normal": (40, 40, 60), "hover": (50, 50, 80)},
-    "save": {"normal": (52, 72, 44), "hover": (70, 102, 58)},
-    "save_as": {"normal": (48, 56, 78), "hover": (64, 74, 102)},
-    "grid": {
-        "normal": (40, 40, 45),
-        "hover": (50, 50, 55),
-        "active": (0, 150, 255),
-        "active_hover": (70, 170, 255),
-    },
-    "settings": {"normal": (48, 44, 66), "hover": (62, 58, 82)},
-    "default": {"normal": (40, 40, 45), "hover": (50, 50, 55)},
 }

@@ -47,6 +47,33 @@ def _text_config(obj: SceneObject) -> tuple[str, int, tuple[int, int, int]]:
     return text, font_size, color
 
 
+def _button_config(obj: SceneObject) -> dict:
+    cd = obj.custom_data or {}
+    size = (
+        max(1, int(cd.get("width") or st.BUTTON_DEFAULT_SIZE[0])),
+        max(1, int(cd.get("height") or st.BUTTON_DEFAULT_SIZE[1])),
+    )
+    text_color = cd.get("text_color")
+    if isinstance(text_color, (list, tuple)) and len(text_color) >= 3:
+        text_color = (int(text_color[0]), int(text_color[1]), int(text_color[2]))
+    else:
+        text_color = st.BUTTON_DEFAULT_TEXT_COLOR
+    bg = getattr(obj, "sprite_color", None)
+    if isinstance(bg, (list, tuple)) and len(bg) >= 3:
+        bg = (int(bg[0]), int(bg[1]), int(bg[2]))
+    else:
+        bg = st.BUTTON_DEFAULT_BG_COLOR
+    return {
+        "size": size,
+        "text": str(cd.get("text") or st.BUTTON_DEFAULT_TEXT),
+        "text_size": max(8, int(cd.get("font_size") or st.BUTTON_DEFAULT_FONT_SIZE)),
+        "text_color": text_color,
+        "base_color": bg,
+        "hover_color": tuple(min(255, int(c * 1.12) + 8) for c in bg),
+        "press_color": tuple(max(0, int(c * 0.78)) for c in bg),
+    }
+
+
 def _primitive_size_and_color(
     obj: SceneObject,
 ) -> Optional[tuple[tuple[int, int], tuple[int, int, int]]]:
@@ -56,11 +83,9 @@ def _primitive_size_and_color(
     if w is not None and h is not None:
         size = (max(1, int(w)), max(1, int(h)))
     else:
+        # Legacy-примитив без width/height: scale — множитель дефолтного размера 100.
         sx, sy = obj.transform.scale_x, obj.transform.scale_y
-        if sx >= 1 and sy >= 1:
-            size = (max(1, int(sx)), max(1, int(sy)))
-        else:
-            return None
+        size = (max(1, int(100 * sx)), max(1, int(100 * sy)))
     color = getattr(obj, "sprite_color", None)
     if isinstance(color, (list, tuple)) and len(color) >= 3:
         color = (int(color[0]), int(color[1]), int(color[2]))
@@ -126,6 +151,21 @@ def _spawn_sprite_for_object(
         scale_y = max(0.05, float(obj.transform.scale_y))
         sprite.scale = (scale_x + scale_y) * 0.5
         return sprite
+    if shape == st.SHAPE_BUTTON:
+        cfg = _button_config(obj)
+        return s.Button(
+            "",
+            cfg["size"],
+            pos,
+            text=cfg["text"],
+            text_size=cfg["text_size"],
+            text_color=cfg["text_color"],
+            base_color=cfg["base_color"],
+            hover_color=cfg["hover_color"],
+            press_color=cfg["press_color"],
+            sorting_order=obj.z_index,
+            scene=runtime_scene,
+        )
     if st.is_primitive(shape):
         prim = _primitive_size_and_color(obj)
         if prim is None:
@@ -220,7 +260,10 @@ def spawn_scene(
             continue
         sprite.angle = obj.transform.rotation
         sprite.sorting_order = obj.z_index
-        sprite.screen_space = getattr(obj, "screen_space", False)
+        if hasattr(sprite, "set_screen_space"):
+            sprite.set_screen_space(getattr(obj, "screen_space", False))
+        else:
+            sprite.screen_space = getattr(obj, "screen_space", False)
 
         spawned_obj = SpawnedObject(
             data=obj,
@@ -231,6 +274,16 @@ def spawn_scene(
         by_id[obj.id] = spawned_obj
         key = obj.name.lower()
         by_name.setdefault(key, []).append(spawned_obj)
+
+    # Иерархия из редактора: координаты в JSON мировые, поэтому позиции сохраняем
+    for spawned_obj in spawned:
+        parent_id = getattr(spawned_obj.data, "parent", None)
+        if not parent_id:
+            continue
+        parent_spawned = by_id.get(parent_id)
+        if parent_spawned is None or parent_spawned is spawned_obj:
+            continue
+        spawned_obj.sprite.set_parent(parent_spawned.sprite, keep_world_position=True)
 
     physics_world = _apply_physics(spawned, source.objects)
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from collections import deque
 from dataclasses import dataclass
 import random
 from typing import Any, Dict, Optional, Iterable
@@ -47,6 +48,11 @@ class NetDebug:
 
 DEFAULT_MULTIPLAYER_SEED = 1337
 
+PING_SMOOTHING_SAMPLES = 5
+
+# Служебные события пинга: не попадают в пользовательские обработчики и poll().
+_PING_EVENTS = ("_ping", "_pong")
+
 
 class MultiplayerContext:
     """Глобальный контекст мультиплеера для клиента."""
@@ -59,6 +65,7 @@ class MultiplayerContext:
         seed: Optional[int] = None,
         debug: Optional[NetDebug] = None,
         server: Optional[Any] = None,
+        ping_interval: float = 1.0,
     ) -> None:
         self.net = net
         self.server = server
@@ -77,6 +84,27 @@ class MultiplayerContext:
         self._last_send: Dict[str, float] = {}
         self.seed = DEFAULT_MULTIPLAYER_SEED if seed is None else int(seed)
         self.random = random.Random(self.seed)
+        self.ping_interval = float(ping_interval)
+        self._last_ping_sent = 0.0
+        self._last_ping_ms = 0.0
+        self._ping_samples: "deque[float]" = deque(maxlen=PING_SMOOTHING_SAMPLES)
+
+    @property
+    def ping_ms(self) -> float:
+        """RTT в миллисекундах, сглаженный скользящим средним по последним замерам."""
+        if not self._ping_samples:
+            return 0.0
+        return sum(self._ping_samples) / len(self._ping_samples)
+
+    @property
+    def last_ping_ms(self) -> float:
+        """Последний измеренный RTT в миллисекундах."""
+        return self._last_ping_ms
+
+    @property
+    def is_connected(self) -> bool:
+        """True, пока сетевой клиент подключен к серверу."""
+        return bool(self.net is not None and getattr(self.net, "connected", False))
 
     def get_player_ids(self) -> list[int]:
         """Удобный доступ к списку подключенных id."""
@@ -96,7 +124,7 @@ class MultiplayerContext:
     def send(
         self, event: str, data: Optional[Dict[str, Any]] = None, group: str = "traffic"
     ) -> None:
-        payload = data or {}
+        payload = dict(data) if data else {}
         payload.setdefault("sender_id", self.client_id)
         self.net.send(event, payload)
         self.debug.log(group, "send", event, payload)
@@ -121,15 +149,78 @@ class MultiplayerContext:
         Позволяет и декораторам, и ручному ctx.poll() читать сообщения без конфликтов."""
         messages = list(self.net.poll(500))
         if self.server is not None:
-            server_msgs = self.server.poll(500)
-            for msg in server_msgs:
-                messages.append(msg)
-                
+            # Сервер кладет каждое игровое сообщение в свою очередь И ретранслирует
+            # его всем клиентам (включая NetClient хоста), поэтому игровые сообщения
+            # берем только из net.poll(). Из очереди сервера берем лишь служебные
+            # события, которые не ретранслируются (client_connected/client_disconnected).
+            _service_events = ("client_connected", "client_disconnected")
+            for msg in self.server.poll(500):
+                if msg.get("event") in _service_events:
+                    messages.append(msg)
+
+
         self._frame_messages = []
         for msg in messages:
+            event = msg.get("event")
+            if event in _PING_EVENTS:
+                if event == "_pong":
+                    self._handle_pong(msg.get("data") or {})
+                continue
             self._handle_internal(msg)
             self.debug.log("traffic", "recv", msg.get("event"), msg.get("data", {}))
             self._frame_messages.append(msg)
+
+        self._maybe_send_ping()
+
+    def _maybe_send_ping(self) -> None:
+        """Раз в ping_interval секунд отправляет служебный _ping для замера RTT."""
+        if self.ping_interval <= 0 or not self.is_connected:
+            return
+        now = time.monotonic()
+        if now - self._last_ping_sent < self.ping_interval:
+            return
+        self._last_ping_sent = now
+        self.net.send("_ping", {"t": now, "sender_id": self.client_id})
+
+    def _handle_pong(self, data: Dict[str, Any]) -> None:
+        t = data.get("t")
+        if not isinstance(t, (int, float)):
+            return
+        rtt_ms = max(0.0, (time.monotonic() - float(t)) * 1000.0)
+        self._last_ping_ms = rtt_ms
+        self._ping_samples.append(rtt_ms)
+        self.debug.log("state", "pong", f"rtt={rtt_ms:.2f}ms")
+
+    def get_net_stats(self) -> Dict[str, Any]:
+        """Возвращает сетевую статистику: пинг, счётчики трафика, состояние.
+
+        Ключи: ping_ms, last_ping_ms, client_id, is_host, connected,
+        clients_count, messages_sent, messages_received, bytes_sent,
+        bytes_received. На хосте дополнительно ключ "server" со счётчиками сервера.
+        """
+        net_stats = self.net.get_stats() if self.net is not None else {}
+        clients_count: Optional[int] = None
+        if self.server is not None and hasattr(self.server, "clients_count"):
+            clients_count = self.server.clients_count
+        else:
+            ids = self.get_player_ids()
+            if ids:
+                clients_count = len(ids)
+        stats: Dict[str, Any] = {
+            "ping_ms": self.ping_ms,
+            "last_ping_ms": self.last_ping_ms,
+            "client_id": self.client_id,
+            "is_host": self.is_host,
+            "connected": self.is_connected,
+            "clients_count": clients_count,
+            "messages_sent": net_stats.get("messages_sent", 0),
+            "messages_received": net_stats.get("messages_received", 0),
+            "bytes_sent": net_stats.get("bytes_sent", 0),
+            "bytes_received": net_stats.get("bytes_received", 0),
+        }
+        if self.server is not None and hasattr(self.server, "get_stats"):
+            stats["server"] = self.server.get_stats()
+        return stats
 
     def poll(self, max_messages: int = 500, ignore_local: bool = True) -> Iterable[NetMessage]:
         """Возвращает сообщения текущего кадра. Больше не уничтожает их при чтении,
@@ -220,6 +311,7 @@ def init_context(
     debug: bool = False,
     color_logs: bool = True,
     server: Optional[Any] = None,
+    ping_interval: float = 1.0,
 ) -> MultiplayerContext:
     """Создает и сохраняет глобальный контекст мультиплеера."""
 
@@ -239,6 +331,7 @@ def init_context(
         seed=seed,
         debug=debug_cfg,
         server=server,
+        ping_interval=ping_interval,
     )
     try:
         import spritePro

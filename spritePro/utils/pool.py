@@ -171,12 +171,12 @@ class PoolManager:
     @classmethod
     def get(cls, name: str) -> Optional[ObjectPool]:
         """Получает пул по имени."""
-        return cls._instance._pools.get(name)
+        return cls()._pools.get(name)
 
     @classmethod
     def register(cls, name: str, pool: ObjectPool) -> None:
         """Регистрирует пул под именем."""
-        cls._instance._pools[name] = pool
+        cls()._pools[name] = pool
 
     @classmethod
     def create_pool(
@@ -198,7 +198,7 @@ class PoolManager:
     @classmethod
     def clear_all(cls) -> None:
         """Очищает все пулы."""
-        for pool in cls._instance._pools.values():
+        for pool in cls()._pools.values():
             pool.clear()
 
 
