@@ -12,17 +12,18 @@
 Вместо того чтобы проверять очередь сообщений руками, мы можем "пометить" функцию, чтобы она автоматически вызывалась при получении нужного сообщения.
 
 ```python
+import pygame
 import spritePro as s
 
 class Setup(s.Scene):
     def update(self, dt):
-        # Отправляем сообщение на сервер
+        # Разовое событие — обычный send (send_every — для регулярных состояний)
         if s.input.was_pressed(pygame.K_SPACE):
-            self.ctx.send_every("ping", {"message": "Привет!"})
+            self.ctx.send("hello", {"message": "Привет!"})
 
-# SpritePro сам вызовет эту функцию, когда по сети придет событие "ping"!
-@s.NetEvent("ping")
-def on_ping_received(sender_id, message):
+# SpritePro сам вызовет эту функцию, когда по сети придет событие "hello"!
+@s.NetEvent("hello")
+def on_hello_received(sender_id, message):
     print(f"Игрок с ID {sender_id} сказал: {message}")
 ```
 
@@ -88,5 +89,7 @@ def spawn_bullet_rpc(pos, direction, owner):
 ```
 Туда же вы можете вписывать свои роли, цвета и прочую информацию на этапе подключения через лобби, если немного изменить стандартное лобби SpritePro.
 
+> 💡 Рядом с `ctx.players` живёт и диагностика: `ctx.ping_ms` (ваш пинг) и `ctx.get_net_stats()` (счётчики сообщений и байт) — удобно выводить в тот же TAB-список.
+
 ## Задание
-Откройте рядом лежащий `example_decorators.py` и попробуйте добавить в него свою логику: например, когда игрок нажимает E, использовать `@s.Command` чтобы попросить сервер восстановить вам здоровье, а затем через `@s.ClientRpc` отыграть у всех игроков звук лечения. Удачи!
+Откройте рядом лежащий `example_decorators.py` (рабочий пример: движение через `@NetEvent`, лечение через `@Command` → `@ClientRpc`) и доработайте его: добавьте стрельбу — по SPACE клиент просит хоста заспавнить пулю (`@s.Command`), хост валидирует и командует всем отрисовать её (`@s.ClientRpc`). Подсказка: готовый образец стрельбы есть в `spritePro/demoGames/net_decorators_demo.py`. Удачи!

@@ -20,8 +20,9 @@ def render(editor) -> None:
         _render_gizmo(editor, obj)
     if editor.camera_preview_enabled:
         _render_camera_preview_frame(editor, viewport)
+    editor._viewport_tool_buttons = []
     if getattr(editor, "viewport_tool_badge_enabled", True):
-        _render_tool_badge(editor, viewport)
+        _render_tool_panel(editor, viewport)
     pygame.draw.rect(editor.screen, editor.colors["ui_border"], viewport, 2)
 
 
@@ -243,19 +244,80 @@ def _render_gizmo_scale(editor, obj, center: Vector2, rect: pygame.Rect) -> None
     pygame.draw.circle(editor.screen, (240, 247, 255), (int(center.x), int(center.y)), 4)
 
 
-def _render_tool_badge(editor, viewport: pygame.Rect) -> None:
-    tool_map = {tool_type: (name, key) for tool_type, key, name in editor._toolbar_tools_list}
-    tool_name, shortcut = tool_map.get(editor.current_tool, ("Select", "V"))
-    label = editor.font_bold.render(f"Tool: {tool_name} [{shortcut}]", True, (232, 240, 248))
-    badge_rect = pygame.Rect(
+def _draw_tool_icon(screen: pygame.Surface, tool_name: str, rect: pygame.Rect, color) -> None:
+    """Рисует иконку инструмента кодом: курсор, крестовина, круговая стрелка, масштаб."""
+    cx, cy = rect.center
+    if tool_name == "SELECT":
+        pygame.draw.polygon(
+            screen,
+            color,
+            [
+                (cx - 4, cy - 8),
+                (cx - 4, cy + 6),
+                (cx - 1, cy + 3),
+                (cx + 2, cy + 8),
+                (cx + 4, cy + 7),
+                (cx + 2, cy + 2),
+                (cx + 6, cy + 2),
+            ],
+        )
+    elif tool_name == "MOVE":
+        pygame.draw.line(screen, color, (cx - 6, cy), (cx + 6, cy), 2)
+        pygame.draw.line(screen, color, (cx, cy - 6), (cx, cy + 6), 2)
+        pygame.draw.polygon(screen, color, [(cx + 9, cy), (cx + 5, cy - 4), (cx + 5, cy + 4)])
+        pygame.draw.polygon(screen, color, [(cx - 9, cy), (cx - 5, cy - 4), (cx - 5, cy + 4)])
+        pygame.draw.polygon(screen, color, [(cx, cy - 9), (cx - 4, cy - 5), (cx + 4, cy - 5)])
+        pygame.draw.polygon(screen, color, [(cx, cy + 9), (cx - 4, cy + 5), (cx + 4, cy + 5)])
+    elif tool_name == "ROTATE":
+        arc_rect = pygame.Rect(cx - 7, cy - 7, 14, 14)
+        pygame.draw.arc(screen, color, arc_rect, 0.6, 5.6, 2)
+        pygame.draw.polygon(screen, color, [(cx + 9, cy - 3), (cx + 3, cy - 3), (cx + 6, cy - 9)])
+    elif tool_name == "SCALE":
+        pygame.draw.rect(screen, color, pygame.Rect(cx - 8, cy - 1, 9, 9), 2)
+        pygame.draw.line(screen, color, (cx, cy - 1), (cx + 6, cy - 7), 2)
+        pygame.draw.polygon(screen, color, [(cx + 8, cy - 9), (cx + 8, cy - 3), (cx + 2, cy - 9)])
+
+
+def _render_tool_panel(editor, viewport: pygame.Rect) -> None:
+    """Панель Select/Move/Rotate/Scale в левом верхнем углу viewport (как в Unity)."""
+    btn_w, btn_h, gap, pad = 30, 26, 2, 4
+    tools = editor._toolbar_tools_list
+    panel = pygame.Rect(
         viewport.x + 10,
         viewport.y + 10,
-        label.get_width() + 14,
-        label.get_height() + 8,
+        pad * 2 + btn_w * len(tools) + gap * (len(tools) - 1),
+        btn_h + pad * 2,
     )
-    pygame.draw.rect(editor.screen, (20, 24, 30), badge_rect, border_radius=5)
-    pygame.draw.rect(editor.screen, (75, 135, 205), badge_rect, 1, border_radius=5)
-    editor.screen.blit(label, (badge_rect.x + 7, badge_rect.y + 4))
+    pygame.draw.rect(editor.screen, (20, 24, 30), panel, border_radius=6)
+    pygame.draw.rect(editor.screen, editor.colors["ui_border"], panel, 1, border_radius=6)
+    mouse_pos = pygame.mouse.get_pos()
+    buttons = []
+    hovered_tool = None
+    x = panel.x + pad
+    for tool_type, key, name in tools:
+        rect = pygame.Rect(x, panel.y + pad, btn_w, btn_h)
+        is_active = editor.current_tool == tool_type
+        is_hovered = rect.collidepoint(mouse_pos)
+        if is_active:
+            pygame.draw.rect(editor.screen, editor.colors["ui_accent"], rect, border_radius=4)
+            icon_color = theme.COLORS["ui_selected_bg"]
+        elif is_hovered:
+            pygame.draw.rect(editor.screen, theme.COLORS["ui_hover"], rect, border_radius=4)
+            icon_color = editor.colors["ui_text"]
+        else:
+            icon_color = (170, 175, 185)
+        _draw_tool_icon(editor.screen, getattr(tool_type, "name", str(tool_type)), rect, icon_color)
+        if is_hovered:
+            hovered_tool = (name, key)
+        buttons.append((tool_type, rect))
+        x += btn_w + gap
+    editor._viewport_tool_buttons = buttons
+    if hovered_tool is not None:
+        label = editor.font.render(f"{hovered_tool[0]} [{hovered_tool[1]}]", True, (232, 240, 248))
+        tip_rect = pygame.Rect(panel.x, panel.bottom + 4, label.get_width() + 10, label.get_height() + 6)
+        pygame.draw.rect(editor.screen, (20, 24, 30), tip_rect, border_radius=4)
+        pygame.draw.rect(editor.screen, editor.colors["ui_border"], tip_rect, 1, border_radius=4)
+        editor.screen.blit(label, (tip_rect.x + 5, tip_rect.y + 3))
 
 
 def _render_camera_preview_frame(editor, viewport: pygame.Rect) -> None:

@@ -8,6 +8,7 @@ import pygame
 from pygame.math import Vector2
 
 from . import object_actions
+from .ui import create_menu as ui_create_menu
 from .ui import hierarchy as ui_hierarchy
 from .ui import input_handling as ui_input
 from .ui import inspector as ui_inspector
@@ -112,6 +113,7 @@ def handle_keydown(editor: "SpriteEditor", event: pygame.event.Event) -> None:
         editor._frame_selection()
     elif event.key == pygame.K_ESCAPE:
         ui_toolbar.close_menu(editor)
+        ui_create_menu.close(editor)
         ui_hierarchy.close_context_menu(editor)
         editor.deselect_all()
 
@@ -127,6 +129,8 @@ def handle_mousedown(editor: "SpriteEditor", event: pygame.event.Event) -> None:
         if editor._active_text_input and not editor._click_in_any_text_input(event.pos):
             editor._deactivate_text_input(apply=True)
 
+        if ui_create_menu.handle_click(editor, editor.mouse_pos):
+            return
         if ui_toolbar.handle_click(editor, editor.mouse_pos):
             return
         if ui_hierarchy.handle_menu_click(editor, editor.mouse_pos):
@@ -139,6 +143,19 @@ def handle_mousedown(editor: "SpriteEditor", event: pygame.event.Event) -> None:
         if editor.mouse_pos.x >= editor.width - editor.ui_right_width and ui_inspector.handle_click(
             editor, editor.mouse_pos
         ):
+            return
+
+        add_btn = getattr(editor, "_hierarchy_add_button_rect", None)
+        if add_btn and add_btn.collidepoint(event.pos):
+            ui_toolbar.close_menu(editor)
+            ui_hierarchy.close_context_menu(editor)
+            viewport_center = Vector2(editor._get_viewport_rect().center)
+            ui_create_menu.open_menu(
+                editor,
+                (add_btn.x, add_btn.bottom + 2),
+                editor.screen_to_world(viewport_center),
+                source="hierarchy",
+            )
             return
 
         if editor.mouse_pos.x <= editor.ui_left_width:
@@ -167,6 +184,10 @@ def handle_mousedown(editor: "SpriteEditor", event: pygame.event.Event) -> None:
 
         viewport = editor._get_viewport_rect()
         if viewport.collidepoint(editor.mouse_pos):
+            for tool_type, tool_rect in getattr(editor, "_viewport_tool_buttons", ()):
+                if tool_rect.collidepoint(event.pos):
+                    editor.current_tool = tool_type
+                    return
             if editor._camera_preview_copy_rect and editor._camera_preview_copy_rect.collidepoint(
                 editor.mouse_pos.x, editor.mouse_pos.y
             ):
@@ -189,12 +210,14 @@ def handle_mousedown(editor: "SpriteEditor", event: pygame.event.Event) -> None:
 
     elif event.button == 2:
         ui_toolbar.close_menu(editor)
+        ui_create_menu.close(editor)
         ui_hierarchy.close_context_menu(editor)
         editor.mouse_pressed = True
         editor.camera_drag_start = Vector2(event.pos)
 
     elif event.button == 3:
         ui_toolbar.close_menu(editor)
+        ui_create_menu.close(editor)
         if editor.mouse_pos.x <= editor.ui_left_width:
             obj = ui_hierarchy.handle_click(editor, editor.mouse_pos)
             if obj not in (None, "__camera__"):
@@ -204,6 +227,13 @@ def handle_mousedown(editor: "SpriteEditor", event: pygame.event.Event) -> None:
             ui_hierarchy.close_context_menu(editor)
             return
         ui_hierarchy.close_context_menu(editor)
+        viewport = editor._get_viewport_rect()
+        if viewport.collidepoint(editor.mouse_pos) and not editor.window_manager.visible_windows:
+            if editor.get_object_at(editor.mouse_world_pos) is None:
+                ui_create_menu.open_menu(
+                    editor, event.pos, Vector2(editor.mouse_world_pos), source="viewport"
+                )
+                return
         editor.mouse_pressed = True
         editor.camera_drag_start = Vector2(event.pos)
 

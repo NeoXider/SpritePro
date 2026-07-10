@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -30,6 +31,68 @@ def _dedupe_paths(paths: list[Path]) -> list[Path]:
         seen.add(key)
         result.append(candidate)
     return result
+
+
+def _caller_dir_outside_package() -> Optional[Path]:
+    """Папка первого файла в стеке вызовов вне пакета spritePro."""
+    package_dir = str(Path(__file__).resolve().parents[1])
+    frame = sys._getframe(1)
+    while frame is not None:
+        file = frame.f_globals.get("__file__")
+        if file:
+            resolved = str(Path(file).resolve())
+            if not resolved.startswith(package_dir):
+                return Path(resolved).parent
+        frame = frame.f_back
+    return None
+
+
+def resolve_scene_path(raw_path: str | Path) -> Path:
+    """Находит файл сцены по имени или относительному пути (как для спрайтов).
+
+    Ищет по кандидатам: как есть, рядом со скриптом вызывающего, в его
+    подпапках scenes/ и assets/, затем то же от cwd и от главного скрипта.
+    Расширение .json можно не указывать.
+
+    Raises:
+        FileNotFoundError: С перечнем проверенных путей.
+    """
+    raw = _normalize_raw_path(raw_path)
+    path = Path(raw).expanduser()
+    names = [path]
+    if path.suffix.lower() != ".json":
+        names.append(path.with_name(path.name + ".json"))
+
+    bases: list[Path] = []
+    caller_dir = _caller_dir_outside_package()
+    if caller_dir is not None:
+        bases.append(caller_dir)
+    bases.append(Path.cwd())
+    main_script = sys.argv[0] if sys.argv and sys.argv[0] else ""
+    if main_script:
+        try:
+            bases.append(Path(main_script).resolve().parent)
+        except OSError:
+            pass
+
+    candidates: list[Path] = []
+    for name in names:
+        if name.is_absolute():
+            candidates.append(name)
+            continue
+        for base in bases:
+            candidates.append(base / name)
+            candidates.append(base / "scenes" / name.name)
+            candidates.append(base / "assets" / name.name)
+
+    for candidate in _dedupe_paths(candidates):
+        try:
+            if candidate.is_file():
+                return candidate.resolve()
+        except OSError:
+            continue
+    tried = "\n  ".join(str(c) for c in _dedupe_paths(candidates))
+    raise FileNotFoundError(f"Сцена '{raw}' не найдена. Проверены пути:\n  {tried}")
 
 
 def resolve_sprite_path(

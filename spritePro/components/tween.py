@@ -607,6 +607,7 @@ class TweenHandle:
             pass
 
 
+
 class TweenManager:
     """Менеджер для обработки нескольких переходов одновременно.
 
@@ -947,6 +948,7 @@ class FrameTweenHandle:
             spritePro.unregister_update_object(self._tween)
         except (ImportError, AttributeError):
             pass
+
 
 
 if __name__ == "__main__":

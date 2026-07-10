@@ -322,7 +322,7 @@ class SettingsWindow(EditorWindow):
             font,
             colors,
             pygame.Rect(body.x, y, body.width, row_h),
-            "Viewport Tool Badge",
+            "Viewport Tools Panel",
             bool(view_settings["viewport_tool_badge_enabled"]),
             on_toggle_viewport_tool_badge,
         )

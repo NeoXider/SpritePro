@@ -153,9 +153,11 @@ def new_scene(editor: "SpriteEditor") -> None:
     set_status(editor, "New scene created")
 
 
-def add_sprite_dialog(editor: "SpriteEditor") -> None:
+def add_sprite_dialog(editor: "SpriteEditor", world_pos: Optional[Vector2] = None) -> None:
+    if world_pos is None:
+        world_pos = Vector2(400, 300)
     if not editor.TKINTER_AVAILABLE:
-        editor.add_sprite("placeholder", Vector2(400, 300))
+        editor.add_sprite("placeholder", world_pos)
         return
 
     try:
@@ -174,9 +176,9 @@ def add_sprite_dialog(editor: "SpriteEditor") -> None:
         root.destroy()
 
         if filepath:
-            editor.add_sprite(filepath, Vector2(400, 300))
+            editor.add_sprite(filepath, world_pos)
     except Exception:
-        editor.add_sprite("placeholder", Vector2(400, 300))
+        editor.add_sprite("placeholder", world_pos)
 
 
 def browse_sprite_path_for_selected(editor: "SpriteEditor") -> None:

@@ -38,12 +38,20 @@ python -m spritePro.editor
 
 ## Инструменты
 
+Панель инструментов (как в Unity) — постоянно видна в левом верхнем углу viewport: Select / Move / Rotate / Scale, активный подсвечен. Горячие клавиши работают всегда:
+
 | Клавиша | Инструмент | Описание |
 |---------|-----------|----------|
 | V | Select | Выделение объектов |
 | G | Move | Перемещение |
 | R | Rotate | Вращение (шаг 15°) |
 | T | Scale | Масштабирование |
+
+## Создание объектов
+
+- Кнопка **«+»** в заголовке панели иерархии — меню создания (Image, Rectangle, Circle, Ellipse, Text, Button); объект появляется в центре видимой области.
+- **Правый клик по пустому месту viewport** — то же меню, объект создаётся в точке клика.
+- Меню **GameObject** — дублирует создание.
 
 ## Управление
 
@@ -113,17 +121,27 @@ s.run(scene=LevelScene, size=(800, 600))
 
 ### Два пайплайна доступа к объектам
 
+Путь к сцене резолвится как у картинок: можно передать голое имя (расширение `.json` необязательно) — файл ищется рядом со скриптом, в `scenes/` и `assets/`, затем от рабочей папки. При неудаче — `FileNotFoundError` со списком проверенных путей.
+
 ```python
-rt = spawn_scene("scene.json", scene=self)
+rt = s.spawn_scene("main_level", scene=self)   # найдёт scenes/main_level.json
+rt = s.spawn_scene("scene.json", scene=self)   # топ-левел алиас
 
 # 1) Как есть — параметры из редактора не переопределяются
 btn = rt.get("play_btn")            # объект или None
+btn = rt["play_btn"]                # то же, но KeyError с подсказкой имён
 label = rt.TextSprite("label")      # текст/шрифт/цвет — из редактора
 
 # 2) С переопределением — меняется ТОЛЬКО явно переданное
 btn = rt.Button("play_btn", on_click=start)      # текст/цвета из редактора
+rt.on_click("play_btn", start)                   # шорткат для кнопок
 label = rt.TextSprite("label", text="Changed")   # font_size/color из редактора
 spr = rt.Sprite("panel", speed=5)
+
+# Обход и проверка
+"play_btn" in rt        # True
+rt.names()              # список имён объектов сцены
+for spawned in rt: ...  # итерация по объектам
 ```
 
 ### Превращение в UI-компоненты (legacy)

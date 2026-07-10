@@ -7,7 +7,6 @@ from . import theme
 
 
 def _menu_specs(editor):
-    current_tool = editor.current_tool
     return (
         {
             "id": "file",
@@ -49,36 +48,6 @@ def _menu_specs(editor):
             ),
         },
         {
-            "id": "tools",
-            "label": "Tools",
-            "items": (
-                {
-                    "label": "Select",
-                    "shortcut": "V",
-                    "checked": current_tool == editor._toolbar_tools_list[0][0],
-                    "action": lambda: _set_tool(editor, editor._toolbar_tools_list[0][0]),
-                },
-                {
-                    "label": "Move",
-                    "shortcut": "G",
-                    "checked": current_tool == editor._toolbar_tools_list[1][0],
-                    "action": lambda: _set_tool(editor, editor._toolbar_tools_list[1][0]),
-                },
-                {
-                    "label": "Rotate",
-                    "shortcut": "R",
-                    "checked": current_tool == editor._toolbar_tools_list[2][0],
-                    "action": lambda: _set_tool(editor, editor._toolbar_tools_list[2][0]),
-                },
-                {
-                    "label": "Scale",
-                    "shortcut": "T",
-                    "checked": current_tool == editor._toolbar_tools_list[3][0],
-                    "action": lambda: _set_tool(editor, editor._toolbar_tools_list[3][0]),
-                },
-            ),
-        },
-        {
             "id": "view",
             "label": "View",
             "items": (
@@ -108,10 +77,6 @@ def _menu_specs(editor):
             ),
         },
     )
-
-
-def _set_tool(editor, tool_type) -> None:
-    editor.current_tool = tool_type
 
 
 def close_menu(editor) -> None:

@@ -124,6 +124,7 @@ class Sprite(pygame.sprite.Sprite):
         self._vel_carry = pygame.math.Vector2(0, 0)
         self.speed = speed
         self._active = True
+        self._active_self = True
         self._game_registered = False
         self.screen_space = False
         self.parent: Optional["Sprite"] = None
@@ -455,6 +456,7 @@ class Sprite(pygame.sprite.Sprite):
             else:
                 self._set_world_center(self.get_world_position())
             self.local_offset = Vector2()
+        self._apply_effective_active()
         return self
 
     def set_position(self, position: VectorInput, anchor: str | Anchor = Anchor.CENTER) -> "Sprite":
@@ -887,6 +889,7 @@ class Sprite(pygame.sprite.Sprite):
             anchor=anchor,
         )
         return self._register_tween(t)
+
 
     def get_world_position(self) -> Vector2:
         """Получает мировую позицию спрайта (с учетом камеры).
@@ -1397,33 +1400,69 @@ class Sprite(pygame.sprite.Sprite):
 
     @property
     def active(self) -> bool:
-        """Активность спрайта.
+        """Эффективная активность спрайта (аналог activeInHierarchy в Unity).
 
         Returns:
-            bool: True, если спрайт активен и должен отрисовываться.
+            bool: True, если активен сам спрайт и вся цепочка его родителей.
         """
         return self._active
 
+    @property
+    def active_self(self) -> bool:
+        """Собственная активность спрайта (аналог activeSelf в Unity).
+
+        Не зависит от родителей: выключенный ребёнок остаётся выключенным
+        после цикла выключения/включения родителя.
+
+        Returns:
+            bool: Собственное состояние активности.
+        """
+        return self._active_self
+
     @active.setter
     def active(self, value: bool):
-        """Включает или выключает спрайт и синхронизирует его с глобальной группой.
+        """Устанавливает собственную активность и пересчитывает эффективную.
 
         Args:
-            value (bool): Новое состояние активности.
+            value (bool): Новое собственное состояние активности.
         """
-        if self._active == value:
-            return
-        self._active = value
-        if self._active:
-            spritePro.enable_sprite(self)
-            self._game_registered = True
-        else:
-            spritePro.disable_sprite(self)
-            self._game_registered = False
+        self._active_self = bool(value)
+        self._apply_effective_active()
 
+    def _parent_chain_active(self) -> bool:
+        """Активна ли вся цепочка родителей спрайта."""
+        node = self.parent
+        while node is not None:
+            if not getattr(node, "_active", True):
+                return False
+            node = getattr(node, "parent", None)
+        return True
+
+    def _apply_effective_active(self) -> None:
+        """Пересчитывает эффективную активность (свою × родителей) и детей."""
+        effective = self._active_self and self._parent_chain_active()
+        if self._active != effective:
+            self._active = effective
+            # Регистрация через контекст напрямую: топ-левел хелперы
+            # enable_sprite/disable_sprite сами пишут sprite.active и
+            # затёрли бы _active_self при каскаде от родителя
+            try:
+                context = spritePro.get_context()
+            except Exception:
+                context = None
+            if effective:
+                if context is not None:
+                    context.enable_sprite(self)
+                self._game_registered = True
+            else:
+                if context is not None:
+                    context.disable_sprite(self)
+                self._game_registered = False
         for child in list(self.children):
-            if hasattr(child, "set_active"):
-                child.set_active(value)
+            if hasattr(child, "_apply_effective_active"):
+                child._apply_effective_active()
+            elif hasattr(child, "set_active"):
+                child.set_active(effective)
 
     def get_active(self) -> bool:
         """Получает текущее состояние активности спрайта.

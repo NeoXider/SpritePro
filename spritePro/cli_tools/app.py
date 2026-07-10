@@ -20,6 +20,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Create a new project template with two scenes: --create [path]",
     )
     parser.add_argument(
+        "--simple",
+        action="store_true",
+        help="With --create: minimal single-file template with one scene",
+    )
+    parser.add_argument(
         "--editor",
         "-e",
         action="store_true",
@@ -210,7 +215,7 @@ def _handle_android(args) -> None:
 
 def _handle_create(args) -> None:
     _configure_logging()
-    project_root = create_project(Path(args.create))
+    project_root = create_project(Path(args.create), simple=args.simple)
     logging.info("Project created at: %s", project_root.resolve())
 
 

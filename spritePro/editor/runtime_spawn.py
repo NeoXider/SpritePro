@@ -10,7 +10,7 @@ import spritePro as s
 
 from .scene import Scene, SceneObject
 from . import sprite_types as st
-from .path_utils import resolve_sprite_path
+from .path_utils import resolve_scene_path, resolve_sprite_path
 from ..resources import resource_cache
 from .runtime_scene import RuntimeScene, SpawnedObject
 
@@ -246,7 +246,7 @@ def spawn_scene(
     apply_camera: bool = True,
     enable_static_cache: bool = False,
 ) -> RuntimeScene:
-    scene_file = Path(scene_path).expanduser().resolve()
+    scene_file = resolve_scene_path(scene_path)
     source = Scene.load(str(scene_file))
     runtime_scene = scene or s.get_current_scene()
 

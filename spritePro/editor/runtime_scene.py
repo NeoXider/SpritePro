@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import difflib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Optional, TYPE_CHECKING, Tuple
 
 import pygame
 import spritePro as s
@@ -309,8 +310,52 @@ class RuntimeScene:
     def _require(self, name: str) -> SpawnedObject:
         spawned_obj = self.exact(name) or self.first(name)
         if spawned_obj is None:
-            raise KeyError(f"Scene object not found: {name!r}")
+            raise KeyError(self._missing_message(name))
         return spawned_obj
+
+    def _missing_message(self, name: str) -> str:
+        available = self.names()
+        close = difflib.get_close_matches(name, available, n=3)
+        hint = f" Did you mean: {close}?" if close else ""
+        return f"Scene object not found: {name!r}. Available: {available}.{hint}"
+
+    def names(self) -> List[str]:
+        """Имена всех заспавненных объектов сцены (в порядке спавна)."""
+        return [spawned_obj.data.name for spawned_obj in self.spawned]
+
+    def __getitem__(self, name: str) -> s.Sprite:
+        """Спрайт по имени: rt["player"]; KeyError со списком доступных имён, если не найден."""
+        return self._require(name).sprite
+
+    def __contains__(self, name: object) -> bool:
+        """Проверка наличия объекта по имени: "player" in rt."""
+        if not isinstance(name, str):
+            return False
+        return (self.exact(name) or self.first(name)) is not None
+
+    def __len__(self) -> int:
+        """Количество заспавненных объектов."""
+        return len(self.spawned)
+
+    def __iter__(self) -> Iterator[SpawnedObject]:
+        """Итерация по SpawnedObject: for spawned in rt: ..."""
+        return iter(self.spawned)
+
+    def on_click(self, name: str, callback: Callable) -> s.Button:
+        """Вешает обработчик клика на кнопку сцены: rt.on_click("play_btn", start_game).
+
+        Raises:
+            KeyError: Объект с таким именем не найден.
+            TypeError: Объект не является кнопкой.
+        """
+        spawned_obj = self._require(name)
+        if not isinstance(spawned_obj.sprite, s.Button):
+            raise TypeError(
+                f"Scene object {spawned_obj.data.name!r} is not a Button "
+                f"(got {type(spawned_obj.sprite).__name__}); "
+                f"create it as a button in the editor or use rt.Button(name, on_click=...)"
+            )
+        return self.Button(name, on_click=callback)
 
     def get(self, name: str) -> Optional[s.Sprite]:
         """Возвращает спрайт объекта как есть, без переопределения настроек редактора."""

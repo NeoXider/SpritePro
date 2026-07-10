@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Open%20Source-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-3.11.1-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-3.12.0-green.svg)](CHANGELOG.md)
 
 ![SpritePro](assets/spritepro-banner.png)
 
@@ -20,7 +20,7 @@ pip install spritepro
 
 Для mobile: `pip install "spritepro[kivy]"`
 
-Шаблон проекта: `python -m spritePro.cli --create`
+Шаблон проекта: `python -m spritePro.cli --create` (минимальный: `--create --simple`)
 
 ### Обновление
 

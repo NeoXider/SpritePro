@@ -158,6 +158,7 @@ def render(editor) -> None:
 
     header = font_bold.render("Objects", True, colors["ui_text"])
     screen.blit(header, (10, top + 10))
+    _render_add_button(editor, top)
 
     list_top = top + theme.HIERARCHY_HEADER_OFFSET
     list_bottom = height - bottom - theme.HIERARCHY_LIST_PADDING
@@ -207,6 +208,23 @@ def render(editor) -> None:
     _render_scrollbar(editor, list_top, list_bottom)
     _render_drag_overlay(editor, list_top, list_bottom)
     _render_context_menu(editor)
+
+
+def _render_add_button(editor, top: int) -> None:
+    """Кнопка «+» в заголовке панели (как в Unity Hierarchy): открывает меню создания."""
+    btn_rect = pygame.Rect(theme.UI_LEFT_WIDTH - 32, top + 6, 22, 22)
+    editor._hierarchy_add_button_rect = btn_rect
+    hovered = btn_rect.collidepoint(pygame.mouse.get_pos())
+    menu = getattr(editor, "_create_menu", None)
+    menu_open = bool(menu) and menu.get("source") == "hierarchy"
+    if menu_open or hovered:
+        bg = editor.colors["ui_accent"] if menu_open else theme.COLORS["ui_hover"]
+        pygame.draw.rect(editor.screen, bg, btn_rect, border_radius=4)
+    pygame.draw.rect(editor.screen, theme.COLORS["ui_input_border"], btn_rect, 1, border_radius=4)
+    plus_color = theme.COLORS["ui_selected_bg"] if menu_open else editor.colors["ui_text"]
+    cx, cy = btn_rect.center
+    pygame.draw.line(editor.screen, plus_color, (cx - 5, cy), (cx + 5, cy), 2)
+    pygame.draw.line(editor.screen, plus_color, (cx, cy - 5), (cx, cy + 5), 2)
 
 
 def _render_scrollbar(editor, list_top: int, list_bottom: int) -> None:

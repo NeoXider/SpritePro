@@ -25,6 +25,158 @@ def _shift_descendants(editor: "SpriteEditor", moves) -> None:
             child.transform.y += dy
 
 
+def _current_property_value(editor: "SpriteEditor", obj, prop: str) -> Optional[float]:
+    """Текущее значение свойства во внутренних единицах (масштаб — долей, размер — пикселями).
+
+    Returns:
+        Optional[float]: Значение или None, если свойство неизвестно/неприменимо к объекту.
+    """
+    if prop == "x":
+        return obj.transform.x
+    if prop == "y":
+        return obj.transform.y
+    if prop == "rotation":
+        return obj.transform.rotation
+    if prop in ("scale_x", "scale_x_percent"):
+        return obj.transform.scale_x
+    if prop in ("scale_y", "scale_y_percent"):
+        return obj.transform.scale_y
+    if prop == "z_index":
+        return obj.z_index
+    if prop in ("width", "height"):
+        if editor_sprite_types.uses_pixel_size(getattr(obj, "sprite_shape", "image")):
+            return obj.custom_data.get(prop, 100)
+        native_w, native_h = editor._get_object_native_size(obj)
+        if prop == "width":
+            return native_w * obj.transform.scale_x if native_w > 0 else None
+        return native_h * obj.transform.scale_y if native_h > 0 else None
+    if prop in ("color_r", "color_g", "color_b"):
+        channel = ("color_r", "color_g", "color_b").index(prop)
+        return getattr(obj, "sprite_color", (255, 255, 255))[channel]
+    if prop in ("text_color_r", "text_color_g", "text_color_b"):
+        channel = ("text_color_r", "text_color_g", "text_color_b").index(prop)
+        c = (obj.custom_data or {}).get("text_color") or (0, 0, 0)
+        return c[channel]
+    if prop == "physics_mass":
+        return obj.physics_mass
+    if prop == "physics_friction":
+        return obj.physics_friction
+    if prop == "physics_bounce":
+        return obj.physics_bounce
+    if prop == "font_size":
+        return int((obj.custom_data or {}).get("font_size", 28))
+    return None
+
+
+def _apply_property(editor: "SpriteEditor", obj, prop: str, value: float) -> tuple[bool, bool, Optional[tuple]]:
+    """Применяет значение свойства объекта: клампы, проценты, физика — в одном месте.
+
+    Args:
+        value: Целевое значение во внутренних единицах (масштаб — долей 0.05..10,
+            цвет — каналом 0..255, размер — пикселями).
+
+    Returns:
+        tuple[bool, bool, Optional[tuple]]: (handled, changed, move) —
+        свойство распознано и применимо; значение реально изменилось;
+        (obj, dx, dy) для сдвига потомков при перемещении.
+    """
+    if prop == "x":
+        if abs(obj.transform.x - value) > 1e-9:
+            move = (obj, value - obj.transform.x, 0.0)
+            obj.transform.x = value
+            return True, True, move
+        return True, False, None
+    if prop == "y":
+        if abs(obj.transform.y - value) > 1e-9:
+            move = (obj, 0.0, value - obj.transform.y)
+            obj.transform.y = value
+            return True, True, move
+        return True, False, None
+    if prop == "rotation":
+        if abs(obj.transform.rotation - value) > 1e-9:
+            obj.transform.rotation = value
+            return True, True, None
+        return True, False, None
+    if prop in ("scale_x", "scale_y"):
+        new_scale = max(0.05, value)
+        if abs(getattr(obj.transform, prop) - new_scale) > 1e-9:
+            setattr(obj.transform, prop, new_scale)
+            return True, True, None
+        return True, False, None
+    if prop in ("scale_x_percent", "scale_y_percent"):
+        attr = "scale_x" if prop == "scale_x_percent" else "scale_y"
+        if abs(getattr(obj.transform, attr) - value) > 1e-9:
+            setattr(obj.transform, attr, max(0.05, min(10.0, value)))
+            return True, True, None
+        return True, False, None
+    if prop == "z_index":
+        new_value = int(round(value))
+        if obj.z_index != new_value:
+            obj.z_index = new_value
+            return True, True, None
+        return True, False, None
+    if prop in ("width", "height"):
+        if editor_sprite_types.uses_pixel_size(getattr(obj, "sprite_shape", "image")):
+            v = max(1, int(value))
+            if obj.custom_data.get(prop) != v:
+                obj.custom_data[prop] = v
+                return True, True, None
+            return True, False, None
+        native_w, native_h = editor._get_object_native_size(obj)
+        native = native_w if prop == "width" else native_h
+        if native <= 0:
+            return False, False, None
+        attr = "scale_x" if prop == "width" else "scale_y"
+        new_scale = max(0.05, value / native)
+        if abs(getattr(obj.transform, attr) - new_scale) > 1e-9:
+            setattr(obj.transform, attr, new_scale)
+            return True, True, None
+        return True, False, None
+    if prop in ("color_r", "color_g", "color_b"):
+        channel = ("color_r", "color_g", "color_b").index(prop)
+        c = list(getattr(obj, "sprite_color", (255, 255, 255)))
+        v = max(0, min(255, int(round(value))))
+        if c[channel] != v:
+            c[channel] = v
+            obj.sprite_color = tuple(c)
+            return True, True, None
+        return True, False, None
+    if prop in ("text_color_r", "text_color_g", "text_color_b"):
+        channel = ("text_color_r", "text_color_g", "text_color_b").index(prop)
+        c = list((obj.custom_data or {}).get("text_color") or (0, 0, 0))
+        v = max(0, min(255, int(round(value))))
+        if c[channel] != v:
+            c[channel] = v
+            obj.custom_data["text_color"] = c
+            return True, True, None
+        return True, False, None
+    if prop == "physics_mass":
+        v = max(0.01, float(value))
+        if getattr(obj, "physics_mass", 1.0) != v:
+            obj.physics_mass = v
+            return True, True, None
+        return True, False, None
+    if prop == "physics_friction":
+        v = max(0.0, min(1.0, float(value)))
+        if getattr(obj, "physics_friction", 0.98) != v:
+            obj.physics_friction = v
+            return True, True, None
+        return True, False, None
+    if prop == "physics_bounce":
+        v = max(0.0, float(value))
+        if getattr(obj, "physics_bounce", 0.5) != v:
+            obj.physics_bounce = v
+            return True, True, None
+        return True, False, None
+    if prop == "font_size":
+        v = max(8, int(round(value)))
+        if int((obj.custom_data or {}).get("font_size", 28)) != v:
+            obj.custom_data["font_size"] = v
+            return True, True, None
+        return True, False, None
+    return False, False, None
+
+
 def adjust_selected_property(editor: "SpriteEditor", prop: str, delta: float) -> None:
     if editor.camera_selected:
         cam = editor.scene.camera
@@ -53,82 +205,30 @@ def adjust_selected_property(editor: "SpriteEditor", prop: str, delta: float) ->
     for obj in editor.selected_objects:
         if obj.locked and prop not in ("active", "locked"):
             continue
-        if prop == "x":
-            obj.transform.x += delta
-            moves.append((obj, delta, 0.0))
-            changed = True
-        elif prop == "y":
-            obj.transform.y += delta
-            moves.append((obj, 0.0, delta))
-            changed = True
-        elif prop == "rotation":
-            obj.transform.rotation += delta
-            changed = True
-        elif prop == "scale_x":
-            obj.transform.scale_x = max(0.05, obj.transform.scale_x + delta)
-            changed = True
-        elif prop == "scale_y":
-            obj.transform.scale_y = max(0.05, obj.transform.scale_y + delta)
-            changed = True
-        elif prop == "scale_x_percent":
-            obj.transform.scale_x = max(0.05, min(10.0, obj.transform.scale_x + delta / 100.0))
-            changed = True
-        elif prop == "scale_y_percent":
-            obj.transform.scale_y = max(0.05, min(10.0, obj.transform.scale_y + delta / 100.0))
-            changed = True
-        elif prop == "z_index":
-            obj.z_index += int(delta)
-            changed = True
-        elif prop in ("width", "height"):
-            if editor_sprite_types.uses_pixel_size(getattr(obj, "sprite_shape", "image")):
-                w = obj.custom_data.get("width", 100) + (delta if prop == "width" else 0)
-                h = obj.custom_data.get("height", 100) + (delta if prop == "height" else 0)
-                obj.custom_data["width"] = max(1, int(w))
-                obj.custom_data["height"] = max(1, int(h))
-                changed = True
-            else:
-                native_w, native_h = editor._get_object_native_size(obj)
-                if prop == "width" and native_w > 0:
-                    current_w = native_w * obj.transform.scale_x
-                    obj.transform.scale_x = max(0.05, (current_w + delta) / native_w)
-                    changed = True
-                if prop == "height" and native_h > 0:
-                    current_h = native_h * obj.transform.scale_y
-                    obj.transform.scale_y = max(0.05, (current_h + delta) / native_h)
-                    changed = True
-        elif prop == "color_r":
-            c = getattr(obj, "sprite_color", (255, 255, 255))
-            obj.sprite_color = (max(0, min(255, int(c[0] + delta))), c[1], c[2])
-            changed = True
-        elif prop == "color_g":
-            c = getattr(obj, "sprite_color", (255, 255, 255))
-            obj.sprite_color = (c[0], max(0, min(255, int(c[1] + delta))), c[2])
-            changed = True
-        elif prop == "color_b":
-            c = getattr(obj, "sprite_color", (255, 255, 255))
-            obj.sprite_color = (c[0], c[1], max(0, min(255, int(c[2] + delta))))
-            changed = True
-        elif prop in ("text_color_r", "text_color_g", "text_color_b"):
-            channel = ("text_color_r", "text_color_g", "text_color_b").index(prop)
-            c = list((obj.custom_data or {}).get("text_color") or (0, 0, 0))
-            c[channel] = max(0, min(255, int(c[channel] + delta)))
-            obj.custom_data["text_color"] = c
-            changed = True
-        elif prop == "physics_mass":
-            obj.physics_mass = max(0.01, obj.physics_mass + delta)
-            changed = True
-        elif prop == "physics_friction":
-            obj.physics_friction = max(0.0, min(1.0, obj.physics_friction + delta))
-            changed = True
-        elif prop == "physics_bounce":
-            obj.physics_bounce = max(0.0, obj.physics_bounce + delta)
-            changed = True
-        elif prop == "font_size":
-            current_font_size = int((obj.custom_data or {}).get("font_size", 28))
-            new_font_size = max(8, current_font_size + int(delta))
-            if current_font_size != new_font_size:
-                obj.custom_data["font_size"] = new_font_size
-                changed = True
+        current = _current_property_value(editor, obj, prop)
+        if current is None:
+            continue
+        if prop in ("scale_x_percent", "scale_y_percent"):
+            target = current + delta / 100.0
+        elif prop in ("z_index", "font_size"):
+            target = current + int(delta)
+        elif prop in (
+            "color_r",
+            "color_g",
+            "color_b",
+            "text_color_r",
+            "text_color_g",
+            "text_color_b",
+        ):
+            target = int(current + delta)
+        else:
+            target = current + delta
+        handled, obj_changed, move = _apply_property(editor, obj, prop, target)
+        if move is not None:
+            moves.append(move)
+        if not handled:
+            continue
+        changed = changed or (obj_changed if prop == "font_size" else True)
     if moves:
         _shift_descendants(editor, moves)
     if changed:
@@ -323,115 +423,15 @@ def set_selected_property_value(editor: "SpriteEditor", prop: str, value: float)
     for obj in editor.selected_objects:
         if obj.locked and prop not in ("active", "locked"):
             continue
-        if prop == "x":
-            if abs(obj.transform.x - value) > 1e-9:
-                moves.append((obj, value - obj.transform.x, 0.0))
-                obj.transform.x = value
-                changed = True
-        elif prop == "y":
-            if abs(obj.transform.y - value) > 1e-9:
-                moves.append((obj, 0.0, value - obj.transform.y))
-                obj.transform.y = value
-                changed = True
-        elif prop == "rotation":
-            if abs(obj.transform.rotation - value) > 1e-9:
-                obj.transform.rotation = value
-                changed = True
-        elif prop == "scale_x":
-            new_value = max(0.05, value)
-            if abs(obj.transform.scale_x - new_value) > 1e-9:
-                obj.transform.scale_x = new_value
-                changed = True
-        elif prop == "scale_y":
-            new_value = max(0.05, value)
-            if abs(obj.transform.scale_y - new_value) > 1e-9:
-                obj.transform.scale_y = new_value
-                changed = True
-        elif prop == "scale_x_percent":
+        if prop in ("scale_x_percent", "scale_y_percent"):
             v = float(value)
-            new_scale = v / 100.0 if 1 <= v <= 1000 else max(0.05, v)
-            if abs(obj.transform.scale_x - new_scale) > 1e-9:
-                obj.transform.scale_x = max(0.05, min(10.0, new_scale))
-                changed = True
-        elif prop == "scale_y_percent":
-            v = float(value)
-            new_scale = v / 100.0 if 1 <= v <= 1000 else max(0.05, v)
-            if abs(obj.transform.scale_y - new_scale) > 1e-9:
-                obj.transform.scale_y = max(0.05, min(10.0, new_scale))
-                changed = True
-        elif prop == "z_index":
-            new_value = int(round(value))
-            if obj.z_index != new_value:
-                obj.z_index = new_value
-                changed = True
-        elif prop in ("width", "height"):
-            if editor_sprite_types.uses_pixel_size(getattr(obj, "sprite_shape", "image")):
-                v = max(1, int(value))
-                if prop == "width" and obj.custom_data.get("width") != v:
-                    obj.custom_data["width"] = v
-                    changed = True
-                if prop == "height" and obj.custom_data.get("height") != v:
-                    obj.custom_data["height"] = v
-                    changed = True
-            else:
-                native_w, native_h = editor._get_object_native_size(obj)
-                if prop == "width" and native_w > 0:
-                    new_scale = max(0.05, value / native_w)
-                    if abs(obj.transform.scale_x - new_scale) > 1e-9:
-                        obj.transform.scale_x = new_scale
-                        changed = True
-                if prop == "height" and native_h > 0:
-                    new_scale = max(0.05, value / native_h)
-                    if abs(obj.transform.scale_y - new_scale) > 1e-9:
-                        obj.transform.scale_y = new_scale
-                        changed = True
-        elif prop == "color_r":
-            c = getattr(obj, "sprite_color", (255, 255, 255))
-            v = max(0, min(255, int(round(value))))
-            if c[0] != v:
-                obj.sprite_color = (v, c[1], c[2])
-                changed = True
-        elif prop == "color_g":
-            c = getattr(obj, "sprite_color", (255, 255, 255))
-            v = max(0, min(255, int(round(value))))
-            if c[1] != v:
-                obj.sprite_color = (c[0], v, c[2])
-                changed = True
-        elif prop == "color_b":
-            c = getattr(obj, "sprite_color", (255, 255, 255))
-            v = max(0, min(255, int(round(value))))
-            if c[2] != v:
-                obj.sprite_color = (c[0], c[1], v)
-                changed = True
-        elif prop in ("text_color_r", "text_color_g", "text_color_b"):
-            channel = ("text_color_r", "text_color_g", "text_color_b").index(prop)
-            c = list((obj.custom_data or {}).get("text_color") or (0, 0, 0))
-            v = max(0, min(255, int(round(value))))
-            if c[channel] != v:
-                c[channel] = v
-                obj.custom_data["text_color"] = c
-                changed = True
-        elif prop == "physics_mass":
-            v = max(0.01, float(value))
-            if getattr(obj, "physics_mass", 1.0) != v:
-                obj.physics_mass = v
-                changed = True
-        elif prop == "physics_friction":
-            v = max(0.0, min(1.0, float(value)))
-            if getattr(obj, "physics_friction", 0.98) != v:
-                obj.physics_friction = v
-                changed = True
-        elif prop == "physics_bounce":
-            v = max(0.0, float(value))
-            if getattr(obj, "physics_bounce", 0.5) != v:
-                obj.physics_bounce = v
-                changed = True
-        elif prop == "font_size":
-            v = max(8, int(round(value)))
-            current_font_size = int((obj.custom_data or {}).get("font_size", 28))
-            if current_font_size != v:
-                obj.custom_data["font_size"] = v
-                changed = True
+            target = v / 100.0 if 1 <= v <= 1000 else max(0.05, v)
+        else:
+            target = value
+        _handled, obj_changed, move = _apply_property(editor, obj, prop, target)
+        if move is not None:
+            moves.append(move)
+        changed = changed or obj_changed
     if moves:
         _shift_descendants(editor, moves)
     if changed:

@@ -35,6 +35,7 @@ try:
     from .ui import hierarchy as ui_hierarchy
     from .ui import inspector as ui_inspector
     from .ui import viewport as ui_viewport
+    from .ui import create_menu as ui_create_menu
 except ImportError:
     import sys
 
@@ -62,6 +63,7 @@ except ImportError:
     from spritePro.editor.ui import hierarchy as ui_hierarchy
     from spritePro.editor.ui import inspector as ui_inspector
     from spritePro.editor.ui import viewport as ui_viewport
+    from spritePro.editor.ui import create_menu as ui_create_menu
 
 
 class ToolType(Enum):
@@ -159,6 +161,9 @@ class SpriteEditor:
         # Кнопки тулбара (для кликов)
         self._toolbar_buttons: Dict[str, Dict[str, object]] = {}
         self._toolbar_menu = None
+        self._create_menu = None
+        self._hierarchy_add_button_rect: Optional[pygame.Rect] = None
+        self._viewport_tool_buttons: List[Tuple[ToolType, pygame.Rect]] = []
         self._inspector_actions: List[Tuple[pygame.Rect, Callable[[], None]]] = []
         self._statusbar_controls: Dict[str, pygame.Rect] = {}
         self._active_slider: Optional[str] = None
@@ -377,8 +382,8 @@ class SpriteEditor:
     def _new_scene(self) -> None:
         editor_actions.new_scene(self)
 
-    def _add_sprite_dialog(self) -> None:
-        editor_actions.add_sprite_dialog(self)
+    def _add_sprite_dialog(self, world_pos: Optional[Vector2] = None) -> None:
+        editor_actions.add_sprite_dialog(self, world_pos)
 
     def _browse_sprite_path_for_selected(self) -> None:
         editor_actions.browse_sprite_path_for_selected(self)
@@ -423,6 +428,7 @@ class SpriteEditor:
         ui_inspector.render(self)
         ui_statusbar.render(self)
         ui_toolbar.render_overlay(self)
+        ui_create_menu.render_overlay(self)
 
     def _get_object_native_size(self, obj: SceneObject) -> Tuple[int, int]:
         shape = getattr(obj, "sprite_shape", "image")

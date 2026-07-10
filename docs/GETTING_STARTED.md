@@ -70,12 +70,16 @@ python -m spritePro.cli --create MyGame
 
 **Что создаст:**
 - `main.py` — точка входа
-- `config.py` — настройки и пути к ассетам
-- `game_events.py` — базовые события через EventBus
-- `scenes/main_scene.py` — главная сцена
+- `config.py` — настройки
+- `scenes/main_scene.py` — главная сцена (грузит уровень из редактора)
 - `scenes/second_scene.py` — вторая сцена (заготовка)
 - `scenes/main_level.json` — стартовый уровень из редактора
-- `assets/audio/`, `assets/images/` — папки для ассетов
+- `assets/` — папка для ассетов
+
+Минимальный вариант — один файл с одной сценой:
+```bash
+python -m spritePro.cli --create MyGame --simple
+```
 
 ---
 
