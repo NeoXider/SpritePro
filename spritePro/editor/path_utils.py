@@ -55,7 +55,12 @@ def resolve_sprite_path(
     candidates: list[Path] = []
     if path.is_absolute():
         candidates.append(path)
-    else:
+        # Абсолютный путь с другой машины: ищем файл по basename рядом
+        # со сценой и в assets, иначе сцена непереносима между ПК
+        rel_fallback = Path(basename) if basename else None
+        if rel_fallback is not None:
+            path = rel_fallback
+    if not path.is_absolute():
         if scene_file is not None:
             scene_dir = scene_file.resolve().parent
             candidates.append(scene_dir / path)
