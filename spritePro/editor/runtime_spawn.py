@@ -47,13 +47,23 @@ def _text_config(obj: SceneObject) -> tuple[str, int, tuple[int, int, int]]:
     return text, font_size, color
 
 
-def _button_config(obj: SceneObject) -> dict:
+def _button_config(obj: SceneObject, label_source: Optional[SceneObject] = None) -> dict:
     cd = obj.custom_data or {}
     size = (
         max(1, int(cd.get("width") or st.BUTTON_DEFAULT_SIZE[0])),
         max(1, int(cd.get("height") or st.BUTTON_DEFAULT_SIZE[1])),
     )
-    text_color = cd.get("text_color")
+    if label_source is not None:
+        # Надпись из дочернего Text-объекта сцены (Unity-стиль)
+        label_cd = label_source.custom_data or {}
+        text = str(label_cd.get("text") or "")
+        text_size = max(8, int(label_cd.get("font_size") or st.BUTTON_DEFAULT_FONT_SIZE))
+        text_color = getattr(label_source, "sprite_color", None)
+    else:
+        # Legacy: надпись в custom_data кнопки; нет текста — кнопка без надписи
+        text = str(cd.get("text") or "")
+        text_size = max(8, int(cd.get("font_size") or st.BUTTON_DEFAULT_FONT_SIZE))
+        text_color = cd.get("text_color")
     if isinstance(text_color, (list, tuple)) and len(text_color) >= 3:
         text_color = (int(text_color[0]), int(text_color[1]), int(text_color[2]))
     else:
@@ -65,8 +75,8 @@ def _button_config(obj: SceneObject) -> dict:
         bg = st.BUTTON_DEFAULT_BG_COLOR
     return {
         "size": size,
-        "text": str(cd.get("text") or st.BUTTON_DEFAULT_TEXT),
-        "text_size": max(8, int(cd.get("font_size") or st.BUTTON_DEFAULT_FONT_SIZE)),
+        "text": text,
+        "text_size": text_size,
         "text_color": text_color,
         "base_color": bg,
         "hover_color": tuple(min(255, int(c * 1.12) + 8) for c in bg),
@@ -109,6 +119,7 @@ def _spawn_sprite_for_object(
     *,
     scene_path: Path,
     runtime_scene: s.Scene,
+    label_source: Optional[SceneObject] = None,
 ) -> Optional[s.Sprite]:
     pos = (obj.transform.x, obj.transform.y)
     shape = getattr(obj, "sprite_shape", "image")
@@ -152,8 +163,8 @@ def _spawn_sprite_for_object(
         sprite.scale = (scale_x + scale_y) * 0.5
         return sprite
     if shape == st.SHAPE_BUTTON:
-        cfg = _button_config(obj)
-        return s.Button(
+        cfg = _button_config(obj, label_source)
+        button = s.Button(
             "",
             cfg["size"],
             pos,
@@ -166,6 +177,13 @@ def _spawn_sprite_for_object(
             sorting_order=obj.z_index,
             scene=runtime_scene,
         )
+        if label_source is not None and button.text_sprite is not None:
+            dx = label_source.transform.x - obj.transform.x
+            dy = label_source.transform.y - obj.transform.y
+            if dx or dy:
+                button.text_sprite.local_offset = pygame.Vector2(dx, dy)
+                button.text_sprite._apply_parent_transform()
+        return button
     if st.is_primitive(shape):
         prim = _primitive_size_and_color(obj)
         if prim is None:
@@ -254,8 +272,31 @@ def spawn_scene(
     by_id: Dict[str, SpawnedObject] = {}
     by_name: Dict[str, List[SpawnedObject]] = {}
 
+    # Дочерний Text кнопки — её надпись (Unity-стиль): он «поглощается»
+    # внутренним text_sprite и не спавнится отдельным объектом
+    button_labels: Dict[str, SceneObject] = {}
+    consumed_label_ids: set[str] = set()
     for obj in source.objects:
-        sprite = _spawn_sprite_for_object(obj, scene_path=scene_file, runtime_scene=runtime_scene)
+        if getattr(obj, "sprite_shape", "") != st.SHAPE_BUTTON:
+            continue
+        for child in source.objects:
+            if (
+                getattr(child, "parent", None) == obj.id
+                and getattr(child, "sprite_shape", "") == st.SHAPE_TEXT
+            ):
+                button_labels[obj.id] = child
+                consumed_label_ids.add(child.id)
+                break
+
+    for obj in source.objects:
+        if obj.id in consumed_label_ids:
+            continue
+        sprite = _spawn_sprite_for_object(
+            obj,
+            scene_path=scene_file,
+            runtime_scene=runtime_scene,
+            label_source=button_labels.get(obj.id),
+        )
         if sprite is None:
             continue
         sprite.angle = obj.transform.rotation

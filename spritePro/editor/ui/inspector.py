@@ -395,9 +395,11 @@ def render(editor) -> None:
         y = _render_text_row(editor, x, y, str((obj.custom_data or {}).get("text", "New Text")))
     elif is_button:
         y = _render_section_header(editor, x, y + 2, "Button")
-        y = _render_text_row(
-            editor, x, y, str((obj.custom_data or {}).get("text", sprite_types.BUTTON_DEFAULT_TEXT))
-        )
+        if "text" in (obj.custom_data or {}):
+            # Legacy-кнопка: надпись в custom_data; новые хранят её в дочернем Text
+            y = _render_text_row(editor, x, y, str(obj.custom_data.get("text", "")))
+        else:
+            y = _render_property_row(editor, x, y, "Text", "child Text object")
     y = _render_section_header(editor, x, y + 2, "Transform")
     y = _render_numeric_property_row(
         editor, x, y, "Position X", obj.transform.x, -10.0, 10.0, "x"
@@ -491,30 +493,35 @@ def render(editor) -> None:
             editor, x, y, "Color B", float(color[2]), -10, 10, "color_b", value_type="int"
         )
     elif is_button:
-        y = _render_section_header(editor, x, y + 2, "Font")
-        font_size = int((obj.custom_data or {}).get("font_size", sprite_types.BUTTON_DEFAULT_FONT_SIZE))
-        y = _render_numeric_property_row(
-            editor,
-            x,
-            y,
-            "Font Size",
-            float(font_size),
-            -1.0,
-            1.0,
-            "font_size",
-            value_type="int",
-        )
-        y = _render_section_header(editor, x, y + 2, "Text Color")
-        text_color = (obj.custom_data or {}).get("text_color") or sprite_types.BUTTON_DEFAULT_TEXT_COLOR
-        y = _render_numeric_property_row(
-            editor, x, y, "Color R", float(text_color[0]), -10, 10, "text_color_r", value_type="int"
-        )
-        y = _render_numeric_property_row(
-            editor, x, y, "Color G", float(text_color[1]), -10, 10, "text_color_g", value_type="int"
-        )
-        y = _render_numeric_property_row(
-            editor, x, y, "Color B", float(text_color[2]), -10, 10, "text_color_b", value_type="int"
-        )
+        if "text" in (obj.custom_data or {}):
+            y = _render_section_header(editor, x, y + 2, "Font")
+            font_size = int(
+                (obj.custom_data or {}).get("font_size", sprite_types.BUTTON_DEFAULT_FONT_SIZE)
+            )
+            y = _render_numeric_property_row(
+                editor,
+                x,
+                y,
+                "Font Size",
+                float(font_size),
+                -1.0,
+                1.0,
+                "font_size",
+                value_type="int",
+            )
+            y = _render_section_header(editor, x, y + 2, "Text Color")
+            text_color = (
+                (obj.custom_data or {}).get("text_color") or sprite_types.BUTTON_DEFAULT_TEXT_COLOR
+            )
+            y = _render_numeric_property_row(
+                editor, x, y, "Color R", float(text_color[0]), -10, 10, "text_color_r", value_type="int"
+            )
+            y = _render_numeric_property_row(
+                editor, x, y, "Color G", float(text_color[1]), -10, 10, "text_color_g", value_type="int"
+            )
+            y = _render_numeric_property_row(
+                editor, x, y, "Color B", float(text_color[2]), -10, 10, "text_color_b", value_type="int"
+            )
         y = _render_section_header(editor, x, y + 2, "Background")
         color = getattr(obj, "sprite_color", sprite_types.BUTTON_DEFAULT_BG_COLOR)
         y = _render_numeric_property_row(

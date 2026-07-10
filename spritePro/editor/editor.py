@@ -325,7 +325,9 @@ class SpriteEditor:
         if shape == editor_sprite_types.SHAPE_BUTTON:
             cd = getattr(obj, "custom_data", None) or {}
             w, h = self._get_object_native_size(obj)
-            text = str(cd.get("text") or editor_sprite_types.BUTTON_DEFAULT_TEXT)
+            # Нет текста в custom_data — кнопка без надписи (надпись —
+            # дочерний Text-объект, он рисуется отдельно)
+            text = str(cd.get("text") or "")
             font_size = max(8, int(cd.get("font_size") or editor_sprite_types.BUTTON_DEFAULT_FONT_SIZE))
             text_color = cd.get("text_color") or editor_sprite_types.BUTTON_DEFAULT_TEXT_COLOR
             bg_color = getattr(obj, "sprite_color", editor_sprite_types.BUTTON_DEFAULT_BG_COLOR)

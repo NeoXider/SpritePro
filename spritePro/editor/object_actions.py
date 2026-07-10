@@ -98,15 +98,16 @@ def add_button(
     text: str = "Button",
     world_pos: Optional[Vector2] = None,
 ) -> SceneObject:
+    """Создаёт кнопку с дочерним Text-объектом (как в Unity).
+
+    Надпись живёт в ребёнке: удалите его — кнопка будет без текста.
+    """
     obj = SceneObject(
         name="Button",
         sprite_path="",
         sprite_shape=editor_sprite_types.SHAPE_BUTTON,
         sprite_color=editor_sprite_types.BUTTON_DEFAULT_BG_COLOR,
         custom_data={
-            "text": text,
-            "font_size": editor_sprite_types.BUTTON_DEFAULT_FONT_SIZE,
-            "text_color": list(editor_sprite_types.BUTTON_DEFAULT_TEXT_COLOR),
             "width": editor_sprite_types.BUTTON_DEFAULT_SIZE[0],
             "height": editor_sprite_types.BUTTON_DEFAULT_SIZE[1],
         },
@@ -120,6 +121,23 @@ def add_button(
     if editor.scene.objects:
         obj.z_index = max(o.z_index for o in editor.scene.objects) + 1
     editor.scene.add_object(obj)
+
+    label = SceneObject(
+        name="Text",
+        sprite_path="",
+        sprite_shape=editor_sprite_types.SHAPE_TEXT,
+        sprite_color=editor_sprite_types.BUTTON_DEFAULT_TEXT_COLOR,
+        custom_data={
+            "text": text,
+            "font_size": editor_sprite_types.BUTTON_DEFAULT_FONT_SIZE,
+        },
+    )
+    label.transform.x = obj.transform.x
+    label.transform.y = obj.transform.y
+    label.parent = obj.id
+    label.z_index = obj.z_index + 1
+    editor.scene.add_object(label)
+
     editor._save_state()
     return obj
 

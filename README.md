@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Open%20Source-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-3.12.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-3.12.1-green.svg)](CHANGELOG.md)
 
 ![SpritePro](assets/spritepro-banner.png)
 
