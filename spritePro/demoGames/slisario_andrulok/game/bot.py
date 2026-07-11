@@ -1,3 +1,9 @@
+"""Бот-змейка: едет к ближайшей еде, избегает стен, плавно поворачивает.
+
+Боты существуют только на авторитете (одиночная игра или хост);
+клиенты видят их через bot_state как NetSnakeView.
+"""
+
 import math
 import random
 
@@ -5,7 +11,7 @@ from pygame.math import Vector2
 
 import spritePro as s
 from .config import (
-    HEAD_SIZE, BOT_SPEED, BOT_INITIAL_LENGTH,
+    BOT_SPEED, BOT_INITIAL_LENGTH,
     BOT_AVOID_WALL_DIST,
     WORLD_WIDTH, WORLD_HEIGHT,
 )
@@ -20,13 +26,14 @@ def _random_pos() -> Vector2:
 
 
 class BotSnake(Snake):
-    def __init__(self, start_pos: tuple[int, int], scene: s.Scene):
+    def __init__(self, bot_id: int, start_pos: tuple[int, int], scene: s.Scene):
+        self.bot_id = bot_id
         self.target_dir = Vector2(random.uniform(-1, 1), random.uniform(-1, 1))
         if self.target_dir.length() > 0:
             self.target_dir.normalize_ip()
         self._wander_target = _random_pos()
         self._wander_timer = 0.0
-        super().__init__(start_pos, scene, initial_length=BOT_INITIAL_LENGTH, ctype_head="bot_head", ctype_seg="bot_segment")
+        super().__init__(start_pos, scene, initial_length=BOT_INITIAL_LENGTH)
         self.speed = BOT_SPEED
 
     def find_food_target(self, foods: list[s.Sprite]) -> Vector2 | None:
@@ -34,8 +41,6 @@ class BotSnake(Snake):
         best: Vector2 | None = None
         best_dist = float("inf")
         for food in foods:
-            if not food.active:
-                continue
             fpos = Vector2(food.rect.center)
             d = head.distance_squared_to(fpos)
             if d < best_dist:
@@ -47,7 +52,7 @@ class BotSnake(Snake):
         if not self.alive:
             return
 
-        desired = self._pick_desired_direction(foods)
+        desired = self._pick_desired_direction(foods, dt)
         self._smooth_turn(desired, dt)
 
         head_pos = Vector2(self.head.rect.center)
@@ -63,7 +68,12 @@ class BotSnake(Snake):
         self.trail.append(self.head.rect.center)
         self._update_segments()
 
-    def _pick_desired_direction(self, foods: list[s.Sprite]) -> Vector2:
+    def get_state(self) -> dict:
+        state = super().get_state()
+        state["id"] = self.bot_id
+        return state
+
+    def _pick_desired_direction(self, foods: list[s.Sprite], dt: float) -> Vector2:
         head = Vector2(self.head.rect.center)
         target = self.find_food_target(foods)
 
@@ -87,7 +97,7 @@ class BotSnake(Snake):
             steer.y -= (head.y - (WORLD_HEIGHT - margin)) / margin
 
         if steer.length() < 0.01:
-            self._wander_timer += 0.016
+            self._wander_timer += dt
             if self._wander_timer > 2.0:
                 self._wander_target = _random_pos()
                 self._wander_timer = 0.0

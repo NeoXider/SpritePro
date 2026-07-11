@@ -1,3 +1,5 @@
+"""Настройки игры: окно, мир, змейки, еда, боты и сетевые интервалы."""
+
 from pathlib import Path
 
 import pygame
@@ -19,9 +21,15 @@ SEGMENT_SIZE = 22
 SEGMENT_SPACING = 4
 SNAKE_SPEED = 280.0
 INITIAL_LENGTH = 3
+# Сколько съеденной еды даёт +1 сегмент.
+FOOD_PER_SEGMENT = 3
+# Отступ от стен при спавне змей.
+SPAWN_MARGIN = 200
 
 FOOD_COUNT = 80
 FOOD_SIZE = 10
+# Еда не появляется вплотную к стенам: боты, идущие к ней, гибли бы о стену.
+FOOD_MARGIN = 60
 FOOD_COLORS = [
     (255, 50, 50),
     (50, 255, 50),
@@ -36,6 +44,15 @@ FOOD_COLORS = [
 BOT_COUNT = 3
 BOT_SPEED = 220.0
 BOT_INITIAL_LENGTH = 3
-BOT_UPDATE_INTERVAL = 0.15
 BOT_AVOID_WALL_DIST = 150
 BOT_RESPAWN_DELAY = 3.0
+
+# --- Сеть (host-authoritative) ---
+# Частота рассылки своей змейки каждым игроком.
+SNAKE_SYNC_INTERVAL = 1.0 / 30.0
+# Частота рассылки ботов хостом.
+BOT_SYNC_INTERVAL = 1.0 / 20.0
+# Периодический полный снапшот еды от хоста (сверка после событий).
+FOOD_SNAPSHOT_INTERVAL = 0.5
+# Если от игрока нет пакетов дольше этого времени — убираем его змейку.
+REMOTE_TIMEOUT = 5.0

@@ -40,5 +40,4 @@ class World:
             wall = s.Sprite("", size, pos, scene=scene)
             wall.set_rect_shape(size=size, color=border_color)
             wall.set_sorting_order(2)
-            wall._ctype = "wall"
             self.walls.append(wall)

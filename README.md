@@ -151,7 +151,7 @@ python -m spritePro.demoGames.local_multiplayer_demo --quick
 
 ### Слизарио (andrulok)
 
-Мультиплеерный клон [Slither.io](https://slither.io/): змейка за курсором, еда, боты, синхронизация позиций и еды по TCP (SpritePro networking).
+Мультиплеерный клон [Slither.io](https://slither.io/) и эталон сетевой игры на SpritePro: host-authoritative еда и боты, подтверждение действий хостом, подключение в середине игры. Разбор архитектуры — в [ARCHITECTURE.md](spritePro/demoGames/slisario_andrulok/ARCHITECTURE.md).
 
 ![Слизарио — пример игры](assets/slizario.png)
 
@@ -159,7 +159,7 @@ python -m spritePro.demoGames.local_multiplayer_demo --quick
 # одиночная игра
 python spritePro/demoGames/slisario_andrulok/main.py --single
 
-# локально: сервер + 2 окна клиентов
+# локально: хост + клиент, два окна
 python spritePro/demoGames/slisario_andrulok/main.py --quick
 ```
 

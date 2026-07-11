@@ -1,7 +1,8 @@
+"""Змейка локального игрока: движение за курсором, рост, состояние для сети."""
+
 import math
 import random
 
-import pygame
 from pygame.math import Vector2
 
 import spritePro as s
@@ -11,8 +12,7 @@ from .config import (
     SEGMENT_SPACING,
     SNAKE_SPEED,
     INITIAL_LENGTH,
-    WORLD_WIDTH,
-    WORLD_HEIGHT,
+    FOOD_PER_SEGMENT,
 )
 
 
@@ -24,15 +24,30 @@ def _random_snake_color() -> tuple[int, int, int]:
     )
 
 
+def _dim_color(color: tuple[int, int, int], factor: float) -> tuple[int, int, int]:
+    return (
+        int(color[0] * factor),
+        int(color[1] * factor),
+        int(color[2] * factor),
+    )
+
+
 class Snake:
-    def __init__(self, start_pos: tuple[int, int], scene: s.Scene, initial_length: int | None = None, ctype_head: str = "player_head", ctype_seg: str = "player_segment"):
+    """Змейка, которой управляет локальная симуляция (игрок или бот)."""
+
+    def __init__(
+        self,
+        start_pos: tuple[int, int],
+        scene: s.Scene,
+        initial_length: int | None = None,
+    ):
+        self.scene = scene
         self.color = _random_snake_color()
         length = initial_length if initial_length is not None else INITIAL_LENGTH
 
         self.head = s.Sprite("", (HEAD_SIZE, HEAD_SIZE), start_pos, scene=scene)
         self.head.set_circle_shape(radius=HEAD_SIZE // 2, color=self.color)
         self.head.set_sorting_order(10)
-        self.head._ctype = ctype_head
 
         seg_color = _dim_color(self.color, 0.7)
         self.segments: list[s.Sprite] = []
@@ -45,7 +60,6 @@ class Snake:
             )
             seg.set_circle_shape(radius=SEGMENT_SIZE // 2, color=seg_color)
             seg.set_sorting_order(5)
-            seg._ctype = ctype_seg
             self.segments.append(seg)
 
         self.trail: list[tuple[int, int]] = [start_pos] * 20
@@ -57,8 +71,7 @@ class Snake:
         if not self.alive:
             return
 
-        mouse_screen = s.input.mouse_pos
-        mouse_world = _screen_to_world(mouse_screen)
+        mouse_world = _screen_to_world(s.input.mouse_pos)
 
         head_pos = self.head.rect.center
         dx = mouse_world.x - head_pos[0]
@@ -89,21 +102,31 @@ class Snake:
 
     def grow(self) -> None:
         self.grow_pending += 1
-        if self.grow_pending >= 3:
-            seg_color = _dim_color(self.color, 0.7)
-            last_pos = self.segments[-1].rect.center if self.segments else self.head.rect.center
-            seg = s.Sprite(
-                "", (SEGMENT_SIZE, SEGMENT_SIZE), last_pos,
-                scene=s.get_current_scene(),
-            )
-            seg.set_circle_shape(radius=SEGMENT_SIZE // 2, color=seg_color)
-            seg.set_sorting_order(5)
-            seg._ctype = getattr(self.head, "_ctype", "player_segment").replace("head", "segment")
-            self.segments.append(seg)
-            self.grow_pending = 0
+        if self.grow_pending < FOOD_PER_SEGMENT:
+            return
+        self.grow_pending = 0
+        seg_color = _dim_color(self.color, 0.7)
+        last_pos = self.segments[-1].rect.center if self.segments else self.head.rect.center
+        seg = s.Sprite("", (SEGMENT_SIZE, SEGMENT_SIZE), last_pos, scene=self.scene)
+        seg.set_circle_shape(radius=SEGMENT_SIZE // 2, color=seg_color)
+        seg.set_sorting_order(5)
+        self.segments.append(seg)
 
     def get_head_position(self) -> tuple[int, int]:
         return self.head.rect.center
+
+    def body_positions(self) -> list[tuple[int, int]]:
+        """Позиции головы и всех сегментов (для выпадения еды на месте смерти)."""
+        return [self.head.rect.center] + [seg.rect.center for seg in self.segments]
+
+    def get_state(self) -> dict:
+        """Состояние змейки для отправки по сети."""
+        return {
+            "head": list(self.head.rect.center),
+            "angle": self.head.angle,
+            "segments": [list(seg.rect.center) for seg in self.segments],
+            "color": list(self.color),
+        }
 
     def die(self) -> None:
         self.alive = False
@@ -122,17 +145,10 @@ class Snake:
 
 
 def _screen_to_world(screen_pos: tuple[int, int]) -> Vector2:
+    """Обратное преобразование камеры (позиция + зум относительно центра экрана)."""
     cam = s.get_camera_position()
     zoom = max(0.01, s.get_camera_zoom())
     cx, cy = s.WH_C.x, s.WH_C.y
     wx = cam.x + (screen_pos[0] - cx * (1 - zoom)) / zoom
     wy = cam.y + (screen_pos[1] - cy * (1 - zoom)) / zoom
     return Vector2(wx, wy)
-
-
-def _dim_color(color: tuple[int, int, int], factor: float) -> tuple[int, int, int]:
-    return (
-        int(color[0] * factor),
-        int(color[1] * factor),
-        int(color[2] * factor),
-    )

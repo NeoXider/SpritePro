@@ -1,16 +1,36 @@
+"""Игровая сцена: геймплей, столкновения и сетевая синхронизация.
+
+Модель сети — host-authoritative:
+
+- своей змейкой владеет каждый игрок и рассылает её состояние (player_state);
+- еда и боты симулируются только авторитетом (хост либо одиночная игра),
+  клиенты получают их событиями и снапшотами (food_eaten, food_state, bot_state);
+- клиент лишь просит съесть еду (eat_food) и растёт после подтверждения
+  хоста (food_eaten) — поэтому двое не могут съесть одну и ту же еду;
+- о смерти игрок сообщает сам (player_died), хост превращает его тело в еду;
+  отключившихся хост убирает событием player_left.
+"""
+
+import random
 import time
+
 import pygame
 import spritePro as s
+
 from game.config import (
-    WORLD_WIDTH, WORLD_HEIGHT, BOT_COUNT,
-    BOT_RESPAWN_DELAY, HEAD_SIZE, FOOD_SIZE,
-    SEGMENT_SIZE,
+    WORLD_WIDTH, WORLD_HEIGHT, BOT_COUNT, BOT_RESPAWN_DELAY,
+    HEAD_SIZE, SEGMENT_SIZE, SPAWN_MARGIN,
+    SNAKE_SYNC_INTERVAL, BOT_SYNC_INTERVAL, FOOD_SNAPSHOT_INTERVAL, REMOTE_TIMEOUT,
 )
-from game.snake import Snake, _dim_color
+from game.snake import Snake
 from game.bot import BotSnake
 from game.food import FoodManager
+from game.net_view import NetSnakeView
 from game.world import World
 from ui.hud import HUD
+
+_HEAD_R = HEAD_SIZE // 2
+_SEG_R = SEGMENT_SIZE // 2
 
 
 def _circle_collide(
@@ -22,295 +42,352 @@ def _circle_collide(
     return dx * dx + dy * dy < (ra + rb) * (ra + rb)
 
 
-_REMOTE_TIMEOUT = 5.0
-_FOOD_SYNC_INTERVAL = 0.25
-
-
-class RemoteSnake:
-    def __init__(self, scene: s.Scene, client_id: int):
-        self.scene = scene
-        self.client_id = client_id
-        self.last_seen = time.time()
-        self.segments: list[s.Sprite] = []
-        self.head = s.Sprite("", (HEAD_SIZE, HEAD_SIZE), (0, 0), scene=scene)
-        self.head.set_circle_shape(radius=HEAD_SIZE // 2, color=(255, 255, 255))
-        self.head.set_sorting_order(10)
-        self._seg_color = (180, 180, 180)
-        self._set_color((255, 255, 255))
-
-    def _set_color(self, color: tuple[int, int, int]) -> None:
-        self.head.set_color(color)
-        self._seg_color = _dim_color(color, 0.7)
-        for seg in self.segments:
-            seg.set_color(self._seg_color)
-
-    def update_from_data(self, data: dict) -> None:
-        self.last_seen = time.time()
-        head_pos = data["head"]
-        seg_positions = data.get("segments", [])
-
-        self.head.rect.center = (int(head_pos[0]), int(head_pos[1]))
-        angle = data.get("angle", 0)
-        self.head.angle = angle
-
-        rc = data.get("color")
-        if rc is not None and tuple(rc) != self.head.color:
-            self._set_color(tuple(rc))
-
-        while len(self.segments) < len(seg_positions):
-            seg = s.Sprite("", (SEGMENT_SIZE, SEGMENT_SIZE), (0, 0), scene=self.scene)
-            seg.set_circle_shape(radius=SEGMENT_SIZE // 2, color=self._seg_color)
-            seg.set_sorting_order(5)
-            self.segments.append(seg)
-        while len(self.segments) > len(seg_positions):
-            seg = self.segments.pop()
-            if seg.active:
-                s.disable_sprite(seg)
-
-        for seg, pos in zip(self.segments, seg_positions):
-            seg.rect.center = (int(pos[0]), int(pos[1]))
-
-    @property
-    def segment_count(self) -> int:
-        return len(self.segments)
-
-    def destroy(self) -> None:
-        if self.head.active:
-            s.disable_sprite(self.head)
-        for seg in self.segments:
-            if seg.active:
-                s.disable_sprite(seg)
-        self.segments.clear()
-
-
 class GameScene(s.Scene):
     def __init__(self, net=None, role=None):
         self.net = net
         self.role = role
-        self.is_multiplayer = net is not None
-        self.ctx = s.multiplayer_ctx if self.is_multiplayer else None
+        self.ctx = s.multiplayer_ctx if net is not None else None
+        self.is_multiplayer = self.ctx is not None
+        self.is_authority = self.ctx is None or self.ctx.is_host
         super().__init__()
         self._init_game()
 
-    def _init_game(self) -> None:
+    # ------------------------------------------------------------------ setup
+
+    def _init_game(self, food_restore: list[dict] | None = None) -> None:
         self.score = 0
         self.game_over = False
-        self._respawn_queue = 0
-        self._respawn_timer = 0.0
-        self.remote_snakes: dict[int, RemoteSnake] = {}
-        self._food_sync_timer = 0.0
+        self._death_sent = False
+        self.remote_snakes: dict[int, NetSnakeView] = {}
+        self.bot_views: dict[int, NetSnakeView] = {}
+        self.bots: list[BotSnake] = []
+        self._next_bot_id = 0
+        self._bot_respawn_timers: list[float] = []
+        self._food_snapshot_timer = 0.0
 
         self.world = World(self)
-        start = (WORLD_WIDTH // 2, WORLD_HEIGHT // 2)
-        self.snake = Snake(start, self)
-
-        self.bots: list[BotSnake] = []
-        self._spawn_bots()
-
-        self.food = FoodManager(self)
-        self.hud = HUD(self)
+        self.snake = Snake(self._spawn_point(), self)
+        self.food = FoodManager(self, authority=self.is_authority, restore=food_restore)
+        if self.is_authority:
+            for _ in range(BOT_COUNT):
+                self._spawn_bot()
+        self.hud = HUD(self, show_ping=self.is_multiplayer)
 
         s.set_camera_follow(self.snake.head, (0, 0))
         s.set_camera_zoom(0.6)
 
+    def _spawn_point(self) -> tuple[int, int]:
+        # В мультиплеере — случайная точка, чтобы игроки не спавнились друг в друге.
+        if self.is_multiplayer:
+            return (
+                random.randint(SPAWN_MARGIN, WORLD_WIDTH - SPAWN_MARGIN),
+                random.randint(SPAWN_MARGIN, WORLD_HEIGHT - SPAWN_MARGIN),
+            )
+        return (WORLD_WIDTH // 2, WORLD_HEIGHT // 2)
+
+    def _spawn_bot(self) -> None:
+        pos = (
+            random.randint(SPAWN_MARGIN, WORLD_WIDTH - SPAWN_MARGIN),
+            random.randint(SPAWN_MARGIN, WORLD_HEIGHT - SPAWN_MARGIN),
+        )
+        self.bots.append(BotSnake(self._next_bot_id, pos, self))
+        self._next_bot_id += 1
+
     def on_exit(self) -> None:
         s.clear_camera_follow()
 
+    # ----------------------------------------------------------------- update
+
     def update(self, dt: float) -> None:
-        if self.game_over:
-            if s.input.was_pressed(pygame.K_r):
-                self._restart()
-            return
+        if not self.game_over:
+            self.snake.update(dt)
 
-        self.snake.update(dt)
-        for bot in self.bots:
-            bot.update(dt, self.food.foods)
-
-        if not self.is_multiplayer or self.ctx.is_host:
+        if self.is_authority:
+            foods = list(self.food.foods.values())
+            for bot in self.bots:
+                bot.update(dt, foods)
+            self._authority_collisions()
+            self._update_bot_respawns(dt)
             self.food.maintain_count()
-        self._check_collisions()
+
+        if not self.game_over:
+            self._player_collisions()
 
         if self.is_multiplayer:
             self._sync_network(dt)
 
-        entries = [("Player", self.snake)]
-        for i, bot in enumerate(self.bots):
-            if bot.alive:
-                entries.append((f"Bot {i+1}", bot))
-        for cid, r in sorted(self.remote_snakes.items()):
-            entries.append((f"Player {cid}", r))
-        self.hud.update_leaderboard(entries)
+        self._update_hud()
 
-        self._update_respawn(dt)
+        if self.game_over and s.input.was_pressed(pygame.K_r):
+            self._restart()
 
-    def _sync_network(self, dt: float) -> None:
-        ctx = self.ctx
-        if ctx is None:
-            return
+    # ------------------------------------------------------------- collisions
 
-        head = self.snake.head.rect.center
-        segs = [seg.rect.center for seg in self.snake.segments]
-        ctx.send_every("player_snake", {
-            "head": head,
-            "segments": segs,
-            "angle": self.snake.head.angle,
-            "score": self.score,
-            "color": self.snake.color,
-        }, 1.0 / 30.0)
+    @staticmethod
+    def _hits_body(pos: tuple[int, int], segments: list[s.Sprite]) -> bool:
+        return any(
+            _circle_collide(pos, seg.rect.center, _HEAD_R, _SEG_R)
+            for seg in segments
+        )
 
-        if ctx.is_host:
-            self._food_sync_timer += dt
-            if self._food_sync_timer >= _FOOD_SYNC_INTERVAL:
-                self._food_sync_timer = 0.0
-                ctx.send("food_state", {"foods": self.food.get_state()})
-
-        now = time.time()
-        for msg in ctx.poll():
-            data = msg.get("data", {})
-            ev = msg.get("event", "")
-            sid = data.get("sender_id")
-
-            if ev == "player_snake" and sid is not None and sid != ctx.client_id:
-                if sid not in self.remote_snakes:
-                    self.remote_snakes[sid] = RemoteSnake(self, sid)
-                self.remote_snakes[sid].update_from_data(data)
-
-            if ev == "food_state" and not ctx.is_host:
-                self.food.sync_from_data(data.get("foods", []))
-
-        stale = [sid for sid, r in self.remote_snakes.items()
-                 if now - r.last_seen > _REMOTE_TIMEOUT]
-        for sid in stale:
-            self.remote_snakes.pop(sid).destroy()
-
-    def _check_collisions(self) -> None:
+    def _player_collisions(self) -> None:
         head = self.snake.head
+        head_c = head.rect.center
 
-        for food in list(self.food.foods):
-            if food.active and _circle_collide(head.rect.center, food.rect.center, HEAD_SIZE // 2, FOOD_SIZE):
-                self._player_eat(food)
-
-        for bot in list(self.bots):
-            if not bot.alive:
-                continue
-            for seg in bot.segments:
-                if seg.active and head.rect.colliderect(seg.rect):
-                    self._trigger_game_over()
-                    return
-
-        for r in list(self.remote_snakes.values()):
-            if head.rect.colliderect(r.head.rect):
-                self._trigger_game_over()
-                return
-            for seg in r.segments:
-                if seg.active and head.rect.colliderect(seg.rect):
-                    self._trigger_game_over()
-                    return
+        food_id = self.food.find_at(head_c, _HEAD_R)
+        if food_id is not None:
+            self._eat(food_id)
 
         for wall in self.world.walls:
             if head.rect.colliderect(wall.rect):
-                self._trigger_game_over()
+                self._die()
                 return
 
-        for bot in list(self.bots):
-            if not bot.alive:
-                continue
-            for food in list(self.food.foods):
-                if food.active and _circle_collide(bot.head.rect.center, food.rect.center, HEAD_SIZE // 2, FOOD_SIZE):
-                    self._bot_eat(bot.head, food)
-                    break
-            for seg in self.snake.segments:
-                if seg.active and bot.head.rect.colliderect(seg.rect):
-                    self._bot_killed(bot.head)
-                    break
-            for other in list(self.bots):
-                if other is bot or not other.alive:
-                    continue
-                for seg in other.segments:
-                    if seg.active and bot.head.rect.colliderect(seg.rect):
-                        self._bot_killed(bot.head)
-                        break
+        if self.is_authority:
+            for bot in list(self.bots):
+                # Лоб в лоб — гибнут оба.
+                if _circle_collide(head_c, bot.head.rect.center, _HEAD_R, _HEAD_R):
+                    self._kill_bot(bot)
+                    self._die()
+                    return
+                if self._hits_body(head_c, bot.segments):
+                    self._die()
+                    return
+        else:
+            for view in self.bot_views.values():
+                if (
+                    _circle_collide(head_c, view.head.rect.center, _HEAD_R, _HEAD_R)
+                    or self._hits_body(head_c, view.segments)
+                ):
+                    self._die()
+                    return
 
-    def _player_eat(self, food_sprite: s.Sprite) -> None:
-        if self.game_over:
-            return
-        self.food._disable_food(food_sprite)
-        if food_sprite in self.food.foods:
-            self.food.foods.remove(food_sprite)
+        for view in self.remote_snakes.values():
+            if (
+                _circle_collide(head_c, view.head.rect.center, _HEAD_R, _HEAD_R)
+                or self._hits_body(head_c, view.segments)
+            ):
+                self._die()
+                return
+
+    def _authority_collisions(self) -> None:
+        for bot in list(self.bots):
+            head_c = bot.head.rect.center
+
+            food_id = self.food.find_at(head_c, _HEAD_R)
+            if food_id is not None and self.food.remove(food_id):
+                bot.grow()
+                if self.ctx is not None:
+                    self.ctx.send("food_eaten", {"food_id": food_id, "eater_id": None})
+
+            if self._bot_hits_deadly(bot):
+                self._kill_bot(bot)
+
+    def _bot_hits_deadly(self, bot: BotSnake) -> bool:
+        head_c = bot.head.rect.center
+        for wall in self.world.walls:
+            if bot.head.rect.colliderect(wall.rect):
+                return True
+        if not self.game_over and self._hits_body(head_c, self.snake.segments):
+            return True
+        for other in self.bots:
+            if other is not bot and self._hits_body(head_c, other.segments):
+                return True
+        for view in self.remote_snakes.values():
+            if self._hits_body(head_c, view.segments):
+                return True
+        return False
+
+    # --------------------------------------------------------------- gameplay
+
+    def _eat(self, food_id: int) -> None:
+        # Еду убираем сразу (отзывчивость), но рост на клиенте происходит
+        # только после подтверждения хоста событием food_eaten.
+        self.food.remove(food_id)
+        if self.is_authority:
+            self._grow_player()
+            if self.ctx is not None:
+                self.ctx.send("food_eaten", {"food_id": food_id, "eater_id": self.ctx.client_id})
+        else:
+            self.ctx.send("eat_food", {"food_id": food_id})
+
+    def _grow_player(self) -> None:
         self.score += 1
         self.snake.grow()
         self.hud.update_score(self.score)
         self.hud.update_length(len(self.snake.segments))
-        if not self.is_multiplayer or self.ctx.is_host:
-            self.food.maintain_count()
 
-    def _bot_eat(self, bot_head: s.Sprite, food_sprite: s.Sprite) -> None:
-        self.food._disable_food(food_sprite)
-        if food_sprite in self.food.foods:
-            self.food.foods.remove(food_sprite)
-        for bot in self.bots:
-            if bot.head is bot_head and bot.alive:
-                bot.grow()
-                if not self.is_multiplayer or self.ctx.is_host:
-                    self.food.maintain_count()
-                break
-
-    def _bot_killed(self, bot_head: s.Sprite) -> None:
-        for bot in self.bots:
-            if bot.head is bot_head and bot.alive:
-                bot.alive = False
-                self._kill_bot(bot)
-                return
-
-    def _spawn_bots(self) -> None:
-        import random as _r
-        for _ in range(BOT_COUNT):
-            x = _r.randint(200, WORLD_WIDTH - 200)
-            y = _r.randint(200, WORLD_HEIGHT - 200)
-            self.bots.append(BotSnake((x, y), self))
-
-    def _update_respawn(self, dt: float) -> None:
-        if self._respawn_queue <= 0:
+    def _die(self) -> None:
+        if self.game_over:
             return
-        self._respawn_timer += dt
-        if self._respawn_timer >= BOT_RESPAWN_DELAY:
-            self._respawn_timer = 0.0
-            self._respawn_queue -= 1
-            import random as _r
-            x = _r.randint(200, WORLD_WIDTH - 200)
-            y = _r.randint(200, WORLD_HEIGHT - 200)
-            self.bots.append(BotSnake((x, y), self))
-
-    def _kill_bot(self, bot: BotSnake) -> None:
-        segments = [bot.head] + bot.segments
-        for seg in segments:
-            self.food.spawn_at(seg.rect.center)
-            if seg.active:
-                s.disable_sprite(seg)
-        bot.segments.clear()
-        bot.trail.clear()
-        bot.alive = False
-        if bot in self.bots:
-            self.bots.remove(bot)
-        self._respawn_queue += 1
-        self.score += 5
-        self.hud.update_score(self.score)
-
-    def _trigger_game_over(self) -> None:
         self.game_over = True
         self.snake.die()
-        for bot in self.bots:
-            for seg in [bot.head] + bot.segments:
-                if seg.active:
-                    s.disable_sprite(seg)
-            bot.segments.clear()
-            bot.trail.clear()
-            bot.alive = False
-        self.bots.clear()
+        if self.is_multiplayer and not self._death_sent:
+            self._death_sent = True
+            self.ctx.send(
+                "player_died",
+                {"segments": [list(p) for p in self.snake.body_positions()]},
+            )
+        if self.is_authority and self.is_multiplayer:
+            self._drop_food(self.snake.body_positions())
         self.hud.show_game_over(self.score)
 
+    def _kill_bot(self, bot: BotSnake) -> None:
+        if bot not in self.bots:
+            return
+        self.bots.remove(bot)
+        positions = bot.body_positions()
+        bot.destroy()
+        self._drop_food(positions)
+        self._bot_respawn_timers.append(BOT_RESPAWN_DELAY)
+
+    def _drop_food(self, positions: list[tuple[int, int]]) -> None:
+        for pos in positions:
+            self.food.spawn_at((int(pos[0]), int(pos[1])))
+        # Форсируем ближайший снапшот, чтобы клиенты увидели выпавшую еду сразу.
+        self._food_snapshot_timer = FOOD_SNAPSHOT_INTERVAL
+
+    def _update_bot_respawns(self, dt: float) -> None:
+        remaining: list[float] = []
+        for timer in self._bot_respawn_timers:
+            timer -= dt
+            if timer <= 0:
+                self._spawn_bot()
+            else:
+                remaining.append(timer)
+        self._bot_respawn_timers = remaining
+
+    # ---------------------------------------------------------------- network
+
+    def _sync_network(self, dt: float) -> None:
+        ctx = self.ctx
+
+        if not self.game_over:
+            state = self.snake.get_state()
+            state["score"] = self.score
+            ctx.send_every("player_state", state, SNAKE_SYNC_INTERVAL)
+
+        if self.is_authority:
+            self._food_snapshot_timer += dt
+            if self._food_snapshot_timer >= FOOD_SNAPSHOT_INTERVAL:
+                self._food_snapshot_timer = 0.0
+                ctx.send("food_state", {"foods": self.food.get_state()})
+            ctx.send_every(
+                "bot_state",
+                {"bots": [bot.get_state() for bot in self.bots]},
+                BOT_SYNC_INTERVAL,
+            )
+
+        self._handle_net_messages()
+        self._drop_stale_remotes()
+
+    def _handle_net_messages(self) -> None:
+        for msg in self.ctx.poll():
+            event = msg.get("event", "")
+            data = msg.get("data") or {}
+            sender_id = data.get("sender_id")
+
+            if event == "player_state" and sender_id is not None:
+                view = self.remote_snakes.get(sender_id)
+                if view is None:
+                    view = self.remote_snakes[sender_id] = NetSnakeView(self)
+                view.apply_state(data)
+
+            elif event == "player_died" and sender_id is not None:
+                self._remove_remote(sender_id, drop_positions=data.get("segments"))
+
+            elif event == "player_left":
+                self._remove_remote(data.get("id"))
+
+            elif event == "eat_food" and self.is_authority:
+                food_id = data.get("food_id")
+                if food_id is not None and self.food.remove(int(food_id)):
+                    self.ctx.send(
+                        "food_eaten",
+                        {"food_id": int(food_id), "eater_id": sender_id},
+                    )
+
+            elif event == "food_eaten":
+                food_id = data.get("food_id")
+                if food_id is not None:
+                    self.food.remove(int(food_id))
+                if data.get("eater_id") == self.ctx.client_id and not self.game_over:
+                    self._grow_player()
+
+            elif event == "food_state" and not self.is_authority:
+                self.food.apply_state(data.get("foods", []))
+
+            elif event == "bot_state" and not self.is_authority:
+                self._apply_bot_state(data.get("bots", []))
+
+            elif event == "client_disconnected" and self.is_authority:
+                client_id = data.get("client_id")
+                self._remove_remote(client_id)
+                self.ctx.send("player_left", {"id": client_id})
+
+    def _apply_bot_state(self, bots: list[dict]) -> None:
+        seen: set[int] = set()
+        for state in bots:
+            bot_id = state.get("id")
+            if bot_id is None:
+                continue
+            seen.add(bot_id)
+            view = self.bot_views.get(bot_id)
+            if view is None:
+                view = self.bot_views[bot_id] = NetSnakeView(self)
+            view.apply_state(state)
+        for bot_id in [bid for bid in self.bot_views if bid not in seen]:
+            self.bot_views.pop(bot_id).destroy()
+
+    def _remove_remote(self, sender_id, drop_positions: list | None = None) -> None:
+        if sender_id is None:
+            return
+        view = self.remote_snakes.pop(int(sender_id), None)
+        positions = drop_positions or (view.body_positions() if view else [])
+        if view is not None:
+            view.destroy()
+        if self.is_authority and positions:
+            self._drop_food([(int(p[0]), int(p[1])) for p in positions])
+
+    def _drop_stale_remotes(self) -> None:
+        now = time.time()
+        stale = [
+            sender_id for sender_id, view in self.remote_snakes.items()
+            if now - view.last_seen > REMOTE_TIMEOUT
+        ]
+        for sender_id in stale:
+            self._remove_remote(sender_id)
+
+    # -------------------------------------------------------------------- hud
+
+    def _update_hud(self) -> None:
+        entries: list[tuple[str, int]] = []
+        if not self.game_over:
+            name = f"You (id {self.ctx.client_id})" if self.is_multiplayer else "You"
+            entries.append((name, len(self.snake.segments)))
+        if self.is_authority:
+            for bot in self.bots:
+                entries.append((f"Bot {bot.bot_id}", len(bot.segments)))
+        else:
+            for bot_id, view in self.bot_views.items():
+                entries.append((f"Bot {bot_id}", view.segment_count))
+        for sender_id, view in sorted(self.remote_snakes.items()):
+            entries.append((f"Player {sender_id}", view.segment_count))
+        self.hud.update_leaderboard(entries)
+
+        if self.is_multiplayer:
+            self.hud.update_ping(self.ctx.ping_ms)
+
+    # ---------------------------------------------------------------- restart
+
     def _restart(self) -> None:
+        # На хосте сохраняем еду, чтобы рестарт хоста не перемешивал её у всех.
+        food_restore = (
+            self.food.get_state()
+            if self.is_multiplayer and self.is_authority
+            else None
+        )
         for sprite in list(s.get_game().all_sprites):
             if getattr(sprite, "scene", None) is self and sprite.active:
                 s.disable_sprite(sprite)
-        self._init_game()
+        self._init_game(food_restore=food_restore)

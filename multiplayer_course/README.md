@@ -1,12 +1,12 @@
 # Курс по мультиплееру на SpritePro
 
-Курс из **11** уроков (папки `1`–`11`): от базового сетевого обмена до полноценной мини-игры, лобби, декораторов `@Command` / `@NetEvent` и продвинутых тем в уроке 10.
+Курс из **12** уроков (папки `1`–`12`): от базового сетевого обмена до полноценной мини-игры, лобби, декораторов `@Command` / `@NetEvent`, продвинутых тем и архитектуры сетевой игры (владение объектами, снапшоты, подтверждения хоста).
 
 Обновлён под **SpritePro 3.12+**: запуск через `s.run(..., multiplayer=True)`, встроенный пинг (`ctx.ping_ms`), сетевая статистика (`ctx.get_net_stats()`) и TCP_NODELAY из коробки.
 
 ## Как проходить
 
-1. Идите по порядку: папки `1` → `11` (урок 10 — продвинутые темы, 11 — сетевые декораторы).
+1. Идите по порядку: папки `1` → `12` (урок 10 — продвинутые темы, 11 — сетевые декораторы, 12 — архитектура сетевой игры).
 2. В каждом уроке сначала прочитайте `lesson.md`.
 3. Запустите `example_*.py` — увидите эталонный пример.
 4. Выполните задания в `practice_*.py`.
@@ -43,7 +43,7 @@ python multiplayer_course/2/example_sync_positions.py --net_debug
 | Уровень | Что изучается | Уроки |
 |---------|-------------|-------|
 | **Low-level** | `NetServer`, `NetClient`, `ctx.send()`, `poll()`, JSON | 1–4 |
-| **App-level** | `Scene`, `Button`, `s.run()`, архитектура проекта, декораторы | 5–11 |
+| **App-level** | `Scene`, `Button`, `s.run()`, архитектура проекта, декораторы | 5–12 |
 
 Ручной цикл `while True: s.update(...)` допустим в учебных low-level примерах. Для полноценных игр используйте `s.run(...)`.
 
@@ -62,6 +62,7 @@ python multiplayer_course/2/example_sync_positions.py --net_debug
 | **9** | Финальный мини-экзамен | Всё вместе: лобби → игра → результат |
 | **10** | Продвинутые темы | LERP, роутинг, снапшоты, dedicated server |
 | **11** | Сетевые декораторы | `@s.NetEvent`, `@s.Command`, `@s.ClientRpc` |
+| **12** | Архитектура сетевой игры | Владение объектами, полный снапшот мира, подтверждения хоста, late join |
 
 ## Ключевые API
 
@@ -100,6 +101,16 @@ ctx.get_net_stats()  # словарь: пинг, счётчики сообщен
 python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py
 python multiplayer_course/tictactoe_example/example_tictactoe_multiplayer.py --quick
 ```
+
+## Эталон: Слизарио
+
+Realtime-игра, собранная по архитектуре из урока 12 (host-authoritative еда и боты, полные снапшоты, подтверждения, подключение в середине игры):
+
+```bash
+python spritePro/demoGames/slisario_andrulok/main.py --quick
+```
+
+Разбор решений: [ARCHITECTURE.md](../spritePro/demoGames/slisario_andrulok/ARCHITECTURE.md)
 
 ## Встроенное лобби
 
