@@ -1,6 +1,6 @@
 # SpritePro
 
-Высокоуровневый 2D game framework на Python (поверх pygame). Desktop, web и mobile из одной кодовой базы.
+A high-level 2D game framework for Python (on top of pygame). Desktop, web and mobile from one codebase.
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Open%20Source-yellow.svg)](LICENSE)
@@ -12,17 +12,17 @@
 
 ---
 
-## Установка
+## Installation
 
 ```bash
 pip install spritepro
 ```
 
-Для mobile: `pip install "spritepro[kivy]"`
+For mobile: `pip install "spritepro[kivy]"`
 
-Шаблон проекта: `python -m spritePro.cli --create` (минимальный: `--create --simple`)
+Project template: `python -m spritePro.cli --create` (minimal: `--create --simple`)
 
-### Обновление
+### Updating
 
 ```bash
 pip install --upgrade spritepro
@@ -30,25 +30,25 @@ pip install --upgrade spritepro
 
 ---
 
-## Почему SpritePro
+## Why SpritePro
 
-| Обычно приходится | В SpritePro |
-|-------------------|-------------|
-| Ручной игровой цикл | `s.run(scene=...)` — сцена + auto-render |
-| Своя камера | Camera API, follow, zoom, shake |
-| UI с нуля | `Button`, `ToggleButton`, `TextSprite`, `Slider`, `TextInput`, `Layout` |
-| Физика отдельно | `pymunk`-интеграция, типы тел, коллизии |
-| Визуальный editor | Sprite Editor → JSON → `spawn_scene(...)` |
-| Сохранения парсить | `PlayerPrefs` → JSON |
-| Мультиплеер с нуля | TCP, лобби, ChatScene, синхронизация |
-| Mobile отдельно | `platform="kivy"` — та же логика |
-| Скроллируемый UI | `ScrollView` + `ClipMask` — готовый клиппинг |
+| What you usually do | In SpritePro |
+|---------------------|--------------|
+| Hand-written game loop | `s.run(scene=...)` — scene + auto-render |
+| Your own camera | Camera API, follow, zoom, shake |
+| UI from scratch | `Button`, `ToggleButton`, `TextSprite`, `Slider`, `TextInput`, `Layout` |
+| Physics kept separate | `pymunk` integration, body types, collisions |
+| Visual editor | Sprite Editor → JSON → `spawn_scene(...)` |
+| Parsing saves by hand | `PlayerPrefs` → JSON |
+| Multiplayer from scratch | TCP, lobby, ChatScene, sync |
+| Mobile as a separate thing | `platform="kivy"` — same logic |
+| Scrollable UI | `ScrollView` + `ClipMask` — clipping that already works |
 
-**SpritePro = pygame + физика, Layout, ScrollView, ClipMask, редактор сцен, мультиплеер, UI.**
+**SpritePro = pygame + physics, Layout, ScrollView, ClipMask, scene editor, multiplayer, UI.**
 
 ---
 
-## Быстрый старт
+## Quick start
 
 ```python
 import spritePro as s
@@ -64,29 +64,29 @@ class MainScene(s.Scene):
 s.run(scene=MainScene, size=(800, 600), title="My Game")
 ```
 
-Всё: окно, сцена, игровой цикл, управление.
+That's it: window, scene, game loop, controls.
 
 ---
 
-## Что внутри
+## What's inside
 
-- **Sprite** — базовый класс с движением, эффектами, иерархией parent-child
+- **Sprite** — the base class, with movement, effects and a parent-child hierarchy
 - **UI**: Button, ToggleButton, Slider, TextInput, TextSprite, Layout (flex/grid/circle/line)
-- **ClipMask** — маска обрезки для viewport, инвентарей, чатов
-- **ScrollView** — скроллируемый контент с колёсиком и drag-and-drop
-- **Физика**: pymunk, DYNAMIC/STATIC/KINEMATIC тела, коллизии
-- **Анимации**: Tween, Fluent API (`DoMove`, `DoScale`, `SetEase`...)
-- **Частицы**: ParticleEmitter, шаблоны, пулы
-- **Мультиплеер**: TCP, лобби, ChatScene, синхронизация
-- **Audio**: звук и музыка
-- **Save/Load**: PlayerPrefs в JSON
-- **Sprite Editor**: визуальная сборка сцен → JSON
+- **ClipMask** — a clipping mask for viewports, inventories, chats
+- **ScrollView** — scrollable content with a wheel and drag-and-drop
+- **Physics**: pymunk, DYNAMIC/STATIC/KINEMATIC bodies, collisions
+- **Animations**: Tween, Fluent API (`DoMove`, `DoScale`, `SetEase`...)
+- **Particles**: ParticleEmitter, presets, pools
+- **Multiplayer**: TCP, lobby, ChatScene, sync
+- **Audio**: sound and music
+- **Save/Load**: PlayerPrefs as JSON
+- **Sprite Editor**: build scenes visually → JSON
 
 ---
 
 ## Sprite Editor
 
-Визуальный редактор сцен с иерархией, инспектором, gizmo.
+A visual scene editor with a hierarchy, an inspector and gizmos.
 
 <img width="800" alt="Sprite Editor" src="https://github.com/user-attachments/assets/01947bfe-d5e6-40cb-ba75-c03f2d4aeb9d" />
 
@@ -94,7 +94,7 @@ s.run(scene=MainScene, size=(800, 600), title="My Game")
 python -m spritePro.cli --editor
 ```
 
-Собираете сцену → сохраняете в JSON → загружаете в игре:
+Build a scene → save it as JSON → load it in the game:
 
 ```python
 rt = spawn_scene("level.json", scene=self)
@@ -103,9 +103,9 @@ player = rt.exact("player").Sprite(speed=5)
 
 ---
 
-## Мультиплеерный чат
+## Multiplayer chat
 
-Готовая сцена чата с маской обрезки и скроллом:
+A ready-made chat scene with a clipping mask and scrolling:
 
 ```python
 from spritePro.readyScenes import ChatScene, ChatStyle
@@ -116,60 +116,60 @@ s.run(scene=ChatScene, multiplayer=True, multiplayer_use_lobby=True, title="Chat
 
 ---
 
-## Сравнение
+## Comparison
 
-| Функция | pygame | arcade | SpritePro |
+| Feature | pygame | arcade | SpritePro |
 |---------|--------|--------|-----------|
-| Авто-рендер | ❌ | ✅ | ✅ |
-| Готовая камера | ❌ | ✅ | ✅ |
-| Физика (pymunk) | ❌ | ✅ | ✅ |
+| Auto-render | ❌ | ✅ | ✅ |
+| Ready-made camera | ❌ | ✅ | ✅ |
+| Physics (pymunk) | ❌ | ✅ | ✅ |
 | Layout (flex/grid) | ❌ | ❌ | ✅ |
-| Редактор сцен (JSON) | ❌ | ❌ | ✅ |
-| Маска обрезки / ScrollView | ❌ | ❌ | ✅ |
-| Мультиплеер (TCP) | ❌ | ❌ | ✅ |
+| Scene editor (JSON) | ❌ | ❌ | ✅ |
+| Clipping mask / ScrollView | ❌ | ❌ | ✅ |
+| Multiplayer (TCP) | ❌ | ❌ | ✅ |
 | PlayerPrefs | ❌ | ❌ | ✅ |
 
 ---
 
-## Что создать
+## What to build
 
-- Платформеры, аркады, RPG
-- Пазлы, tower defense
-- Мультиплеерные игры
-- Мобильные игры (`platform="kivy"`)
+- Platformers, arcades, RPGs
+- Puzzles, tower defense
+- Multiplayer games
+- Mobile games (`platform="kivy"`)
 
 ---
 
-## Демо-игры
+## Demo games
 
 ```bash
-python -m spritePro.demoGames.physics_demo       # физика
-python -m spritePro.demoGames.fluent_tween_demo   # твины
-python -m spritePro.demoGames.layout_demo         # лейауты
+python -m spritePro.demoGames.physics_demo       # physics
+python -m spritePro.demoGames.fluent_tween_demo   # tweens
+python -m spritePro.demoGames.layout_demo         # layouts
 python -m spritePro.demoGames.local_multiplayer_demo --quick
 ```
 
-### Слизарио (andrulok)
+### Slizario (andrulok)
 
-Мультиплеерный клон [Slither.io](https://slither.io/) и эталон сетевой игры на SpritePro: host-authoritative еда и боты, подтверждение действий хостом, подключение в середине игры. Разбор архитектуры — в [ARCHITECTURE.md](spritePro/demoGames/slisario_andrulok/ARCHITECTURE.md).
+A multiplayer clone of [Slither.io](https://slither.io/) and the reference networked game on SpritePro: host-authoritative food and bots, actions confirmed by the host, joining mid-game. Architecture walkthrough in [ARCHITECTURE.md](spritePro/demoGames/slisario_andrulok/ARCHITECTURE.md).
 
-![Слизарио — пример игры](assets/slizario.png)
+![Slizario — example game](assets/slizario.png)
 
 ```bash
-# одиночная игра
+# single player
 python spritePro/demoGames/slisario_andrulok/main.py --single
 
-# локально: хост + клиент, два окна
+# local: host + client, two windows
 python spritePro/demoGames/slisario_andrulok/main.py --quick
 ```
 
-Подробнее: [spritePro/demoGames/slisario_andrulok/README.md](spritePro/demoGames/slisario_andrulok/README.md)
+More: [spritePro/demoGames/slisario_andrulok/README.md](spritePro/demoGames/slisario_andrulok/README.md)
 
-[Все 54 демо](docs/demo_games/demo_games.md)
+[All 54 demos](docs/demo_games/demo_games.md)
 
 ---
 
-## Mobile и Web
+## Mobile and Web
 
 ```python
 s.run(scene=MainScene, platform="kivy")  # Android/iOS
@@ -183,29 +183,29 @@ Web: [docs/builds/building_web.md](docs/builds/building_web.md)
 
 ---
 
-## Документация
+## Documentation
 
-| Что | Где |
-|-----|-----|
-| Полный индекс | [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) |
-| Оглавление папки `docs/` | [docs/README.md](docs/README.md) |
+| What | Where |
+|------|-------|
+| Full index | [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) |
+| Table of contents for `docs/` | [docs/README.md](docs/README.md) |
 | API Reference | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) |
-| Для новичков | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) |
-| Физика | [docs/core/physics_guide.md](docs/core/physics_guide.md) |
+| For beginners | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) |
+| Physics | [docs/core/physics_guide.md](docs/core/physics_guide.md) |
 | UI/Layout | [docs/ui/layout_ui.md](docs/ui/layout_ui.md) |
 | ClipMask | [docs/ui/clip_mask.md](docs/ui/clip_mask.md) |
-| Мультиплеер | [docs/systems/networking_guide.md](docs/systems/networking_guide.md) |
+| Multiplayer | [docs/systems/networking_guide.md](docs/systems/networking_guide.md) |
 | Sprite Editor | [docs/editor/sprite_editor.md](docs/editor/sprite_editor.md) |
 | Mobile | [docs/builds/mobile_kivy.md](docs/builds/mobile_kivy.md) |
 
 ---
 
-## Вклад
+## Contributing
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — как внести вклад
-- [ROADMAP.md](ROADMAP.md) — планы развития
-- [CHANGELOG.md](CHANGELOG.md) — история изменений
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute
+- [ROADMAP.md](ROADMAP.md) — roadmap
+- [CHANGELOG.md](CHANGELOG.md) — changelog
 
 ---
 
-[📖 Документация](DOCUMENTATION_INDEX.md) · [💬 GitHub Issues](https://github.com/NeoXider/SpritePro/issues)
+[📖 Documentation](DOCUMENTATION_INDEX.md) · [💬 GitHub Issues](https://github.com/NeoXider/SpritePro/issues)
